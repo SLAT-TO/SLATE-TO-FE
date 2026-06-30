@@ -8,24 +8,23 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 
 ## 팀원 및 역할 분담
 
-| 이름 | 담당 페이지 | 담당 공용 컴포넌트 |
-| --- | --- | --- |
-| 클레버 | 워크스페이스 · 프로젝트 상세 (영상 피드백) | TextArea · YouTube Iframe Player · Dropdown |
-| 디아 | 로그인 / 인증 (토큰 · 소셜 · 라우팅 가드) | Input · 프로젝트 카드 · 영상 미리보기 · 태그 |
-| 이브 | 온보딩 · 홈 · 캘린더 · 알림 | Button · Calendar |
-| 재희 | 레이아웃 (골격) · 구인구직 · 마이페이지 · 전역 스타일 | ProgressBar · 구인구직 카드 · Modal |
-
+| 이름   | 담당 페이지                                           | 담당 공용 컴포넌트                           |
+| ------ | ----------------------------------------------------- | -------------------------------------------- |
+| 클레버 | 워크스페이스 · 프로젝트 상세 (영상 피드백)            | TextArea · YouTube Iframe Player · Dropdown  |
+| 디아   | 로그인 / 인증 (토큰 · 소셜 · 라우팅 가드)             | Input · 프로젝트 카드 · 영상 미리보기 · 태그 |
+| 이브   | 온보딩 · 홈 · 캘린더 · 알림                           | Button · Calendar                            |
+| 재희   | 레이아웃 (골격) · 구인구직 · 마이페이지 · 전역 스타일 | ProgressBar · 구인구직 카드 · Modal          |
 
 ## 기술 스택
 
-| 분류 | 기술 |
-| --- | --- |
-| Framework | React 19, TypeScript, Vite |
-| Styling | Tailwind CSS 4 |
-| 상태 관리 | Zustand 5 |
-| 유효성 검사 | Zod 4 |
-| 코드 품질 | ESLint, Prettier |
-| 배포 | Vercel |
+| 분류        | 기술                       |
+| ----------- | -------------------------- |
+| Framework   | React 19, TypeScript, Vite |
+| Styling     | Tailwind CSS 4             |
+| 상태 관리   | Zustand 5                  |
+| 유효성 검사 | Zod 4                      |
+| 코드 품질   | ESLint, Prettier           |
+| 배포        | Vercel                     |
 
 ## 폴더 구조
 
@@ -69,11 +68,11 @@ main        # 배포 브랜치
 
 ## 네이밍 규칙
 
-| 대상 | 규칙 | 예시 |
-| --- | --- | --- |
-| 컴포넌트 파일/폴더 | PascalCase | `VideoPlayer.tsx` |
-| 함수 / 변수 / 커스텀 훅 | camelCase | `isLoggedIn`, `useAuth.ts` |
-| 레포지토리 / 브랜치 | kebab-case | `slate-to-fe`, `feature/kcleverp-login` |
+| 대상                    | 규칙       | 예시                                    |
+| ----------------------- | ---------- | --------------------------------------- |
+| 컴포넌트 파일/폴더      | PascalCase | `VideoPlayer.tsx`                       |
+| 함수 / 변수 / 커스텀 훅 | camelCase  | `isLoggedIn`, `useAuth.ts`              |
+| 레포지토리 / 브랜치     | kebab-case | `slate-to-fe`, `feature/kcleverp-login` |
 
 ## 커밋 컨벤션
 
@@ -81,14 +80,14 @@ main        # 배포 브랜치
 type: 내용 (#이슈번호)
 ```
 
-| type | 설명 |
-| --- | --- |
-| `feat` | 새로운 기능 |
-| `fix` | 버그 수정 |
-| `style` | 코드 포맷, 세미콜론 등 (로직 변경 없음) |
-| `refactor` | 리팩토링 |
-| `chore` | 빌드 설정, 패키지 관리 |
-| `docs` | 문서 수정 |
+| type       | 설명                                    |
+| ---------- | --------------------------------------- |
+| `feat`     | 새로운 기능                             |
+| `fix`      | 버그 수정                               |
+| `style`    | 코드 포맷, 세미콜론 등 (로직 변경 없음) |
+| `refactor` | 리팩토링                                |
+| `chore`    | 빌드 설정, 패키지 관리                  |
+| `docs`     | 문서 수정                               |
 
 예시:
 
@@ -115,10 +114,12 @@ feat: 로그인 페이지 UI 구현 (#12)
 **폰트**: Pretendard
 
 크기와 굵기를 조합해서 사용합니다.
+
 - 크기: `text-head-lg` / `text-head-md` / `text-head-sm` / `text-body-lg` / `text-body-sm` / `text-caption-lg` / `text-caption-sm`
 - 굵기: `font-bold` / `font-semibold` / `font-normal`
 
 **색상**
+
 - **Primitive** — 디자인 시스템 원본 팔레트 (`bg-main-7`, `text-neutral-6` 등)
 - **Semantic** — 용도 기반 별칭으로 Primitive를 참조 (`bg-primary`, `bg-secondary` 등)
 - 가능하면 Semantic 우선 사용, 없는 경우 Primitive 직접 사용
@@ -140,15 +141,15 @@ npm run build
 
 ## 화면 목록 및 플로우
 
-| 영역 | 화면 |
-| --- | --- |
-| 진입 | 랜딩, 로그인, 회원가입, 약관 |
-| 온보딩 | 역할 선택, 지역, 카테고리, 프로필 설정 |
-| 홈 | 대시보드, 캘린더, 할일, 알림 |
-| 구인구직 | 공고 목록, 인력풀 |
-| 프로필 | 마이 프로필, 공개 프로필, 북마크 |
-| 워크스페이스 | 프로젝트 목록, 설정, 공지, 활동 |
-| 프로젝트 상세 | 대시보드, 일정, 파일, 피드백 |
+| 영역          | 화면                                   |
+| ------------- | -------------------------------------- |
+| 진입          | 랜딩, 로그인, 회원가입, 약관           |
+| 온보딩        | 역할 선택, 지역, 카테고리, 프로필 설정 |
+| 홈            | 대시보드, 캘린더, 할일, 알림           |
+| 구인구직      | 공고 목록, 인력풀                      |
+| 프로필        | 마이 프로필, 공개 프로필, 북마크       |
+| 워크스페이스  | 프로젝트 목록, 설정, 공지, 활동        |
+| 프로젝트 상세 | 대시보드, 일정, 파일, 피드백           |
 
 ```mermaid
 flowchart TD

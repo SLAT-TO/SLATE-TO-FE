@@ -1,0 +1,3 @@
+# 모든 텍스트 파일을 LF로 통일 (각 PC의 core.autocrlf·OS와 무관하게 레포가 강제)
+# prettier 기본값(endOfLine: lf)과 일치 -> Windows에서도 format:check 통과
+* text=auto eol=lf
