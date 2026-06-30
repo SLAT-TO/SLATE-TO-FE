@@ -28,7 +28,11 @@ interface TextAreaProps {
   maxHeight?: number
   disabled?: boolean
   error?: string
+  /** 안내 문구 -> error가 없을 때만 표시 (error 우선) */
+  hint?: string
   label?: string
+  /** true면 label 옆에 * 표시 + aria-required 부여 */
+  required?: boolean
   /** 외부에서 추가적으로 스타일을 주입할 수 있는 속성 -> 사용할때 필요시 사용 */
   className?: string
   /** React 19부터 forwardRef 없이 ref를 prop으로 받음 -> 부모 ref가 내부 textarea DOM까지 전달됨 (외부 포커스 제어용) */
@@ -48,7 +52,9 @@ const TextArea = ({
   maxHeight = 240,
   disabled = false,
   error,
+  hint,
   label,
+  required = false,
   className = '',
   ref,
 }: TextAreaProps) => {
@@ -85,14 +91,16 @@ const TextArea = ({
     onChange(e.target.value)
   }
 
-  // 에러 메시지를 textarea와 연결해야 스크린리더가 같이 읽어줌 (폴백 id 덕분에 항상 연결 가능)
-  const errorId = error ? `${inputId}-error` : undefined
+  // error가 hint보다 우선. 표시할 메시지를 textarea와 연결해야 스크린리더가 같이 읽어줌 (폴백 id 덕분에 항상 연결 가능)
+  const message = error ?? hint
+  const messageId = message ? `${inputId}-desc` : undefined
 
   return (
     <div className="flex w-full flex-col gap-1">
       {label && (
         <label htmlFor={inputId} className="text-caption-lg text-neutral-9 font-semibold">
           {label}
+          {required && <span className="text-warning"> *</span>}
         </label>
       )}
       <textarea
@@ -106,17 +114,21 @@ const TextArea = ({
         rows={rows}
         maxLength={maxLength}
         disabled={disabled}
+        aria-required={required}
         aria-invalid={!!error}
-        aria-describedby={errorId}
+        aria-describedby={messageId}
         className={`text-body-sm text-neutral-10 placeholder:text-neutral-5 w-full resize-none overflow-y-auto rounded-md border px-3 py-2 transition-colors outline-none ${
           error ? 'border-warning focus:border-warning' : 'border-border focus:border-primary'
         } ${disabled ? 'bg-neutral-2 text-neutral-8 cursor-not-allowed' : 'bg-bg-primary'} ${className}`}
       />
-      {(error || typeof maxLength === 'number') && (
-        //에러가 있거나 maxLength가 있을때만 렌더링
+      {(message || typeof maxLength === 'number') && (
+        //에러/힌트 메시지가 있거나 maxLength가 있을때만 렌더링 (error 우선, 없으면 hint)
         <div className="flex justify-between gap-2">
-          <span id={errorId} className="text-caption-sm text-warning truncate">
-            {error}
+          <span
+            id={messageId}
+            className={`text-caption-sm truncate ${error ? 'text-warning' : 'text-neutral-5'}`}
+          >
+            {message}
           </span>
           {typeof maxLength === 'number' && (
             <span className="text-caption-sm text-neutral-5 shrink-0 whitespace-nowrap">
