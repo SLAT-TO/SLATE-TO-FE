@@ -72,7 +72,7 @@ const ActionMenu = ({
           if (isTriggerDisabled) return
           setOpen((v) => !v)
         }}
-        className="focus-visible:ring-primary flex size-8 items-center justify-center rounded-md text-neutral-8 transition-colors hover:bg-neutral-2 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:text-neutral-4"
+        className="focus-visible:ring-primary text-neutral-8 hover:bg-neutral-2 disabled:text-neutral-4 flex size-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed"
       >
         <svg viewBox="0 0 20 8" className="size-4" fill="currentColor" aria-hidden>
           <circle cx="2" cy="4" r="2" />
@@ -86,7 +86,7 @@ const ActionMenu = ({
           id={menuId}
           role="menu"
           aria-labelledby={triggerId}
-          className="border-border bg-bg-primary absolute right-0 top-full z-10 mt-1 min-w-28 overflow-hidden rounded-md border shadow-md"
+          className="border-border bg-bg-primary absolute top-full right-0 z-10 mt-1 min-w-28 overflow-hidden rounded-md border shadow-md"
         >
           {items.map((item, index) => (
             <li key={`${item.label}-${index}`} role="none">
@@ -95,7 +95,7 @@ const ActionMenu = ({
                 role="menuitem"
                 disabled={item.disabled}
                 onClick={() => handleSelect(item)}
-                className={`text-body-sm focus-visible:ring-primary block w-full px-3 py-2 text-left hover:bg-neutral-2 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:text-neutral-4 ${
+                className={`text-body-sm focus-visible:ring-primary hover:bg-neutral-2 disabled:text-neutral-4 block w-full px-3 py-2 text-left focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed ${
                   item.danger ? 'text-warning' : 'text-neutral-10'
                 }`}
               >
