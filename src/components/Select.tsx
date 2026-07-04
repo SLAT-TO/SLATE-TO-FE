@@ -59,8 +59,12 @@ const Select = ({
   // 부모가 id를 안 넘겨도 label-트리거 연결이 깨지지 않도록 폴백 id 생성
   const reactId = useId()
   const triggerId = id ?? reactId
+  const listboxId = `${triggerId}-listbox`
+  const optionId = (i: number) => `${triggerId}-opt-${i}`
 
   const message = error ?? hint
+  // 에러/hint 메시지를 트리거와 연결(aria-describedby)해 스크린리더가 같이 읽도록
+  const messageId = message ? `${triggerId}-desc` : undefined
 
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -137,6 +141,13 @@ const Select = ({
           onClick={() => (open ? setOpen(false) : openList())}
           onBlur={onBlur}
           onKeyDown={handleKeyDown}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-controls={open ? listboxId : undefined}
+          aria-required={required}
+          aria-invalid={!!error}
+          aria-describedby={messageId}
+          aria-activedescendant={open && activeIndex >= 0 ? optionId(activeIndex) : undefined}
           className={`text-body-sm flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left transition-colors outline-none ${
             error ? 'border-warning focus:border-warning' : 'border-border focus:border-primary'
           } ${disabled ? 'bg-neutral-2 cursor-not-allowed' : 'bg-bg-primary cursor-pointer'}`}
@@ -144,8 +155,9 @@ const Select = ({
           <span className={selected ? 'text-neutral-10' : 'text-neutral-5'}>
             {selected?.label ?? placeholder}
           </span>
-          {/* chevron: 열리면 180도 회전 */}
+          {/* chevron: 열리면 180도 회전 (장식용이라 스크린리더에서 숨김) */}
           <svg
+            aria-hidden
             viewBox="0 0 20 20"
             className={`text-neutral-5 size-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
             fill="none"
@@ -157,13 +169,20 @@ const Select = ({
         </button>
 
         {open && (
-          <ul className="border-border bg-bg-primary absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border py-1 shadow-md">
+          <ul
+            id={listboxId}
+            role="listbox"
+            className="border-border bg-bg-primary absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border py-1 shadow-md"
+          >
             {options.map((o, i) => {
               const isSelected = o.value === value
               const isActive = i === activeIndex
               return (
                 <li
                   key={o.value}
+                  id={optionId(i)}
+                  role="option"
+                  aria-selected={isSelected}
                   // 트리거가 blur되어 목록이 닫히기 전에 클릭이 처리되도록 mousedown 기본동작 차단
                   onMouseDown={(e) => e.preventDefault()}
                   onMouseEnter={() => setActiveIndex(i)}
@@ -184,7 +203,10 @@ const Select = ({
       {name && <input type="hidden" name={name} value={value} />}
 
       {message && (
-        <span className={`text-caption-sm truncate ${error ? 'text-warning' : 'text-neutral-5'}`}>
+        <span
+          id={messageId}
+          className={`text-caption-sm truncate ${error ? 'text-warning' : 'text-neutral-5'}`}
+        >
           {message}
         </span>
       )}
