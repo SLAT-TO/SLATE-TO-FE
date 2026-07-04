@@ -13,12 +13,10 @@ function BellIcon() {
 
 export default function Header({ userName = '000' }: HeaderProps) {
   return (
-    <header className="flex h-[90px] flex-shrink-0 items-center justify-between border-b border-border bg-bg-primary px-8">
+    <header className="border-border bg-bg-primary flex h-[90px] flex-shrink-0 items-center justify-between border-b px-8">
       {/* 인사말 */}
       <div>
-        <h1 className="text-body-sm font-semibold text-neutral-11">
-          안녕하세요 {userName} 님
-        </h1>
+        <h1 className="text-body-sm text-neutral-11 font-semibold">안녕하세요 {userName} 님</h1>
       </div>
 
       {/* 우측 액션 영역 */}
@@ -26,7 +24,7 @@ export default function Header({ userName = '000' }: HeaderProps) {
         {/* 알림 */}
         <button
           type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-6 transition-colors hover:bg-neutral-2 hover:text-neutral-9"
+          className="text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 flex h-10 w-10 items-center justify-center rounded-full transition-colors"
           aria-label="알림"
         >
           <BellIcon />
@@ -35,7 +33,7 @@ export default function Header({ userName = '000' }: HeaderProps) {
         {/* 아바타 */}
         <button
           type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-3 text-caption-sm font-medium text-neutral-7 hover:bg-neutral-4"
+          className="bg-neutral-3 text-caption-sm text-neutral-7 hover:bg-neutral-4 flex h-10 w-10 items-center justify-center rounded-full font-medium"
           aria-label="프로필"
         >
           {userName.charAt(0)}

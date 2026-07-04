@@ -59,13 +59,13 @@ const navItems: NavItem[] = [
 
 export default function Sidebar() {
   return (
-    <aside className="flex h-screen w-[260px] flex-shrink-0 flex-col border-r border-border bg-bg-primary">
+    <aside className="border-border bg-bg-primary flex h-screen w-[260px] flex-shrink-0 flex-col border-r">
       {/* 로고 */}
       <div className="flex items-center gap-3 px-5 pt-[51px]">
-        <div className="flex h-[27px] w-[27px] items-center justify-center rounded-md bg-primary">
+        <div className="bg-primary flex h-[27px] w-[27px] items-center justify-center rounded-md">
           <span className="text-[11px] font-bold text-white">S</span>
         </div>
-        <span className="font-bold text-neutral-11" style={{ fontSize: '16px' }}>
+        <span className="text-neutral-11 font-bold" style={{ fontSize: '16px' }}>
           SLAT-TO
         </span>
       </div>
@@ -77,11 +77,11 @@ export default function Sidebar() {
             key={item.href}
             href={item.href}
             className={[
-              'flex h-8 items-center gap-[13px] rounded-lg text-caption-lg',
+              'text-caption-lg flex h-8 items-center gap-[13px] rounded-lg',
               item.sub ? 'ml-[13px]' : '',
               item.active
-                ? 'w-[144px] bg-main-1 px-[7px] font-medium text-primary'
-                : 'w-[144px] px-[7px] text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9',
+                ? 'bg-main-1 text-primary w-[144px] px-[7px] font-medium'
+                : 'text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 w-[144px] px-[7px]',
             ]
               .filter(Boolean)
               .join(' ')}
@@ -95,10 +95,10 @@ export default function Sidebar() {
       </nav>
 
       {/* 하단 고정 영역 */}
-      <div className="mt-auto flex flex-col gap-[5px] border-t border-border px-5 py-4">
+      <div className="border-border mt-auto flex flex-col gap-[5px] border-t px-5 py-4">
         <a
           href="/mypage"
-          className="flex h-8 w-[144px] items-center gap-[13px] rounded-lg px-[7px] text-caption-lg text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9"
+          className="text-caption-lg text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 flex h-8 w-[144px] items-center gap-[13px] rounded-lg px-[7px]"
         >
           <span className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center">
             <svg width="17" height="17" viewBox="0 0 20 20" fill="currentColor">
@@ -110,7 +110,7 @@ export default function Sidebar() {
         </a>
         <a
           href="/settings"
-          className="flex h-8 w-[144px] items-center gap-[13px] rounded-lg px-[7px] text-caption-lg text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9"
+          className="text-caption-lg text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 flex h-8 w-[144px] items-center gap-[13px] rounded-lg px-[7px]"
         >
           <span className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center">
             <svg width="17" height="17" viewBox="0 0 20 20" fill="currentColor">

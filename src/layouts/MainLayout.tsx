@@ -9,7 +9,7 @@ type MainLayoutProps = {
 
 export default function MainLayout({ children, userName }: MainLayoutProps) {
   return (
-    <div className="flex h-screen overflow-hidden bg-bg-secondary">
+    <div className="bg-bg-secondary flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header userName={userName} />
