@@ -7,6 +7,7 @@ type ButtonSize = 'md' | 'sm'
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   size?: ButtonSize
+  fullWidth?: boolean
   icon?: ReactNode // 선택적 아이콘 (텍스트 왼쪽에 표시)
   ref?: Ref<HTMLButtonElement> // React 19: ref를 prop으로 직접 전달
 }
@@ -33,6 +34,7 @@ const variantStyles: Record<ButtonVariant, string> = {
 export function Button({
   variant = 'primary',
   size = 'md',
+  fullWidth = false,
   icon,
   children,
   className,
@@ -42,7 +44,7 @@ export function Button({
   return (
     <button
       ref={ref}
-      className={`${base} ${sizeStyles[size]} ${variantStyles[variant]} ${className ?? ''}`}
+      className={`${base} ${sizeStyles[size]} ${variantStyles[variant]} ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}
       {...rest}
     >
       {icon}
