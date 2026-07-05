@@ -8,6 +8,23 @@ function HomeIcon() {
     </svg>
   )
 }
+function CalendarIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <rect x="2" y="4" width="16" height="14" rx="2" />
+      <line x1="2" y1="8" x2="18" y2="8" />
+      <line x1="6" y1="2" x2="6" y2="5" strokeLinecap="round" />
+      <line x1="14" y1="2" x2="14" y2="5" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 function WorkspaceIcon() {
   return (
@@ -51,7 +68,8 @@ type NavItem = {
 }
 
 const navItems: NavItem[] = [
-  { label: '홈 캘린더', href: '/', icon: <HomeIcon />, active: true },
+  { label: '홈', href: '/', icon: <HomeIcon />, active: true },
+  { label: '캘린더', href: '/calendar', icon: <CalendarIcon /> },
   { label: '워크스페이스', href: '/workspace', icon: <WorkspaceIcon /> },
   { label: '프로젝트 명', href: '/project', icon: <ProjectIcon />, sub: true },
   { label: '매칭', href: '/matching', icon: <MatchingIcon /> },
@@ -65,9 +83,7 @@ export default function Sidebar() {
         <div className="bg-primary flex h-[27px] w-[27px] items-center justify-center rounded-md">
           <span className="text-[11px] font-bold text-white">S</span>
         </div>
-        <span className="text-neutral-11 font-bold" style={{ fontSize: '16px' }}>
-          SLAT-TO
-        </span>
+        <span className="text-body-sm text-neutral-11 font-bold">SLAT-TO</span>
       </div>
 
       {/* 네비게이션 */}
