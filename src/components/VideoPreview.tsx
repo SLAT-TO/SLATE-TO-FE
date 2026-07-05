@@ -34,47 +34,36 @@ export default function VideoPreview({ videoUrl }: VideoPreviewProps) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!videoUrl) {
-      setData(null);
-      setLoading(false);
-      setError(false);
-      return;
-    }
+    if (!videoUrl) return;
 
     const endpoint = getOEmbedEndpoint(videoUrl);
-    if (!endpoint) {
-      setData(null);
-      setError(true);
-      setLoading(false);
-      return;
-    }
+    if (!endpoint) return;
 
     const controller = new AbortController();
 
-    setData(null);
-    setLoading(true);
-    setError(false);
-
-    fetch(endpoint, { signal: controller.signal })
-      .then((res) => {
+    const load = async () => {
+      setData(null);
+      setLoading(true);
+      setError(false);
+      try {
+        const res = await fetch(endpoint, { signal: controller.signal });
         if (!res.ok) throw new Error();
-        return res.json() as Promise<OEmbedData>;
-      })
-      .then((json) => {
+        const json = (await res.json()) as OEmbedData;
         setData(json);
         setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         if ((err as Error).name === 'AbortError') return;
         setData(null);
         setError(true);
         setLoading(false);
-      });
+      }
+    };
 
+    load();
     return () => controller.abort();
   }, [videoUrl]);
 
-  if (!videoUrl) {
+  if (!videoUrl || !getOEmbedEndpoint(videoUrl)) {
     return (
       <PreviewBox>
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neutral-4">
