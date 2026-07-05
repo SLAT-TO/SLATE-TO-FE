@@ -44,7 +44,15 @@ export function Calendar({ month, events, onDateClick, onEventClick }: CalendarP
           return (
             <div
               key={key}
+              role="button"
+              tabIndex={0}
               onClick={() => onDateClick?.(day)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onDateClick?.(day)
+                }
+              }}
               className="border-border bg-bg-primary flex h-[147px] cursor-pointer flex-col items-stretch gap-1 border-r border-b pt-2 pr-2 pl-2"
             >
               <span
@@ -58,9 +66,18 @@ export function Calendar({ month, events, onDateClick, onEventClick }: CalendarP
               {dayEvents.map((event) => (
                 <div
                   key={event.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => {
-                    e.stopPropagation() // 셀의 onDateClick 안 터지게
+                    e.stopPropagation()
                     onEventClick?.(event)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      onEventClick?.(event)
+                    }
                   }}
                   className="truncate rounded-md px-2 py-1 text-xs font-medium text-white"
                   style={{ backgroundColor: event.color ?? '#3B5BFF' }}
