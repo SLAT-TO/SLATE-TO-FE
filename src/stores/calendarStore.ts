@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { CalendarEvent } from '../types/Calendar.types'
+import type { CalendarEvent } from '../schemas/calendarEvent'
 
 interface CalendarState {
   events: CalendarEvent[]
