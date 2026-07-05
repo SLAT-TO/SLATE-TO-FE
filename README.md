@@ -23,6 +23,7 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 | Styling     | Tailwind CSS 4             |
 | 상태 관리   | Zustand 5                  |
 | 유효성 검사 | Zod 4                      |
+| 날짜 처리   | date-fns 4                 |
 | 코드 품질   | ESLint, Prettier           |
 | 배포        | Vercel                     |
 
@@ -31,7 +32,6 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 ```
 SLATE_TO_FE/
 ├── .vscode/
-├── public/
 ├── src/
 │   ├── api/              # API 호출
 │   ├── assets/
@@ -39,6 +39,7 @@ SLATE_TO_FE/
 │   │   ├── icons/        # 아이콘 SVG (Flaticon UIcons)
 │   │   └── fonts/
 │   ├── components/       # 공통 컴포넌트
+│   ├── constants/        # 도메인 상수 (역할·영상 카테고리·피드백 유형)
 │   ├── hooks/            # 커스텀 훅
 │   ├── layouts/          # 공통 레이아웃
 │   ├── pages/            # 라우트 단위 페이지
@@ -128,16 +129,15 @@ feat: 로그인 페이지 UI 구현 (#12)
 
 ## 공용 폼 컨트롤 규약
 
-> Input · TextArea · Select · Choice · ChoiceGroup · Button 등 폼 컨트롤을 여러 명이 동시에 만들 때 props가 어긋나 폼 화면(회원가입·공고작성·설정)에서 충돌하는 것을 막기 위한 최소 규약입니다. 기준 템플릿은 이미 구현된 `src/components/TextArea.tsx`.
+> Input · TextArea · Select · Choice · Button 등 폼 컨트롤을 여러 명이 동시에 만들 때 props가 어긋나 폼 화면(회원가입·공고작성·설정)에서 충돌하는 것을 막기 위한 최소 규약입니다. 기준 템플릿은 이미 구현된 `src/components/TextArea.tsx`.
 
 ### 컴포넌트 네이밍
 
-| 이름          | 용도                                                                    |
-| ------------- | ----------------------------------------------------------------------- |
-| `Choice`      | 단일 checkbox / radio (`type`, `shape`)                                 |
-| `ChoiceGroup` | 옵션 배열형 — `radio` → `value: string`, `checkbox` → `value: string[]` |
-| `Select`      | 드롭다운 단일선택 (값 저장). 콤보박스(직접입력)는 후순위                |
-| `Tabs`        | 콘텐츠 탭 (GNB·사이드바와 다름)                                         |
+| 이름     | 용도                                                               |
+| -------- | ------------------------------------------------------------------ |
+| `Choice` | 단일 checkbox / radio — 모양은 `type`이 결정 (와이어프레임상 고정) |
+| `Select` | 드롭다운 단일선택 (값 저장). 콤보박스(직접입력)는 후순위           |
+| `Tabs`   | 콘텐츠 탭 (GNB·사이드바와 다름)                                    |
 
 ### Input / FileInput / ActionMenu
 
