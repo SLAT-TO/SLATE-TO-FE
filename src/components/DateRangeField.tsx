@@ -33,11 +33,6 @@ export function DateRangeField({ value, onChange }: DateRangeFieldProps) {
     return () => document.removeEventListener('mousedown', handleOutside)
   }, [open])
 
-  // 시작, 종료 다 고르면 자동으로 닫기
-  function handleChange(range: DateRange | undefined) {
-    onChange(range)
-  }
-
   return (
     <div ref={containerRef} className="relative inline-block">
       {/* 트리거: 시작 ~ 종료 */}
@@ -62,7 +57,7 @@ export function DateRangeField({ value, onChange }: DateRangeFieldProps) {
       {/* 팝업 달력 (열렸을 때만) */}
       {open && (
         <div className="border-neutral-3 absolute top-full left-0 z-10 mt-2 rounded-lg border bg-white shadow-lg">
-          <DateRangeCalendar value={value} onChange={handleChange} />
+          <DateRangeCalendar value={value} onChange={onChange} onComplete={() => setOpen(false)} />
         </div>
       )}
     </div>

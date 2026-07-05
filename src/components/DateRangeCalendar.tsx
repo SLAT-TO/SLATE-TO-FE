@@ -6,13 +6,14 @@ import { ko } from 'react-day-picker/locale'
 import 'react-day-picker/style.css' // 기본 스타일 (색상은 확정 후 커스텀 예정)
 
 interface DateRangeCalendarProps {
-  value?: DateRange // { from, to }
+  value?: DateRange
   onChange: (range: DateRange | undefined) => void
+  onComplete?: () => void // 시작~종료 다 골랐을 때
 }
 
 // 기간 선택 달력 코어 (input·팝업 없이 달력만)
 // 동작: 첫 클릭 → 시작일=종료일(하루), 이후 클릭 → 종료일 선택
-export function DateRangeCalendar({ value, onChange }: DateRangeCalendarProps) {
+export function DateRangeCalendar({ value, onChange, onComplete }: DateRangeCalendarProps) {
   // 종료일을 기다리는 중인지 (첫 클릭 후 true)
   const [awaitingEnd, setAwaitingEnd] = useState(false)
 
@@ -36,6 +37,7 @@ export function DateRangeCalendar({ value, onChange }: DateRangeCalendarProps) {
     // 종료일 확정 → 범위 완성
     onChange({ from: value.from, to: day })
     setAwaitingEnd(false)
+    onComplete?.() // 범위 완성 → 알림
   }
 
   return (
@@ -46,7 +48,8 @@ export function DateRangeCalendar({ value, onChange }: DateRangeCalendarProps) {
         selected: value,
         range_start: value?.from,
         range_end: value?.to,
-        range_middle: value,
+        range_middle:
+          value?.from && value?.to ? { after: value.from, before: value.to } : undefined,
         sunday: { dayOfWeek: [0] },
       }}
       modifiersClassNames={{
