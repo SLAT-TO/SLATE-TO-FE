@@ -26,7 +26,7 @@ export function Calendar({ month, events, onDateClick, onEventClick }: CalendarP
         {WEEKDAYS.map((label) => (
           <div
             key={label}
-            className="flex h-12 items-start bg-[#E9F2FE] pt-2 pl-2 text-sm text-gray-600"
+            className="text-neutral-6 flex h-12 items-start bg-[#E9F2FE] pt-2 pl-2 text-sm"
           >
             {label}
           </div>
@@ -34,7 +34,7 @@ export function Calendar({ month, events, onDateClick, onEventClick }: CalendarP
       </div>
 
       {/* 날짜 그리드 */}
-      <div className="grid grid-cols-[repeat(7,147px)] border-t border-l border-[#AFAFAF]">
+      <div className="border-border grid grid-cols-[repeat(7,147px)] border-t border-l">
         {days.map((day) => {
           const key = toDateKey(day)
           const dayEvents = eventsByDay.get(key) ?? []
@@ -44,11 +44,11 @@ export function Calendar({ month, events, onDateClick, onEventClick }: CalendarP
             <div
               key={key}
               onClick={() => onDateClick?.(day)}
-              className="flex h-[147px] cursor-pointer flex-col items-stretch gap-1 border-r border-b border-[#AFAFAF] bg-white pt-2 pr-2 pl-2"
+              className="border-border bg-bg-primary flex h-[147px] cursor-pointer flex-col items-stretch gap-1 border-r border-b pt-2 pr-2 pl-2"
             >
               <span
-                className={`text-sm ${inMonth ? 'text-gray-900' : 'text-gray-400'} ${
-                  isToday(day) ? 'font-bold text-blue-600' : ''
+                className={`text-sm ${inMonth ? 'text-neutral-10' : 'text-neutral-5'} ${
+                  isToday(day) ? 'text-primary font-bold' : ''
                 }`}
               >
                 {format(day, 'd')}

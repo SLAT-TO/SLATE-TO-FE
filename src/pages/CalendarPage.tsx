@@ -14,11 +14,11 @@ export function CalendarPage() {
     <div className="mx-auto max-w-4xl p-6">
       {/* 월 이동 헤더 — 이건 페이지 책임 (컴포넌트 밖) */}
       <header className="mb-4 flex items-center justify-start gap-3">
-        <h2 className="text-base font-bold text-black">{format(month, 'yyyy년 M월')}</h2>
+        <h2 className="text-neutral-11 text-base font-bold">{format(month, 'yyyy년 M월')}</h2>
         <button
           type="button"
           onClick={() => setMonth(subMonths(month, 1))}
-          className="rounded-md px-1 py-1 hover:bg-gray-100"
+          className="hover:bg-neutral-2 rounded-md px-1 py-1"
         >
           &lt;
         </button>
