@@ -10,6 +10,7 @@ interface AvatarProps {
   fallback?: ReactNode // 이미지가 없거나 실패했을 때 보여줄 것 (이니셜·아이콘 등)
   border?: AvatarBorder // 테두리 종류 (없으면 테두리 없음)
   onClick?: () => void // 있으면 클릭 가능(프로필 수정 등), 없으면 보여주기 전용
+  ariaLabel?: string // 클릭 가능할 때 스크린리더용 라벨 (예: "프로필 수정")
   className?: string
 }
 
@@ -26,9 +27,18 @@ export function Avatar({
   fallback,
   border,
   onClick,
+  ariaLabel,
   className,
 }: AvatarProps) {
   const [error, setError] = useState(false)
+  const [prevSrc, setPrevSrc] = useState(src)
+
+  // src가 바뀌면 렌더 중에 error 리셋 (effect 없이)
+  if (src !== prevSrc) {
+    setPrevSrc(src)
+    setError(false)
+  }
+
   const showImage = src && !error
 
   const content = showImage ? (
@@ -50,7 +60,13 @@ export function Avatar({
   // 클릭 가능하면 button (키보드 접근 O), 아니면 div (표시 전용)
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} style={style} className={`${shape} cursor-pointer`}>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={ariaLabel}
+        style={style}
+        className={`${shape} cursor-pointer`}
+      >
         {content}
       </button>
     )
