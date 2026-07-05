@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Tab {
   key: string
@@ -14,16 +14,25 @@ interface TabsProps {
 export default function Tabs({ tabs, defaultTab, onChange }: TabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab ?? tabs[0]?.key)
 
+  useEffect(() => {
+    if (!tabs.some((tab) => tab.key === activeTab)) {
+      setActiveTab(tabs[0]?.key)
+    }
+  }, [tabs, activeTab])
+
   const handleClick = (key: string) => {
     setActiveTab(key)
     onChange?.(key)
   }
 
   return (
-    <div className="border-border flex border-b">
+    <div className="border-border flex border-b" role="tablist">
       {tabs.map((tab) => (
         <button
+          type="button"
           key={tab.key}
+          role="tab"
+          aria-selected={activeTab === tab.key}
           onClick={() => handleClick(tab.key)}
           className={`text-body-sm px-6 py-3 transition-colors ${
             activeTab === tab.key
