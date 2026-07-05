@@ -1,28 +1,16 @@
 import { useEffect, useState, type ReactNode } from 'react';
 
-type OEmbedData = {
-  title: string;
-  thumbnail_url: string;
-  author_name?: string;
-};
+import { fetchOEmbed } from '../api/oEmbed';
+import { type OEmbedData } from '../schemas/oEmbed';
+import { getOEmbedEndpoint } from '../utils/oEmbed';
 
 type VideoPreviewProps = {
   videoUrl?: string;
 };
 
-function getOEmbedEndpoint(url: string): string | null {
-  if (url.includes('youtube.com') || url.includes('youtu.be')) {
-    return `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-  }
-  if (url.includes('vimeo.com')) {
-    return `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`;
-  }
-  return null;
-}
-
 function PreviewBox({ children }: { children: ReactNode }) {
   return (
-    <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl bg-[#D9D9D9]">
+    <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl bg-neutral-4">
       {children}
     </div>
   );
@@ -35,9 +23,7 @@ export default function VideoPreview({ videoUrl }: VideoPreviewProps) {
 
   useEffect(() => {
     if (!videoUrl) return;
-
-    const endpoint = getOEmbedEndpoint(videoUrl);
-    if (!endpoint) return;
+    if (!getOEmbedEndpoint(videoUrl)) return;
 
     const controller = new AbortController();
 
@@ -46,10 +32,8 @@ export default function VideoPreview({ videoUrl }: VideoPreviewProps) {
       setLoading(true);
       setError(false);
       try {
-        const res = await fetch(endpoint, { signal: controller.signal });
-        if (!res.ok) throw new Error();
-        const json = (await res.json()) as OEmbedData;
-        setData(json);
+        const result = await fetchOEmbed(videoUrl, controller.signal);
+        setData(result);
         setLoading(false);
       } catch (err) {
         if ((err as Error).name === 'AbortError') return;
@@ -66,23 +50,27 @@ export default function VideoPreview({ videoUrl }: VideoPreviewProps) {
   if (!videoUrl || !getOEmbedEndpoint(videoUrl)) {
     return (
       <PreviewBox>
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neutral-4">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neutral-6">
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <p className="text-caption-lg text-neutral-5">링크를 입력하면 미리보기가 표시됩니다.</p>
+        <p className="text-caption-lg text-neutral-6">링크를 입력하면 미리보기가 표시됩니다.</p>
       </PreviewBox>
     );
   }
 
   if (loading) {
-    return <PreviewBox><div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-3 border-t-primary" /></PreviewBox>;
+    return (
+      <PreviewBox>
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-3 border-t-primary" />
+      </PreviewBox>
+    );
   }
 
   if (error || !data) {
     return (
       <PreviewBox>
-        <p className="text-caption-lg text-neutral-5">미리보기를 불러올 수 없어요</p>
+        <p className="text-caption-lg text-neutral-6">미리보기를 불러올 수 없어요</p>
       </PreviewBox>
     );
   }
