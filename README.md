@@ -24,6 +24,7 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 | 상태 관리   | Zustand 5                  |
 | 유효성 검사 | Zod 4                      |
 | 날짜 처리   | date-fns 4                 |
+| 날짜 선택   | react-day-picker 10        |
 | 코드 품질   | ESLint, Prettier           |
 | 배포        | Vercel                     |
 
