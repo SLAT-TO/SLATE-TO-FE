@@ -25,11 +25,11 @@ export default function ConfirmModal({
       <div className="w-80 text-center">
         <h2 className="text-head-sm text-neutral-11 font-semibold">{title}</h2>
         {description && <p className="text-body-sm text-neutral-6 mt-2">{description}</p>}
-        <div className="mt-6 flex justify-center gap-2">
-          <Button variant="primary" size="sm" onClick={onConfirm}>
+        <div className="mt-6 flex gap-2">
+          <Button variant="primary" size="md" className="flex-1" onClick={onConfirm}>
             {confirmText}
           </Button>
-          <Button variant="secondary" size="sm" onClick={onClose}>
+          <Button variant="secondary" size="md" className="flex-1" onClick={onClose}>
             {cancelText}
           </Button>
         </div>
