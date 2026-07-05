@@ -8,12 +8,14 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 
 ## 팀원 및 역할 분담
 
-| 이름   | 담당 페이지                                           | 담당 공용 컴포넌트                                                         |
-| ------ | ----------------------------------------------------- | -------------------------------------------------------------------------- |
-| 클레버 | 워크스페이스 · 프로젝트 상세 (영상 피드백)            | TextArea · YouTube Iframe Player · Select · Choice · ActionMenu            |
-| 디아   | 로그인 / 인증 (토큰 · 소셜 · 라우팅 가드)             | Input · 프로젝트 카드 · 영상 미리보기 · Tag · FileInput                    |
-| 이브   | 온보딩 · 홈 · 캘린더 · 알림                           | Button · Calendar(라이브러리) · Avatar · DatePicker                        |
-| 재희   | 레이아웃 (골격) · 구인구직 · 마이페이지 · 전역 스타일 | ProgressBar · 구인구직 카드 · Modal(껍데기+ConfirmModal) · Tabs · 레이아웃 |
+| 이름   | 담당 페이지                                           | 담당 공용 컴포넌트                                              |
+| ------ | ----------------------------------------------------- | --------------------------------------------------------------- |
+| 클레버 | 워크스페이스 · 프로젝트 상세 (영상 피드백)            | TextArea · YouTube Iframe Player · Select · Choice · ActionMenu |
+| 디아   | 로그인 / 인증 (토큰 · 소셜 · 라우팅 가드)             | Input · 영상 미리보기 · Tag · FileInput                         |
+| 이브   | 온보딩 · 홈 · 캘린더 · 알림                           | Button · Calendar(라이브러리) · Avatar · DatePicker · Switch    |
+| 재희   | 레이아웃 (골격) · 구인구직 · 마이페이지 · 전역 스타일 | ProgressBar · Modal(껍데기+ConfirmModal) · Tabs · 레이아웃      |
+
+> **프로젝트 카드**(디아) · **구인구직 카드**(재희)는 공용이 아닌 **도메인 컴포넌트**로, 화면 조립 단계에서 해당 화면과 함께 구현합니다.
 
 ## 기술 스택
 
@@ -23,6 +25,8 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 | Styling     | Tailwind CSS 4             |
 | 상태 관리   | Zustand 5                  |
 | 유효성 검사 | Zod 4                      |
+| 날짜 처리   | date-fns 4                 |
+| 날짜 선택   | react-day-picker 10        |
 | 코드 품질   | ESLint, Prettier           |
 | 배포        | Vercel                     |
 
@@ -31,7 +35,6 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 ```
 SLATE_TO_FE/
 ├── .vscode/
-├── public/
 ├── src/
 │   ├── api/              # API 호출
 │   ├── assets/
@@ -39,6 +42,7 @@ SLATE_TO_FE/
 │   │   ├── icons/        # 아이콘 SVG (Flaticon UIcons)
 │   │   └── fonts/
 │   ├── components/       # 공통 컴포넌트
+│   ├── constants/        # 도메인 상수 (역할·영상 카테고리·피드백 유형)
 │   ├── hooks/            # 커스텀 훅
 │   ├── layouts/          # 공통 레이아웃
 │   ├── pages/            # 라우트 단위 페이지
@@ -128,27 +132,27 @@ feat: 로그인 페이지 UI 구현 (#12)
 
 ## 공용 폼 컨트롤 규약
 
-> Input · TextArea · Select · Choice · ChoiceGroup · Button 등 폼 컨트롤을 여러 명이 동시에 만들 때 props가 어긋나 폼 화면(회원가입·공고작성·설정)에서 충돌하는 것을 막기 위한 최소 규약입니다. 기준 템플릿은 이미 구현된 `src/components/TextArea.tsx`.
+> Input · TextArea · Select · Choice · Button 등 폼 컨트롤을 여러 명이 동시에 만들 때 props가 어긋나 폼 화면(회원가입·공고작성·설정)에서 충돌하는 것을 막기 위한 최소 규약입니다. 기준 템플릿은 이미 구현된 `src/components/TextArea.tsx`.
 
 ### 컴포넌트 네이밍
 
-| 이름          | 용도                                                                    |
-| ------------- | ----------------------------------------------------------------------- |
-| `Choice`      | 단일 checkbox / radio (`type`, `shape`)                                 |
-| `ChoiceGroup` | 옵션 배열형 — `radio` → `value: string`, `checkbox` → `value: string[]` |
-| `Select`      | 드롭다운 단일선택 (값 저장). 콤보박스(직접입력)는 후순위                |
-| `Tabs`        | 콘텐츠 탭 (GNB·사이드바와 다름)                                         |
+| 이름     | 용도                                                               |
+| -------- | ------------------------------------------------------------------ |
+| `Choice` | 단일 checkbox / radio — 모양은 `type`이 결정 (와이어프레임상 고정) |
+| `Select` | 드롭다운 단일선택 (값 저장)                                        |
+| `Tabs`   | 콘텐츠 탭 (GNB·사이드바와 다름)                                    |
 
-### Input / FileInput / ActionMenu
+### Input / FileInput / Switch / ActionMenu
 
 | 이름         | 용도                                                                                     |
 | ------------ | ---------------------------------------------------------------------------------------- |
 | `Input`      | **문자열** 입력 (로그인, 검색, 일반 폼). `value: string`, `onChange(string)`             |
 | `FileInput`  | **파일** 선택·업로드 (프로젝트 파일 추가 등). `Input`과 별도 컴포넌트                    |
+| `Switch`     | boolean **ON/OFF** 토글 (알림 설정 등). `Choice` checkbox와 UI·용도 분리                 |
 | `ActionMenu` | 트리거(⋯ 등) + **액션 목록** (`onClick` 실행). **폼 필드 아님** — 공통 props 규약 미적용 |
 
 - `Select`(값 선택)와 `ActionMenu`(동작 실행)는 용도가 다름
-- `ActionMenu` v1은 트리거 + `items[]` + 열림/닫기 수준으로 시작
+- `ActionMenu`는 트리거 + `items[]` + 열림/닫기로 구성
 
 ### 공통 props
 
