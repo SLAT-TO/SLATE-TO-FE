@@ -11,7 +11,9 @@ export default function ProgressBar({
   variant = 'default',
   className = '',
 }: ProgressBarProps) {
-  const percentage = Math.min(100, Math.max(0, (value / max) * 100))
+  const safeMax = max > 0 ? max : 100
+  const clampedValue = Math.min(safeMax, Math.max(0, value))
+  const percentage = (clampedValue / safeMax) * 100
 
   const variantColor = {
     default: 'bg-primary',
@@ -22,9 +24,9 @@ export default function ProgressBar({
   return (
     <div
       role="progressbar"
-      aria-valuenow={value}
+      aria-valuenow={clampedValue}
       aria-valuemin={0}
-      aria-valuemax={max}
+      aria-valuemax={safeMax}
       className={`bg-neutral-3 h-2 w-full rounded-full ${className}`}
     >
       <div
