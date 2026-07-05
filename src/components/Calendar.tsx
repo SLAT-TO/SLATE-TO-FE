@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { format, isSameMonth, isToday } from 'date-fns'
-import type { CalendarEvent, CalendarProps } from '../types/Calendar.types'
+import type { CalendarProps } from '../types/Calendar.types'
+import type { CalendarEvent } from '../schemas/calendarEvent'
 import { getMonthGrid, toDateKey } from '../utils/calendarUtils'
 
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
