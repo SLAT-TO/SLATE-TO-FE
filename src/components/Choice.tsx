@@ -77,7 +77,6 @@ const Choice = ({
         onChange={(e) => onChange(e.target.checked)}
         onBlur={onBlur}
         aria-required={required || undefined}
-        aria-checked={checked}
         className="peer sr-only"
       />
       {/* 커스텀 인디케이터 (checkbox=사각 / radio=원형) */}
