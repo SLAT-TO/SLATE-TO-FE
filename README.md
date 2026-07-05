@@ -12,7 +12,7 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 | ------ | ----------------------------------------------------- | -------------------------------------------------------------------------- |
 | 클레버 | 워크스페이스 · 프로젝트 상세 (영상 피드백)            | TextArea · YouTube Iframe Player · Select · Choice · ActionMenu            |
 | 디아   | 로그인 / 인증 (토큰 · 소셜 · 라우팅 가드)             | Input · 프로젝트 카드 · 영상 미리보기 · Tag · FileInput                    |
-| 이브   | 온보딩 · 홈 · 캘린더 · 알림                           | Button · Calendar(라이브러리) · Avatar · DatePicker                        |
+| 이브   | 온보딩 · 홈 · 캘린더 · 알림                           | Button · Calendar(라이브러리) · Avatar · DatePicker · Switch               |
 | 재희   | 레이아웃 (골격) · 구인구직 · 마이페이지 · 전역 스타일 | ProgressBar · 구인구직 카드 · Modal(껍데기+ConfirmModal) · Tabs · 레이아웃 |
 
 ## 기술 스택
@@ -139,12 +139,13 @@ feat: 로그인 페이지 UI 구현 (#12)
 | `Select` | 드롭다운 단일선택 (값 저장). 콤보박스(직접입력)는 후순위           |
 | `Tabs`   | 콘텐츠 탭 (GNB·사이드바와 다름)                                    |
 
-### Input / FileInput / ActionMenu
+### Input / FileInput / Switch / ActionMenu
 
 | 이름         | 용도                                                                                     |
 | ------------ | ---------------------------------------------------------------------------------------- |
 | `Input`      | **문자열** 입력 (로그인, 검색, 일반 폼). `value: string`, `onChange(string)`             |
 | `FileInput`  | **파일** 선택·업로드 (프로젝트 파일 추가 등). `Input`과 별도 컴포넌트                    |
+| `Switch`     | boolean **ON/OFF** 토글 (알림 설정 등). `Choice` checkbox와 UI·용도 분리                 |
 | `ActionMenu` | 트리거(⋯ 등) + **액션 목록** (`onClick` 실행). **폼 필드 아님** — 공통 props 규약 미적용 |
 
 - `Select`(값 선택)와 `ActionMenu`(동작 실행)는 용도가 다름
