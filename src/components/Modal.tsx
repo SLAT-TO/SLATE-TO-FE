@@ -41,10 +41,16 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
 
   if (!isOpen) return null
 
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose()
+    }
+  }
+
   return createPortal(
     <div
       className="bg-neutral-11/50 fixed inset-0 z-50 flex items-center justify-center"
-      onClick={onClose}
+      onClick={handleOverlayClick}
     >
       <div
         ref={contentRef}
@@ -52,7 +58,6 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
         aria-modal="true"
         tabIndex={-1}
         className="bg-bg-primary rounded-lg p-6 shadow-lg outline-none"
-        onClick={(e) => e.stopPropagation()}
       >
         {children}
       </div>
