@@ -1,8 +1,10 @@
+import MainLayout from './layouts/MainLayout'
+
 function App() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <h1 className="text-3xl font-bold">SLATE_TO_FE</h1>
-    </div>
+    <MainLayout userName="김수민">
+      <div>여기에 페이지 콘텐츠가 들어갑니다 (임시)</div>
+    </MainLayout>
   )
 }
 
