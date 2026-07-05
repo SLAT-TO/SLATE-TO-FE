@@ -35,6 +35,7 @@ export function Button({
   variant = 'primary',
   size = 'md',
   fullWidth = false,
+  type = 'button',
   icon,
   children,
   className,
@@ -44,6 +45,7 @@ export function Button({
   return (
     <button
       ref={ref}
+      type={type}
       className={`${base} ${sizeStyles[size]} ${variantStyles[variant]} ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}
       {...rest}
     >
