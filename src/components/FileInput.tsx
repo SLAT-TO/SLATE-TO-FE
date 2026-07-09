@@ -92,7 +92,7 @@ const FileInput = ({
           onClick={openPicker}
           className="text-body-sm text-primary hover:text-primary-hover w-fit font-semibold disabled:cursor-not-allowed"
         >
-          {multiple ? '파일 선택' : value.length > 0 ? '파일 변경' : '파일 선택'}
+          {value.length > 0 ? '파일 변경' : '파일 선택'}
         </button>
         {value.length > 0 && (
           <ul className="flex flex-col gap-1">
