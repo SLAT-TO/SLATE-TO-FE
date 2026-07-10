@@ -50,6 +50,7 @@ export type ProjectInvitation = {
 
 export type ProjectActivity = {
   id: number
+  projectId: number
   type: string
   message: string
   createdAt: string

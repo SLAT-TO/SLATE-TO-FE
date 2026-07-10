@@ -8,11 +8,12 @@ import type { Application, Recruitment } from '../types/recruitment'
 import type { Schedule } from '../types/schedule'
 import type { MeUser, NotificationSettings } from '../types/user'
 import type { ReferenceFile, VideoDetail } from '../types/video'
-
+/* stats에 값을 업데이트해도 빈값 객체가 변질 되지 않도록 객체 생성 함수로 정의하여 사용용 */
 function emptyStats() {
   return { projectTypes: [], roles: [] }
 }
 
+/** 온보딩 미완료 - 온보딩 플로우 테스트용 */
 const incompleteUser: MeUser = {
   id: 1,
   email: 'new@example.com',
@@ -27,9 +28,11 @@ const incompleteUser: MeUser = {
   categories: [],
   bio: null,
   createdAt: '2026-07-01T00:00:00Z',
+  /* 빈값 객체 생성 함수 사용 */
   stats: emptyStats(),
 }
 
+/** 온보딩 완료 — 로그인된 '나', 대부분 기능 테스트용 */
 const completeUser: MeUser = {
   id: 2,
   email: 'slate@example.com',
@@ -57,6 +60,7 @@ const completeUser: MeUser = {
   },
 }
 
+/** 타 유저 — 공개 프로필·멤버·공고 등 시나리오용 */
 const publicEditor: MeUser = {
   id: 3,
   email: 'park@example.com',
@@ -78,12 +82,13 @@ const publicEditor: MeUser = {
 }
 
 let nextId = 100
-
+/* 다음 id 할당 함수 프로젝트나 유저와 안겹치게 넉넉히 100부터 시작 */
 export function allocId(): number {
   nextId += 1
   return nextId
 }
 
+/* 모의 데이터베이스 타입 정의 */
 export type MockDb = {
   currentUserId: number | null
   tokens: AuthTokens | null
@@ -112,6 +117,7 @@ export type MockDb = {
   }>
 }
 
+/* 기본 알림 설정 객체 생성 함수 */
 function defaultNotificationSettings(): NotificationSettings {
   return {
     emailAllEnabled: true,
@@ -122,6 +128,7 @@ function defaultNotificationSettings(): NotificationSettings {
   }
 }
 
+/* 모의 데이터베이스(임시 데이터) 객체 생성 */
 export const db: MockDb = {
   currentUserId: completeUser.id,
   tokens: {
@@ -201,6 +208,7 @@ export const db: MockDb = {
   files: [
     {
       id: 1,
+      projectId: 1,
       fileName: 'reference.pdf',
       description: '레퍼런스 자료',
       storageKey: 'projects/1/files/reference.pdf',
@@ -374,6 +382,7 @@ export const db: MockDb = {
   activities: [
     {
       id: 1,
+      projectId: 1,
       type: 'FILE_UPLOADED',
       message: 'reference.pdf 파일이 업로드되었습니다',
       createdAt: '2026-06-10T09:00:00Z',
@@ -390,11 +399,14 @@ export const db: MockDb = {
   ],
 }
 
+/* 현재 로그인된 유저 조회 함수 */
 export function getCurrentUser(): MeUser | null {
+  /* 현재 로그인된 유저가 없으면 null 반환 */
   if (db.currentUserId == null) return null
   return db.users.find((u) => u.id === db.currentUserId) ?? null
 }
 
+/* 현재 로그인된 유저 조회 함수 호출 후 없으면 에러 반환 */
 export function requireUser(): MeUser {
   const user = getCurrentUser()
   if (!user || !db.tokens) {
@@ -403,6 +415,7 @@ export function requireUser(): MeUser {
   return user
 }
 
+/* 공개 프로필 데이터 변환 함수 */
 export function toPublicUser(user: MeUser) {
   return {
     id: user.id,

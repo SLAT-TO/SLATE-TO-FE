@@ -1,5 +1,6 @@
 export type ProjectFile = {
   id: number
+  projectId: number
   fileName: string
   description: string | null
   storageKey: string

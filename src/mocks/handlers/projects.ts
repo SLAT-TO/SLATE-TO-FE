@@ -2,8 +2,11 @@ import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
 import type { CreateProjectRequest, UpdateProjectRequest } from '../../types/project'
 import { allocId, db, requireUser } from '../db'
-import { badRequest, notFound, unauthorized } from '../errors'
+import { badRequest, domainError, notFound, unauthorized } from '../errors'
 import { created, ok } from '../response'
+
+/** Free 플랜 프로젝트 상한 — 시드 2개 기준으로 생성 여유를 둠 */
+const FREE_PROJECT_LIMIT = 5
 
 function safeUser() {
   try {
@@ -23,6 +26,9 @@ export const projectHandlers = [
     if (!safeUser()) return unauthorized()
     const body = (await request.json()) as CreateProjectRequest
     if (!body.title || !body.type) return badRequest()
+    if (db.projects.length >= FREE_PROJECT_LIMIT) {
+      return domainError('PROJECT409', '무료 플랜 프로젝트 생성 한도를 초과했습니다.')
+    }
 
     const now = new Date().toISOString()
     const project = {
@@ -122,15 +128,7 @@ export const projectHandlers = [
   http.get(paths.projectInvitations.byToken(':token'), ({ params }) => {
     const invitation = db.invitations.find((i) => i.token === params.token)
     if (!invitation) {
-      return HttpResponse.json(
-        {
-          isSuccess: false,
-          code: 'INVITE400',
-          message: '유효하지 않거나 만료된 초대 링크입니다.',
-          result: null,
-        },
-        { status: 400 },
-      )
+      return domainError('INVITE400', '유효하지 않거나 만료된 초대 링크입니다.')
     }
     const project = db.projects.find((p) => p.id === invitation.projectId)
     if (!project) return notFound()
@@ -151,29 +149,25 @@ export const projectHandlers = [
     if (!user) return unauthorized()
     const invitation = db.invitations.find((i) => i.token === params.token)
     if (!invitation) {
-      return HttpResponse.json(
-        {
-          isSuccess: false,
-          code: 'INVITE400',
-          message: '유효하지 않거나 만료된 초대 링크입니다.',
-          result: null,
-        },
-        { status: 400 },
-      )
+      return domainError('INVITE400', '유효하지 않거나 만료된 초대 링크입니다.')
     }
     return HttpResponse.json(ok({ projectId: invitation.projectId, joined: true }), { status: 200 })
   }),
 
   http.get(paths.projects.activities(':projectId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
-    if (!db.projects.some((p) => p.id === Number(params.projectId))) return notFound()
-    return HttpResponse.json(ok({ items: db.activities }), { status: 200 })
+    const projectId = Number(params.projectId)
+    if (!db.projects.some((p) => p.id === projectId)) return notFound()
+    const items = db.activities.filter((a) => a.projectId === projectId)
+    return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
   http.get(paths.projects.files(':projectId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
-    if (!db.projects.some((p) => p.id === Number(params.projectId))) return notFound()
-    return HttpResponse.json(ok({ items: db.files }), { status: 200 })
+    const projectId = Number(params.projectId)
+    if (!db.projects.some((p) => p.id === projectId)) return notFound()
+    const items = db.files.filter((f) => f.projectId === projectId)
+    return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
   http.post(paths.projects.uploadUrl(':projectId'), async ({ request, params }) => {
@@ -186,15 +180,7 @@ export const projectHandlers = [
     }
     if (!body.fileName || !body.contentType || body.fileSize == null) return badRequest()
     if (body.fileSize > 100 * 1024 * 1024) {
-      return HttpResponse.json(
-        {
-          isSuccess: false,
-          code: 'FILE400',
-          message: '지원하지 않는 파일이거나 파일 크기가 제한을 초과했습니다.',
-          result: null,
-        },
-        { status: 400 },
-      )
+      return domainError('FILE400', '지원하지 않는 파일이거나 파일 크기가 제한을 초과했습니다.')
     }
 
     return HttpResponse.json(
@@ -210,7 +196,8 @@ export const projectHandlers = [
 
   http.post(paths.projects.files(':projectId'), async ({ request, params }) => {
     if (!safeUser()) return unauthorized()
-    if (!db.projects.some((p) => p.id === Number(params.projectId))) return notFound()
+    const projectId = Number(params.projectId)
+    if (!db.projects.some((p) => p.id === projectId)) return notFound()
     const body = (await request.json()) as {
       fileName: string
       description?: string
@@ -222,6 +209,7 @@ export const projectHandlers = [
     const now = new Date().toISOString()
     const file = {
       id: allocId(),
+      projectId,
       fileName: body.fileName,
       description: body.description ?? null,
       storageKey: body.storageKey,

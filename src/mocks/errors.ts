@@ -1,4 +1,5 @@
 import { HttpResponse } from 'msw'
+import type { DomainErrorCode } from '../types/api'
 import { fail, statusOf } from './response'
 
 export function unauthorized() {
@@ -24,4 +25,10 @@ export function conflict(message = '요청이 현재 상태와 충돌합니다.'
 export function forbidden(message = '접근 권한이 없습니다.') {
   const body = fail('COMMON403', message)
   return HttpResponse.json(body, { status: statusOf('COMMON403') })
+}
+
+/** 공통 예외 규칙의 도메인 코드 (FILE400 / INVITE400 / PROJECT409) */
+export function domainError(code: DomainErrorCode, message: string) {
+  const body = fail(code, message)
+  return HttpResponse.json(body, { status: statusOf(code) })
 }

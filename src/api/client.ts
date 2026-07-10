@@ -1,6 +1,8 @@
 import axios, { type AxiosRequestConfig, isAxiosError } from 'axios'
 import { ApiError, type ApiCode, type ApiResponse, type ApiValidationError } from '../types/api'
 
+// TODO(논의 필요): 현재 명세는 JSON accessToken + Bearer라 localStorage에 저장.
+// XSS에 취약하므로 httpOnly 쿠키 세션이 더 나을 수 있음 — 백/명세 확정 후 재검토.
 const ACCESS_TOKEN_KEY = 'slate_access_token'
 
 export function getAccessToken(): string | null {
