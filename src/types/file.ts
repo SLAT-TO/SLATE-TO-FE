@@ -1,0 +1,46 @@
+export type ProjectFile = {
+  id: number
+  fileName: string
+  description: string | null
+  storageKey: string
+  contentType: string
+  fileSize: number
+  isPinned: boolean
+  isFinal: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type UploadUrlRequest = {
+  fileName: string
+  contentType: string
+  fileSize: number
+}
+
+export type UploadUrlResult = {
+  uploadUrl: string
+  storageKey: string
+  expiresAt: string
+  requiredHeaders: Record<string, string>
+}
+
+export type RegisterFileRequest = {
+  fileName: string
+  description?: string
+  storageKey: string
+  contentType: string
+  fileSize: number
+  isPinned?: boolean
+}
+
+export type UpdateFileRequest = {
+  fileName?: string
+  description?: string
+  isPinned?: boolean
+  isFinal?: boolean
+}
+
+export type DownloadUrlResult = {
+  downloadUrl: string
+  expiresAt: string
+}
