@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import type { ReactNode } from 'react'
 
-/** primary=??, secondary=??�??, ghost=??�??? */
+/** primary=직무, secondary=진행·모집, ghost=완료·비활성 */
 type TagVariant = 'primary' | 'secondary' | 'ghost'
 
 interface TagProps {
