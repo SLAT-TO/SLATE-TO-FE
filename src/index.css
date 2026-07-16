@@ -5,8 +5,8 @@
   /* Font */
   --font-sans: 'Pretendard', sans-serif;
 
-  /* Tailwind v4? ?? ?? ??(text-head-lg ?)? --text-* ???????? ????.
-     (--font-size-* ? ??? ??? ?? text-* ???? ?? ????) */
+  /* Tailwind v4는 폰트 크기 유틸(text-head-lg 등)을 --text-* 네임스페이스에서 생성한다.
+     (--font-size-* 는 유틸을 만들지 않아 text-* 클래스가 전부 무효였음) */
   --text-head-lg: 32px;
   --text-head-md: 28px;
   --text-head-sm: 20px;
@@ -73,7 +73,7 @@
 
   /* Gradation */
 
-  /* Tag (Figma ??? ???) */
+  /* Tag (Figma 디자인 시스템) */
   --color-tag-role-bg: #eaf1ff;
   --color-tag-role-text: #5584ee;
   --color-tag-active-bg: #eaf7e6;
