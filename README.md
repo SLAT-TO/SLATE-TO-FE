@@ -42,12 +42,13 @@ SLATE_TO_FE/
 │   │   ├── icons/        # 아이콘 SVG (Flaticon UIcons)
 │   │   └── fonts/
 │   ├── components/       # 공통 컴포넌트
-│   ├── constants/        # 도메인 상수 (역할·영상 카테고리·피드백 유형)
+│   ├── constants/        # 도메인·UI 상수 (카테고리, ActionMenu 액션 enum 등)
 │   ├── hooks/            # 커스텀 훅
 │   ├── layouts/          # 공통 레이아웃
 │   ├── pages/            # 라우트 단위 페이지
 │   ├── schemas/          # Zod 스키마
 │   ├── stores/           # Zustand 스토어
+│   ├── styles/           # 공유 Tailwind 클래스 조합 (토큰은 index.css @theme)
 │   ├── types/            # 전역 타입
 │   └── utils/            # 순수 함수
 ├── .editorconfig
@@ -129,6 +130,8 @@ feat: 로그인 페이지 UI 구현 (#12)
 - **Primitive** — 디자인 시스템 원본 팔레트 (`bg-main-7`, `text-neutral-6` 등)
 - **Semantic** — 용도 기반 별칭으로 Primitive를 참조 (`bg-primary`, `bg-secondary` 등)
 - 가능하면 Semantic 우선 사용, 없는 경우 Primitive 직접 사용
+
+**스타일 조합** — `src/index.css`의 `@theme` 토큰을 Tailwind 클래스로 묶은 문자열은 `src/styles/`에 둡니다. 도메인 데이터는 `constants/`에만 둡니다.
 
 ## 공용 폼 컨트롤 규약
 

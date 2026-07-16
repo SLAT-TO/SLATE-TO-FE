@@ -70,8 +70,12 @@
 
   /* Border */
   --color-border: #afafaf;
+  --color-border-input: #e5e7eb;
 
   /* Gradation */
+
+  /* Panel shadow (Select?ActionMenu ????) */
+  --shadow-panel: 0 3px 12px rgba(169, 204, 244, 0.25);
   --color-gradation: #a9ccf4;
 
   /* Semantic - Success */
