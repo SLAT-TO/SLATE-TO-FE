@@ -1,12 +1,6 @@
-import { useEffect, useId, useRef, useState, type Ref } from 'react'
-
-export interface ActionMenuItem {
-  label: string
-  onClick: () => void
-  /** 삭제 등 파괴적 액션 강조 (text-warning) */
-  danger?: boolean
-  disabled?: boolean
-}
+import { memo, useCallback, useEffect, useId, useRef, useState, type Ref } from 'react'
+import { ACTION_MENU_LABELS, type ActionMenuItem } from '../constants/actionMenu'
+import { actionMenuItemClass, actionMenuPanelClass } from '../styles/dropdown'
 
 interface ActionMenuProps {
   /** 항목·onClick은 전부 사용하는 화면(부모)이 소유 — ActionMenu는 렌더링만 담당 */
@@ -19,20 +13,23 @@ interface ActionMenuProps {
   ref?: Ref<HTMLButtonElement>
 }
 
-const ActionMenu = ({
+const PANEL_CLASS = actionMenuPanelClass
+
+const ITEM_CLASS = actionMenuItemClass
+
+const ActionMenu = memo(function ActionMenu({
   items,
   disabled = false,
   ariaLabel = '더보기',
   className = '',
   ref,
-}: ActionMenuProps) => {
+}: ActionMenuProps) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const triggerId = useId()
   const menuId = useId()
   const isTriggerDisabled = disabled || items.length === 0
 
-  // 트리거 바깥 클릭 또는 Esc로 닫기 (표준 dropdown 패턴)
   useEffect(() => {
     if (!open) return
 
@@ -51,11 +48,16 @@ const ActionMenu = ({
     }
   }, [open])
 
-  const handleSelect = (item: ActionMenuItem) => {
+  const handleSelect = useCallback((item: ActionMenuItem) => {
     if (item.disabled) return
     setOpen(false)
     item.onClick()
-  }
+  }, [])
+
+  const handleToggle = useCallback(() => {
+    if (isTriggerDisabled) return
+    setOpen((v) => !v)
+  }, [isTriggerDisabled])
 
   return (
     <div ref={containerRef} className={`relative inline-block ${className}`}>
@@ -68,38 +70,28 @@ const ActionMenu = ({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        onClick={() => {
-          if (isTriggerDisabled) return
-          setOpen((v) => !v)
-        }}
+        onClick={handleToggle}
         className="focus-visible:ring-primary text-neutral-8 hover:bg-neutral-2 disabled:text-neutral-4 flex size-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed"
       >
-        <svg viewBox="0 0 20 8" className="size-4" fill="currentColor" aria-hidden>
-          <circle cx="2" cy="4" r="2" />
-          <circle cx="10" cy="4" r="2" />
-          <circle cx="18" cy="4" r="2" />
+        <svg viewBox="0 0 8 20" className="size-4" fill="currentColor" aria-hidden>
+          <circle cx="4" cy="2" r="2" />
+          <circle cx="4" cy="10" r="2" />
+          <circle cx="4" cy="18" r="2" />
         </svg>
       </button>
 
       {open && (
-        <ul
-          id={menuId}
-          role="menu"
-          aria-labelledby={triggerId}
-          className="border-border bg-bg-primary absolute top-full right-0 z-10 mt-1 min-w-28 overflow-hidden rounded-md border shadow-md"
-        >
-          {items.map((item, index) => (
-            <li key={`${item.label}-${index}`} role="none">
+        <ul id={menuId} role="menu" aria-labelledby={triggerId} className={PANEL_CLASS}>
+          {items.map((item) => (
+            <li key={item.action} role="none">
               <button
                 type="button"
                 role="menuitem"
                 disabled={item.disabled}
                 onClick={() => handleSelect(item)}
-                className={`text-body-sm focus-visible:ring-primary hover:bg-neutral-2 disabled:text-neutral-4 block w-full px-3 py-2 text-left focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed ${
-                  item.danger ? 'text-warning' : 'text-neutral-10'
-                }`}
+                className={ITEM_CLASS}
               >
-                {item.label}
+                {ACTION_MENU_LABELS[item.action]}
               </button>
             </li>
           ))}
@@ -107,6 +99,6 @@ const ActionMenu = ({
       )}
     </div>
   )
-}
+})
 
 export default ActionMenu
