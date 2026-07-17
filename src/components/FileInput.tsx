@@ -35,7 +35,7 @@ const FileInput = ({
   const inputId = id ?? reactId
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const message = error ?? hint
+  const message = error || hint
   const messageId = message ? `${inputId}-desc` : undefined
 
   const setRefs = (node: HTMLInputElement | null) => {
@@ -50,7 +50,6 @@ const FileInput = ({
   }
 
   const openPicker = () => {
-    if (disabled) return
     inputRef.current?.click()
   }
 
@@ -79,7 +78,7 @@ const FileInput = ({
           accept={accept}
           multiple={multiple}
           disabled={disabled}
-          required={required && value.length === 0}
+          tabIndex={-1}
           aria-required={required}
           aria-invalid={!!error}
           aria-describedby={messageId}
@@ -90,15 +89,16 @@ const FileInput = ({
           type="button"
           disabled={disabled}
           onClick={openPicker}
+          aria-describedby={messageId}
           className="text-body-sm text-primary hover:text-primary-hover w-fit font-semibold disabled:cursor-not-allowed"
         >
           {value.length > 0 ? '파일 변경' : '파일 선택'}
         </button>
         {value.length > 0 && (
           <ul className="flex flex-col gap-1">
-            {value.map((file) => (
+            {value.map((file, index) => (
               <li
-                key={`${file.name}-${file.lastModified}`}
+                key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
                 className="text-caption-lg text-neutral-9 truncate"
               >
                 {file.name}
