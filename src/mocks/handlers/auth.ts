@@ -1,56 +1,27 @@
 import { http, HttpResponse } from 'msw'
-import type { GoogleLoginRequest, RefreshTokenRequest } from '../../types/auth'
 import { paths } from '../../api/paths'
 import { db, getCurrentUser } from '../db'
 import { unauthorized } from '../errors'
-import { ok, statusOf } from '../response'
+import { ok } from '../response'
 
 export const authHandlers = [
-  // TODO(논의 필요): 현재 Notion 명세는 FE가 Google code를 받아 POST로 백에 전달하는 흐름.
-  // code 노출·Hop 측면에서 redirect_uri를 백엔드 콜백으로 두고 FE에는 토큰만 주는 구조가 더 나을 수 있음.
-  // 백/명세와 OAuth 콜백 위치(FE vs BE) 확정 후 mock·API 계약 재검토.
-  http.post(paths.auth.googleLogin, async ({ request }) => {
-    const body = (await request.json()) as GoogleLoginRequest
-    /* 가로챈 요청에 인가 코드가 없으면 400 에러 반환 */
-    if (!body.authorizationCode) {
-      return HttpResponse.json(
-        {
-          isSuccess: false,
-          code: 'COMMON400',
-          message: '인가 코드가 유효하지 않거나 만료됨',
-          result: null,
-        },
-        { status: 400 },
-      )
-    }
-    // authorizationCode로 시나리오 분기
-    // - mock-new → 온보딩 미완료 유저 (온보딩 테스트)
-    // - 그 외(예: mock-code) → 온보딩 완료 유저 (일반 기능 테스트)
+  /** GET /api/v1/auth/login/google — 구글 인증 진입 (mock: 콜백으로 리다이렉트) */
+  http.get(paths.auth.googleLogin, ({ request }) => {
+    const url = new URL(request.url)
+    const mockUser = url.searchParams.get('mockUser')
     const user =
-      body.authorizationCode === 'mock-new'
+      mockUser === 'new'
         ? (db.users.find((u) => !u.onboardingCompleted) ?? db.users[0])
         : (db.users.find((u) => u.onboardingCompleted) ?? db.users[0])
+
     db.currentUserId = user.id
     db.tokens = {
-      accessToken: `mock-access-${user.id}`,
+      accessToken: '',
       refreshToken: `mock-refresh-${user.id}`,
     }
 
-    return HttpResponse.json(
-      ok({
-        accessToken: db.tokens.accessToken,
-        refreshToken: db.tokens.refreshToken,
-        user: {
-          id: user.id,
-          email: user.email,
-          nickname: user.nickname,
-          profileImageUrl: user.profileImageUrl,
-          provider: user.provider,
-          onboardingCompleted: user.onboardingCompleted,
-        },
-      }),
-      { status: statusOf('COMMON200') },
-    )
+    const redirectTo = url.searchParams.get('redirectTo') || '/auth/callback'
+    return HttpResponse.redirect(new URL(redirectTo, url.origin).toString(), 302)
   }),
 
   http.post(paths.auth.logout, () => {
@@ -60,9 +31,9 @@ export const authHandlers = [
     return HttpResponse.json(ok(null), { status: 200 })
   }),
 
-  http.post(paths.auth.refresh, async ({ request }) => {
-    const body = (await request.json()) as RefreshTokenRequest
-    if (!body.refreshToken || !db.tokens || body.refreshToken !== db.tokens.refreshToken) {
+  /** POST /api/v1/auth/refresh — 본문 없음, refreshToken은 HttpOnly 쿠키 */
+  http.post(paths.auth.refresh, () => {
+    if (!db.tokens?.refreshToken) {
       return HttpResponse.json(
         {
           isSuccess: false,
@@ -74,11 +45,7 @@ export const authHandlers = [
       )
     }
 
-    db.tokens = {
-      accessToken: 'mock-access-refreshed',
-      refreshToken: 'mock-refresh-refreshed',
-    }
-
-    return HttpResponse.json(ok(db.tokens), { status: 200 })
+    db.tokens.accessToken = 'mock-access-refreshed'
+    return HttpResponse.json(ok({ accessToken: db.tokens.accessToken }), { status: 200 })
   }),
 ]

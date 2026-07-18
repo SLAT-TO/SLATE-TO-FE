@@ -6,6 +6,7 @@ import type { Portfolio } from '../types/portfolio'
 import type { Project, ProjectActivity, ProjectMember } from '../types/project'
 import type { Application, Recruitment } from '../types/recruitment'
 import type { Schedule } from '../types/schedule'
+import type { ProjectNotice } from '../types/notice'
 import type { MeUser, NotificationSettings } from '../types/user'
 import type { ReferenceFile, VideoDetail } from '../types/video'
 /* stats에 값을 업데이트해도 빈값 객체가 변질 되지 않도록 객체 생성 함수로 정의하여 사용용 */
@@ -19,16 +20,14 @@ const incompleteUser: MeUser = {
   email: 'new@example.com',
   nickname: '신규유저',
   profileImageUrl: null,
-  provider: 'GOOGLE',
+  socialType: 'GOOGLE',
   onboardingCompleted: false,
   primaryRole: null,
   roles: [],
   location: null,
-  regions: [],
   categories: [],
   bio: null,
   createdAt: '2026-07-01T00:00:00Z',
-  /* 빈값 객체 생성 함수 사용 */
   stats: emptyStats(),
 }
 
@@ -38,12 +37,11 @@ const completeUser: MeUser = {
   email: 'slate@example.com',
   nickname: '슬레이투',
   profileImageUrl: 'https://cdn.example.com/profiles/soomin.jpg',
-  provider: 'GOOGLE',
+  socialType: 'GOOGLE',
   onboardingCompleted: true,
   primaryRole: 'DIRECTOR',
   roles: ['DIRECTOR', 'PD', 'EDITOR'],
-  location: 'SEOUL',
-  regions: ['SEOUL', 'GYEONGGI'],
+  location: '서울시',
   categories: ['DRAMA', 'MUSIC_VIDEO'],
   bio: '사랑의 이야기를 영상으로 담아내는 것을 좋아합니다.',
   createdAt: '2026-06-01T10:00:00Z',
@@ -66,12 +64,11 @@ const publicEditor: MeUser = {
   email: 'park@example.com',
   nickname: '박편집',
   profileImageUrl: 'https://cdn.example.com/profiles/park.jpg',
-  provider: 'GOOGLE',
+  socialType: 'GOOGLE',
   onboardingCompleted: true,
   primaryRole: 'EDITOR',
   roles: ['EDITOR'],
-  location: 'SEOUL',
-  regions: ['SEOUL'],
+  location: '서울시',
   categories: ['DOCUMENTARY'],
   bio: '디테일에 강한 편집자입니다.',
   createdAt: '2026-05-01T10:00:00Z',
@@ -109,6 +106,7 @@ export type MockDb = {
   schedules: Schedule[]
   notifications: AppNotification[]
   activities: ProjectActivity[]
+  notices: ProjectNotice[]
   invitations: Array<{
     token: string
     projectId: number
@@ -162,7 +160,7 @@ export const db: MockDb = {
       description: '다큐멘터리 프로젝트',
       type: 'DOCUMENTARY',
       customTypeName: null,
-      lengthType: 'DOCUMENTARY',
+      lengthType: 'LONG_FORM',
       clientName: '독립제작사',
       status: 'PREPARING',
       endDate: '2026-12-31',
@@ -216,6 +214,7 @@ export const db: MockDb = {
       fileSize: 1024,
       isPinned: false,
       isFinal: false,
+      uploaderId: completeUser.id,
       createdAt: '2026-06-10T09:00:00Z',
       updatedAt: '2026-06-10T09:00:00Z',
     },
@@ -384,9 +383,23 @@ export const db: MockDb = {
       id: 1,
       projectId: 1,
       type: 'FILE_UPLOADED',
-      message: 'reference.pdf 파일이 업로드되었습니다',
+      content: 'reference.pdf 파일이 업로드되었습니다',
+      actor: { type: 'USER', id: completeUser.id, name: completeUser.nickname },
+      groupCount: 1,
+      metadata: { fileName: 'reference.pdf' },
       createdAt: '2026-06-10T09:00:00Z',
-      actorName: '슬레이투',
+    },
+  ],
+  notices: [
+    {
+      id: 1,
+      projectId: 1,
+      title: '촬영 일정 공지',
+      content: '다음 주 화요일 오전 촬영입니다.',
+      writerId: completeUser.id,
+      writerNickname: completeUser.nickname,
+      createdAt: '2026-06-15T09:00:00Z',
+      updatedAt: '2026-06-15T09:00:00Z',
     },
   ],
   invitations: [
@@ -413,6 +426,24 @@ export function requireUser(): MeUser {
     throw new Error('UNAUTHORIZED')
   }
   return user
+}
+
+/* GET /users/me 응답 변환 */
+export function toMeProfile(user: MeUser) {
+  return {
+    id: user.id,
+    email: user.email,
+    nickname: user.nickname,
+    profileImageUrl: user.profileImageUrl,
+    bio: user.bio,
+    location: user.location,
+    socialType: user.socialType,
+    primaryRole: user.primaryRole,
+    roles: user.roles,
+    categories: user.categories,
+    onboardingCompleted: user.onboardingCompleted,
+    createdAt: user.createdAt,
+  }
 }
 
 /* 공개 프로필 데이터 변환 함수 */

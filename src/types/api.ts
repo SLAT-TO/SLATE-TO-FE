@@ -3,7 +3,7 @@ export type CommonSuccessCode = 'COMMON200' | 'COMMON201'
 export type CommonErrorCode =
   'COMMON400' | 'COMMON401' | 'COMMON403' | 'COMMON404' | 'COMMON405' | 'COMMON409' | 'COMMON500'
 
-export type DomainErrorCode = 'PROJECT409' | 'INVITE400' | 'FILE400'
+export type DomainErrorCode = 'PROJECT409' | 'INVITE400' | 'FILE400' | 'ONBOARDING409'
 
 export type ApiCode = CommonSuccessCode | CommonErrorCode | DomainErrorCode | (string & {})
 

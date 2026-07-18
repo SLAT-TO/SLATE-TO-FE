@@ -10,6 +10,8 @@ export const paths = {
   },
   users: {
     me: `${API_PREFIX}/users/me`,
+    /** Notion DB에 GET /users/me 중복 등록 — 통계는 임시 path 분리 */
+    activityStats: `${API_PREFIX}/users/me/activity-stats`,
     onboarding: `${API_PREFIX}/users/me/onboarding`,
     byId: (userId: number | string) => `${API_PREFIX}/users/${userId}`,
     portfolios: (userId: number | string) => `${API_PREFIX}/users/${userId}/portfolios`,
@@ -45,6 +47,9 @@ export const paths = {
     schedules: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/schedules`,
     scheduleCandidates: (projectId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/schedule-participants/candidates`,
+    notices: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/notices`,
+    notice: (projectId: number | string, noticeId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/notices/${noticeId}`,
   },
   projectInvitations: {
     byToken: (token: string) => `${API_PREFIX}/project-invitations/${token}`,

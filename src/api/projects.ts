@@ -2,6 +2,8 @@ import { request } from './client'
 import { paths } from './paths'
 import type {
   CreateProjectRequest,
+  CreateProjectResult,
+  CursorPage,
   Project,
   ProjectActivity,
   ProjectInvitation,
@@ -11,18 +13,24 @@ import type {
 import type {
   DownloadUrlResult,
   ProjectFile,
+  ProjectFileListItem,
   RegisterFileRequest,
   UpdateFileRequest,
   UploadUrlRequest,
   UploadUrlResult,
 } from '../types/file'
+import type {
+  CreateNoticeRequest,
+  ProjectNoticeListItem,
+  UpdateNoticeRequest,
+} from '../types/notice'
 
 export async function getProjects(): Promise<Project[]> {
   return request<Project[]>({ method: 'GET', url: paths.projects.root })
 }
 
-export async function createProject(body: CreateProjectRequest): Promise<Project> {
-  return request<Project>({ method: 'POST', url: paths.projects.root, data: body })
+export async function createProject(body: CreateProjectRequest): Promise<CreateProjectResult> {
+  return request<CreateProjectResult>({ method: 'POST', url: paths.projects.root, data: body })
 }
 
 export async function getProject(projectId: number): Promise<Project> {
@@ -89,11 +97,11 @@ export async function acceptInvitation(
 
 export async function getProjectActivities(
   projectId: number,
-): Promise<{ items: ProjectActivity[] }> {
+): Promise<CursorPage<ProjectActivity>> {
   return request({ method: 'GET', url: paths.projects.activities(projectId) })
 }
 
-export async function getProjectFiles(projectId: number): Promise<{ items: ProjectFile[] }> {
+export async function getProjectFiles(projectId: number): Promise<CursorPage<ProjectFileListItem>> {
   return request({ method: 'GET', url: paths.projects.files(projectId) })
 }
 
@@ -131,4 +139,37 @@ export async function getDownloadUrl(
   fileId: number,
 ): Promise<DownloadUrlResult> {
   return request({ method: 'GET', url: paths.projects.downloadUrl(projectId, fileId) })
+}
+
+export async function getProjectNotices(
+  projectId: number,
+): Promise<CursorPage<ProjectNoticeListItem>> {
+  return request({ method: 'GET', url: paths.projects.notices(projectId) })
+}
+
+export async function createProjectNotice(
+  projectId: number,
+  body: CreateNoticeRequest,
+): Promise<ProjectNoticeListItem> {
+  return request({
+    method: 'POST',
+    url: paths.projects.notices(projectId),
+    data: body,
+  })
+}
+
+export async function updateProjectNotice(
+  projectId: number,
+  noticeId: number,
+  body: UpdateNoticeRequest,
+): Promise<ProjectNoticeListItem> {
+  return request({
+    method: 'PATCH',
+    url: paths.projects.notice(projectId, noticeId),
+    data: body,
+  })
+}
+
+export async function deleteProjectNotice(projectId: number, noticeId: number): Promise<null> {
+  return request({ method: 'DELETE', url: paths.projects.notice(projectId, noticeId) })
 }

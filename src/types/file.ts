@@ -1,3 +1,8 @@
+export type FileUploader = {
+  id: number
+  nickname: string
+}
+
 export type ProjectFile = {
   id: number
   projectId: number
@@ -8,8 +13,21 @@ export type ProjectFile = {
   fileSize: number
   isPinned: boolean
   isFinal: boolean
+  uploaderId: number
   createdAt: string
   updatedAt: string
+}
+
+export type ProjectFileListItem = {
+  id: number
+  fileName: string
+  description: string | null
+  contentType: string
+  fileSize: number
+  isPinned: boolean
+  isFinal: boolean
+  uploader: FileUploader
+  createdAt: string
 }
 
 export type UploadUrlRequest = {

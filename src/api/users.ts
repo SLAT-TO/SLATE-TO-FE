@@ -1,12 +1,13 @@
 import { request } from './client'
 import { paths } from './paths'
 import type {
-  MeUser,
+  MeProfile,
   NotificationSettings,
   OnboardingRequest,
   OnboardingResult,
   PublicUser,
   UpdateProfileRequest,
+  UserActivityStats,
 } from '../types/user'
 import type {
   CreatePortfolioRequest,
@@ -15,8 +16,12 @@ import type {
   UpdatePortfolioRequest,
 } from '../types/portfolio'
 
-export async function getMe(): Promise<MeUser> {
-  return request<MeUser>({ method: 'GET', url: paths.users.me })
+export async function getMe(): Promise<MeProfile> {
+  return request<MeProfile>({ method: 'GET', url: paths.users.me })
+}
+
+export async function getMyActivityStats(): Promise<UserActivityStats> {
+  return request<UserActivityStats>({ method: 'GET', url: paths.users.activityStats })
 }
 
 export async function submitOnboarding(body: OnboardingRequest): Promise<OnboardingResult> {
@@ -27,8 +32,8 @@ export async function submitOnboarding(body: OnboardingRequest): Promise<Onboard
   })
 }
 
-export async function updateProfile(body: UpdateProfileRequest): Promise<MeUser> {
-  return request<MeUser>({ method: 'PATCH', url: paths.users.me, data: body })
+export async function updateProfile(body: UpdateProfileRequest): Promise<MeProfile> {
+  return request<MeProfile>({ method: 'PATCH', url: paths.users.me, data: body })
 }
 
 export async function deleteAccount(agreed: boolean): Promise<null> {

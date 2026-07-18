@@ -1,8 +1,8 @@
 import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
 import type { OnboardingRequest, UpdateProfileRequest } from '../../types/user'
-import { allocId, db, requireUser, toPublicUser } from '../db'
-import { badRequest, conflict, notFound, unauthorized } from '../errors'
+import { allocId, db, requireUser, toMeProfile, toPublicUser } from '../db'
+import { badRequest, domainError, notFound, unauthorized } from '../errors'
 import { created, ok } from '../response'
 import type { CreatePortfolioRequest, UpdatePortfolioRequest } from '../../types/portfolio'
 
@@ -18,31 +18,36 @@ export const userHandlers = [
   http.get(paths.users.me, () => {
     const user = safeUser()
     if (!user) return unauthorized()
-    return HttpResponse.json(ok(user), { status: 200 })
+    return HttpResponse.json(ok(toMeProfile(user)), { status: 200 })
+  }),
+
+  http.get(paths.users.activityStats, () => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+    return HttpResponse.json(ok(user.stats), { status: 200 })
   }),
 
   http.post(paths.users.onboarding, async ({ request }) => {
     const user = safeUser()
     if (!user) return unauthorized()
-    if (user.onboardingCompleted) return conflict('이미 온보딩을 완료한 유저')
+    if (user.onboardingCompleted) {
+      return domainError('ONBOARDING409', '이미 온보딩을 완료한 유저')
+    }
 
     const body = (await request.json()) as OnboardingRequest
-    if (!body.agreedTermsOfService) return badRequest('필수 약관 미동의')
-    if (
-      !body.roles?.length ||
-      !body.regions?.length ||
-      !body.categories?.length ||
-      !body.nickname
-    ) {
+    if (!body.agreedTermsOfService || !body.agreedPrivacyPolicy) {
+      return badRequest('필수 약관 미동의')
+    }
+    if (!body.roles?.length || !body.location || !body.categories?.length || !body.nickname) {
       return badRequest('요청 값이 올바르지 않습니다.')
     }
 
+    const updatedAt = new Date().toISOString()
     user.nickname = body.nickname
     user.bio = body.bio ?? null
     user.profileImageUrl = body.profileImageUrl ?? user.profileImageUrl
     user.roles = body.roles
-    user.regions = body.regions
-    user.location = body.regions[0] ?? null
+    user.location = body.location
     user.categories = body.categories
     user.primaryRole = body.roles[0] ?? null
     user.onboardingCompleted = true
@@ -50,13 +55,8 @@ export const userHandlers = [
     return HttpResponse.json(
       ok({
         id: user.id,
-        nickname: user.nickname,
-        bio: user.bio,
-        profileImageUrl: user.profileImageUrl,
-        roles: user.roles,
-        regions: user.regions,
-        categories: user.categories,
         onboardingCompleted: true as const,
+        updatedAt,
       }),
       { status: 200 },
     )
@@ -76,7 +76,7 @@ export const userHandlers = [
       user.primaryRole = body.roles[0] ?? null
     }
 
-    return HttpResponse.json(ok(user), { status: 200 })
+    return HttpResponse.json(ok(toMeProfile(user)), { status: 200 })
   }),
 
   http.delete(paths.users.me, async ({ request }) => {

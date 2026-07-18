@@ -1,5 +1,6 @@
 export type ProjectStatus = 'PREPARING' | 'IN_PROGRESS' | 'DONE' | 'ON_HOLD' | string
-export type ProjectLengthType = 'FEATURE' | 'SHORT' | 'DOCUMENTARY' | string
+export type ProjectLengthType = 'LONG_FORM' | 'SHORT_FORM' | string
+export type ProjectPermission = 'ADMIN' | 'MEMBER' | string
 
 export type Project = {
   id: number
@@ -17,15 +18,28 @@ export type Project = {
 
 export type CreateProjectRequest = {
   title: string
-  description?: string
+  description: string
   type: string
   customTypeName?: string
-  lengthType?: ProjectLengthType
+  lengthType: ProjectLengthType
   clientName?: string
-  endDate?: string
+  endDate: string
+  jobRole: string
+  customJobRole?: string
 }
 
-export type UpdateProjectRequest = Partial<CreateProjectRequest> & {
+export type CreateProjectResult = {
+  id: number
+  title: string
+  status: ProjectStatus
+  permission: ProjectPermission
+  startDate: string
+  createdAt: string
+}
+
+export type UpdateProjectRequest = Partial<
+  Omit<CreateProjectRequest, 'jobRole' | 'customJobRole'>
+> & {
   status?: ProjectStatus
 }
 
@@ -48,11 +62,25 @@ export type ProjectInvitation = {
   expiresAt: string
 }
 
+export type ActivityActor = {
+  type: 'USER' | 'CLIENT_REVIEWER' | 'SYSTEM'
+  id?: number
+  name?: string
+}
+
 export type ProjectActivity = {
   id: number
   projectId: number
   type: string
-  message: string
+  content: string
+  actor: ActivityActor
+  groupCount: number
+  metadata: Record<string, unknown>
   createdAt: string
-  actorName: string | null
+}
+
+export type CursorPage<T> = {
+  items: T[]
+  nextCursor: number | null
+  hasNext: boolean
 }

@@ -1,50 +1,36 @@
-export type AuthProvider = 'GOOGLE'
+export type SocialType = 'GOOGLE'
 
 export type UserRole = 'DIRECTOR' | 'EDITOR' | 'CINEMATOGRAPHER' | 'SOUND' | 'PD' | 'ART'
 
-export type UserRegion =
-  | 'SEOUL'
-  | 'GYEONGGI'
-  | 'GANGWON'
-  | 'CHUNGNAM'
-  | 'CHUNGBUK'
-  | 'JEONBUK'
-  | 'JEONNAM'
-  | 'GYEONGBUK'
-  | 'GYEONGNAM'
-  | 'JEJU'
-  | 'NATIONWIDE'
-
 export type UserCategory =
   'FILM' | 'DOCUMENTARY' | 'DRAMA' | 'MUSIC_VIDEO' | 'ENTERTAINMENT' | 'COMMERCIAL'
-
-export type StatCountItem = {
-  type?: string
-  role?: string
-  label: string
-  count: number
-}
 
 export type UserStats = {
   projectTypes: Array<{ type: string; label: string; count: number }>
   roles: Array<{ role: string; label: string; count: number }>
 }
 
-/** GET /api/v1/users/me — 통일 응답 */
-export type MeUser = {
+/** GET /api/v1/users/me — 유저 정보 조회 */
+export type MeProfile = {
   id: number
   email: string
   nickname: string
   profileImageUrl: string | null
-  provider: AuthProvider
-  onboardingCompleted: boolean
+  bio: string | null
+  location: string | null
+  socialType: SocialType
   primaryRole: UserRole | null
   roles: UserRole[]
-  location: UserRegion | null
-  regions: UserRegion[]
   categories: UserCategory[]
-  bio: string | null
+  onboardingCompleted: boolean
   createdAt: string
+}
+
+/** GET /api/v1/users/me/activity-stats — 활동 통계 (Notion DB path 충돌 임시 분리) */
+export type UserActivityStats = UserStats
+
+/** mock DB 내부 저장용 */
+export type MeUser = MeProfile & {
   stats: UserStats
 }
 
@@ -53,7 +39,7 @@ export type PublicUser = {
   nickname: string
   profileImageUrl: string | null
   bio: string | null
-  location: UserRegion | null
+  location: string | null
   primaryRole: UserRole | null
   roles: UserRole[]
   categories: UserCategory[]
@@ -62,29 +48,26 @@ export type PublicUser = {
 
 export type OnboardingRequest = {
   agreedTermsOfService: boolean
-  roles: UserRole[]
-  regions: UserRegion[]
-  categories: UserCategory[]
+  agreedPrivacyPolicy: boolean
+  agreedMarketing?: boolean
   nickname: string
+  roles: UserRole[]
+  location: string
+  categories: UserCategory[]
   bio?: string
   profileImageUrl?: string
 }
 
 export type OnboardingResult = {
   id: number
-  nickname: string
-  bio: string | null
-  profileImageUrl: string | null
-  roles: UserRole[]
-  regions: UserRegion[]
-  categories: UserCategory[]
   onboardingCompleted: true
+  updatedAt: string
 }
 
 export type UpdateProfileRequest = {
   nickname?: string
   bio?: string
-  location?: UserRegion
+  location?: string
   profileImageUrl?: string
   roles?: UserRole[]
 }
