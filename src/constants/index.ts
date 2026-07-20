@@ -1,4 +1,15 @@
 export { FEEDBACK_TYPE_LABELS, FEEDBACK_TYPE_OPTIONS, type FeedbackType } from './feedbackTypes'
+export {
+  ONBOARDING_ROLE_LABELS,
+  ONBOARDING_ROLE_OPTIONS,
+  type OnboardingRole,
+} from './onboardingRoles'
+export {
+  ONBOARDING_VIDEO_CATEGORY_LABELS,
+  ONBOARDING_VIDEO_CATEGORY_OPTIONS,
+  type OnboardingVideoCategory,
+} from './onboardingVideoCategories'
+export { REGION_LABELS, REGION_OPTIONS, type Region } from './regions'
 export { ROLE_LABELS, ROLE_OPTIONS, type Role } from './roles'
 export {
   FILM_LENGTH_LABELS,
