@@ -1,15 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import { format } from 'date-fns'
+import { useRef, useState } from 'react'
 import { DateSingleCalendar } from './DateSingleCalendar'
+import { useOutsideClick } from '../hooks/useOutsideClick'
+import { formatDate } from '../utils/formatDate'
 
 interface DateFieldProps {
   value?: Date
   onChange: (date: Date | undefined) => void
-}
-
-// 날짜 문자열 변환 (없으면 placeholder)
-function formatDate(date?: Date) {
-  return date ? format(date, 'yyyy.MM.dd') : '날짜를 선택해주세요'
 }
 
 // input(트리거) + 팝업 달력을 묶은 단일 날짜 선택 필드
@@ -19,18 +15,7 @@ export function DateSingleField({ value, onChange }: DateFieldProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   // 팝업 바깥을 클릭하면 닫기
-  useEffect(() => {
-    if (!open) return
-
-    function handleOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
-  }, [open])
+  useOutsideClick(containerRef, open, () => setOpen(false))
 
   // 날짜 고르면 반영하고 닫기
   function handleChange(date: Date | undefined) {

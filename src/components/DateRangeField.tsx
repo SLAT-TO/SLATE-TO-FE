@@ -1,16 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
-import { format } from 'date-fns'
+import { useRef, useState } from 'react'
 import type { DateRange } from 'react-day-picker'
 import { DateRangeCalendar } from './DateRangeCalendar'
+import { useOutsideClick } from '../hooks/useOutsideClick'
+import { formatDate } from '../utils/formatDate'
 
 interface DateRangeFieldProps {
   value?: DateRange
   onChange: (range: DateRange | undefined) => void
-}
-
-// 날짜 문자열 변환 (없으면 placeholder)
-function formatDate(date?: Date) {
-  return date ? format(date, 'yyyy.MM.dd') : '날짜를 선택해주세요'
 }
 
 // input(트리거) + 팝업 달력을 묶은 기간 선택 필드
@@ -20,18 +16,7 @@ export function DateRangeField({ value, onChange }: DateRangeFieldProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   // 팝업 바깥을 클릭하면 닫기
-  useEffect(() => {
-    if (!open) return
-
-    function handleOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
-  }, [open])
+  useOutsideClick(containerRef, open, () => setOpen(false))
 
   return (
     <div ref={containerRef} className="relative inline-block">

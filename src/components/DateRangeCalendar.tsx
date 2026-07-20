@@ -51,9 +51,11 @@ export function DateRangeCalendar({ value, onChange, onComplete }: DateRangeCale
         range_middle:
           value?.from && value?.to ? { after: value.from, before: value.to } : undefined,
         sunday: { dayOfWeek: [0] },
+        saturday: { dayOfWeek: [6] },
       }}
       modifiersClassNames={{
         sunday: 'text-red-500',
+        saturday: 'text-blue-700',
         today: '!font-bold !text-blue-600',
       }}
       onDayClick={handleDayClick}
