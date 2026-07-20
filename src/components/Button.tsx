@@ -63,7 +63,11 @@ export function Button({
       ref={ref}
       type={type}
       className={`${base} ${sizeStyles[size]} ${variantStyles[variant]} ${getBackgroundStyle(variant, size)} ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}
-      style={{ ...style, ...(width !== undefined && { width }), ...(height !== undefined && { height }) }}
+      style={{
+        ...style,
+        ...(width !== undefined && { width }),
+        ...(height !== undefined && { height }),
+      }}
       {...rest}
     >
       {icon}
