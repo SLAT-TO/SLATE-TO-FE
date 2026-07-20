@@ -47,7 +47,7 @@ export function OnboardingLayout({
         <div
           className={
             titleAlign === 'left'
-              ? '-mt-6 mx-auto w-full max-w-245.5 text-left'
+              ? 'mx-auto -mt-6 w-full max-w-245.5 text-left'
               : '-mt-6 w-full text-center'
           }
         >
