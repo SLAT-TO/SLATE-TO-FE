@@ -54,8 +54,8 @@ export function DateRangeCalendar({ value, onChange, onComplete }: DateRangeCale
         saturday: { dayOfWeek: [6] },
       }}
       modifiersClassNames={{
-        sunday: 'text-red-500',
-        saturday: 'text-blue-700',
+        sunday: 'text-warning',
+        saturday: 'text-secondary',
         today: '!font-bold !text-blue-600',
       }}
       onDayClick={handleDayClick}

@@ -21,9 +21,11 @@ export function DateSingleCalendar({ value, onChange }: DateCalendarProps) {
       onSelect={onChange}
       modifiers={{
         sunday: { dayOfWeek: [0] },
+        saturday: { dayOfWeek: [6] },
       }}
       modifiersClassNames={{
-        sunday: 'text-red-500',
+        sunday: 'text-warning',
+        saturday: 'text-secondary',
         today: '!font-bold !text-blue-600',
       }}
       formatters={{ formatCaption }}
