@@ -10,6 +10,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean
   icon?: ReactNode // 선택적 아이콘 (텍스트 왼쪽에 표시)
   ref?: Ref<HTMLButtonElement> // React 19: ref를 prop으로 직접 전달
+  width?: string | number // 지정 시 프리셋(md/sm/lg) 너비 대신 이 값을 사용
+  height?: string | number // 지정 시 프리셋(md/sm/lg) 높이 대신 이 값을 사용
 }
 
 // 공통 스타일 (버튼 타이포그래피: 600 / 150% / 자간 -0.176px)
@@ -19,11 +21,11 @@ const base =
 
 // 크기별 스타일
 // md: 240x40, sm: 200x32 (padding 8px 16px, radius 8px)
-// lg: 400x48 (padding 8px 93px/92px, radius 6.83px) - 피그마 스펙 그대로 반영
+// lg: 400x48 (padding 8px 93px/92px, radius 6.828px) - 피그마 스펙 그대로 반영
 const sizeStyles: Record<ButtonSize, string> = {
-  md: 'h-10 px-4 text-base rounded-lg',
-  sm: 'h-8 px-4 text-sm rounded-lg',
-  lg: 'w-[400px] h-12 pt-2 pr-[93px] pb-2 pl-[92px] text-base rounded-[6.83px]',
+  md: 'w-[240px] h-10 px-4 text-base rounded-lg',
+  sm: 'w-[200px] h-8 px-4 text-sm rounded-lg',
+  lg: 'w-[400px] h-12 pt-2 pr-[93px] pb-2 pl-[92px] text-base rounded-[6.828px]',
 }
 
 // 종류별 스타일 (default / hover / disabled 상태 포함)
@@ -50,6 +52,9 @@ export function Button({
   icon,
   children,
   className,
+  style,
+  width,
+  height,
   ref,
   ...rest
 }: ButtonProps) {
@@ -58,6 +63,7 @@ export function Button({
       ref={ref}
       type={type}
       className={`${base} ${sizeStyles[size]} ${variantStyles[variant]} ${getBackgroundStyle(variant, size)} ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}
+      style={{ ...style, ...(width !== undefined && { width }), ...(height !== undefined && { height }) }}
       {...rest}
     >
       {icon}
