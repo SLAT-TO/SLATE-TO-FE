@@ -2,6 +2,11 @@
 @import 'tailwindcss';
 
 @theme {
+  /* Breakpoint — 태블릿(md)부터 반응형 시작, 모바일은 md 레이아웃을 축소·핀치줌으로 사용 */
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+
   /* Font */
   --font-sans: 'Pretendard', sans-serif;
 
