@@ -19,9 +19,10 @@ interface ChipGridProps {
 // 트랙 폭 자체를 칩 폭으로 고정하고 justify-center로 그리드를 가운데 배치한다.
 // 지역(4열)도 항상 4열로 고정한다. 모바일에서 2열로 줄어들면 행 수가 늘어나
 // 역할·카테고리(3행)와 그리드 전체 높이가 크게 어긋나 '다음' 버튼 위치가 달라지기 때문.
+// lg(1024px) 미만에서는 트랙 폭도 SelectableChip의 축소 폭(140px)에 맞춘다.
 const columnClass: Record<ChipGridProps['columns'], string> = {
   2: 'grid-cols-[repeat(2,264px)] justify-center',
-  4: 'grid-cols-[repeat(4,172px)] justify-center',
+  4: 'grid-cols-[repeat(4,140px)] justify-center lg:grid-cols-[repeat(4,172px)]',
 }
 
 // columns=4(활동 지역)만 region 사이즈, 나머지(역할·영상 카테고리)는 wide 사이즈

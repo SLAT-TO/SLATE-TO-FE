@@ -6,10 +6,12 @@ interface SelectableChipProps {
   variant: 'wide' | 'region'
 }
 
-// 화면별 칩 치수 (Figma 스펙 고정값)
+// 화면별 칩 치수 (Figma 스펙 고정값, lg=1024px부터 적용)
+// region은 4열×172px가 768px(md) 뷰포트보다 넓어 넘치므로, lg 미만에서는 폭만 140px로
+// 줄여 맞춘다 (높이·간격·행 수는 그대로라 '다음' 버튼 위치는 단계 간에 계속 일치함).
 const variantClass = {
   wide: 'flex w-[264px] h-[88px] items-center justify-center whitespace-nowrap px-4',
-  region: 'flex w-[172px] h-[88px] items-center justify-center whitespace-nowrap px-4',
+  region: 'flex w-35 h-[88px] items-center justify-center whitespace-nowrap px-4 lg:w-[172px]',
 } as const
 
 // 온보딩 다중선택 그리드용 칩 버튼. 선택 시 파랑 채움, 미선택은 흰 배경.
