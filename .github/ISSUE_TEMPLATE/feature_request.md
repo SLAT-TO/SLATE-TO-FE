@@ -1,7 +1,7 @@
 ---
 name: 기능 개발
 about: 개발할 기능/작업을 등록할 때 작성해주세요
-labels: feature
+labels: enhancement
 ---
 
 ## 작업 내용
