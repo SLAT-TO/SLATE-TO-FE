@@ -1,9 +1,19 @@
 import MainLayout from './layouts/MainLayout'
+import ProjectCard from './domains/project/ProjectCard'
 
 function App() {
   return (
     <MainLayout userName="김수민">
-      <div>여기에 페이지 콘텐츠가 들어갑니다 (임시)</div>
+      <div style={{ maxWidth: 1070, padding: 24 }}>
+        <ProjectCard
+          title="위로, 또 위로"
+          statusLabel="진행중"
+          statusVariant="secondary"
+          tags={['다큐', '단편']}
+          progress={64}
+          members={[{ alt: '김수민' }, { alt: '이하늘' }]}
+        />
+      </div>
     </MainLayout>
   )
 }

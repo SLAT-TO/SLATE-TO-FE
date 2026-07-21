@@ -1,7 +1,7 @@
 import type { KeyboardEvent } from 'react'
-import { Avatar } from './Avatar'
-import ProgressBar from './ProgressBar'
-import Tag from './Tag'
+import { Avatar } from '../../components/Avatar'
+import ProgressBar from '../../components/ProgressBar'
+import Tag, { type TagVariant } from '../../components/Tag'
 
 interface ProjectCardMember {
   src?: string
@@ -10,9 +10,10 @@ interface ProjectCardMember {
 
 interface ProjectCardProps {
   title: string
-  /** 상태 문구 (예: 편집 중) — 색 배지 없이 일반 텍스트로 표시 (Figma 기준) */
-  status?: string
-  /** 장르·역할 등 메타 태그 (Tag variant=primary로 통일 표시) */
+  statusLabel: string
+  /** 상태 문구에 맞는 Tag 색상 (예: 진행중=secondary, 완료=ghost) — 호출부에서 도메인 상태값 기준으로 결정 */
+  statusVariant?: TagVariant
+  /** 장르·분량 등 메타 태그 */
   tags?: string[]
   /** 0~100, 미전달 시 진행률 바 숨김 */
   progress?: number
@@ -25,7 +26,8 @@ const AVATAR_SIZE = 28
 
 const ProjectCard = ({
   title,
-  status,
+  statusLabel,
+  statusVariant = 'secondary',
   tags = [],
   progress,
   members = [],
@@ -52,19 +54,21 @@ const ProjectCard = ({
     >
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-head-sm text-neutral-10 font-semibold">{title}</h3>
-        {status && <span className="text-body-sm text-neutral-8">{status}</span>}
+        <Tag variant={statusVariant}>{statusLabel}</Tag>
       </div>
 
       {typeof progress === 'number' && <ProgressBar value={progress} />}
 
       <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-2">
-          {tags.map((tag) => (
-            <Tag key={tag} variant="primary">
-              {tag}
-            </Tag>
-          ))}
-        </div>
+        {tags.length > 0 && (
+          <div className="flex gap-2">
+            {tags.map((tag) => (
+              <Tag key={tag} variant="primary">
+                {tag}
+              </Tag>
+            ))}
+          </div>
+        )}
 
         {members.length > 0 && (
           <div className="flex">
