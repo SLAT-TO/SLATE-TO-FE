@@ -1,5 +1,5 @@
 // src/components/JobCard.tsx
-import type { ReactNode } from 'react'
+import Tag from './Tag'
 
 interface JobCardProps {
   type: string
@@ -11,15 +11,6 @@ interface JobCardProps {
   dDay: string
   isBookmarked: boolean
   onBookmarkClick: () => void
-}
-
-// 유형/카테고리/역할 태그가 모두 동일한 칩 스타일을 공유 (피그마 "tag" 컴포넌트 기준)
-function Tag({ children }: { children: ReactNode }) {
-  return (
-    <span className="bg-main-1 text-main-6 text-caption-sm flex h-6 w-[72px] shrink-0 items-center justify-center rounded font-semibold whitespace-nowrap">
-      {children}
-    </span>
-  )
 }
 
 function JobCard({
@@ -69,7 +60,7 @@ function JobCard({
       </div>
 
       <div className="flex items-center justify-between gap-3">
-        <Tag>{role}</Tag>
+        <Tag variant="primary">{role}</Tag>
 
         <div className="flex shrink-0 items-center gap-4">
           {price && <span className="text-caption-sm text-neutral-11 font-semibold">{price}</span>}
