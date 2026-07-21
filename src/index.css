@@ -79,6 +79,14 @@
   /* Gradation */
   --color-gradation: #a9ccf4;
 
+  /* Tag (Figma 디자인 시스템) */
+  --color-tag-role-bg: #eaf1ff;
+  --color-tag-role-text: #5584ee;
+  --color-tag-active-bg: #eaf7e6;
+  --color-tag-active-text: #357a2b;
+  --color-tag-done-bg: #e2e8f0;
+  --color-tag-done-text: #64748b;
+
   /* Semantic - Success */
   --color-success-light: #dcfce7;
   --color-success: #22c55e;
