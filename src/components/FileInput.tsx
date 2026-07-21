@@ -1,4 +1,5 @@
-import { useId, useRef, type ChangeEvent, type Ref } from 'react'
+import { useId, useRef, useState, type ChangeEvent, type DragEvent, type Ref } from 'react'
+import uploadIcon from '../assets/icons/upload.svg?raw'
 
 interface FileInputProps {
   id?: string
@@ -34,9 +35,11 @@ const FileInput = ({
   const reactId = useId()
   const inputId = id ?? reactId
   const inputRef = useRef<HTMLInputElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
-  const message = error || hint
-  const messageId = message ? `${inputId}-desc` : undefined
+  const hintId = hint && !error ? `${inputId}-hint` : undefined
+  const errorId = error ? `${inputId}-error` : undefined
+  const labelId = label ? `${inputId}-label` : undefined
 
   const setRefs = (node: HTMLInputElement | null) => {
     inputRef.current = node
@@ -50,25 +53,56 @@ const FileInput = ({
   }
 
   const openPicker = () => {
-    inputRef.current?.click()
+    if (!disabled) inputRef.current?.click()
   }
 
-  const borderClass = error
-    ? 'border-warning'
-    : 'border-border hover:border-primary focus-within:border-primary'
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    if (!disabled) setIsDragging(true)
+  }
+
+  const handleDragLeave = () => {
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+    if (disabled) return
+    onChange(Array.from(e.dataTransfer.files))
+  }
 
   return (
-    <div className={`flex w-full flex-col gap-1 ${className}`}>
+    <div className={`flex w-full flex-col gap-1.5 ${className}`}>
       {label && (
-        <label htmlFor={inputId} className="text-caption-lg text-neutral-9 font-semibold">
+        <label
+          id={labelId}
+          htmlFor={inputId}
+          className="text-head-sm text-neutral-10 font-semibold"
+        >
           {label}
           {required && <span className="text-warning"> *</span>}
         </label>
       )}
       <div
-        className={`bg-bg-primary flex min-h-12 w-full flex-col gap-2 rounded-md border px-3 py-2 transition-colors ${borderClass} ${
-          disabled ? 'cursor-not-allowed opacity-40' : ''
-        }`}
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled}
+        aria-labelledby={labelId}
+        aria-describedby={hintId ?? errorId}
+        onClick={openPicker}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            openPicker()
+          }
+        }}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`bg-neutral-2 flex w-full flex-col items-center justify-center gap-2 rounded-lg border px-6 py-[29px] text-center transition-colors md:gap-2.5 lg:gap-3 lg:px-10 lg:py-9 xl:py-10 ${
+          isDragging ? 'border-primary' : 'border-neutral-3'
+        } ${disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}`}
       >
         <input
           ref={setRefs}
@@ -81,39 +115,40 @@ const FileInput = ({
           tabIndex={-1}
           aria-required={required}
           aria-invalid={!!error}
-          aria-describedby={messageId}
           className="sr-only"
           onChange={handleChange}
         />
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={openPicker}
-          aria-describedby={messageId}
-          className="text-body-sm text-primary hover:text-primary-hover w-fit font-semibold disabled:cursor-not-allowed"
-        >
-          {value.length > 0 ? '파일 변경' : '파일 선택'}
-        </button>
-        {value.length > 0 && (
-          <ul className="flex flex-col gap-1">
-            {value.map((file, index) => (
-              <li
-                key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
-                className="text-caption-lg text-neutral-9 truncate"
-              >
-                {file.name}
-              </li>
-            ))}
-          </ul>
+        <span
+          aria-hidden
+          className="text-neutral-5 inline-flex size-6 shrink-0 lg:size-7 xl:size-8 [&_svg]:block [&_svg]:size-full"
+          dangerouslySetInnerHTML={{ __html: uploadIcon }}
+        />
+        <div className="text-neutral-5 flex flex-col items-center gap-2">
+          <p className="text-body-sm">이곳에 파일을 추가해주세요.</p>
+          <p className="text-caption-sm">파일을 드래그하거나 클릭하여 업로드</p>
+        </div>
+        {hint && !error && (
+          <p id={hintId} className="text-caption-sm text-neutral-5 mt-3">
+            {hint}
+          </p>
         )}
       </div>
-      {message && (
-        <span
-          id={messageId}
-          className={`text-caption-sm ${error ? 'text-warning' : 'text-neutral-5'}`}
-        >
-          {message}
-        </span>
+      {value.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {value.map((file, index) => (
+            <li
+              key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
+              className="text-caption-lg text-neutral-9 truncate"
+            >
+              {file.name}
+            </li>
+          ))}
+        </ul>
+      )}
+      {error && (
+        <p id={errorId} className="text-caption-sm text-warning">
+          {error}
+        </p>
       )}
     </div>
   )
