@@ -73,11 +73,13 @@ export const scheduleHandlers = [
   http.post(paths.schedules.root, async ({ request }) => {
     if (!safeUser()) return unauthorized()
     const body = (await request.json()) as CreateScheduleRequest
-    if (!body.projectId || !body.title || !body.startAt || !body.endAt) return badRequest()
+    if (!body.scheduleScope || !body.title || !body.startAt || !body.endAt) return badRequest()
+    if (body.scheduleScope === 'PROJECT' && !body.projectId) return badRequest()
     const now = new Date().toISOString()
     const schedule = {
       id: allocId(),
-      projectId: body.projectId,
+      scheduleScope: body.scheduleScope,
+      projectId: body.scheduleScope === 'PROJECT' ? (body.projectId ?? null) : null,
       title: body.title,
       startAt: body.startAt,
       endAt: body.endAt,

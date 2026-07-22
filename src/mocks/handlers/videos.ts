@@ -197,7 +197,7 @@ export const videoHandlers = [
       actor: { type: 'USER' as const, id: user.id, name: user.nickname },
       content: body.content,
       timestampSec: body.timestampSec ?? null,
-      status: 'OPEN',
+      status: false,
       createdAt: now,
       updatedAt: now,
     }
@@ -228,7 +228,7 @@ export const videoHandlers = [
     if (!safeUser()) return unauthorized()
     const feedback = db.feedbacks.find((f) => f.feedbackId === Number(params.feedbackId))
     if (!feedback) return notFound()
-    const body = (await request.json()) as { status: string }
+    const body = (await request.json()) as { status: boolean }
     feedback.status = body.status
     feedback.updatedAt = new Date().toISOString()
     return HttpResponse.json(ok(feedback), { status: 200 })

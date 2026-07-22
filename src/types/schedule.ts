@@ -1,6 +1,9 @@
+export type ScheduleScope = 'PERSONAL' | 'PROJECT'
+
 export type Schedule = {
   id: number
-  projectId: number
+  scheduleScope: ScheduleScope
+  projectId: number | null
   title: string
   startAt: string
   endAt: string
@@ -18,7 +21,9 @@ export type ScheduleSummaryItem = {
 }
 
 export type CreateScheduleRequest = {
-  projectId: number
+  scheduleScope: ScheduleScope
+  /** scheduleScope가 PROJECT일 때 필수 */
+  projectId?: number
   title: string
   startAt: string
   endAt: string

@@ -218,6 +218,20 @@ export const db: MockDb = {
       createdAt: '2026-06-10T09:00:00Z',
       updatedAt: '2026-06-10T09:00:00Z',
     },
+    {
+      id: 2,
+      projectId: 1,
+      fileName: 'storyboard.pdf',
+      description: '스토리보드',
+      storageKey: 'projects/1/files/storyboard.pdf',
+      contentType: 'application/pdf',
+      fileSize: 2048,
+      isPinned: false,
+      isFinal: false,
+      uploaderId: completeUser.id,
+      createdAt: '2026-06-12T09:00:00Z',
+      updatedAt: '2026-06-12T09:00:00Z',
+    },
   ],
   videos: [
     {
@@ -271,9 +285,19 @@ export const db: MockDb = {
       actor: { type: 'USER', id: 3, name: '박편집' },
       content: '42초 부근 컷 전환을 부드럽게 해주세요',
       timestampSec: 42,
-      status: 'OPEN',
+      status: false,
       createdAt: '2026-05-21T00:00:00Z',
       updatedAt: '2026-05-21T00:00:00Z',
+    },
+    {
+      feedbackId: 2,
+      videoId: 10,
+      actor: { type: 'USER', id: 2, name: '슬레이투' },
+      content: '로고 크기 조금만 더 키워주세요',
+      timestampSec: 87,
+      status: true,
+      createdAt: '2026-05-22T00:00:00Z',
+      updatedAt: '2026-05-23T00:00:00Z',
     },
   ],
   replies: [
@@ -346,6 +370,7 @@ export const db: MockDb = {
   schedules: [
     {
       id: 1,
+      scheduleScope: 'PROJECT',
       projectId: 1,
       title: '레퍼런스 회의',
       startAt: '2026-07-10T14:00:00',

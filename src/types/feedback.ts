@@ -1,4 +1,3 @@
-export type FeedbackStatus = 'OPEN' | 'RESOLVED' | string
 export type FeedbackActorType = 'USER' | 'GUEST'
 
 export type FeedbackActor = {
@@ -13,7 +12,8 @@ export type Feedback = {
   actor: FeedbackActor
   content: string
   timestampSec: number | null
-  status: FeedbackStatus
+  /** 해결 여부. "피드백 해결 상태 변경" API 스펙(boolean) 기준 — 목록 조회 API는 문자열(Y/N)로 명세돼 있어 실제 연동 시 재확인 필요 */
+  status: boolean
   createdAt: string
   updatedAt: string
 }
@@ -38,7 +38,7 @@ export type UpdateFeedbackRequest = {
 }
 
 export type UpdateFeedbackStatusRequest = {
-  status: FeedbackStatus
+  status: boolean
 }
 
 export type CreateReplyRequest = {
