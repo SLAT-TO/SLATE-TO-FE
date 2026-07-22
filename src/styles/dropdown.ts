@@ -6,7 +6,7 @@ export const DROPDOWN_PANEL_BASE =
 export const DROPDOWN_PANEL_POSITION = 'absolute z-10 mt-1'
 
 export const DROPDOWN_ITEM_BASE =
-  'text-caption-lg flex h-12 w-full items-center justify-center text-neutral-10 transition-colors hover:bg-neutral-2'
+  'text-caption-lg flex h-10 w-full items-center justify-center text-neutral-10 transition-colors hover:bg-neutral-2'
 
 export const selectPanelClass = `${DROPDOWN_PANEL_BASE} ${DROPDOWN_PANEL_POSITION} max-h-60 w-full overflow-auto`
 
