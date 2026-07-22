@@ -6,10 +6,12 @@ export const PROJECT_LENGTH_TYPE_LABEL: Record<string, string> = {
 }
 
 export const PROJECT_TYPE_LABEL: Record<string, string> = {
-  DOCUMENTARY: '다큐',
-  COMMERCIAL: '광고',
-  MUSIC_VIDEO: '뮤직비디오',
+  FILM: '영화',
+  DOCUMENTARY: '다큐/시사/교양',
   DRAMA: '드라마',
+  MUSIC_VIDEO: '뮤직비디오',
+  ENTERTAINMENT: '예능/오락',
+  COMMERCIAL: '광고/홍보영상',
 }
 
 export function projectMetaTags(project: Project): string[] {
