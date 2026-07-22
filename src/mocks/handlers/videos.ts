@@ -40,6 +40,7 @@ export const videoHandlers = [
         bookmarked: v.bookmarked,
         progressStatus: v.progressStatus,
         unreadCommentCount: v.unreadCommentCount,
+        updatedAt: v.updatedAt,
       }))
 
     return HttpResponse.json(

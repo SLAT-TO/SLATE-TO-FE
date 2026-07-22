@@ -7,6 +7,7 @@ export type VideoListItem = {
   bookmarked: boolean
   progressStatus: VideoProgressStatus
   unreadCommentCount: number
+  updatedAt: string
 }
 
 export type VideoDetail = {
