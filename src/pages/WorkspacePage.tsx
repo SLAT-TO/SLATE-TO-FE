@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getProjects } from '../api/projects'
 import { projectMetaTags } from '../constants/projectLabels'
-import { projectStatusLabel } from '../constants/projectStatus'
+import { projectStatusColor, projectStatusLabel } from '../constants/projectStatus'
 import type { Project } from '../types/project'
 import { ApiError } from '../types/api'
 import { navigate } from '../utils/navigation'
@@ -76,7 +76,9 @@ export default function WorkspacePage() {
                       </div>
                     )}
                   </div>
-                  <span className="bg-main-1 text-main-7 text-caption-sm shrink-0 rounded-[3px] px-[19px] py-1 font-semibold">
+                  <span
+                    className={`text-caption-sm shrink-0 rounded-[3px] px-[19px] py-1 font-semibold ${projectStatusColor(project.status)}`}
+                  >
                     {projectStatusLabel(project.status)}
                   </span>
                 </button>
