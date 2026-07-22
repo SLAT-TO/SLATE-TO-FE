@@ -1,21 +1,31 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
+  deleteProject,
   getProject,
   getProjectActivities,
   getProjectFiles,
   getProjectMembers,
   getProjectNotices,
+  updateProject,
 } from '../api/projects'
+import ActionMenu from '../components/ActionMenu'
 import { Avatar } from '../components/Avatar'
 import Choice from '../components/Choice'
+import ConfirmModal from '../components/ConfirmModal'
 import Tabs from '../components/Tabs'
+import VideoFeedbackTab from '../components/VideoFeedbackTab'
+import ProjectSettingsView from '../components/ProjectSettingsView'
 import { projectMetaTags } from '../constants/projectLabels'
-import type { Project, ProjectActivity, ProjectMember } from '../types/project'
+import {
+  PROJECT_STATUS_LABEL,
+  projectStatusColor,
+  projectStatusLabel,
+} from '../constants/projectStatus'
+import type { Project, ProjectActivity, ProjectMember, ProjectStatus } from '../types/project'
 import type { ProjectFileListItem } from '../types/file'
 import type { ProjectNoticeListItem } from '../types/notice'
 import { ApiError } from '../types/api'
 import { navigate } from '../utils/navigation'
-import bellIcon from '../assets/icons/bell.svg?raw'
 
 const DETAIL_TABS = [
   { key: 'dashboard', label: '대시보드' },
@@ -28,17 +38,6 @@ const CARD_SHADOW = 'shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)]'
 
 type ProjectDetailPageProps = {
   projectId: number
-}
-
-/** assets/icons SVG(raw) — fill=currentColor라 부모 text 색으로 칠해짐 */
-function AssetIcon({ svg, className }: { svg: string; className: string }) {
-  return (
-    <span
-      aria-hidden
-      className={`text-main-7 inline-flex shrink-0 [&_svg]:block [&_svg]:size-full ${className}`}
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
-  )
 }
 
 function formatNoticeMeta(notice: ProjectNoticeListItem): string {
@@ -60,8 +59,21 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   const [tab, setTab] = useState('dashboard')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false)
+  const statusMenuRef = useRef<HTMLDivElement>(null)
+  const [view, setView] = useState<'main' | 'settings'>('main')
+  const [deleteOpen, setDeleteOpen] = useState(false)
   /** 활동 완료 토글 — API 연동 전 로컬 상태 */
   const [checkedActivityIds, setCheckedActivityIds] = useState<Set<number>>(() => new Set())
+
+  useEffect(() => {
+    if (!statusMenuOpen) return
+    const handlePointerDown = (e: PointerEvent) => {
+      if (!statusMenuRef.current?.contains(e.target as Node)) setStatusMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [statusMenuOpen])
 
   useEffect(() => {
     let cancelled = false
@@ -119,24 +131,94 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   const metaTags = projectMetaTags(project)
 
+  const changeStatus = async (status: ProjectStatus) => {
+    setStatusMenuOpen(false)
+    if (status === project.status) return
+    const previous = project.status
+    setProject({ ...project, status })
+    try {
+      await updateProject(projectId, { status })
+    } catch {
+      setProject((prev) => (prev ? { ...prev, status: previous } : prev))
+    }
+  }
+
+  const confirmDeleteProject = async () => {
+    await deleteProject(projectId)
+    navigate('/workspace')
+  }
+
+  if (view === 'settings') {
+    return (
+      <ProjectSettingsView
+        project={project}
+        onCancel={() => setView('main')}
+        onSaved={(updated) => {
+          setProject(updated)
+          setView('main')
+        }}
+      />
+    )
+  }
+
   return (
     <section className="flex w-full flex-col gap-8">
       <header className="flex items-start justify-between gap-6">
         <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <h1 className="text-head-md text-neutral-11 font-bold">{project.title}</h1>
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="text-head-md text-neutral-11 font-bold">{project.title}</h1>
+            <ActionMenu
+              items={[
+                { label: '수정하기', onClick: () => setView('settings') },
+                { label: '삭제하기', onClick: () => setDeleteOpen(true), danger: true },
+              ]}
+              ariaLabel="프로젝트 메뉴"
+            />
+          </div>
 
-          {metaTags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {metaTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="bg-main-1 text-main-6 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
-                >
-                  {tag}
-                </span>
-              ))}
+          <div className="flex flex-wrap items-center gap-2">
+            {metaTags.map((tag) => (
+              <span
+                key={tag}
+                className="bg-main-1 text-main-6 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
+              >
+                {tag}
+              </span>
+            ))}
+            <div className="relative" ref={statusMenuRef}>
+              <button
+                type="button"
+                onClick={() => setStatusMenuOpen((v) => !v)}
+                className={`text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold ${projectStatusColor(project.status)}`}
+              >
+                {projectStatusLabel(project.status)}
+                <svg viewBox="0 0 12 12" fill="none" className="size-3">
+                  <path
+                    d="M2.5 4.5L6 8l3.5-3.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              {statusMenuOpen && (
+                <ul className="border-neutral-3 bg-bg-primary absolute top-full left-0 z-10 mt-1 w-32 rounded-lg border py-1 shadow-md">
+                  {(Object.keys(PROJECT_STATUS_LABEL) as ProjectStatus[]).map((status) => (
+                    <li key={status}>
+                      <button
+                        type="button"
+                        onClick={() => changeStatus(status)}
+                        className="hover:bg-neutral-2 text-caption-lg text-neutral-10 block w-full px-3 py-2 text-left"
+                      >
+                        {PROJECT_STATUS_LABEL[status]}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          )}
+          </div>
 
           <div className="flex flex-col gap-2">
             <h2 className="text-head-sm text-neutral-11 font-bold">프로젝트 소개</h2>
@@ -180,16 +262,16 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
                 ) : (
                   <ul className="flex flex-col gap-8">
                     {notices.map((notice) => (
-                      <li key={notice.id} className="flex items-center gap-5">
-                        <AssetIcon svg={bellIcon} className="size-[17px]" />
-                        <div className="flex min-w-0 flex-col gap-2">
-                          <span className="text-body-sm text-neutral-11 truncate">
-                            {notice.title}
-                          </span>
-                          <span className="text-caption-lg text-neutral-6">
-                            {formatNoticeMeta(notice)}
-                          </span>
-                        </div>
+                      <li
+                        key={notice.id}
+                        className="border-neutral-5 flex items-center justify-between gap-3 rounded-[8px] border-[0.75px] px-4 py-3"
+                      >
+                        <span className="text-body-sm text-neutral-11 min-w-0 truncate">
+                          {notice.title}
+                        </span>
+                        <span className="text-caption-lg text-neutral-6 shrink-0">
+                          {formatNoticeMeta(notice)}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -244,9 +326,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
       )}
 
       {tab === 'schedule' && (
-        <p className="text-body-sm text-neutral-6">
-          일정 탭 골격입니다. 이후 캘린더 API와 연결합니다.
-        </p>
+        <p className="text-body-sm text-neutral-6">일정 탭 골격입니다. 이후 캘린더 API와 연결합니다.</p>
       )}
 
       {tab === 'files' && (
@@ -270,11 +350,15 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         </section>
       )}
 
-      {tab === 'feedback' && (
-        <p className="text-body-sm text-neutral-6">
-          피드백 탭 골격입니다. 영상 목록·피드백 화면은 이후 조립합니다.
-        </p>
-      )}
+      {tab === 'feedback' && <VideoFeedbackTab projectId={projectId} />}
+
+      <ConfirmModal
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={confirmDeleteProject}
+        title="프로젝트를 삭제할까요?"
+        description="삭제한 프로젝트는 복구할 수 없습니다."
+      />
     </section>
   )
 }
