@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { deleteProject, updateProject } from '../api/projects'
-import { Button } from './Button'
-import ConfirmModal from './ConfirmModal'
-import Input from './Input'
-import Select from './Select'
-import TextArea from './TextArea'
-import { PROJECT_LENGTH_TYPE_LABEL, PROJECT_TYPE_LABEL } from '../constants/projectLabels'
-import { navigate } from '../utils/navigation'
-import type { Project } from '../types/project'
+import { deleteProject, updateProject } from '../../api/projects'
+import { Button } from '../../components/Button'
+import ConfirmModal from '../../components/ConfirmModal'
+import Input from '../../components/Input'
+import Select from '../../components/Select'
+import TextArea from '../../components/TextArea'
+import { PROJECT_LENGTH_TYPE_LABEL, PROJECT_TYPE_LABEL } from '../../constants/projectLabels'
+import { navigate } from '../../utils/navigation'
+import type { Project } from '../../types/project'
 
 type ProjectSettingsViewProps = {
   project: Project
