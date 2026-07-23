@@ -101,8 +101,15 @@ export async function getProjectActivities(
   return request({ method: 'GET', url: paths.projects.activities(projectId) })
 }
 
-export async function getProjectFiles(projectId: number): Promise<CursorPage<ProjectFileListItem>> {
-  return request({ method: 'GET', url: paths.projects.files(projectId) })
+export async function getProjectFiles(
+  projectId: number,
+  keyword?: string,
+): Promise<CursorPage<ProjectFileListItem>> {
+  return request({
+    method: 'GET',
+    url: paths.projects.files(projectId),
+    params: keyword ? { keyword } : undefined,
+  })
 }
 
 export async function getUploadUrl(

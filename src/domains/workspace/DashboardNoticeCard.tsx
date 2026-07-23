@@ -15,6 +15,7 @@ function AssetIcon({ svg, className }: { svg: string; className: string }) {
 
 interface DashboardNoticeCardProps {
   notices: ProjectNoticeListItem[]
+  onExpand: () => void
 }
 
 function formatNoticeMeta(notice: ProjectNoticeListItem): string {
@@ -27,11 +28,15 @@ function formatNoticeMeta(notice: ProjectNoticeListItem): string {
   return `${notice.writer.nickname} ${month}월 ${day}일 ${hours}:${minutes}`
 }
 
-export default function DashboardNoticeCard({ notices }: DashboardNoticeCardProps) {
+export default function DashboardNoticeCard({ notices, onExpand }: DashboardNoticeCardProps) {
   return (
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">공지 사항</h2>
-      <div className={`flex min-h-[183px] flex-col justify-center ${CARD_BASE} p-4`}>
+      <button
+        type="button"
+        onClick={onExpand}
+        className={`flex min-h-[183px] flex-col justify-center ${CARD_BASE} p-4 text-left`}
+      >
         {notices.length === 0 ? (
           <p className="text-caption-lg text-neutral-6">등록된 공지가 없습니다.</p>
         ) : (
@@ -54,7 +59,7 @@ export default function DashboardNoticeCard({ notices }: DashboardNoticeCardProp
             ))}
           </ul>
         )}
-      </div>
+      </button>
     </section>
   )
 }

@@ -22,6 +22,7 @@ import {
 import ActionMenu from '../../components/ActionMenu'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
+import InlineIcon from '../../components/InlineIcon'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import YouTubeIframePlayer from '../../components/YouTubeIframePlayer'
@@ -40,16 +41,6 @@ import downloadIcon from '../../assets/icons/download.svg?raw'
 import paperPlaneIcon from '../../assets/icons/paper-plane.svg?raw'
 import searchIcon from '../../assets/icons/search.svg?raw'
 import starIcon from '../../assets/icons/star.svg?raw'
-
-function InlineIcon({ svg, className }: { svg: string; className: string }) {
-  return (
-    <span
-      aria-hidden
-      className={`inline-flex shrink-0 [&_svg]:block [&_svg]:size-full ${className}`}
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
-  )
-}
 
 type VideoFeedbackTabProps = {
   projectId: number

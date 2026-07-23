@@ -10,6 +10,9 @@ import ProjectSettingsView from '../domains/workspace/ProjectSettingsView'
 import DashboardNoticeCard from '../domains/workspace/DashboardNoticeCard'
 import DashboardTodayScheduleCard from '../domains/workspace/DashboardTodayScheduleCard'
 import DashboardActivityCard from '../domains/workspace/DashboardActivityCard'
+import NoticeListView from '../domains/workspace/NoticeListView'
+import NoticeDetailView from '../domains/workspace/NoticeDetailView'
+import ProjectFileList from '../domains/workspace/ProjectFileList'
 import { useProjectDetail } from '../hooks/useProjectDetail'
 import { useProjectStatusMenu } from '../hooks/useProjectStatusMenu'
 import { projectMetaTags } from '../constants/projectLabels'
@@ -33,7 +36,7 @@ type ProjectDetailPageProps = {
 }
 
 export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
-  const { project, setProject, members, activities, notices, loading, error } =
+  const { project, setProject, members, activities, notices, setNotices, loading, error } =
     useProjectDetail(projectId)
   const statusMenuRef = useRef<HTMLDivElement>(null)
   const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
@@ -42,6 +45,8 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null)
   const [meId, setMeId] = useState<number | null>(null)
+  /** 대시보드 탭 내부 공지사항 서브뷰 — 'main'=대시보드, 'list'=공지사항 목록, number=공지 상세(noticeId) */
+  const [noticeView, setNoticeView] = useState<'main' | 'list' | number>('main')
   /** 활동 완료 토글 — API 연동 전 로컬 상태 */
   const [checkedActivityIds, setCheckedActivityIds] = useState<Set<number>>(() => new Set())
 
@@ -190,10 +195,10 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         <Tabs tabs={DETAIL_TABS} defaultTab="dashboard" onChange={setTab} />
       </div>
 
-      {tab === 'dashboard' && (
+      {tab === 'dashboard' && noticeView === 'main' && (
         <div className="flex flex-col gap-8">
           <div className="grid gap-8 lg:grid-cols-2">
-            <DashboardNoticeCard notices={notices} />
+            <DashboardNoticeCard notices={notices} onExpand={() => setNoticeView('list')} />
             <DashboardTodayScheduleCard />
           </div>
 
@@ -218,11 +223,38 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         </p>
       )}
 
-      {tab === 'files' && (
-        <p className="text-caption-lg text-neutral-6">
-          파일 목록은 FileInput 컴포넌트 머지 이후 별도로 구현합니다.
-        </p>
+      {tab === 'dashboard' && noticeView === 'list' && (
+        <NoticeListView
+          projectId={projectId}
+          notices={notices}
+          onBack={() => setNoticeView('main')}
+          onOpenNotice={(noticeId) => setNoticeView(noticeId)}
+          onCreated={(notice) => setNotices((prev) => [notice, ...prev])}
+        />
       )}
+
+      {tab === 'dashboard' &&
+        typeof noticeView === 'number' &&
+        (() => {
+          const selectedNotice = notices.find((n) => n.id === noticeView)
+          if (!selectedNotice) return null
+          return (
+            <NoticeDetailView
+              projectId={projectId}
+              notice={selectedNotice}
+              onBack={() => setNoticeView('list')}
+              onUpdated={(updated) => {
+                setNotices((prev) => prev.map((n) => (n.id === updated.id ? updated : n)))
+              }}
+              onDeleted={(noticeId) => {
+                setNotices((prev) => prev.filter((n) => n.id !== noticeId))
+                setNoticeView('list')
+              }}
+            />
+          )
+        })()}
+
+      {tab === 'files' && <ProjectFileList projectId={projectId} />}
 
       {tab === 'feedback' && (
         <VideoFeedbackTab projectId={projectId} onSelectVideo={setSelectedVideoId} />
