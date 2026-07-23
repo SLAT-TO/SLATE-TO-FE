@@ -12,7 +12,11 @@ import DashboardActivityCard from '../domains/workspace/DashboardActivityCard'
 import { useProjectDetail } from '../hooks/useProjectDetail'
 import { useProjectStatusMenu } from '../hooks/useProjectStatusMenu'
 import { projectMetaTags } from '../constants/projectLabels'
-import { PROJECT_STATUS_LABEL, projectStatusColor, projectStatusLabel } from '../constants/projectStatus'
+import {
+  PROJECT_STATUS_LABEL,
+  projectStatusColor,
+  projectStatusLabel,
+} from '../constants/projectStatus'
 import type { ProjectStatus } from '../types/project'
 import { navigate } from '../utils/navigation'
 
@@ -28,7 +32,8 @@ type ProjectDetailPageProps = {
 }
 
 export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
-  const { project, setProject, members, activities, notices, loading, error } = useProjectDetail(projectId)
+  const { project, setProject, members, activities, notices, loading, error } =
+    useProjectDetail(projectId)
   const statusMenuRef = useRef<HTMLDivElement>(null)
   const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
   const [tab, setTab] = useState('dashboard')

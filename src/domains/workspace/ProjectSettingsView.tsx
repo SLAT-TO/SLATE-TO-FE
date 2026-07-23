@@ -21,7 +21,11 @@ const LENGTH_OPTIONS = Object.entries(PROJECT_LENGTH_TYPE_LABEL).map(([value, la
   label,
 }))
 
-export default function ProjectSettingsView({ project, onCancel, onSaved }: ProjectSettingsViewProps) {
+export default function ProjectSettingsView({
+  project,
+  onCancel,
+  onSaved,
+}: ProjectSettingsViewProps) {
   const [title, setTitle] = useState(project.title)
   const [endDate, setEndDate] = useState(project.endDate ?? '')
   const [clientName, setClientName] = useState(project.clientName ?? '')
@@ -66,8 +70,16 @@ export default function ProjectSettingsView({ project, onCancel, onSaved }: Proj
     <section className="flex flex-col gap-6">
       <h1 className="text-head-md text-neutral-11 font-bold">프로젝트 설정</h1>
 
-      <div className={`bg-white flex flex-col gap-8 rounded-[10px] p-8 shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)]`}>
-        <Input value={title} onChange={setTitle} label="프로젝트명" placeholder="프로젝트명을 입력해주세요." required />
+      <div
+        className={`flex flex-col gap-8 rounded-[10px] bg-white p-8 shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)]`}
+      >
+        <Input
+          value={title}
+          onChange={setTitle}
+          label="프로젝트명"
+          placeholder="프로젝트명을 입력해주세요."
+          required
+        />
 
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-1.5">
@@ -79,7 +91,12 @@ export default function ProjectSettingsView({ project, onCancel, onSaved }: Proj
               className="border-neutral-3 text-body-sm h-12 rounded-lg border px-4"
             />
           </div>
-          <Input value={clientName} onChange={setClientName} label="클라이언트명" placeholder="클라이언트명을 입력해주세요." />
+          <Input
+            value={clientName}
+            onChange={setClientName}
+            label="클라이언트명"
+            placeholder="클라이언트명을 입력해주세요."
+          />
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -99,7 +116,13 @@ export default function ProjectSettingsView({ project, onCancel, onSaved }: Proj
           />
         </div>
 
-        <TextArea value={description} onChange={setDescription} label="설명" placeholder="설명을 입력해주세요." rows={4} />
+        <TextArea
+          value={description}
+          onChange={setDescription}
+          label="설명"
+          placeholder="설명을 입력해주세요."
+          rows={4}
+        />
 
         <button
           type="button"
@@ -110,7 +133,13 @@ export default function ProjectSettingsView({ project, onCancel, onSaved }: Proj
         </button>
 
         <div className="flex justify-center gap-4">
-          <Button variant="primary" size="md" onClick={submit} disabled={saving || !title.trim()} className="w-60">
+          <Button
+            variant="primary"
+            size="md"
+            onClick={submit}
+            disabled={saving || !title.trim()}
+            className="w-60"
+          >
             확인
           </Button>
           <Button variant="secondary" size="md" onClick={onCancel} className="w-60">

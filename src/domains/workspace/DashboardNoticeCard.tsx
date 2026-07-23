@@ -20,7 +20,9 @@ export default function DashboardNoticeCard({ notices }: DashboardNoticeCardProp
   return (
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">공지 사항</h2>
-      <div className={`flex min-h-[183px] flex-col justify-center rounded-[10px] bg-white p-4 ${CARD_SHADOW}`}>
+      <div
+        className={`flex min-h-[183px] flex-col justify-center rounded-[10px] bg-white p-4 ${CARD_SHADOW}`}
+      >
         {notices.length === 0 ? (
           <p className="text-caption-lg text-neutral-6">등록된 공지가 없습니다.</p>
         ) : (
@@ -30,8 +32,12 @@ export default function DashboardNoticeCard({ notices }: DashboardNoticeCardProp
                 key={notice.id}
                 className="border-neutral-5 flex items-center justify-between gap-3 rounded-[8px] border-[0.75px] px-4 py-3"
               >
-                <span className="text-body-sm text-neutral-11 min-w-0 truncate">{notice.title}</span>
-                <span className="text-caption-lg text-neutral-6 shrink-0">{formatNoticeMeta(notice)}</span>
+                <span className="text-body-sm text-neutral-11 min-w-0 truncate">
+                  {notice.title}
+                </span>
+                <span className="text-caption-lg text-neutral-6 shrink-0">
+                  {formatNoticeMeta(notice)}
+                </span>
               </li>
             ))}
           </ul>
