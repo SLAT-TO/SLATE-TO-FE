@@ -169,8 +169,8 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
             <h1 className="text-head-md text-neutral-11 font-bold">{project.title}</h1>
             <ActionMenu
               items={[
-                { label: '수정하기', onClick: () => setView('settings') },
-                { label: '삭제하기', onClick: () => setDeleteOpen(true), danger: true },
+                { action: 'edit', onClick: () => setView('settings') },
+                { action: 'delete', onClick: () => setDeleteOpen(true) },
               ]}
               ariaLabel="프로젝트 메뉴"
             />

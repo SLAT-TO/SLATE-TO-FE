@@ -281,8 +281,7 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
   }
 
   const toggleResolved = async (feedback: Feedback) => {
-    const nextStatus = feedback.status === 'RESOLVED' ? 'OPEN' : 'RESOLVED'
-    const updated = await updateFeedbackStatus(feedback.feedbackId, { status: nextStatus })
+    const updated = await updateFeedbackStatus(feedback.feedbackId, { status: !feedback.status })
     setFeedbacks((prev) => prev.map((f) => (f.feedbackId === updated.feedbackId ? updated : f)))
   }
 
@@ -327,9 +326,7 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
     setPickerOpen(false)
   }
 
-  const filteredFeedbacks = feedbacks.filter((f) =>
-    filter === 'unresolved' ? f.status !== 'RESOLVED' : true,
-  )
+  const filteredFeedbacks = feedbacks.filter((f) => (filter === 'unresolved' ? !f.status : true))
   const filteredFiles = referenceFiles.filter((f) =>
     f.fileName.toLowerCase().includes(fileSearch.toLowerCase()),
   )
@@ -476,7 +473,7 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
           <ul className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
             {filteredFeedbacks.map((feedback) => {
               const isMine = meId !== null && feedback.actor.type === 'USER' && feedback.actor.id === meId
-              const isResolved = feedback.status === 'RESOLVED'
+              const isResolved = feedback.status
               return (
                 <li key={feedback.feedbackId} className="border-neutral-3 flex flex-col gap-2 border-b pb-3">
                   <div className="flex items-start justify-between gap-2">
@@ -499,9 +496,7 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
                     </div>
                     {isMine && (
                       <ActionMenu
-                        items={[
-                          { label: '삭제하기', onClick: () => removeFeedback(feedback.feedbackId), danger: true },
-                        ]}
+                        items={[{ action: 'delete', onClick: () => removeFeedback(feedback.feedbackId) }]}
                       />
                     )}
                   </div>
