@@ -1,6 +1,18 @@
 import type { ProjectNoticeListItem } from '../../types/notice'
+import bellIcon from '../../assets/icons/bell.svg?raw'
 
 const CARD_SHADOW = 'shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)]'
+
+/** assets/icons SVG(raw) — fill=currentColor라 부모 text 색으로 칠해짐 */
+function AssetIcon({ svg, className }: { svg: string; className: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`text-main-7 inline-flex shrink-0 [&_svg]:block [&_svg]:size-full ${className}`}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  )
+}
 
 interface DashboardNoticeCardProps {
   notices: ProjectNoticeListItem[]
@@ -32,9 +44,10 @@ export default function DashboardNoticeCard({ notices }: DashboardNoticeCardProp
                 key={notice.id}
                 className="border-neutral-5 flex items-center justify-between gap-3 rounded-[8px] border-[0.75px] px-4 py-3"
               >
-                <span className="text-body-sm text-neutral-11 min-w-0 truncate">
-                  {notice.title}
-                </span>
+                <div className="flex min-w-0 items-center gap-3">
+                  <AssetIcon svg={bellIcon} className="size-[17px]" />
+                  <span className="text-body-sm text-neutral-11 min-w-0 truncate">{notice.title}</span>
+                </div>
                 <span className="text-caption-lg text-neutral-6 shrink-0">
                   {formatNoticeMeta(notice)}
                 </span>
