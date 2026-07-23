@@ -378,7 +378,7 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
                 <button type="button" onClick={toggleMute} className="shrink-0">
                   <VolumeIcon muted={isMuted} />
                 </button>
-                <span className="rounded-full bg-black/40 px-3 py-1 text-caption-sm">
+                <span className="text-caption-sm rounded-full bg-black/40 px-3 py-1">
                   {formatTimestamp(currentTime)}/{formatTimestamp(duration)}
                 </span>
                 <button
@@ -440,21 +440,23 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
             <button
               type="button"
               onClick={openPicker}
-              className="border-primary text-primary hover:bg-primary/5 w-full rounded-lg border py-2 text-body-sm font-semibold"
+              className="border-primary text-primary hover:bg-primary/5 text-body-sm w-full rounded-lg border py-2 font-semibold"
             >
               파일 추가하기
             </button>
           </div>
         </div>
 
-        <div className="flex w-full min-h-[144px] flex-col gap-4 lg:h-[calc(100vh-140px)] lg:w-[300px] lg:shrink-0 lg:sticky lg:top-6">
+        <div className="flex min-h-[144px] w-full flex-col gap-4 lg:sticky lg:top-6 lg:h-[calc(100vh-140px)] lg:w-[300px] lg:shrink-0">
           <div className="flex shrink-0 items-center gap-2">
             <h2 className="text-head-sm text-neutral-11 font-semibold">피드백</h2>
             <button
               type="button"
               onClick={() => setFilter('all')}
               className={`text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold ${
-                filter === 'all' ? 'bg-success-light text-success-dark' : 'bg-neutral-3 text-neutral-6'
+                filter === 'all'
+                  ? 'bg-success-light text-success-dark'
+                  : 'bg-neutral-3 text-neutral-6'
               }`}
             >
               전체
@@ -463,7 +465,9 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
               type="button"
               onClick={() => setFilter('unresolved')}
               className={`text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold ${
-                filter === 'unresolved' ? 'bg-success-light text-success-dark' : 'bg-neutral-3 text-neutral-6'
+                filter === 'unresolved'
+                  ? 'bg-success-light text-success-dark'
+                  : 'bg-neutral-3 text-neutral-6'
               }`}
             >
               해결 안됨
@@ -472,23 +476,35 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
 
           <ul className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
             {filteredFeedbacks.map((feedback) => {
-              const isMine = meId !== null && feedback.actor.type === 'USER' && feedback.actor.id === meId
+              const isMine =
+                meId !== null && feedback.actor.type === 'USER' && feedback.actor.id === meId
               const isResolved = feedback.status
               return (
-                <li key={feedback.feedbackId} className="border-neutral-3 flex flex-col gap-2 border-b pb-3">
+                <li
+                  key={feedback.feedbackId}
+                  className="border-neutral-3 flex flex-col gap-2 border-b pb-3"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <Avatar alt={feedback.actor.name} size={22} fallback={feedback.actor.name.slice(0, 1)} />
+                      <Avatar
+                        alt={feedback.actor.name}
+                        size={22}
+                        fallback={feedback.actor.name.slice(0, 1)}
+                      />
                       {feedback.timestampSec !== null && (
                         <button
                           type="button"
-                          onClick={() => playerRef.current?.seekTo(feedback.timestampSec ?? 0, true)}
+                          onClick={() =>
+                            playerRef.current?.seekTo(feedback.timestampSec ?? 0, true)
+                          }
                           className="text-caption-sm text-primary font-bold underline"
                         >
                           {formatTimestamp(feedback.timestampSec)}
                         </button>
                       )}
-                      <span className="text-caption-sm text-neutral-9 font-medium">{feedback.actor.name}</span>
+                      <span className="text-caption-sm text-neutral-9 font-medium">
+                        {feedback.actor.name}
+                      </span>
                       <span
                         className={`size-[9px] rounded-full ${isResolved ? 'bg-success' : 'bg-warning'}`}
                         aria-hidden
@@ -496,7 +512,9 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
                     </div>
                     {isMine && (
                       <ActionMenu
-                        items={[{ action: 'delete', onClick: () => removeFeedback(feedback.feedbackId) }]}
+                        items={[
+                          { action: 'delete', onClick: () => removeFeedback(feedback.feedbackId) },
+                        ]}
                       />
                     )}
                   </div>
@@ -509,7 +527,10 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
                       onClick={() => toggleReplies(feedback.feedbackId)}
                       className="text-caption-sm text-neutral-9 flex items-center gap-1 font-semibold"
                     >
-                      답글{repliesByFeedback[feedback.feedbackId]?.length ? ` ${repliesByFeedback[feedback.feedbackId].length}` : ''}
+                      답글
+                      {repliesByFeedback[feedback.feedbackId]?.length
+                        ? ` ${repliesByFeedback[feedback.feedbackId].length}`
+                        : ''}
                       <InlineIcon
                         svg={chevronDownIcon}
                         className={`size-4 transition-transform ${expandedFeedbackId === feedback.feedbackId ? 'rotate-180' : ''}`}
@@ -530,9 +551,15 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
                     <div className="flex flex-col gap-2 pl-2">
                       {(repliesByFeedback[feedback.feedbackId] ?? []).map((reply) => (
                         <div key={reply.replyId} className="flex items-start gap-2">
-                          <Avatar alt={reply.actor.name} size={18} fallback={reply.actor.name.slice(0, 1)} />
+                          <Avatar
+                            alt={reply.actor.name}
+                            size={18}
+                            fallback={reply.actor.name.slice(0, 1)}
+                          />
                           <div className="flex flex-col">
-                            <span className="text-caption-sm text-neutral-9 font-semibold">{reply.actor.name}</span>
+                            <span className="text-caption-sm text-neutral-9 font-semibold">
+                              {reply.actor.name}
+                            </span>
                             <span className="text-caption-lg text-neutral-10">{reply.content}</span>
                           </div>
                         </div>
@@ -564,12 +591,17 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
             <button
               type="button"
               onClick={attachCurrentTime}
-              className="border-neutral-5 text-neutral-9 flex w-fit items-center gap-1 rounded-lg border px-2 py-1.5 text-caption-sm"
+              className="border-neutral-5 text-neutral-9 text-caption-sm flex w-fit items-center gap-1 rounded-lg border px-2 py-1.5"
             >
               <ClockIcon />
               {pendingTimestamp !== null ? formatTimestamp(pendingTimestamp) : '현재 위치'}
             </button>
-            <TextArea value={newFeedback} onChange={setNewFeedback} placeholder="피드백을 입력하세요" rows={3} />
+            <TextArea
+              value={newFeedback}
+              onChange={setNewFeedback}
+              placeholder="피드백을 입력하세요"
+              rows={3}
+            />
             <button
               type="button"
               onClick={submitFeedback}
@@ -587,7 +619,9 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
 
       <Modal isOpen={pickerOpen} onClose={() => setPickerOpen(false)}>
         <div className="bg-bg-primary flex w-[420px] flex-col gap-3 rounded-lg p-5">
-          <h3 className="text-body-sm text-neutral-11 font-semibold">참고 파일로 연결할 파일 선택</h3>
+          <h3 className="text-body-sm text-neutral-11 font-semibold">
+            참고 파일로 연결할 파일 선택
+          </h3>
           <ul className="flex max-h-80 flex-col gap-1 overflow-y-auto">
             {projectFiles.map((file) => (
               <li key={file.id}>
@@ -601,7 +635,9 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
               </li>
             ))}
             {projectFiles.length === 0 && (
-              <p className="text-caption-lg text-neutral-6">연결할 수 있는 프로젝트 파일이 없습니다.</p>
+              <p className="text-caption-lg text-neutral-6">
+                연결할 수 있는 프로젝트 파일이 없습니다.
+              </p>
             )}
           </ul>
         </div>

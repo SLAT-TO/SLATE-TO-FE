@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
-import { getProject, getProjectActivities, getProjectMembers, getProjectNotices } from '../api/projects'
+import {
+  getProject,
+  getProjectActivities,
+  getProjectMembers,
+  getProjectNotices,
+} from '../api/projects'
 import { ApiError } from '../types/api'
 import type { Project, ProjectActivity, ProjectMember } from '../types/project'
 import type { ProjectNoticeListItem } from '../types/notice'
