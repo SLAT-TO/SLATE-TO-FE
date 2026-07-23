@@ -447,8 +447,10 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
             >
               <InlineIcon svg={starIcon} className="size-4" />
             </button>
-            <span className="bg-neutral-2 text-neutral-9 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold">
+            {/* 드롭다운처럼 보이는 디자인이지만 영상 진행 상태 변경 API가 없어 비활성 표시만 함 */}
+            <span className="bg-neutral-3 text-neutral-5 text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold">
               {videoDetail.progressStatus === 'DONE' ? '완료' : '진행중'}
+              <InlineIcon svg={chevronDownIcon} className="size-3" />
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -606,7 +608,7 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
           </div>
         </div>
 
-        <div className="flex min-h-[144px] w-full flex-col gap-4 lg:sticky lg:top-6 lg:h-[calc(100vh-140px)] lg:w-[300px] lg:shrink-0">
+        <div className="flex min-h-[144px] w-full flex-col gap-4 rounded-[10px] bg-white p-4 shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)] lg:sticky lg:top-6 lg:h-[calc(100vh-140px)] lg:w-[300px] lg:shrink-0">
           <div className="flex shrink-0 items-center gap-2">
             <h2 className="text-head-sm text-neutral-11 font-semibold">피드백</h2>
             <button
