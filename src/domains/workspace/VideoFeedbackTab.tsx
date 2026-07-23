@@ -9,12 +9,20 @@ import {
   getVideo,
   getVideos,
   linkReferenceFile,
+  unlinkReferenceFile,
   updateFeedbackStatus,
+  updateVideoBookmark,
 } from '../../api/videos'
-import { getProjectFiles } from '../../api/projects'
+import {
+  createInvitation,
+  getDownloadUrl,
+  getProjectFiles,
+  getProjectMembers,
+} from '../../api/projects'
 import { getMe } from '../../api/users'
 import ActionMenu from '../../components/ActionMenu'
 import { Avatar } from '../../components/Avatar'
+import { Button } from '../../components/Button'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import YouTubeIframePlayer from '../../components/YouTubeIframePlayer'
@@ -22,11 +30,13 @@ import type { VideoDetail, VideoListItem } from '../../types/video'
 import type { Feedback, FeedbackReply } from '../../types/feedback'
 import type { ReferenceFile } from '../../types/video'
 import type { ProjectFileListItem } from '../../types/file'
+import type { ProjectMember } from '../../types/project'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
 import commentCheckIcon from '../../assets/icons/comment-check.svg?raw'
 import documentIcon from '../../assets/icons/document.svg?raw'
 import downloadIcon from '../../assets/icons/download.svg?raw'
 import searchIcon from '../../assets/icons/search.svg?raw'
+import starIcon from '../../assets/icons/star.svg?raw'
 
 function InlineIcon({ svg, className }: { svg: string; className: string }) {
   return (
@@ -48,6 +58,15 @@ function formatTimestamp(sec: number): string {
   const m = Math.floor(sec / 60)
   const s = Math.floor(sec % 60)
   return `${m}:${String(s).padStart(2, '0')}`
+}
+
+function formatDate(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}.${month}.${day}`
 }
 
 function PlayIcon() {
@@ -89,6 +108,23 @@ function ClockIcon() {
       <path d="M12 7v5l3 3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
+}
+/** 구간(시작~종료) 기록 버튼 아이콘 — 시계 두 개 */
+function ClockRangeIcon() {
+  return (
+    <svg viewBox="0 0 34 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-7">
+      <circle cx="9" cy="12" r="7" />
+      <path d="M9 8.5v3.5l2 2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="25" cy="12" r="7" />
+      <path d="M25 8.5v3.5l2 2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function formatFeedbackTime(feedback: Pick<Feedback, 'startTime' | 'endTime'>): string {
+  if (feedback.startTime === null) return ''
+  if (feedback.endTime === null) return formatTimestamp(feedback.startTime)
+  return `${formatTimestamp(feedback.startTime)} ~ ${formatTimestamp(feedback.endTime)}`
 }
 
 export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
@@ -176,13 +212,18 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<FeedbackFilter>('all')
   const [newFeedback, setNewFeedback] = useState('')
-  const [pendingTimestamp, setPendingTimestamp] = useState<number | null>(null)
+  const [pendingStart, setPendingStart] = useState<number | null>(null)
+  const [pendingEnd, setPendingEnd] = useState<number | null>(null)
+  /** 구간 기록 버튼으로 시작점만 찍고 종료점 대기 중인 상태 */
+  const [isCapturingRange, setIsCapturingRange] = useState(false)
   const [expandedFeedbackId, setExpandedFeedbackId] = useState<number | null>(null)
   const [repliesByFeedback, setRepliesByFeedback] = useState<Record<number, FeedbackReply[]>>({})
   const [newReply, setNewReply] = useState('')
   const [fileSearch, setFileSearch] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [projectFiles, setProjectFiles] = useState<ProjectFileListItem[]>([])
+  const [members, setMembers] = useState<ProjectMember[]>([])
+  const [inviteCopied, setInviteCopied] = useState(false)
 
   const playerRef = useRef<YT.Player | null>(null)
   const playerWrapperRef = useRef<HTMLDivElement>(null)
@@ -197,15 +238,17 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
     async function load() {
       setLoading(true)
       try {
-        const [detail, refFiles, feedbackPage] = await Promise.all([
+        const [detail, refFiles, feedbackPage, memberList] = await Promise.all([
           getVideo(projectId, videoId),
           getReferenceFiles(videoId),
           getFeedbacks(videoId),
+          getProjectMembers(projectId).catch(() => [] as ProjectMember[]),
         ])
         if (cancelled) return
         setVideoDetail(detail)
         setReferenceFiles(refFiles.items)
         setFeedbacks(feedbackPage.items)
+        setMembers(memberList)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -229,6 +272,26 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
   const handlePlayerReady = (player: YT.Player) => {
     playerRef.current = player
     setDuration(player.getDuration())
+  }
+
+  const toggleBookmark = async () => {
+    if (!videoDetail) return
+    const next = !videoDetail.bookmarked
+    setVideoDetail({ ...videoDetail, bookmarked: next })
+    try {
+      await updateVideoBookmark(projectId, videoId, { bookmarked: next })
+    } catch {
+      setVideoDetail((prev) => (prev ? { ...prev, bookmarked: !next } : prev))
+    }
+  }
+
+  /** 참여 인원 초대 — 초대 링크 생성 후 클립보드에 복사 (골격, 실제 초대 수락 화면은 별도 구현 필요) */
+  const inviteMember = async () => {
+    const { token } = await createInvitation(projectId)
+    const inviteUrl = `${window.location.origin}/invitations/${token}`
+    await navigator.clipboard.writeText(inviteUrl)
+    setInviteCopied(true)
+    setTimeout(() => setInviteCopied(false), 2000)
   }
 
   const handleStateChange = (event: YT.PlayerStateChangeEvent) => {
@@ -266,18 +329,35 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
   }
 
   const attachCurrentTime = () => {
-    setPendingTimestamp(Math.floor(currentTime))
+    setPendingStart(Math.floor(currentTime))
+    setPendingEnd(null)
+    setIsCapturingRange(false)
+  }
+
+  /** 구간 기록 버튼 — 첫 클릭은 시작점, 재생 위치를 옮긴 뒤 두 번째 클릭은 종료점 */
+  const toggleRangeCapture = () => {
+    if (!isCapturingRange) {
+      setPendingStart(Math.floor(currentTime))
+      setPendingEnd(null)
+      setIsCapturingRange(true)
+    } else {
+      setPendingEnd(Math.floor(currentTime))
+      setIsCapturingRange(false)
+    }
   }
 
   const submitFeedback = async () => {
     if (!newFeedback.trim()) return
     const created = await createFeedback(videoId, {
       content: newFeedback.trim(),
-      timestampSec: pendingTimestamp ?? undefined,
+      startTime: pendingStart ?? undefined,
+      endTime: pendingEnd ?? undefined,
     })
     setFeedbacks((prev) => [created, ...prev])
     setNewFeedback('')
-    setPendingTimestamp(null)
+    setPendingStart(null)
+    setPendingEnd(null)
+    setIsCapturingRange(false)
   }
 
   const toggleResolved = async (feedback: Feedback) => {
@@ -326,6 +406,16 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
     setPickerOpen(false)
   }
 
+  const removeReferenceFile = async (referenceFileId: number) => {
+    await unlinkReferenceFile(videoId, referenceFileId)
+    setReferenceFiles((prev) => prev.filter((f) => f.referenceFileId !== referenceFileId))
+  }
+
+  const downloadReferenceFile = async (projectFileId: number) => {
+    const { downloadUrl } = await getDownloadUrl(projectId, projectFileId)
+    window.open(downloadUrl, '_blank', 'noopener')
+  }
+
   const filteredFeedbacks = feedbacks.filter((f) => (filter === 'unresolved' ? !f.status : true))
   const filteredFiles = referenceFiles.filter((f) =>
     f.fileName.toLowerCase().includes(fileSearch.toLowerCase()),
@@ -344,6 +434,55 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
       >
         {'< 영상 목록'}
       </button>
+
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-head-sm text-neutral-11 font-bold">{videoDetail.title}</h1>
+            <button
+              type="button"
+              onClick={toggleBookmark}
+              aria-label={videoDetail.bookmarked ? '북마크 해제' : '북마크'}
+              className={videoDetail.bookmarked ? 'text-caution' : 'text-neutral-4'}
+            >
+              <InlineIcon svg={starIcon} className="size-4" />
+            </button>
+            <span className="bg-neutral-2 text-neutral-9 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold">
+              {videoDetail.progressStatus === 'DONE' ? '완료' : '진행중'}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-caption-lg text-neutral-6">
+              생성일 {formatDate(videoDetail.createdAt)}
+            </span>
+            <span className="text-caption-lg text-neutral-6">
+              수정일 {formatDate(videoDetail.updatedAt)}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="text-caption-lg text-neutral-6">참여 인원</span>
+          {members.length > 0 && (
+            <div className="flex -space-x-2">
+              {members.slice(0, 4).map((member) => (
+                <Avatar
+                  key={member.id}
+                  src={member.profileImageUrl ?? undefined}
+                  alt={member.name}
+                  size={28}
+                  fallback={member.name.slice(0, 1)}
+                  border="gray"
+                  className="bg-neutral-2"
+                />
+              ))}
+            </div>
+          )}
+          <Button variant="primary" size="sm" onClick={inviteMember}>
+            {inviteCopied ? '링크 복사됨' : '+ 초대'}
+          </Button>
+        </div>
+      </div>
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="flex min-w-0 flex-1 flex-col gap-6">
@@ -393,7 +532,7 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
           </div>
 
           <div className="flex flex-col gap-3">
-            <h2 className="text-head-sm text-neutral-9 font-semibold">프로젝트 소개</h2>
+            <h2 className="text-head-sm text-neutral-9 font-semibold">프로젝트 소개글</h2>
             {videoDetail.categories.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {videoDetail.categories.map((category) => (
@@ -428,13 +567,33 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
             {filteredFiles.map((file) => (
               <div
                 key={file.referenceFileId}
-                className="bg-bg-primary border-neutral-5 flex items-center justify-between rounded-lg border px-4 py-3"
+                className="bg-bg-primary border-neutral-5 flex items-center justify-between gap-3 rounded-lg border px-4 py-3"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <InlineIcon svg={documentIcon} className="text-neutral-5 size-6 shrink-0" />
                   <span className="text-body-sm text-neutral-11 truncate">{file.fileName}</span>
                 </div>
-                <InlineIcon svg={downloadIcon} className="text-neutral-9 size-4 shrink-0" />
+                <div className="flex shrink-0 items-center gap-4">
+                  <span className="text-caption-lg text-neutral-6">
+                    {formatDate(file.createdAt)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => downloadReferenceFile(file.projectFileId)}
+                    aria-label="다운로드"
+                    className="text-neutral-9 hover:text-primary"
+                  >
+                    <InlineIcon svg={downloadIcon} className="size-4" />
+                  </button>
+                  <ActionMenu
+                    items={[
+                      {
+                        action: 'delete',
+                        onClick: () => removeReferenceFile(file.referenceFileId),
+                      },
+                    ]}
+                  />
+                </div>
               </div>
             ))}
             <button
@@ -491,15 +650,13 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
                         size={22}
                         fallback={feedback.actor.name.slice(0, 1)}
                       />
-                      {feedback.timestampSec !== null && (
+                      {feedback.startTime !== null && (
                         <button
                           type="button"
-                          onClick={() =>
-                            playerRef.current?.seekTo(feedback.timestampSec ?? 0, true)
-                          }
+                          onClick={() => playerRef.current?.seekTo(feedback.startTime ?? 0, true)}
                           className="text-caption-sm text-primary font-bold underline"
                         >
-                          {formatTimestamp(feedback.timestampSec)}
+                          {formatFeedbackTime(feedback)}
                         </button>
                       )}
                       <span className="text-caption-sm text-neutral-9 font-medium">
@@ -588,14 +745,44 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
           </ul>
 
           <div className="border-neutral-5 flex shrink-0 flex-col gap-2 rounded-lg border p-3">
-            <button
-              type="button"
-              onClick={attachCurrentTime}
-              className="border-neutral-5 text-neutral-9 text-caption-sm flex w-fit items-center gap-1 rounded-lg border px-2 py-1.5"
-            >
-              <ClockIcon />
-              {pendingTimestamp !== null ? formatTimestamp(pendingTimestamp) : '현재 위치'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={attachCurrentTime}
+                aria-label="현재 위치 기록"
+                title={
+                  pendingStart !== null && pendingEnd === null && !isCapturingRange
+                    ? formatTimestamp(pendingStart)
+                    : '현재 위치 기록'
+                }
+                className={`border-neutral-5 flex items-center justify-center rounded-lg border p-1.5 ${
+                  pendingStart !== null && pendingEnd === null && !isCapturingRange
+                    ? 'border-primary text-primary'
+                    : 'text-neutral-9'
+                }`}
+              >
+                <ClockIcon />
+              </button>
+              <button
+                type="button"
+                onClick={toggleRangeCapture}
+                aria-label="구간 기록"
+                title={
+                  isCapturingRange
+                    ? '종료 지점 기록'
+                    : pendingEnd !== null
+                      ? formatFeedbackTime({ startTime: pendingStart, endTime: pendingEnd })
+                      : '구간 기록'
+                }
+                className={`border-neutral-5 flex items-center justify-center rounded-lg border p-1.5 ${
+                  isCapturingRange || pendingEnd !== null
+                    ? 'border-primary text-primary'
+                    : 'text-neutral-9'
+                }`}
+              >
+                <ClockRangeIcon />
+              </button>
+            </div>
             <TextArea
               value={newFeedback}
               onChange={setNewFeedback}

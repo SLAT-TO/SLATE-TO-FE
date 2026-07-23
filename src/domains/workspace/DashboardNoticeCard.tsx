@@ -46,7 +46,9 @@ export default function DashboardNoticeCard({ notices }: DashboardNoticeCardProp
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <AssetIcon svg={bellIcon} className="size-[17px]" />
-                  <span className="text-body-sm text-neutral-11 min-w-0 truncate">{notice.title}</span>
+                  <span className="text-body-sm text-neutral-11 min-w-0 truncate">
+                    {notice.title}
+                  </span>
                 </div>
                 <span className="text-caption-lg text-neutral-6 shrink-0">
                   {formatNoticeMeta(notice)}
