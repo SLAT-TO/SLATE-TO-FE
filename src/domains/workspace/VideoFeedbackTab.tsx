@@ -19,14 +19,13 @@ import {
   getProjectFiles,
   getProjectMembers,
 } from '../../api/projects'
-import { getMe } from '../../api/users'
 import ActionMenu from '../../components/ActionMenu'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import YouTubeIframePlayer from '../../components/YouTubeIframePlayer'
-import type { VideoDetail, VideoListItem } from '../../types/video'
+import type { VideoDetail, VideoListItem, VideoProgressStatus } from '../../types/video'
 import type { Feedback, FeedbackReply } from '../../types/feedback'
 import type { ReferenceFile } from '../../types/video'
 import type { ProjectFileListItem } from '../../types/file'
@@ -127,17 +126,16 @@ function formatFeedbackTime(feedback: Pick<Feedback, 'startTime' | 'endTime'>): 
   return `${formatTimestamp(feedback.startTime)} ~ ${formatTimestamp(feedback.endTime)}`
 }
 
-export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
-  const [meId, setMeId] = useState<number | null>(null)
+type VideoFeedbackTabWithSelectionProps = VideoFeedbackTabProps & {
+  onSelectVideo: (videoId: number) => void
+}
+
+export default function VideoFeedbackTab({
+  projectId,
+  onSelectVideo,
+}: VideoFeedbackTabWithSelectionProps) {
   const [videos, setVideos] = useState<VideoListItem[]>([])
   const [videosLoading, setVideosLoading] = useState(true)
-  const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null)
-
-  useEffect(() => {
-    getMe()
-      .then((me) => setMeId(me.id))
-      .catch(() => setMeId(null))
-  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -158,17 +156,6 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
     }
   }, [projectId])
 
-  if (selectedVideoId !== null) {
-    return (
-      <VideoDetailView
-        projectId={projectId}
-        videoId={selectedVideoId}
-        meId={meId}
-        onBack={() => setSelectedVideoId(null)}
-      />
-    )
-  }
-
   return (
     <section className="flex flex-col gap-3">
       {videosLoading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
@@ -181,7 +168,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
             <li key={video.videoId}>
               <button
                 type="button"
-                onClick={() => setSelectedVideoId(video.videoId)}
+                onClick={() => onSelectVideo(video.videoId)}
                 className="hover:bg-neutral-2 flex w-full items-center justify-between gap-3 px-1 py-4 text-left"
               >
                 <span className="text-body-sm text-neutral-11 font-medium">{video.title}</span>
@@ -198,14 +185,14 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
   )
 }
 
-type VideoDetailViewProps = {
+export type VideoDetailViewProps = {
   projectId: number
   videoId: number
   meId: number | null
   onBack: () => void
 }
 
-function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewProps) {
+export function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewProps) {
   const [videoDetail, setVideoDetail] = useState<VideoDetail | null>(null)
   const [referenceFiles, setReferenceFiles] = useState<ReferenceFile[]>([])
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
@@ -224,6 +211,8 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
   const [projectFiles, setProjectFiles] = useState<ProjectFileListItem[]>([])
   const [members, setMembers] = useState<ProjectMember[]>([])
   const [inviteCopied, setInviteCopied] = useState(false)
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false)
+  const statusMenuRef = useRef<HTMLDivElement>(null)
 
   const playerRef = useRef<YT.Player | null>(null)
   const playerWrapperRef = useRef<HTMLDivElement>(null)
@@ -231,6 +220,21 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
   const [isMuted, setIsMuted] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+
+  useEffect(() => {
+    if (!statusMenuOpen) return
+    const handlePointerDown = (e: PointerEvent) => {
+      if (!statusMenuRef.current?.contains(e.target as Node)) setStatusMenuOpen(false)
+    }
+    // 유튜브 iframe 클릭은 별도 document라 pointerdown이 감지되지 않아 window blur로 보조 감지
+    const handleWindowBlur = () => setStatusMenuOpen(false)
+    document.addEventListener('pointerdown', handlePointerDown)
+    window.addEventListener('blur', handleWindowBlur)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      window.removeEventListener('blur', handleWindowBlur)
+    }
+  }, [statusMenuOpen])
 
   useEffect(() => {
     let cancelled = false
@@ -283,6 +287,12 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
     } catch {
       setVideoDetail((prev) => (prev ? { ...prev, bookmarked: !next } : prev))
     }
+  }
+
+  /** 영상 진행 상태 변경 — 백엔드에 상태 변경 API가 없어 로컬 상태만 갱신 (API 연동 전, 최근 활동 체크박스와 동일한 방식) */
+  const changeVideoStatus = (status: VideoProgressStatus) => {
+    setStatusMenuOpen(false)
+    setVideoDetail((prev) => (prev ? { ...prev, progressStatus: status } : prev))
   }
 
   /** 참여 인원 초대 — 초대 링크 생성 후 클립보드에 복사 (골격, 실제 초대 수락 화면은 별도 구현 필요) */
@@ -447,11 +457,32 @@ function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewPr
             >
               <InlineIcon svg={starIcon} className="size-4" />
             </button>
-            {/* 드롭다운처럼 보이는 디자인이지만 영상 진행 상태 변경 API가 없어 비활성 표시만 함 */}
-            <span className="bg-neutral-3 text-neutral-5 text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold">
-              {videoDetail.progressStatus === 'DONE' ? '완료' : '진행중'}
-              <InlineIcon svg={chevronDownIcon} className="size-3" />
-            </span>
+            {/* 영상 진행 상태 변경 API가 없어 로컬 상태만 갱신 (changeVideoStatus 주석 참고) */}
+            <div className="relative" ref={statusMenuRef}>
+              <button
+                type="button"
+                onClick={() => setStatusMenuOpen((v) => !v)}
+                className="bg-neutral-3 text-neutral-5 text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold"
+              >
+                {videoDetail.progressStatus === 'DONE' ? '완료' : '진행중'}
+                <InlineIcon svg={chevronDownIcon} className="size-3" />
+              </button>
+              {statusMenuOpen && (
+                <ul className="border-neutral-3 bg-bg-primary absolute top-full left-0 z-10 mt-1 w-24 rounded-lg border py-1 shadow-md">
+                  {(['IN_PROGRESS', 'DONE'] as const).map((status) => (
+                    <li key={status}>
+                      <button
+                        type="button"
+                        onClick={() => changeVideoStatus(status)}
+                        className="hover:bg-neutral-2 text-caption-lg text-neutral-10 block w-full px-3 py-2 text-left"
+                      >
+                        {status === 'DONE' ? '완료' : '진행중'}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-caption-lg text-neutral-6">

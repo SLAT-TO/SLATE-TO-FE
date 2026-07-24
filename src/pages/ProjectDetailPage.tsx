@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { deleteProject } from '../api/projects'
+import { getMe } from '../api/users'
 import ActionMenu from '../components/ActionMenu'
 import { Avatar } from '../components/Avatar'
 import ConfirmModal from '../components/ConfirmModal'
 import Tabs from '../components/Tabs'
-import VideoFeedbackTab from '../domains/workspace/VideoFeedbackTab'
+import VideoFeedbackTab, { VideoDetailView } from '../domains/workspace/VideoFeedbackTab'
 import ProjectSettingsView from '../domains/workspace/ProjectSettingsView'
 import DashboardNoticeCard from '../domains/workspace/DashboardNoticeCard'
 import DashboardTodayScheduleCard from '../domains/workspace/DashboardTodayScheduleCard'
@@ -39,8 +40,16 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   const [tab, setTab] = useState('dashboard')
   const [view, setView] = useState<'main' | 'settings'>('main')
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null)
+  const [meId, setMeId] = useState<number | null>(null)
   /** 활동 완료 토글 — API 연동 전 로컬 상태 */
   const [checkedActivityIds, setCheckedActivityIds] = useState<Set<number>>(() => new Set())
+
+  useEffect(() => {
+    getMe()
+      .then((me) => setMeId(me.id))
+      .catch(() => setMeId(null))
+  }, [])
 
   if (loading) {
     return <p className="text-body-sm text-neutral-6">불러오는 중…</p>
@@ -77,6 +86,17 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
           setProject(updated)
           setView('main')
         }}
+      />
+    )
+  }
+
+  if (selectedVideoId !== null) {
+    return (
+      <VideoDetailView
+        projectId={projectId}
+        videoId={selectedVideoId}
+        meId={meId}
+        onBack={() => setSelectedVideoId(null)}
       />
     )
   }
@@ -203,7 +223,9 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         </p>
       )}
 
-      {tab === 'feedback' && <VideoFeedbackTab projectId={projectId} />}
+      {tab === 'feedback' && (
+        <VideoFeedbackTab projectId={projectId} onSelectVideo={setSelectedVideoId} />
+      )}
 
       <ConfirmModal
         isOpen={deleteOpen}
