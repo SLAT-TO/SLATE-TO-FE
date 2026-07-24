@@ -1,7 +1,6 @@
 import type { ProjectNoticeListItem } from '../../types/notice'
 import bellIcon from '../../assets/icons/bell.svg?raw'
-
-const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
+import { CARD_BASE } from '../../styles/card'
 
 /** assets/icons SVG(raw) — fill=currentColor라 부모 text 색으로 칠해짐 */
 function AssetIcon({ svg, className }: { svg: string; className: string }) {
@@ -32,9 +31,7 @@ export default function DashboardNoticeCard({ notices }: DashboardNoticeCardProp
   return (
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">공지 사항</h2>
-      <div
-        className={`flex min-h-[183px] flex-col justify-center rounded-[10px] bg-white p-4 ${CARD_SHADOW}`}
-      >
+      <div className={`flex min-h-[183px] flex-col justify-center ${CARD_BASE} p-4`}>
         {notices.length === 0 ? (
           <p className="text-caption-lg text-neutral-6">등록된 공지가 없습니다.</p>
         ) : (

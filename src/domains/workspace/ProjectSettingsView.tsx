@@ -6,6 +6,7 @@ import Input from '../../components/Input'
 import Select from '../../components/Select'
 import TextArea from '../../components/TextArea'
 import { PROJECT_LENGTH_TYPE_LABEL, PROJECT_TYPE_LABEL } from '../../constants/projectLabels'
+import { CARD_BASE } from '../../styles/card'
 import { navigate } from '../../utils/navigation'
 import type { Project } from '../../types/project'
 
@@ -70,7 +71,7 @@ export default function ProjectSettingsView({
     <section className="flex flex-col gap-6">
       <h1 className="text-head-md text-neutral-11 font-bold">프로젝트 설정</h1>
 
-      <div className="flex flex-col gap-8 rounded-[10px] bg-white p-8 shadow-[var(--shadow-card)]">
+      <div className={`flex flex-col gap-8 ${CARD_BASE} p-8`}>
         <Input
           value={title}
           onChange={setTitle}
