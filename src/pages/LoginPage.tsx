@@ -16,9 +16,15 @@ export function LoginPage() {
         backgroundImage: 'linear-gradient(115deg, #9ff0ff 33.5%, #b9d6ff 98%)',
       }}
     >
-      <img src={loginBg} alt="" className="pointer-events-none absolute inset-0 size-full object-cover" />
+      <img
+        src={loginBg}
+        alt=""
+        className="pointer-events-none absolute inset-0 size-full object-cover"
+      />
 
-      <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">SLATE - TO</p>
+      <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">
+        SLATE - TO
+      </p>
 
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-10 px-4 py-16">
         <div className="flex w-full max-w-[1062px] flex-col items-center gap-10">
