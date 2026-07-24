@@ -33,9 +33,15 @@ export function TermsPage() {
         backgroundImage: 'linear-gradient(118deg, #9ff0ff 33.5%, #b9d6ff 98%)',
       }}
     >
-      <img src={termsBg} alt="" className="pointer-events-none absolute inset-0 size-full object-cover" />
+      <img
+        src={termsBg}
+        alt=""
+        className="pointer-events-none absolute inset-0 size-full object-cover"
+      />
 
-      <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">SLATE - TO</p>
+      <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">
+        SLATE - TO
+      </p>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
         <div className="bg-neutral-1 flex w-full max-w-[1062px] flex-col gap-12 rounded-xl p-12 shadow-[0_3px_12px_rgba(169,204,244,0.15)]">
@@ -48,7 +54,12 @@ export function TermsPage() {
           </div>
 
           <div className="flex flex-col gap-5">
-            <Choice type="checkbox" checked={allAgreed} onChange={toggleAll} label="모두 동의합니다." />
+            <Choice
+              type="checkbox"
+              checked={allAgreed}
+              onChange={toggleAll}
+              label="모두 동의합니다."
+            />
             <div className="border-neutral-5 flex flex-col gap-3 border-t pt-5">
               {TERMS.map((t) => (
                 <Choice
