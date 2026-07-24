@@ -2,6 +2,11 @@
 @import 'tailwindcss';
 
 @theme {
+  /* Breakpoint — 태블릿(md)부터 반응형 시작, 모바일은 md 레이아웃을 축소·핀치줌으로 사용 */
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+
   /* Font */
   --font-sans: 'Pretendard', sans-serif;
 
@@ -70,9 +75,21 @@
 
   /* Border */
   --color-border: #afafaf;
+  --color-border-input: #e5e7eb;
 
   /* Gradation */
+
+  /* Panel shadow (Select·ActionMenu 드롭다운) */
+  --shadow-panel: 0 3px 12px rgba(169, 204, 244, 0.25);
   --color-gradation: #a9ccf4;
+
+  /* Tag (Figma 디자인 시스템) */
+  --color-tag-role-bg: #eaf1ff;
+  --color-tag-role-text: #5584ee;
+  --color-tag-active-bg: #eaf7e6;
+  --color-tag-active-text: #357a2b;
+  --color-tag-done-bg: #e2e8f0;
+  --color-tag-done-text: #64748b;
 
   /* Semantic - Success */
   --color-success-light: #dcfce7;
