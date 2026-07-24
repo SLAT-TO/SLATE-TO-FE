@@ -70,9 +70,7 @@ export default function ProjectSettingsView({
     <section className="flex flex-col gap-6">
       <h1 className="text-head-md text-neutral-11 font-bold">프로젝트 설정</h1>
 
-      <div
-        className={`flex flex-col gap-8 rounded-[10px] bg-white p-8 shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)]`}
-      >
+      <div className="flex flex-col gap-8 rounded-[10px] bg-white p-8 shadow-[var(--shadow-card)]">
         <Input
           value={title}
           onChange={setTitle}
