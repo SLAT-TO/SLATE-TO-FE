@@ -25,6 +25,7 @@ import { Button } from '../../components/Button'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import YouTubeIframePlayer from '../../components/YouTubeIframePlayer'
+import { CARD_BASE } from '../../styles/card'
 import type { VideoDetail, VideoListItem, VideoProgressStatus } from '../../types/video'
 import type { Feedback, FeedbackReply } from '../../types/feedback'
 import type { ReferenceFile } from '../../types/video'
@@ -637,7 +638,9 @@ export function VideoDetailView({
           </div>
         </div>
 
-        <div className="flex min-h-[144px] w-full flex-col gap-4 rounded-[10px] bg-white p-4 shadow-[var(--shadow-card)] lg:sticky lg:top-6 lg:h-[calc(100vh-140px)] lg:w-[300px] lg:shrink-0">
+        <div
+          className={`flex min-h-[144px] w-full flex-col gap-4 ${CARD_BASE} p-4 lg:sticky lg:top-6 lg:h-[calc(100vh-140px)] lg:w-[300px] lg:shrink-0`}
+        >
           <div className="flex shrink-0 items-center justify-between">
             <h2 className="text-head-sm text-neutral-11 font-semibold">피드백</h2>
             <div className="flex items-center gap-2">
