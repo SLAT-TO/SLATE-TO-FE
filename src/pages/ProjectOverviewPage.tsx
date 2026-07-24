@@ -12,11 +12,10 @@ const MOCK_PORTFOLIO: Portfolio = {
   roles: ['DIRECTOR', 'EDITOR'],
   description: '고등학생들의 연애와 우정을 그린 웹드라마 연출 및 편집을 담당했습니다.',
   comment: '감정선과 몰입감을 살리는 연출을 중점으로 작업했습니다.',
-  youtubeUrl: '',
+  youtubeUrl: 'https://www.youtube.com/watch?v=hDBSEV7ZwZs',
   thumbnailUrl: 'https://placehold.co/300x160',
 }
 
-// UserRole → 한글 라벨 매핑. 매핑 함수 확정되면 교체 (팀장 답변 대기).
 const ROLE_LABEL_MAP: Record<string, string> = {
   DIRECTOR: '연출',
   EDITOR: '편집',
@@ -83,7 +82,7 @@ function ProjectOverviewPage() {
             </a>
           </OverviewField>
         ) : (
-          <label className="bg-neutral-1 hover:bg-neutral-2 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg py-12">
+          <label className="bg-neutral-2 hover:bg-neutral-3 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg py-12 shadow-xs">
             <input
               type="file"
               accept=".png,.pdf,.doc,.docx,.jpg,.jpeg"
@@ -91,8 +90,7 @@ function ProjectOverviewPage() {
               onChange={(e) => {
                 const file = e.target.files?.[0]
                 if (file) {
-                  // 파일 업로드 API 연동 필요 (일요일 mock 연동 시).
-                  // 개요 화면 내 업로드 여부는 디자이너 확인 대기 중 (피그마 댓글).
+                  // 파일 업로드 API 연동 필요
                   console.log('선택된 파일:', file.name)
                 }
               }}
