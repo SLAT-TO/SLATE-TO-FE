@@ -494,23 +494,25 @@ export function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetai
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="text-caption-lg text-neutral-6">참여 인원</span>
-          {members.length > 0 && (
-            <div className="flex -space-x-2">
-              {members.slice(0, 4).map((member) => (
-                <Avatar
-                  key={member.id}
-                  src={member.profileImageUrl ?? undefined}
-                  alt={member.name}
-                  size={28}
-                  fallback={member.name.slice(0, 1)}
-                  border="gray"
-                  className="bg-neutral-2"
-                />
-              ))}
-            </div>
-          )}
+        <div className="flex shrink-0 items-center justify-end gap-16">
+          <div className="flex items-center gap-4">
+            <span className="text-caption-lg text-neutral-11 font-semibold">참여 인원</span>
+            {members.length > 0 && (
+              <div className="flex -space-x-2">
+                {members.slice(0, 4).map((member) => (
+                  <Avatar
+                    key={member.id}
+                    src={member.profileImageUrl ?? undefined}
+                    alt={member.name}
+                    size={28}
+                    fallback={member.name.slice(0, 1)}
+                    border="gray"
+                    className="bg-neutral-2"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
           <Button variant="primary" size="sm" onClick={inviteMember}>
             {inviteCopied ? '링크 복사됨' : '+ 초대'}
           </Button>
@@ -640,30 +642,32 @@ export function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetai
         </div>
 
         <div className="flex min-h-[144px] w-full flex-col gap-4 rounded-[10px] bg-white p-4 shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)] lg:sticky lg:top-6 lg:h-[calc(100vh-140px)] lg:w-[300px] lg:shrink-0">
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center justify-between">
             <h2 className="text-head-sm text-neutral-11 font-semibold">피드백</h2>
-            <button
-              type="button"
-              onClick={() => setFilter('all')}
-              className={`text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold ${
-                filter === 'all'
-                  ? 'bg-success-light text-success-dark'
-                  : 'bg-neutral-3 text-neutral-6'
-              }`}
-            >
-              전체
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilter('unresolved')}
-              className={`text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold ${
-                filter === 'unresolved'
-                  ? 'bg-success-light text-success-dark'
-                  : 'bg-neutral-3 text-neutral-6'
-              }`}
-            >
-              해결 안됨
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFilter('all')}
+                className={`text-caption-sm h-6 w-[72px] rounded-[3px] font-semibold ${
+                  filter === 'all'
+                    ? 'bg-tag-active-bg text-tag-active-text'
+                    : 'bg-tag-done-bg text-tag-done-text'
+                }`}
+              >
+                전체
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilter('unresolved')}
+                className={`text-caption-sm h-6 w-[72px] rounded-[3px] font-semibold ${
+                  filter === 'unresolved'
+                    ? 'bg-tag-active-bg text-tag-active-text'
+                    : 'bg-tag-done-bg text-tag-done-text'
+                }`}
+              >
+                해결 안됨
+              </button>
+            </div>
           </div>
 
           <ul className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
