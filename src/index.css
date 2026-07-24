@@ -18,7 +18,7 @@
 
   /* Font */
   --font-sans: 'Pretendard', sans-serif;
-  /* 로그인 등 진입 화면 워드마크 전용 (Figma 지정 폰트) */
+  /* 로그인/랜딩 등 진입 화면 워드마크 전용 (Figma 지정 폰트) */
   --font-logo: 'Dela Gothic One', sans-serif;
 
   /* Tailwind v4는 폰트 크기 유틸(text-head-lg 등)을 --text-* 네임스페이스에서 생성한다.
