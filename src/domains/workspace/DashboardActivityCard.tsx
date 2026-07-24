@@ -1,7 +1,7 @@
 import Choice from '../../components/Choice'
 import type { ProjectActivity } from '../../types/project'
 
-const CARD_SHADOW = 'shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)]'
+const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
 
 interface DashboardActivityCardProps {
   activities: ProjectActivity[]

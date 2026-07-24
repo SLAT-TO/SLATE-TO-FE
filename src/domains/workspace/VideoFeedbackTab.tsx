@@ -637,7 +637,7 @@ export function VideoDetailView({
           </div>
         </div>
 
-        <div className="flex min-h-[144px] w-full flex-col gap-4 rounded-[10px] bg-white p-4 shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)] lg:sticky lg:top-6 lg:h-[calc(100vh-140px)] lg:w-[300px] lg:shrink-0">
+        <div className="flex min-h-[144px] w-full flex-col gap-4 rounded-[10px] bg-white p-4 shadow-[var(--shadow-card)] lg:sticky lg:top-6 lg:h-[calc(100vh-140px)] lg:w-[300px] lg:shrink-0">
           <div className="flex shrink-0 items-center justify-between">
             <h2 className="text-head-sm text-neutral-11 font-semibold">피드백</h2>
             <div className="flex items-center gap-2">

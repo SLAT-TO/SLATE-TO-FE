@@ -1,7 +1,7 @@
 import type { ProjectNoticeListItem } from '../../types/notice'
 import bellIcon from '../../assets/icons/bell.svg?raw'
 
-const CARD_SHADOW = 'shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)]'
+const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
 
 /** assets/icons SVG(raw) — fill=currentColor라 부모 text 색으로 칠해짐 */
 function AssetIcon({ svg, className }: { svg: string; className: string }) {
