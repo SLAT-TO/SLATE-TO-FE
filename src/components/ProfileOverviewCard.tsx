@@ -16,15 +16,20 @@ function ProfileOverviewCard({
   onEditClick,
 }: ProfileOverviewCardProps) {
   return (
-    <section className="border-border bg-surface lg:divide-border flex flex-col gap-6 rounded-xl border p-6 lg:flex-row lg:gap-0 lg:divide-x">
+    <section className="flex flex-col gap-6 rounded-xl bg-white p-6 shadow-xs lg:flex-row lg:gap-0">
+      {/* 프로필 영역 — 절반 */}
       <div className="lg:w-1/2 lg:pr-6">
         <ProfileSummaryCard profile={profile} onEditClick={onEditClick} />
       </div>
-      <div className="border-border border-t pt-6 lg:w-1/4 lg:border-t-0 lg:px-6 lg:pt-0">
-        <StatBarSection title="많이 한 프로젝트 유형" items={projectTypeStats} />
-      </div>
-      <div className="border-border border-t pt-6 lg:w-1/4 lg:border-t-0 lg:pt-0 lg:pl-6">
-        <StatBarSection title="많이 한 역할" items={roleStats} />
+
+      {/* 통계 영역 — 절반, 사이에만 세로선 */}
+      <div className="flex flex-col gap-8 border-t border-[#A3A3A3] pt-6 lg:w-1/2 lg:flex-row lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+        <div className="flex-1">
+          <StatBarSection title="많이 한 프로젝트 유형" items={projectTypeStats} />
+        </div>
+        <div className="flex-1">
+          <StatBarSection title="많이 한 역할" items={roleStats} />
+        </div>
       </div>
     </section>
   )

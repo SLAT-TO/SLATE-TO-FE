@@ -2,13 +2,14 @@
 import ProfileOverviewCard from '../components/ProfileOverviewCard'
 import ProjectHistoryCard from '../components/ProjectHistoryCard'
 import type { ProfileSummary, StatItem, ProjectHistoryItem } from '../types/MyPage.types'
+import { navigate } from '../utils/navigation'
 
 // 아래 하드코딩 데이터는 추후 API 연동 시 교체
 // GET /api/users/me, GET /api/users/me/stats, GET /api/users/me/projects 등으로 대체 예정
 // 라벨(브랜드 영상, 연출 등)은 constants/videoCategories.ts, constants/roles.ts의 상수 참조로 교체할 것
 
 // 빈 상태 / 일반 상태 전환용 테스트 플래그 (API 연동 시 제거)
-const IS_EMPTY_TEST = true
+const IS_EMPTY_TEST = false
 
 const MOCK_PROFILE_FILLED: ProfileSummary = {
   profileImageUrl: 'https://placehold.co/64x64',
@@ -57,8 +58,8 @@ const MOCK_PROJECT_HISTORY: ProjectHistoryItem[] = [
   {
     id: '1',
     title: '프로젝트 명',
-    thumbnailUrl: 'https://placehold.co/300x160',
-    tags: ['단편', '촬영감독', '프로젝트유형'],
+    thumbnailUrl: 'https://img.youtube.com/vi/hDBSEV7ZwZs/hqdefault.jpg',
+    tags: ['드라마', '프로젝트 길이', '촬영감독'],
   },
   {
     id: '2',
@@ -81,24 +82,28 @@ const MOCK_PROJECT_HISTORY: ProjectHistoryItem[] = [
 ]
 
 function MyPage() {
-  // 프로필 수정 폼(Frame 2147229201) 라우트 확정되면 이동 로직 연결
+  // 프로필 수정 폼 라우트 확정되면 이동 로직 연결
   const handleEditClick = () => {
-    // TODO: 프로필 수정 페이지로 이동
+    navigate('/mypage/edit')
   }
 
-  // 프로젝트 수정 폼(Frame 2147229203)으로 이동하는 라우팅 연결 필요
-  const handleProjectEdit = (id: string) => {
-    console.log('프로젝트 수정:', id)
+  // 카드 클릭->  프로젝트 개요
+  const handleProjectClick = (id: string) => {
+    navigate(`/mypage/project/${id}`)
   }
 
-  // 삭제 확인 모달(ConfirmModal) 연결 + 실제 삭제 API 연동 필요
+  // 삭제 확인 모달 연결 + 실제 삭제 API 연동 필요
   const handleProjectDelete = (id: string) => {
     console.log('프로젝트 삭제:', id)
   }
 
-  // 프로젝트 추가 폼(Frame 2147229202)으로 이동하는 라우팅 연결 필요
+  // 프로젝트 추가 폼으로 이동하는 라우팅 연결 필요
   const handleAddProject = () => {
-    console.log('프로젝트 추가')
+    navigate('/mypage/project/new')
+  }
+
+  const handleProjectEdit = (id: string) => {
+    navigate(`/mypage/project/${id}/edit`)
   }
 
   const profile = IS_EMPTY_TEST ? MOCK_PROFILE_EMPTY : MOCK_PROFILE_FILLED
@@ -127,7 +132,7 @@ function MyPage() {
             <button
               type="button"
               onClick={handleAddProject}
-              className="border-border text-text-primary hover:bg-surface-hover rounded-md border px-3 py-1.5 text-sm"
+              className="border-primary text-primary hover:bg-main-1 rounded-md border px-3 py-1.5 text-sm"
             >
               + 추가하기
             </button>
@@ -155,6 +160,7 @@ function MyPage() {
                 project={project}
                 onEdit={handleProjectEdit}
                 onDelete={handleProjectDelete}
+                onClick={handleProjectClick}
               />
             ))}
           </div>

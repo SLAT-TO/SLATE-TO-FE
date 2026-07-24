@@ -1,19 +1,16 @@
 // src/components/ProjectHistoryCard.tsx
 import { useEffect, useRef, useState } from 'react'
 import type { ProjectHistoryItem } from '../types/MyPage.types'
+import Tag from './Tag'
 
 interface ProjectHistoryCardProps {
   project: ProjectHistoryItem
   onEdit?: (id: string) => void
   onDelete?: (id: string) => void
+  onClick?: (id: string) => void
 }
 
-/**
- * 마이페이지 "프로젝트 이력" 카드
- * 레이아웃: 제목 + 케밥(⋮) → 썸네일 → 태그 순 (피그마 Frame 2147228773 기준)
- * 케밥 클릭 시 "수정하기 / 삭제하기" 드롭다운 노출
- */
-function ProjectHistoryCard({ project, onEdit, onDelete }: ProjectHistoryCardProps) {
+function ProjectHistoryCard({ project, onEdit, onDelete, onClick }: ProjectHistoryCardProps) {
   const { id, title, thumbnailUrl, tags } = project
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -32,25 +29,31 @@ function ProjectHistoryCard({ project, onEdit, onDelete }: ProjectHistoryCardPro
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isMenuOpen])
 
-  const handleEditClick = () => {
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // 추가
     setIsMenuOpen(false)
     onEdit?.(id)
   }
 
-  const handleDeleteClick = () => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // 추가
     setIsMenuOpen(false)
     onDelete?.(id)
   }
-
   return (
-    <article className="border-border bg-surface overflow-hidden rounded-xl border">
-      {/* 제목 + 케밥 메뉴 */}
+    <article
+      onClick={() => onClick?.(id)}
+      className="cursor-pointer overflow-hidden rounded-xl bg-white shadow-xs"
+    >
       <div className="relative flex items-center justify-between p-3 pb-2">
         <h4 className="text-text-primary text-sm font-semibold">{title}</h4>
 
         <button
           type="button"
-          onClick={() => setIsMenuOpen((prev) => !prev)}
+          onClick={(e) => {
+            e.stopPropagation() // 카드 클릭 막기 ★
+            setIsMenuOpen((prev) => !prev)
+          }}
           aria-label="프로젝트 옵션 더보기"
           aria-haspopup="menu"
           aria-expanded={isMenuOpen}
@@ -97,17 +100,14 @@ function ProjectHistoryCard({ project, onEdit, onDelete }: ProjectHistoryCardPro
       </div>
 
       {/* 썸네일 */}
-      <img src={thumbnailUrl} alt={title} className="h-32 w-full object-cover" />
+      <div className="px-3">
+        <img src={thumbnailUrl} alt={title} className="h-32 w-full rounded-lg object-cover" />
+      </div>
 
       {/* 태그 */}
       <div className="flex flex-wrap gap-1.5 p-3 pt-2">
         {tags.map((tag) => (
-          <span
-            key={tag}
-            className="bg-surface-muted text-text-secondary rounded-full px-2 py-0.5 text-xs"
-          >
-            {tag}
-          </span>
+          <Tag key={tag}>{tag}</Tag>
         ))}
       </div>
     </article>
