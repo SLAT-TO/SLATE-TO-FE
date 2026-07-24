@@ -36,9 +36,15 @@ export function InviteAcceptPage() {
         backgroundImage: 'linear-gradient(118deg, #9ff0ff 33.5%, #b9d6ff 98%)',
       }}
     >
-      <img src={inviteBg} alt="" className="pointer-events-none absolute inset-0 size-full object-cover" />
+      <img
+        src={inviteBg}
+        alt=""
+        className="pointer-events-none absolute inset-0 size-full object-cover"
+      />
 
-      <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">SLATE - TO</p>
+      <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">
+        SLATE - TO
+      </p>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
         {step === 'role' && (
@@ -86,7 +92,12 @@ export function InviteAcceptPage() {
           <Card>
             <div className="flex flex-col items-center gap-3">
               <p className="text-head-lg text-neutral-10 font-bold">이용 약관 동의</p>
-              <Choice type="checkbox" checked={allAgreed} onChange={setAllAgreed} label="모두 동의합니다." />
+              <Choice
+                type="checkbox"
+                checked={allAgreed}
+                onChange={setAllAgreed}
+                label="모두 동의합니다."
+              />
             </div>
             <div className="flex flex-col gap-4">
               <Choice
