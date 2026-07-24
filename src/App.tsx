@@ -1,5 +1,6 @@
 import MainLayout from './layouts/MainLayout'
 import { usePathname } from './hooks/usePathname'
+import { LoginPage } from './pages/LoginPage'
 
 function AppRoutes({ pathname }: { pathname: string }) {
   if (pathname === '/' || pathname === '') {
@@ -24,13 +25,13 @@ function AppRoutes({ pathname }: { pathname: string }) {
 }
 
 /** /login 등 — 각 기능 PR에서 경로 추가 */
-const FULLSCREEN_PATHS: string[] = []
+const FULLSCREEN_PATHS: string[] = ['/login']
 
 function App() {
   const pathname = usePathname()
 
   if (FULLSCREEN_PATHS.includes(pathname)) {
-    // return <LoginPage /> 등
+    return <LoginPage />
   }
 
   return (
