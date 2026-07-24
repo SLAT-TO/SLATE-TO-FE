@@ -9,6 +9,7 @@ import {
 import ActionMenu from '../../components/ActionMenu'
 import { Button } from '../../components/Button'
 import ConfirmModal from '../../components/ConfirmModal'
+import FileInput from '../../components/FileInput'
 import InlineIcon from '../../components/InlineIcon'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
@@ -165,10 +166,10 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
       <Modal isOpen={uploadOpen} onClose={() => setUploadOpen(false)}>
         <div className="bg-bg-primary flex w-[420px] flex-col gap-3 rounded-lg p-5">
           <h3 className="text-body-sm text-neutral-11 font-semibold">파일 추가</h3>
-          <input
-            type="file"
-            onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
-            className="text-caption-lg text-neutral-9"
+          <FileInput
+            value={uploadFile ? [uploadFile] : []}
+            onChange={(files) => setUploadFile(files[0] ?? null)}
+            hint="첨부가능 파일 형식 (Png, Pdf, Word, Jpg) 최대 5GB"
           />
           <TextArea
             value={description}
