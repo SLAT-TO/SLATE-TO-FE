@@ -1,5 +1,6 @@
 import MainLayout from './layouts/MainLayout'
 import HomePage from './pages/HomePage'
+import InvitationAcceptPage from './pages/InvitationAcceptPage'
 import ProjectDetailPage from './pages/ProjectDetailPage'
 import WorkspacePage from './pages/WorkspacePage'
 import { usePathname } from './hooks/usePathname'
@@ -13,6 +14,11 @@ function AppRoutes({ pathname }: { pathname: string }) {
       return <p className="text-body-sm text-warning">잘못된 프로젝트 경로입니다.</p>
     }
     return <ProjectDetailPage projectId={projectId} />
+  }
+
+  const invitationMatch = matchPath('/invitations/:token', pathname)
+  if (invitationMatch) {
+    return <InvitationAcceptPage token={invitationMatch.token} />
   }
 
   if (pathname === '/workspace') {

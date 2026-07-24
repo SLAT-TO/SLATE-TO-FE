@@ -112,6 +112,8 @@ export type MockDb = {
     projectId: number
     inviterName: string
     expiresAt: string
+    /** 서버가 명시적으로 관리하는 상태. 만료 여부는 expiresAt 기준으로 별도 계산 */
+    status: 'PENDING' | 'ACCEPTED'
   }>
 }
 
@@ -435,6 +437,7 @@ export const db: MockDb = {
       projectId: 1,
       inviterName: '슬레이투',
       expiresAt: '2026-12-31T00:00:00Z',
+      status: 'PENDING',
     },
   ],
 }

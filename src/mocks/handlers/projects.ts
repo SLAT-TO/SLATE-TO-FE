@@ -183,9 +183,13 @@ export const projectHandlers = [
       projectId: project.id,
       inviterName: safeUser()!.nickname,
       expiresAt: '2026-12-31T00:00:00Z',
+      status: 'PENDING' as const,
     }
     db.invitations.push(invitation)
-    return HttpResponse.json(created({ token, expiresAt: invitation.expiresAt }), { status: 201 })
+    const inviteUrl = `${self.location.origin}/invitations/${token}`
+    return HttpResponse.json(created({ inviteUrl, expiresAt: invitation.expiresAt }), {
+      status: 201,
+    })
   }),
 
   http.get(paths.projectInvitations.byToken(':token'), ({ params }) => {
@@ -195,26 +199,56 @@ export const projectHandlers = [
     }
     const project = db.projects.find((p) => p.id === invitation.projectId)
     if (!project) return notFound()
+    const isExpired = new Date(invitation.expiresAt).getTime() < Date.now()
     return HttpResponse.json(
       ok({
         projectId: project.id,
         projectTitle: project.title,
         inviterName: invitation.inviterName,
-        status: project.status,
+        status: isExpired ? 'EXPIRED' : invitation.status,
         expiresAt: invitation.expiresAt,
       }),
       { status: 200 },
     )
   }),
 
-  http.post(paths.projectInvitations.accept(':token'), ({ params }) => {
+  http.post(paths.projectInvitations.accept(':token'), async ({ request, params }) => {
     const user = safeUser()
     if (!user) return unauthorized()
     const invitation = db.invitations.find((i) => i.token === params.token)
     if (!invitation) {
       return domainError('INVITE400', '유효하지 않거나 만료된 초대 링크입니다.')
     }
-    return HttpResponse.json(ok({ projectId: invitation.projectId, joined: true }), { status: 200 })
+    if (new Date(invitation.expiresAt).getTime() < Date.now()) {
+      return domainError('INVITE400', '유효하지 않거나 만료된 초대 링크입니다.')
+    }
+    if (db.members.some((m) => m.userId === user.id)) {
+      return domainError('PROJECT409', '이미 프로젝트에 참여 중입니다.')
+    }
+    const body = (await request.json()) as { roleNames?: string[] }
+    if (!body.roleNames?.length) return badRequest()
+    const memberId = allocId()
+    const joinedAt = new Date().toISOString()
+    db.members.unshift({
+      id: memberId,
+      userId: user.id,
+      name: user.nickname,
+      profileImageUrl: user.profileImageUrl,
+      email: user.email,
+      region: user.region ?? user.location,
+      jobRole: body.roleNames[0],
+      roleNames: body.roleNames,
+      isAdmin: false,
+    })
+    return HttpResponse.json(
+      ok({
+        projectId: invitation.projectId,
+        memberId,
+        roleNames: body.roleNames,
+        joinedAt,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.get(paths.projects.activities(':projectId'), ({ request, params }) => {
