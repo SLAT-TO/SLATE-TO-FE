@@ -21,12 +21,14 @@ export function LoginPage() {
       <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">SLATE - TO</p>
 
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-10 px-4 py-16">
-        <div className="flex w-full max-w-[560px] flex-col items-center gap-10">
-          <img src={loginAvatar} alt="" className="size-[100px] rounded-full object-cover" />
+        <div className="flex w-full max-w-[1062px] flex-col items-center gap-10">
+          <div className="flex w-full max-w-[560px] flex-col items-center gap-10">
+            <img src={loginAvatar} alt="" className="size-[100px] rounded-full object-cover" />
 
-          <div className="text-head-md text-neutral-1 text-center font-bold">
-            <p>영상 제작의 흐름을 하나로,</p>
-            <p>영상 제작자 커뮤니케이션 서비스, 슬레이투</p>
+            <div className="text-head-md text-neutral-1 text-center font-bold">
+              <p>영상 제작의 흐름을 하나로,</p>
+              <p>영상 제작자 커뮤니케이션 서비스, 슬레이투</p>
+            </div>
           </div>
 
           <div className="flex w-full flex-col gap-4">
@@ -60,8 +62,8 @@ export function LoginPage() {
             </button>
           </div>
 
-          <div className="flex w-full flex-col gap-4">
-            <div className="text-caption-lg text-neutral-10 flex items-center gap-4">
+          <div className="flex w-full flex-col items-center gap-4">
+            <div className="text-caption-lg text-neutral-10 flex w-full items-center gap-4">
               <span className="border-neutral-10/30 h-px flex-1 border-t" />
               SNS 계정으로 로그인
               <span className="border-neutral-10/30 h-px flex-1 border-t" />
@@ -69,13 +71,13 @@ export function LoginPage() {
 
             <button
               type="button"
-              className="bg-neutral-1 border-neutral-5 text-body-sm text-neutral-10 h-12 w-full rounded-lg border"
+              className="bg-neutral-1 border-neutral-5 text-body-sm text-neutral-10 h-12 w-full max-w-[400px] rounded-lg border"
             >
               구글 로그인 / 회원가입
             </button>
             <button
               type="button"
-              className="border-neutral-5 text-body-sm text-neutral-10 h-12 w-full rounded-lg border bg-[#fee500]"
+              className="border-neutral-5 text-body-sm text-neutral-10 h-12 w-full max-w-[400px] rounded-lg border bg-[#fee500]"
             >
               카카오 로그인 / 회원가입
             </button>
