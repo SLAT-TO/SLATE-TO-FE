@@ -68,17 +68,17 @@ function ProfileEditPage() {
             alt="프로필 미리보기"
             className="h-20 w-20 rounded-full object-cover"
           />
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-3">
+          {/* 이름 + 안내문구 수직 세트 & 우측 버튼 레이아웃 */}
+          <div className="flex items-center gap-8">
+            <div className="flex flex-col gap-1">
               <span className="text-text-primary text-lg font-semibold">
                 {values.nickname || '이름'}
               </span>
-              {/* TODO(재희): 파일 선택 → 미리보기 → 업로드 연동 */}
-              <Button variant="secondary" size="sm">
-                변경하기
-              </Button>
+              <span className="text-neutral-5 text-xs">Png, Jpg 파일 5MB 이하</span>
             </div>
-            <span className="text-text-tertiary text-xs">Png, Jpg 파일 50MB 이하</span>
+            <Button variant="secondary" size="sm">
+              변경하기
+            </Button>
           </div>
         </div>
       </section>
