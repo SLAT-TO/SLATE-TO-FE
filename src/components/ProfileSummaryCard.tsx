@@ -23,9 +23,15 @@ function ProfileSummaryCard({ profile, onEditClick }: ProfileSummaryCardProps) {
             {role}
           </span>
         </div>
-        <span className="text-text-secondary text-sm">{region}</span>
+        {region && <span className="text-text-secondary text-sm">{region}</span>}
         <span className="text-text-secondary text-sm">{email}</span>
-        <p className="text-text-secondary mt-2 text-sm whitespace-pre-line">{introduction}</p>
+        <p className="text-text-secondary mt-2 text-sm whitespace-pre-line">
+          {introduction?.trim() ? (
+            introduction
+          ) : (
+            <span className="text-text-tertiary">한 줄 자기소개를 입력해주세요.</span>
+          )}
+        </p>
       </div>
       <button
         type="button"
