@@ -1,5 +1,4 @@
 import { request } from './client'
-import { normalizeVideoList, type BeVideoListRaw } from './normalize'
 import { paths } from './paths'
 import type {
   BookmarkVideoRequest,
@@ -29,12 +28,11 @@ export async function getVideos(
   cursor?: number,
   size = 20,
 ): Promise<VideoListResult> {
-  const result = await request<BeVideoListRaw>({
+  return request({
     method: 'GET',
     url: paths.projects.videos(projectId),
     params: { cursor, size },
   })
-  return normalizeVideoList(result)
 }
 
 export async function createVideo(
@@ -117,7 +115,7 @@ export async function deleteFeedback(feedbackId: number): Promise<null> {
 export async function updateFeedbackStatus(
   feedbackId: number,
   body: UpdateFeedbackStatusRequest,
-): Promise<{ feedbackId: number; status: boolean; updatedAt: string }> {
+): Promise<Feedback> {
   return request({ method: 'PATCH', url: paths.feedbacks.status(feedbackId), data: body })
 }
 

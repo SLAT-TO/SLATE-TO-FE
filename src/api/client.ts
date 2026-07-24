@@ -17,8 +17,6 @@ export function setAccessToken(token: string | null): void {
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '',
   headers: { 'Content-Type': 'application/json' },
-  // refreshToken HttpOnly 쿠키 송수신 (path=/api/v1/auth)
-  withCredentials: true,
 })
 
 apiClient.interceptors.request.use((config) => {

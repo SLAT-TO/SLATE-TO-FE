@@ -10,9 +10,6 @@ interface YouTubeIframePlayerProps {
   className?: string
   /** Player 준비 완료 — v2 Context·seekTo 연동용 */
   onReady?: (player: YT.Player) => void
-  /** true면 유튜브 기본 컨트롤을 숨김 (커스텀 컨트롤 오버레이용) */
-  hideControls?: boolean
-  onStateChange?: (event: YT.PlayerStateChangeEvent) => void
 }
 
 const DEFAULT_TITLE = 'YouTube video player'
@@ -25,21 +22,14 @@ const YouTubeIframePlayer = ({
   title = DEFAULT_TITLE,
   className = '',
   onReady,
-  hideControls = false,
-  onStateChange,
 }: YouTubeIframePlayerProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const onReadyRef = useRef(onReady)
-  const onStateChangeRef = useRef(onStateChange)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     onReadyRef.current = onReady
   }, [onReady])
-
-  useEffect(() => {
-    onStateChangeRef.current = onStateChange
-  }, [onStateChange])
 
   const videoId = extractYouTubeVideoId(videoIdOrUrl)
 
@@ -59,17 +49,12 @@ const YouTubeIframePlayer = ({
         playerVars: {
           rel: 0,
           modestbranding: 1,
-          controls: hideControls ? 0 : 1,
         },
         events: {
           onReady: (event) => {
             if (cancelled) return
             setIsLoading(false)
             onReadyRef.current?.(event.target)
-          },
-          onStateChange: (event) => {
-            if (cancelled) return
-            onStateChangeRef.current?.(event)
           },
         },
       })
@@ -79,7 +64,7 @@ const YouTubeIframePlayer = ({
       cancelled = true
       player?.destroy()
     }
-  }, [videoId, hideControls])
+  }, [videoId])
 
   if (!videoId) {
     return (

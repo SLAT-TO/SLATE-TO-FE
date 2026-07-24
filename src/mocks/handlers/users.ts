@@ -35,10 +35,10 @@ export const userHandlers = [
     }
 
     const body = (await request.json()) as OnboardingRequest
-    if (!body.agreedTerms) {
+    if (!body.agreedTermsOfService || !body.agreedPrivacyPolicy) {
       return badRequest('필수 약관 미동의')
     }
-    if (!body.roles?.length || !body.region || !body.categories?.length || !body.nickname) {
+    if (!body.roles?.length || !body.location || !body.categories?.length || !body.nickname) {
       return badRequest('요청 값이 올바르지 않습니다.')
     }
 
@@ -47,8 +47,7 @@ export const userHandlers = [
     user.bio = body.bio ?? null
     user.profileImageUrl = body.profileImageUrl ?? user.profileImageUrl
     user.roles = body.roles
-    user.region = body.region
-    user.location = body.region
+    user.location = body.location
     user.categories = body.categories
     user.primaryRole = body.roles[0] ?? null
     user.onboardingCompleted = true
@@ -56,7 +55,7 @@ export const userHandlers = [
     return HttpResponse.json(
       ok({
         id: user.id,
-        onboardingCompleted: true,
+        onboardingCompleted: true as const,
         updatedAt,
       }),
       { status: 200 },

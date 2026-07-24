@@ -1,19 +1,6 @@
 import { request } from './client'
-import {
-  normalizeMemberList,
-  normalizeProjectList,
-  toProject,
-  toProjectMember,
-  type BeMember,
-  type BeMemberListResult,
-  type BeProjectListRaw,
-  type BeProjectSummary,
-} from './normalize'
 import { paths } from './paths'
 import type {
-  AcceptInvitationRequest,
-  AcceptInvitationResult,
-  CreateInvitationResult,
   CreateProjectRequest,
   CreateProjectResult,
   CursorPage,
@@ -39,8 +26,7 @@ import type {
 } from '../types/notice'
 
 export async function getProjects(): Promise<Project[]> {
-  const result = await request<BeProjectListRaw>({ method: 'GET', url: paths.projects.root })
-  return normalizeProjectList(result)
+  return request<Project[]>({ method: 'GET', url: paths.projects.root })
 }
 
 export async function createProject(body: CreateProjectRequest): Promise<CreateProjectResult> {
@@ -48,54 +34,41 @@ export async function createProject(body: CreateProjectRequest): Promise<CreateP
 }
 
 export async function getProject(projectId: number): Promise<Project> {
-  const result = await request<BeProjectSummary>({
-    method: 'GET',
-    url: paths.projects.byId(projectId),
-  })
-  return toProject(result)
+  return request<Project>({ method: 'GET', url: paths.projects.byId(projectId) })
 }
 
 export async function updateProject(
   projectId: number,
   body: UpdateProjectRequest,
-): Promise<{ id: number; title?: string; status?: string; updatedAt: string }> {
+): Promise<{ id: number; updatedAt: string }> {
   return request({ method: 'PATCH', url: paths.projects.byId(projectId), data: body })
 }
 
-export async function deleteProject(projectId: number): Promise<null> {
+export async function deleteProject(projectId: number): Promise<{ deletedAt: string }> {
   return request({ method: 'DELETE', url: paths.projects.byId(projectId) })
 }
 
 export async function getProjectMembers(projectId: number): Promise<ProjectMember[]> {
-  const result = await request<BeMemberListResult>({
-    method: 'GET',
-    url: paths.projects.members(projectId),
-  })
-  return normalizeMemberList(result)
+  return request({ method: 'GET', url: paths.projects.members(projectId) })
 }
 
 export async function getProjectMember(
   projectId: number,
   memberId: number,
 ): Promise<ProjectMember> {
-  const result = await request<BeMember>({
-    method: 'GET',
-    url: paths.projects.member(projectId, memberId),
-  })
-  return toProjectMember(result)
+  return request({ method: 'GET', url: paths.projects.member(projectId, memberId) })
 }
 
 export async function updateMemberRole(
   projectId: number,
   memberId: number,
-  roleNames: string[],
+  jobRole: string,
 ): Promise<ProjectMember> {
-  const result = await request<BeMember>({
+  return request({
     method: 'PATCH',
     url: paths.projects.member(projectId, memberId),
-    data: { roleNames },
+    data: { jobRole },
   })
-  return toProjectMember(result)
 }
 
 export async function removeMember(projectId: number, memberId: number): Promise<null> {
@@ -106,7 +79,9 @@ export async function leaveProject(projectId: number): Promise<null> {
   return request({ method: 'DELETE', url: paths.projects.leave(projectId) })
 }
 
-export async function createInvitation(projectId: number): Promise<CreateInvitationResult> {
+export async function createInvitation(
+  projectId: number,
+): Promise<{ token: string; expiresAt: string }> {
   return request({ method: 'POST', url: paths.projects.invitations(projectId) })
 }
 
@@ -116,9 +91,8 @@ export async function getInvitation(token: string): Promise<ProjectInvitation> {
 
 export async function acceptInvitation(
   token: string,
-  body: AcceptInvitationRequest,
-): Promise<AcceptInvitationResult> {
-  return request({ method: 'POST', url: paths.projectInvitations.accept(token), data: body })
+): Promise<{ projectId: number; joined: boolean }> {
+  return request({ method: 'POST', url: paths.projectInvitations.accept(token) })
 }
 
 export async function getProjectActivities(

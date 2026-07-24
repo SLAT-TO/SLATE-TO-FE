@@ -1,54 +1,23 @@
 export type SocialType = 'GOOGLE'
 
-export type UserRole =
-  | 'DIRECTOR'
-  | 'PD'
-  | 'CINEMATOGRAPHER'
-  | 'EDITOR'
-  | 'ART'
-  | 'SOUND'
-  | 'WRITER'
-  | 'LIGHTING'
-  | 'ACTOR'
-  | 'ETC'
+export type UserRole = 'DIRECTOR' | 'EDITOR' | 'CINEMATOGRAPHER' | 'SOUND' | 'PD' | 'ART'
 
 export type UserCategory =
-  | 'YOUTUBE_CONTENT'
-  | 'AD_BRAND'
-  | 'MUSIC_VIDEO'
-  | 'WEDDING_EVENT'
-  | 'DOCUMENTARY'
-  | 'FILM_DRAMA'
-  | 'CORPORATE_PROMO'
-  | 'ETC'
-
-export type UserRegion =
-  | 'SEOUL'
-  | 'GYEONGGI'
-  | 'GANGWON'
-  | 'CHUNGCHEONGNAM'
-  | 'CHUNGCHEONGBUK'
-  | 'JEOLLABUK'
-  | 'JEOLLANAM'
-  | 'GYEONGSANGBUK'
-  | 'GYEONGSANGNAM'
-  | 'JEJU'
-  | 'NATIONWIDE'
+  'FILM' | 'DOCUMENTARY' | 'DRAMA' | 'MUSIC_VIDEO' | 'ENTERTAINMENT' | 'COMMERCIAL'
 
 export type UserStats = {
   projectTypes: Array<{ type: string; label: string; count: number }>
   roles: Array<{ role: string; label: string; count: number }>
 }
 
-/** GET /api/v1/users/me — BE는 region, FE 호환용 location 병행 */
+/** GET /api/v1/users/me — 유저 정보 조회 */
 export type MeProfile = {
   id: number
   email: string
   nickname: string
   profileImageUrl: string | null
   bio: string | null
-  region: UserRegion | string | null
-  location: UserRegion | string | null
+  location: string | null
   socialType: SocialType
   primaryRole: UserRole | null
   roles: UserRole[]
@@ -57,7 +26,7 @@ export type MeProfile = {
   createdAt: string
 }
 
-/** GET /api/v1/users/me/activity-stats — BE 미구현, mock 전용 */
+/** GET /api/v1/users/me/activity-stats — 활동 통계 (Notion DB path 충돌 임시 분리) */
 export type UserActivityStats = UserStats
 
 /** mock DB 내부 저장용 */
@@ -70,19 +39,20 @@ export type PublicUser = {
   nickname: string
   profileImageUrl: string | null
   bio: string | null
-  location: UserRegion | string | null
+  location: string | null
   primaryRole: UserRole | null
   roles: UserRole[]
   categories: UserCategory[]
   stats: UserStats
 }
 
-/** BE UserOnboardingRequest 기준 */
 export type OnboardingRequest = {
-  agreedTerms: boolean
+  agreedTermsOfService: boolean
+  agreedPrivacyPolicy: boolean
+  agreedMarketing?: boolean
   nickname: string
   roles: UserRole[]
-  region: UserRegion | string
+  location: string
   categories: UserCategory[]
   bio?: string
   profileImageUrl?: string
@@ -90,14 +60,14 @@ export type OnboardingRequest = {
 
 export type OnboardingResult = {
   id: number
-  onboardingCompleted: boolean
+  onboardingCompleted: true
   updatedAt: string
 }
 
 export type UpdateProfileRequest = {
   nickname?: string
   bio?: string
-  location?: UserRegion | string
+  location?: string
   profileImageUrl?: string
   roles?: UserRole[]
 }

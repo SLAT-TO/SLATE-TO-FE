@@ -8,24 +8,17 @@ interface Tab {
 interface TabsProps {
   tabs: Tab[]
   defaultTab?: string
-  /** 지정하면 controlled로 동작 — 부모가 탭 상태를 소유할 때 사용(예: 화면 전환 후 되돌아와도 선택 유지) */
-  activeTab?: string
   onChange?: (key: string) => void
 }
 
-export default function Tabs({
-  tabs,
-  defaultTab,
-  activeTab: controlledActiveTab,
-  onChange,
-}: TabsProps) {
-  const [internalActiveTab, setInternalActiveTab] = useState(defaultTab ?? tabs[0]?.key)
-  const activeTab = controlledActiveTab ?? internalActiveTab
+export default function Tabs({ tabs, defaultTab, onChange }: TabsProps) {
+  const [activeTab, setActiveTab] = useState(defaultTab ?? tabs[0]?.key)
 
+  // activeTab이 현재 tabs 목록에 없으면, 렌더링 시점에 안전한 값으로 대체
   const safeActiveTab = tabs.some((tab) => tab.key === activeTab) ? activeTab : tabs[0]?.key
 
   const handleClick = (key: string) => {
-    if (controlledActiveTab === undefined) setInternalActiveTab(key)
+    setActiveTab(key)
     onChange?.(key)
   }
 

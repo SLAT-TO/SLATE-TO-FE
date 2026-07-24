@@ -1,6 +1,4 @@
 import type { ReactNode } from 'react'
-import { usePathname } from '../hooks/usePathname'
-import { navigate } from '../utils/navigation'
 
 function HomeIcon() {
   return (
@@ -31,6 +29,17 @@ function WorkspaceIcon() {
   )
 }
 
+function ProjectIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M3 2C1.895 2 1 2.895 1 4V16C1 17.105 1.895 18 3 18H17C18.105 18 19 17.105 19 16V7L13 2H3Z" />
+      <path d="M13 2V7H19" fill="none" stroke="white" strokeWidth="1.5" />
+      <line x1="5" y1="11" x2="15" y2="11" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="5" y1="14" x2="12" y2="14" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function MatchingIcon() {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="currentColor">
@@ -46,36 +55,22 @@ type NavItem = {
   label: string
   href: string
   icon: ReactNode
-  match?: (pathname: string) => boolean
+  active?: boolean
+  sub?: boolean
 }
 
 const navItems: NavItem[] = [
-  { label: '홈', href: '/', icon: <HomeIcon />, match: (path) => path === '/' },
-  {
-    label: '캘린더',
-    href: '/calendar',
-    icon: <CalendarIcon />,
-    match: (path) => path.startsWith('/calendar'),
-  },
-  {
-    label: '워크스페이스',
-    href: '/workspace',
-    icon: <WorkspaceIcon />,
-    match: (path) => path === '/workspace' || path.startsWith('/workspace/'),
-  },
-  {
-    label: '매칭',
-    href: '/matching',
-    icon: <MatchingIcon />,
-    match: (path) => path.startsWith('/matching'),
-  },
+  { label: '홈', href: '/', icon: <HomeIcon />, active: true },
+  { label: '캘린더', href: '/calendar', icon: <CalendarIcon /> },
+  { label: '워크스페이스', href: '/workspace', icon: <WorkspaceIcon /> },
+  { label: '프로젝트 명', href: '/project', icon: <ProjectIcon />, sub: true },
+  { label: '매칭', href: '/matching', icon: <MatchingIcon /> },
 ]
 
 export default function Sidebar() {
-  const pathname = usePathname()
-
   return (
     <aside className="border-border bg-bg-primary flex h-screen w-[260px] flex-shrink-0 flex-col border-r">
+      {/* 로고 */}
       <div className="flex items-center gap-3 px-5 pt-[51px]">
         <div className="bg-primary flex h-[27px] w-[27px] items-center justify-center rounded-md">
           <span className="text-[11px] font-bold text-white">S</span>
@@ -83,40 +78,34 @@ export default function Sidebar() {
         <span className="text-body-sm text-neutral-11 font-bold">SLAT-TO</span>
       </div>
 
+      {/* 네비게이션 */}
       <nav className="mt-[38px] flex flex-col gap-[5px] px-5">
-        {navItems.map((item) => {
-          const active = item.match?.(pathname) ?? pathname === item.href
-          return (
-            <a
-              key={item.href}
-              href={item.href}
-              onClick={(event) => {
-                event.preventDefault()
-                navigate(item.href)
-              }}
-              className={[
-                'text-caption-lg flex h-8 items-center gap-[13px] rounded-lg',
-                active
-                  ? 'bg-main-1 text-primary w-[144px] px-[7px] font-medium'
-                  : 'text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 w-[144px] px-[7px]',
-              ].join(' ')}
-            >
-              <span className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center">
-                {item.icon}
-              </span>
-              {item.label}
-            </a>
-          )
-        })}
+        {navItems.map((item) => (
+          <a
+            key={item.href}
+            href={item.href}
+            className={[
+              'text-caption-lg flex h-8 items-center gap-[13px] rounded-lg',
+              item.sub ? 'ml-[13px]' : '',
+              item.active
+                ? 'bg-main-1 text-primary w-[144px] px-[7px] font-medium'
+                : 'text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 w-[144px] px-[7px]',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <span className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center">
+              {item.icon}
+            </span>
+            {item.label}
+          </a>
+        ))}
       </nav>
 
+      {/* 하단 고정 영역 */}
       <div className="border-border mt-auto flex flex-col gap-[5px] border-t px-5 py-4">
         <a
           href="/mypage"
-          onClick={(event) => {
-            event.preventDefault()
-            navigate('/mypage')
-          }}
           className="text-caption-lg text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 flex h-8 w-[144px] items-center gap-[13px] rounded-lg px-[7px]"
         >
           <span className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center">
@@ -129,10 +118,6 @@ export default function Sidebar() {
         </a>
         <a
           href="/settings"
-          onClick={(event) => {
-            event.preventDefault()
-            navigate('/settings')
-          }}
           className="text-caption-lg text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 flex h-8 w-[144px] items-center gap-[13px] rounded-lg px-[7px]"
         >
           <span className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center">

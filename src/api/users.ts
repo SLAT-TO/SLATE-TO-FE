@@ -1,5 +1,4 @@
 import { request } from './client'
-import { normalizeMe, type BeMe } from './normalize'
 import { paths } from './paths'
 import type {
   MeProfile,
@@ -18,8 +17,7 @@ import type {
 } from '../types/portfolio'
 
 export async function getMe(): Promise<MeProfile> {
-  const result = await request<BeMe>({ method: 'GET', url: paths.users.me })
-  return normalizeMe(result)
+  return request<MeProfile>({ method: 'GET', url: paths.users.me })
 }
 
 export async function getMyActivityStats(): Promise<UserActivityStats> {
@@ -35,8 +33,7 @@ export async function submitOnboarding(body: OnboardingRequest): Promise<Onboard
 }
 
 export async function updateProfile(body: UpdateProfileRequest): Promise<MeProfile> {
-  const result = await request<BeMe>({ method: 'PATCH', url: paths.users.me, data: body })
-  return normalizeMe(result)
+  return request<MeProfile>({ method: 'PATCH', url: paths.users.me, data: body })
 }
 
 export async function deleteAccount(agreed: boolean): Promise<null> {

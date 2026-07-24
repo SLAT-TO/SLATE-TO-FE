@@ -1,29 +1,17 @@
 import MainLayout from './layouts/MainLayout'
-import HomePage from './pages/HomePage'
-import ProjectDetailPage from './pages/ProjectDetailPage'
-import WorkspacePage from './pages/WorkspacePage'
 import { usePathname } from './hooks/usePathname'
-import { matchPath } from './utils/navigation'
 
 function AppRoutes({ pathname }: { pathname: string }) {
-  const projectMatch = matchPath('/workspace/projects/:projectId', pathname)
-  if (projectMatch) {
-    const projectId = Number(projectMatch.projectId)
-    if (!Number.isFinite(projectId)) {
-      return <p className="text-body-sm text-warning">잘못된 프로젝트 경로입니다.</p>
-    }
-    return <ProjectDetailPage projectId={projectId} />
-  }
-
-  if (pathname === '/workspace') {
-    return <WorkspacePage />
-  }
-
   if (pathname === '/' || pathname === '') {
-    return <HomePage />
+    return (
+      <section className="flex flex-col gap-2">
+        <h1 className="text-head-sm text-neutral-11 font-bold">홈</h1>
+        <p className="text-body-sm text-neutral-6">홈 대시보드는 이후 조립 예정입니다.</p>
+      </section>
+    )
   }
 
-  // /invitations/:token 등 화면 라우트는 각 기능 PR에서 여기에 추가
+  // /workspace, /invitations/:token 등 화면 라우트는 각 기능 PR에서 여기에 추가
 
   return (
     <section className="flex flex-col gap-2">

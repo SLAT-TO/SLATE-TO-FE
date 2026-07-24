@@ -50,9 +50,7 @@ function toFileListItem(file: (typeof db.files)[number]) {
 export const projectHandlers = [
   http.get(paths.projects.root, () => {
     if (!safeUser()) return unauthorized()
-    return HttpResponse.json(ok({ items: db.projects, nextCursor: null, hasNext: false }), {
-      status: 200,
-    })
+    return HttpResponse.json(ok(db.projects), { status: 200 })
   }),
 
   http.post(paths.projects.root, async ({ request }) => {
@@ -65,7 +63,7 @@ export const projectHandlers = [
       !body.description ||
       !body.lengthType ||
       !body.endDate ||
-      !body.roleNames?.length
+      !body.jobRole
     ) {
       return badRequest()
     }
@@ -95,9 +93,8 @@ export const projectHandlers = [
       name: user.nickname,
       profileImageUrl: user.profileImageUrl,
       email: user.email,
-      region: user.region ?? user.location,
-      jobRole: body.roleNames[0],
-      roleNames: body.roleNames,
+      region: user.location,
+      jobRole: body.jobRole,
       isAdmin: true,
     })
 
@@ -106,8 +103,9 @@ export const projectHandlers = [
         id: project.id,
         title: project.title,
         status: project.status,
+        permission: 'ADMIN',
+        startDate: now.slice(0, 10),
         createdAt: now,
-        updatedAt: now,
       }),
       { status: 201 },
     )
@@ -140,61 +138,23 @@ export const projectHandlers = [
   http.get(paths.projects.members(':projectId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     if (!db.projects.some((p) => p.id === Number(params.projectId))) return notFound()
-    const items = db.members.map((m) => ({
-      memberId: m.id,
-      userId: m.userId,
-      nickname: m.name,
-      profileImageUrl: m.profileImageUrl,
-      permission: m.isAdmin ? 'ADMIN' : 'MEMBER',
-      roleNames: m.roleNames?.length ? m.roleNames : [m.jobRole],
-      joinedAt: '2026-06-01T09:00:00Z',
-    }))
-    return HttpResponse.json(ok({ items, memberCount: items.length }), { status: 200 })
+    return HttpResponse.json(ok(db.members), { status: 200 })
   }),
 
   http.get(paths.projects.member(':projectId', ':memberId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const member = db.members.find((m) => m.id === Number(params.memberId))
     if (!member) return notFound()
-    return HttpResponse.json(
-      ok({
-        memberId: member.id,
-        userId: member.userId,
-        nickname: member.name,
-        email: member.email,
-        profileImageUrl: member.profileImageUrl,
-        bio: null,
-        permission: member.isAdmin ? 'ADMIN' : 'MEMBER',
-        roleNames: member.roleNames?.length ? member.roleNames : [member.jobRole],
-        joinedAt: '2026-06-01T09:00:00Z',
-      }),
-      { status: 200 },
-    )
+    return HttpResponse.json(ok(member), { status: 200 })
   }),
 
   http.patch(paths.projects.member(':projectId', ':memberId'), async ({ request, params }) => {
     if (!safeUser()) return unauthorized()
     const member = db.members.find((m) => m.id === Number(params.memberId))
     if (!member) return notFound()
-    const body = (await request.json()) as { roleNames?: string[] }
-    if (body.roleNames?.length) {
-      member.roleNames = body.roleNames
-      member.jobRole = body.roleNames[0]
-    }
-    return HttpResponse.json(
-      ok({
-        memberId: member.id,
-        userId: member.userId,
-        nickname: member.name,
-        email: member.email,
-        profileImageUrl: member.profileImageUrl,
-        bio: null,
-        permission: member.isAdmin ? 'ADMIN' : 'MEMBER',
-        roleNames: member.roleNames,
-        joinedAt: '2026-06-01T09:00:00Z',
-      }),
-      { status: 200 },
-    )
+    const body = (await request.json()) as { jobRole?: string }
+    if (body.jobRole) member.jobRole = body.jobRole
+    return HttpResponse.json(ok(member), { status: 200 })
   }),
 
   http.delete(paths.projects.member(':projectId', ':memberId'), ({ params }) => {
@@ -225,10 +185,7 @@ export const projectHandlers = [
       expiresAt: '2026-12-31T00:00:00Z',
     }
     db.invitations.push(invitation)
-    const inviteUrl = `http://localhost:3000/project-invitations/${token}`
-    return HttpResponse.json(created({ inviteUrl, expiresAt: invitation.expiresAt }), {
-      status: 201,
-    })
+    return HttpResponse.json(created({ token, expiresAt: invitation.expiresAt }), { status: 201 })
   }),
 
   http.get(paths.projectInvitations.byToken(':token'), ({ params }) => {
@@ -243,44 +200,21 @@ export const projectHandlers = [
         projectId: project.id,
         projectTitle: project.title,
         inviterName: invitation.inviterName,
-        status: 'PENDING',
+        status: project.status,
         expiresAt: invitation.expiresAt,
       }),
       { status: 200 },
     )
   }),
 
-  http.post(paths.projectInvitations.accept(':token'), async ({ request, params }) => {
+  http.post(paths.projectInvitations.accept(':token'), ({ params }) => {
     const user = safeUser()
     if (!user) return unauthorized()
     const invitation = db.invitations.find((i) => i.token === params.token)
     if (!invitation) {
       return domainError('INVITE400', '유효하지 않거나 만료된 초대 링크입니다.')
     }
-    const body = (await request.json()) as { roleNames?: string[] }
-    if (!body.roleNames?.length) return badRequest()
-    const memberId = allocId()
-    const joinedAt = new Date().toISOString()
-    db.members.unshift({
-      id: memberId,
-      userId: user.id,
-      name: user.nickname,
-      profileImageUrl: user.profileImageUrl,
-      email: user.email,
-      region: user.region ?? user.location,
-      jobRole: body.roleNames[0],
-      roleNames: body.roleNames,
-      isAdmin: false,
-    })
-    return HttpResponse.json(
-      ok({
-        projectId: invitation.projectId,
-        memberId,
-        roleNames: body.roleNames,
-        joinedAt,
-      }),
-      { status: 200 },
-    )
+    return HttpResponse.json(ok({ projectId: invitation.projectId, joined: true }), { status: 200 })
   }),
 
   http.get(paths.projects.activities(':projectId'), ({ request, params }) => {

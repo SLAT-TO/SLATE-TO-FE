@@ -40,12 +40,11 @@ export const videoHandlers = [
         bookmarked: v.bookmarked,
         progressStatus: v.progressStatus,
         unreadCommentCount: v.unreadCommentCount,
-        updatedAt: v.updatedAt,
       }))
 
     return HttpResponse.json(
       ok({
-        items: videos,
+        videos,
         nextCursor: videos.length ? videos[videos.length - 1].videoId : null,
         hasNext: false,
       }),
@@ -180,24 +179,9 @@ export const videoHandlers = [
     return HttpResponse.json(ok(null), { status: 200 })
   }),
 
-  http.get(paths.videos.feedbacks(':videoId'), ({ request, params }) => {
+  http.get(paths.videos.feedbacks(':videoId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
-    const url = new URL(request.url)
-    const statusParam = url.searchParams.get('status')
-
-    let items = db.feedbacks.filter((f) => f.videoId === Number(params.videoId))
-    if (statusParam !== null) {
-      const wantResolved = statusParam === 'true'
-      items = items.filter((f) => f.status === wantResolved)
-    }
-    // startTime 오름차순, null(타임코드 없음)은 맨 뒤
-    items = [...items].sort((a, b) => {
-      if (a.startTime === null && b.startTime === null) return 0
-      if (a.startTime === null) return 1
-      if (b.startTime === null) return -1
-      return a.startTime - b.startTime
-    })
-
+    const items = db.feedbacks.filter((f) => f.videoId === Number(params.videoId))
     return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
@@ -206,15 +190,13 @@ export const videoHandlers = [
     if (!user) return unauthorized()
     const body = (await request.json()) as CreateFeedbackRequest
     if (!body.content) return badRequest()
-    if (body.endTime !== undefined && body.startTime === undefined) return badRequest()
     const now = new Date().toISOString()
     const feedback = {
       feedbackId: allocId(),
       videoId: Number(params.videoId),
       actor: { type: 'USER' as const, id: user.id, name: user.nickname },
       content: body.content,
-      startTime: body.startTime ?? null,
-      endTime: body.endTime ?? null,
+      timestampSec: body.timestampSec ?? null,
       status: false,
       createdAt: now,
       updatedAt: now,
@@ -229,8 +211,7 @@ export const videoHandlers = [
     if (!feedback) return notFound()
     const body = (await request.json()) as Partial<CreateFeedbackRequest>
     if (body.content !== undefined) feedback.content = body.content
-    if (body.startTime !== undefined) feedback.startTime = body.startTime
-    if (body.endTime !== undefined) feedback.endTime = body.endTime
+    if (body.timestampSec !== undefined) feedback.timestampSec = body.timestampSec
     feedback.updatedAt = new Date().toISOString()
     return HttpResponse.json(ok(feedback), { status: 200 })
   }),
@@ -247,18 +228,10 @@ export const videoHandlers = [
     if (!safeUser()) return unauthorized()
     const feedback = db.feedbacks.find((f) => f.feedbackId === Number(params.feedbackId))
     if (!feedback) return notFound()
-    const body = (await request.json()) as { userId?: number; status: boolean }
-    if (body.userId == null || body.status === undefined) return badRequest()
+    const body = (await request.json()) as { status: boolean }
     feedback.status = body.status
     feedback.updatedAt = new Date().toISOString()
-    return HttpResponse.json(
-      ok({
-        feedbackId: feedback.feedbackId,
-        status: feedback.status,
-        updatedAt: feedback.updatedAt,
-      }),
-      { status: 200 },
-    )
+    return HttpResponse.json(ok(feedback), { status: 200 })
   }),
 
   http.get(paths.feedbacks.replies(':feedbackId'), ({ params }) => {

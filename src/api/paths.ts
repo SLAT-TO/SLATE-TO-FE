@@ -12,7 +12,7 @@ export const paths = {
     me: `${API_PREFIX}/users/me`,
     /** Notion DB에 GET /users/me 중복 등록 — 통계는 임시 path 분리 */
     activityStats: `${API_PREFIX}/users/me/activity-stats`,
-    onboarding: `${API_PREFIX}/users/onboarding`,
+    onboarding: `${API_PREFIX}/users/me/onboarding`,
     byId: (userId: number | string) => `${API_PREFIX}/users/${userId}`,
     portfolios: (userId: number | string) => `${API_PREFIX}/users/${userId}/portfolios`,
     notificationSettings: `${API_PREFIX}/users/me/notification-settings`,
