@@ -1,9 +1,7 @@
 import MainLayout from './layouts/MainLayout'
 import { usePathname } from './hooks/usePathname'
 
-function AppRoutes() {
-  const pathname = usePathname()
-
+function AppRoutes({ pathname }: { pathname: string }) {
   if (pathname === '/' || pathname === '') {
     return (
       <section className="flex flex-col gap-2">
@@ -37,7 +35,7 @@ function App() {
 
   return (
     <MainLayout userName="김수민">
-      <AppRoutes />
+      <AppRoutes pathname={pathname} />
     </MainLayout>
   )
 }
