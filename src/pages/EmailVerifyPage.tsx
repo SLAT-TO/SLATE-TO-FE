@@ -37,7 +37,7 @@ export function EmailVerifyPage() {
             onChange={setEmail}
           />
 
-          <Button type="submit" fullWidth className="max-w-[410px]">
+          <Button type="submit" fullWidth className="max-w-[410px] self-center">
             인증 메일 보내기
           </Button>
         </div>
