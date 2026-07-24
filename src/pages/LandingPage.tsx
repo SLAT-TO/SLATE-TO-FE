@@ -12,7 +12,11 @@ function ArrowForwardIcon() {
 export function LandingPage() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-white">
-      <img src={landingBg} alt="" className="pointer-events-none absolute inset-0 size-full object-cover" />
+      <img
+        src={landingBg}
+        alt=""
+        className="pointer-events-none absolute inset-0 size-full object-cover"
+      />
       <div className="absolute inset-y-0 left-0 w-full max-w-2xl bg-gradient-to-r from-[#a9e2ff]/60 to-transparent mix-blend-multiply" />
 
       <div className="relative z-10 flex min-h-screen flex-col gap-16 px-8 pt-16 pb-16 md:px-20 md:pt-24">
