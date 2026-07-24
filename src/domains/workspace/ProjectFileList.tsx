@@ -138,7 +138,7 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
         {files.map((file) => (
           <div
             key={file.id}
-            className={`flex items-center justify-between gap-3 rounded-[10px] bg-white px-4 py-3 shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)]`}
+            className="flex items-center justify-between gap-3 rounded-[10px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"
           >
             <div className="flex min-w-0 items-center gap-3">
               <InlineIcon svg={documentIcon} className="text-neutral-5 size-6 shrink-0" />

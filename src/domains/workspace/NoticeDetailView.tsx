@@ -8,7 +8,7 @@ import Input from '../../components/Input'
 import TextArea from '../../components/TextArea'
 import type { ProjectNoticeListItem } from '../../types/notice'
 
-const CARD_SHADOW = 'shadow-[0px_3.4px_12.5px_rgba(169,204,244,0.15)]'
+const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
 
 interface NoticeDetailViewProps {
   projectId: number
