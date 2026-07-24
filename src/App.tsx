@@ -1,5 +1,9 @@
 import MainLayout from './layouts/MainLayout'
 import { usePathname } from './hooks/usePathname'
+import MyPage from './pages/MyPage'
+import ProfileEditPage from './pages/ProfileEditPage'
+import ProjectOverviewPage from './pages/ProjectOverviewPage'
+import ProjectFormPage from './pages/ProjectFormPage'
 
 function AppRoutes({ pathname }: { pathname: string }) {
   if (pathname === '/' || pathname === '') {
@@ -11,7 +15,25 @@ function AppRoutes({ pathname }: { pathname: string }) {
     )
   }
 
-  // /workspace, /invitations/:token 등 화면 라우트는 각 기능 PR에서 여기에 추가
+  if (pathname === '/mypage') {
+    return <MyPage />
+  }
+
+  if (pathname === '/mypage/edit') {
+    return <ProfileEditPage />
+  }
+
+  if (pathname === '/mypage/project/1') {
+    return <ProjectOverviewPage />
+  }
+
+  if (pathname === '/mypage/project/new') {
+    return <ProjectFormPage mode="create" />
+  }
+
+  if (pathname === '/mypage/project/1/edit') {
+    return <ProjectFormPage mode="edit" />
+  }
 
   return (
     <section className="flex flex-col gap-2">
@@ -23,7 +45,6 @@ function AppRoutes({ pathname }: { pathname: string }) {
   )
 }
 
-/** /login 등 — 각 기능 PR에서 경로 추가 */
 const FULLSCREEN_PATHS: string[] = []
 
 function App() {
@@ -34,7 +55,7 @@ function App() {
   }
 
   return (
-    <MainLayout userName="김수민">
+    <MainLayout userName="서정현">
       <AppRoutes pathname={pathname} />
     </MainLayout>
   )
