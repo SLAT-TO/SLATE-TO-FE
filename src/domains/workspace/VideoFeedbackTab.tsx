@@ -31,9 +31,11 @@ import type { ReferenceFile } from '../../types/video'
 import type { ProjectFileListItem } from '../../types/file'
 import type { ProjectMember } from '../../types/project'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
+import clockIcon from '../../assets/icons/clock.svg?raw'
 import commentCheckIcon from '../../assets/icons/comment-check.svg?raw'
 import documentIcon from '../../assets/icons/document.svg?raw'
 import downloadIcon from '../../assets/icons/download.svg?raw'
+import paperPlaneIcon from '../../assets/icons/paper-plane.svg?raw'
 import searchIcon from '../../assets/icons/search.svg?raw'
 import starIcon from '../../assets/icons/star.svg?raw'
 
@@ -97,25 +99,6 @@ function ExpandIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
       <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
-    </svg>
-  )
-}
-function ClockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-/** 구간(시작~종료) 기록 버튼 아이콘 — 시계 두 개 */
-function ClockRangeIcon() {
-  return (
-    <svg viewBox="0 0 34 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-7">
-      <circle cx="9" cy="12" r="7" />
-      <path d="M9 8.5v3.5l2 2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="25" cy="12" r="7" />
-      <path d="M25 8.5v3.5l2 2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -792,13 +775,13 @@ export function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetai
                     ? formatTimestamp(pendingStart)
                     : '현재 위치 기록'
                 }
-                className={`border-neutral-5 flex items-center justify-center rounded-lg border p-1.5 ${
+                className={`border-neutral-5 flex items-center justify-center rounded-lg border p-2 ${
                   pendingStart !== null && pendingEnd === null && !isCapturingRange
                     ? 'border-primary text-primary'
                     : 'text-neutral-9'
                 }`}
               >
-                <ClockIcon />
+                <InlineIcon svg={clockIcon} className="size-5" />
               </button>
               <button
                 type="button"
@@ -811,13 +794,15 @@ export function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetai
                       ? formatFeedbackTime({ startTime: pendingStart, endTime: pendingEnd })
                       : '구간 기록'
                 }
-                className={`border-neutral-5 flex items-center justify-center rounded-lg border p-1.5 ${
+                className={`border-neutral-5 flex items-center rounded-lg border p-2 ${
                   isCapturingRange || pendingEnd !== null
                     ? 'border-primary text-primary'
                     : 'text-neutral-9'
                 }`}
               >
-                <ClockRangeIcon />
+                <InlineIcon svg={clockIcon} className="size-5" />
+                <span aria-hidden className="mx-0.5 h-0.5 w-3 bg-current" />
+                <InlineIcon svg={clockIcon} className="size-5" />
               </button>
             </div>
             <TextArea
@@ -833,9 +818,7 @@ export function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetai
               className="bg-primary disabled:bg-neutral-3 flex size-7 items-center justify-center self-end rounded-full text-white"
               aria-label="전송"
             >
-              <svg viewBox="0 0 16 16" fill="currentColor" className="size-3.5">
-                <path d="M1 8l13-6-4 6 4 6z" />
-              </svg>
+              <InlineIcon svg={paperPlaneIcon} className="size-4" />
             </button>
           </div>
         </div>
