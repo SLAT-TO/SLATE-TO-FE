@@ -1,5 +1,5 @@
-import ActionMenu from './ActionMenu'
-import Tag from './Tag'
+import ActionMenu from '../../components/ActionMenu'
+import Tag from '../../components/Tag'
 
 export type VideoCardProgressStatus = 'IN_PROGRESS' | 'DONE' | string
 

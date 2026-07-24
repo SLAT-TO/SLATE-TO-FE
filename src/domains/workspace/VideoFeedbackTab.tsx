@@ -3,6 +3,7 @@ import {
   createFeedback,
   createReply,
   deleteFeedback,
+  deleteVideo,
   getFeedbacks,
   getReferenceFiles,
   getReplies,
@@ -27,6 +28,8 @@ import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import YouTubeIframePlayer from '../../components/YouTubeIframePlayer'
 import { CARD_BASE } from '../../styles/card'
+import VideoCard from './VideoCard'
+import { formatRelativeTime } from '../../utils/formatRelativeTime'
 import type { VideoDetail, VideoListItem, VideoProgressStatus } from '../../types/video'
 import type { Feedback, FeedbackReply } from '../../types/feedback'
 import type { ReferenceFile } from '../../types/video'
@@ -132,6 +135,11 @@ export default function VideoFeedbackTab({
     }
   }, [projectId])
 
+  const removeVideo = async (videoId: number) => {
+    await deleteVideo(projectId, videoId)
+    setVideos((prev) => prev.filter((v) => v.videoId !== videoId))
+  }
+
   return (
     <section className="flex flex-col gap-3">
       {videosLoading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
@@ -139,23 +147,20 @@ export default function VideoFeedbackTab({
         <p className="text-caption-lg text-neutral-6">등록된 영상이 없습니다.</p>
       )}
       {!videosLoading && videos.length > 0 && (
-        <ul className="border-border divide-border divide-y border-y">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {videos.map((video) => (
-            <li key={video.videoId}>
-              <button
-                type="button"
-                onClick={() => onSelectVideo(video.videoId)}
-                className="hover:bg-neutral-2 flex w-full items-center justify-between gap-3 px-1 py-4 text-left"
-              >
-                <span className="text-body-sm text-neutral-11 font-medium">{video.title}</span>
-                <span className="text-caption-lg text-neutral-6 shrink-0">
-                  {video.progressStatus === 'DONE' ? '완료' : '진행중'}
-                  {video.unreadCommentCount > 0 ? ` · 안읽음 ${video.unreadCommentCount}` : ''}
-                </span>
-              </button>
-            </li>
+            <VideoCard
+              key={video.videoId}
+              title={video.title}
+              thumbnailUrl={video.thumbnailUrl}
+              progressStatus={video.progressStatus}
+              relativeTime={formatRelativeTime(video.updatedAt)}
+              unreadCommentCount={video.unreadCommentCount}
+              onClick={() => onSelectVideo(video.videoId)}
+              onDelete={() => removeVideo(video.videoId)}
+            />
           ))}
-        </ul>
+        </div>
       )}
     </section>
   )
