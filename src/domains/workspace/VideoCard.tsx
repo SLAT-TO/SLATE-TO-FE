@@ -1,5 +1,6 @@
 import ActionMenu from '../../components/ActionMenu'
 import Tag from '../../components/Tag'
+import { CARD_BASE } from '../../styles/card'
 
 export type VideoCardProgressStatus = 'IN_PROGRESS' | 'DONE' | string
 
@@ -15,8 +16,6 @@ interface VideoCardProps {
   className?: string
 }
 
-const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
-
 export default function VideoCard({
   title,
   thumbnailUrl,
@@ -28,9 +27,7 @@ export default function VideoCard({
   className = '',
 }: VideoCardProps) {
   return (
-    <div
-      className={`flex w-full flex-col gap-3 rounded-[10px] bg-white p-4 ${CARD_SHADOW} ${className}`}
-    >
+    <div className={`flex w-full flex-col gap-3 ${CARD_BASE} p-4 ${className}`}>
       <div className="flex items-start justify-between gap-2">
         <button
           type="button"
