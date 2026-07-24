@@ -36,14 +36,20 @@ function TermCheckbox({
         onChange={(e) => onChange(e.target.checked)}
         className="peer sr-only"
       />
-      <span className="peer-checked:bg-primary peer-checked:border-primary flex size-3 shrink-0 items-center justify-center rounded-sm border border-white/60">
+      <span className="bg-neutral-1 border-neutral-1 flex size-3 shrink-0 items-center justify-center rounded-sm border">
         {checked && (
-          <svg viewBox="0 0 20 20" className="size-2.5" fill="none" stroke="white" strokeWidth={3}>
+          <svg
+            viewBox="0 0 20 20"
+            className="text-main-3 size-2.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={3}
+          >
             <path d="M4 10l4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
       </span>
-      <span className="text-caption-sm text-neutral-1">{label}</span>
+      <span className="text-caption-lg text-neutral-1">{label}</span>
     </label>
   )
 }
@@ -57,18 +63,16 @@ export function SignupPage() {
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [agreed, setAgreed] = useState<Record<(typeof TERMS)[number]['key'], boolean>>({
-    age: false,
-    service: false,
-    privacy: false,
-    collect: false,
+    age: true,
+    service: true,
+    privacy: true,
+    collect: true,
   })
 
   const allAgreed = TERMS.every((t) => agreed[t.key])
 
   const toggleAll = (checked: boolean) => {
-    setAgreed(
-      TERMS.reduce((acc, t) => ({ ...acc, [t.key]: checked }), {} as typeof agreed),
-    )
+    setAgreed(TERMS.reduce((acc, t) => ({ ...acc, [t.key]: checked }), {} as typeof agreed))
   }
 
   return (
@@ -78,15 +82,26 @@ export function SignupPage() {
         backgroundImage: 'linear-gradient(118deg, #9ff0ff 33.5%, #b9d6ff 98%)',
       }}
     >
-      <img src={signupBg} alt="" className="pointer-events-none absolute inset-0 size-full object-cover" />
+      <img
+        src={signupBg}
+        alt=""
+        className="pointer-events-none absolute inset-0 size-full object-cover"
+      />
 
-      <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">SLATE - TO</p>
+      <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">
+        SLATE - TO
+      </p>
 
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-10 px-4 py-16">
         <div className="flex w-full max-w-[1062px] flex-col gap-8">
           <div className="flex flex-col gap-4">
             <p className="text-head-sm text-neutral-1 font-semibold">이름</p>
-            <Input id="signup-name" placeholder="이름을 입력하세요." value={name} onChange={setName} />
+            <Input
+              id="signup-name"
+              placeholder="이름을 입력하세요."
+              value={name}
+              onChange={setName}
+            />
           </div>
 
           <div className="flex flex-col gap-4">
@@ -160,7 +175,7 @@ export function SignupPage() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3 border-b border-white/30 pb-3">
+            <div className="flex items-center gap-3 border-b border-white pb-3">
               <TermCheckbox label="모두 동의합니다." checked={allAgreed} onChange={toggleAll} />
             </div>
             <div className="flex flex-col gap-2">
