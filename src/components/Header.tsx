@@ -1,4 +1,7 @@
+import type { ReactNode } from 'react'
+
 type HeaderProps = {
+  title?: ReactNode
   userName?: string
 }
 
@@ -11,12 +14,15 @@ function BellIcon() {
   )
 }
 
-export default function Header({ userName = '000' }: HeaderProps) {
+export default function Header({ title, userName = '000' }: HeaderProps) {
   return (
     <header className="border-border bg-bg-primary flex h-[90px] flex-shrink-0 items-center justify-between border-b px-8">
-      {/* 인사말 */}
       <div>
-        <h1 className="text-body-sm text-neutral-11 font-semibold">안녕하세요 {userName} 님</h1>
+        {typeof title === 'string' ? (
+          <h1 className="text-body-sm text-neutral-11 font-semibold">{title}</h1>
+        ) : (
+          title
+        )}
       </div>
 
       {/* 우측 액션 영역 */}
