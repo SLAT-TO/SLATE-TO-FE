@@ -16,7 +16,7 @@ type Step = 'role' | 'name' | 'terms'
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-neutral-1 flex w-full max-w-[1062px] flex-col gap-[60px] rounded-xl p-12 shadow-[0_3px_12px_rgba(169,204,244,0.15)]">
+    <div className="bg-neutral-1 flex min-h-[600px] w-full max-w-[1062px] flex-col gap-[60px] rounded-xl p-12 shadow-[0_3px_12px_rgba(169,204,244,0.15)]">
       {children}
     </div>
   )
@@ -55,7 +55,7 @@ export function InviteAcceptPage() {
                 placeholder="역할을 선택해주세요."
               />
             </div>
-            <Button type="button" fullWidth onClick={() => setStep('name')}>
+            <Button type="button" fullWidth onClick={() => setStep('name')} className="mt-auto">
               입장하기
             </Button>
           </Card>
@@ -76,7 +76,7 @@ export function InviteAcceptPage() {
                 onChange={setName}
               />
             </div>
-            <Button type="button" fullWidth onClick={() => setStep('terms')}>
+            <Button type="button" fullWidth onClick={() => setStep('terms')} className="mt-auto">
               입장하기
             </Button>
           </Card>
@@ -99,7 +99,7 @@ export function InviteAcceptPage() {
                 이용약관 내용이 여기에 표시됩니다.
               </div>
             </div>
-            <Button type="submit" fullWidth>
+            <Button type="submit" fullWidth className="mt-auto">
               동의합니다.
             </Button>
           </Card>
