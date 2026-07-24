@@ -29,7 +29,8 @@ import type { VideoDetail, VideoListItem, VideoProgressStatus } from '../../type
 import type { Feedback, FeedbackReply } from '../../types/feedback'
 import type { ReferenceFile } from '../../types/video'
 import type { ProjectFileListItem } from '../../types/file'
-import type { ProjectMember } from '../../types/project'
+import type { ProjectLengthType, ProjectMember } from '../../types/project'
+import { PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
 import clockIcon from '../../assets/icons/clock.svg?raw'
 import commentCheckIcon from '../../assets/icons/comment-check.svg?raw'
@@ -172,10 +173,17 @@ export type VideoDetailViewProps = {
   projectId: number
   videoId: number
   meId: number | null
+  lengthType: ProjectLengthType | null
   onBack: () => void
 }
 
-export function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetailViewProps) {
+export function VideoDetailView({
+  projectId,
+  videoId,
+  meId,
+  lengthType,
+  onBack,
+}: VideoDetailViewProps) {
   const [videoDetail, setVideoDetail] = useState<VideoDetail | null>(null)
   const [referenceFiles, setReferenceFiles] = useState<ReferenceFile[]>([])
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
@@ -551,7 +559,7 @@ export function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetai
 
           <div className="flex flex-col gap-3">
             <h2 className="text-head-sm text-neutral-9 font-semibold">프로젝트 소개글</h2>
-            {videoDetail.categories.length > 0 && (
+            {(videoDetail.categories.length > 0 || lengthType) && (
               <div className="flex flex-wrap gap-2">
                 {videoDetail.categories.map((category) => (
                   <span
@@ -561,6 +569,11 @@ export function VideoDetailView({ projectId, videoId, meId, onBack }: VideoDetai
                     {category}
                   </span>
                 ))}
+                {lengthType && (
+                  <span className="bg-tag-role-bg text-tag-role-text text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold">
+                    {PROJECT_LENGTH_TYPE_LABEL[lengthType] ?? lengthType}
+                  </span>
+                )}
               </div>
             )}
             <div className="bg-neutral-2 border-neutral-3 text-body-sm text-neutral-5 rounded-lg border px-4 py-3">
