@@ -17,6 +17,7 @@ import type { ProjectFileListItem } from '../../types/file'
 import documentIcon from '../../assets/icons/document.svg?raw'
 import downloadIcon from '../../assets/icons/download.svg?raw'
 import searchIcon from '../../assets/icons/search.svg?raw'
+import { CARD_BASE } from '../../styles/card'
 
 interface ProjectFileListProps {
   projectId: number
@@ -138,7 +139,7 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
         {files.map((file) => (
           <div
             key={file.id}
-            className="flex items-center justify-between gap-3 rounded-[10px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"
+            className={`flex items-center justify-between gap-3 ${CARD_BASE} px-4 py-3`}
           >
             <div className="flex min-w-0 items-center gap-3">
               <InlineIcon svg={documentIcon} className="text-neutral-5 size-6 shrink-0" />

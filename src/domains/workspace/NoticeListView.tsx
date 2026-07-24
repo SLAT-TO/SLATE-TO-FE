@@ -5,8 +5,7 @@ import Input from '../../components/Input'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import type { ProjectNoticeListItem } from '../../types/notice'
-
-const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
+import { CARD_BASE } from '../../styles/card'
 
 interface NoticeListViewProps {
   projectId: number
@@ -85,7 +84,7 @@ export default function NoticeListView({
               <button
                 type="button"
                 onClick={() => onOpenNotice(notice.id)}
-                className={`flex w-full items-center justify-between gap-3 rounded-[10px] bg-white px-4 py-4 text-left ${CARD_SHADOW}`}
+                className={`flex w-full items-center justify-between gap-3 ${CARD_BASE} px-4 py-4 text-left`}
               >
                 <span className="text-body-sm text-neutral-11 min-w-0 truncate font-medium">
                   {notice.title}

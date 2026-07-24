@@ -7,8 +7,7 @@ import ConfirmModal from '../../components/ConfirmModal'
 import Input from '../../components/Input'
 import TextArea from '../../components/TextArea'
 import type { ProjectNoticeListItem } from '../../types/notice'
-
-const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
+import { CARD_BASE } from '../../styles/card'
 
 interface NoticeDetailViewProps {
   projectId: number
@@ -86,7 +85,7 @@ export default function NoticeDetailView({
         {'< 공지사항 목록'}
       </button>
 
-      <div className={`flex flex-col gap-3 rounded-[10px] bg-white p-5 ${CARD_SHADOW}`}>
+      <div className={`flex flex-col gap-3 ${CARD_BASE} p-5`}>
         {editing ? (
           <>
             <Input value={title} onChange={setTitle} placeholder="제목" />
