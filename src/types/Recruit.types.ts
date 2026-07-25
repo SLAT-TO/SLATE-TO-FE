@@ -65,7 +65,7 @@ export interface RecruitmentAuthor {
   profileImageUrl: string
 }
 
-export interface Application {
+export interface RecruitApplicant {
   id: number
   applicantId: number
   applicantName: string

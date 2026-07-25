@@ -1,7 +1,7 @@
-import type { Application } from '../../types/Recruit.types'
+import type { RecruitApplicant } from '../../types/Recruit.types'
 
 // API 연동 시 제거 — GET /recruitments/:id/applications
-export const MOCK_APPLICANTS: Application[] = [
+export const MOCK_APPLICANTS: RecruitApplicant[] = [
   {
     id: 1,
     applicantId: 11,

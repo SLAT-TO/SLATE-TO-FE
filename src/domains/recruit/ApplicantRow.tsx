@@ -1,9 +1,9 @@
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
-import type { Application } from '../../types/Recruit.types'
+import type { RecruitApplicant } from '../../types/Recruit.types'
 
 interface ApplicantRowProps {
-  applicant: Application
+  applicant: RecruitApplicant
   onViewProfile: (applicantId: number) => void
 }
 

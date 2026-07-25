@@ -54,7 +54,7 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
         onClose={() => setIsApplyOpen(false)}
         onSubmit={(values) => {
           // TODO: API 연동 — POST /recruitments/:id/applications
-          console.log('지원:', values)
+          void values
         }}
       />
     </div>
