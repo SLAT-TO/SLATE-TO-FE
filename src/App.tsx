@@ -1,4 +1,6 @@
+import { useMemo } from 'react'
 import MainLayout from './layouts/MainLayout'
+import CalendarPage from './pages/CalendarPage'
 import HomePage from './pages/HomePage'
 import MyPage from './pages/MyPage'
 import NotificationPage from './pages/NotificationPage'
@@ -10,13 +12,31 @@ import RecruitPage from './pages/RecruitPage'
 import JobDetailPage from './pages/JobDetailPage'
 import JobApplicantsPage from './pages/JobApplicantsPage'
 import WorkspacePage from './pages/WorkspacePage'
+import HeaderTitle from './components/HeaderTitle'
 import { usePathname } from './hooks/usePathname'
+import { useHeaderSlot } from './hooks/useHeaderSlot'
 import { renderFullscreenRoute } from './routes/fullscreen'
 import { matchPath } from './utils/navigation'
 
 const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
 
+// 라우트별 헤더 타이틀 매핑
+function getHeaderTitle(pathname: string): string {
+  if (pathname === '/' || pathname === '') return `안녕하세요 ${USER_NAME} 님`
+  if (pathname === '/calendar') return '통합 캘린더'
+  if (pathname === '/matching') return '추천공고'
+  if (pathname === '/mypage') return '마이페이지'
+  if (pathname === '/mypage/edit') return '프로필 수정'
+  if (pathname === '/mypage/project/new') return '프로젝트 추가'
+  if (matchPath('/mypage/project/:id/edit', pathname)) return '프로젝트 수정'
+  if (matchPath('/mypage/project/:id', pathname)) return '프로젝트 개요'
+  return ''
+}
+
 function AppRoutes({ pathname }: { pathname: string }) {
+  const headerTitle = useMemo(() => getHeaderTitle(pathname), [pathname])
+  useHeaderSlot(useMemo(() => <HeaderTitle>{headerTitle}</HeaderTitle>, [headerTitle]))
+
   const projectMatch = matchPath('/workspace/projects/:projectId', pathname)
   if (projectMatch) {
     const projectId = Number(projectMatch.projectId)
@@ -30,7 +50,14 @@ function AppRoutes({ pathname }: { pathname: string }) {
     return <WorkspacePage />
   }
 
-  if (pathname === '/notifications') return <NotificationPage />
+  if (pathname === '/notifications') {
+      return <NotificationPage />
+  }
+  
+  if (pathname === '/calendar') {
+    return <CalendarPage />
+  }
+
   const applicantsMatch = matchPath('/matching/:jobId/applicants', pathname)
   if (applicantsMatch) {
     const jobId = Number(applicantsMatch.jobId)
