@@ -46,11 +46,7 @@ export function CalendarPage() {
         </button>
       </header>
 
-      <Calendar
-        month={month}
-        events={events}
-        onDateClick={() => {}}
-      />
+      <Calendar month={month} events={events} onDateClick={() => {}} />
     </div>
   )
 }

@@ -43,7 +43,10 @@ interface WeekEventBarsProps {
 
 // 한 주(week) 안에서 이벤트를 레인에 배치해 그린다. maxLanes를 넘는 이벤트는 CalendarGrid의 "+N" 배지로 표시됨.
 function WeekEventBars({ week, events, maxLanes, onEventClick, top }: WeekEventBarsProps) {
-  const { positioned } = useMemo(() => assignEventLanes(week, events, maxLanes), [week, events, maxLanes])
+  const { positioned } = useMemo(
+    () => assignEventLanes(week, events, maxLanes),
+    [week, events, maxLanes],
+  )
 
   return (
     <div
@@ -78,7 +81,7 @@ function WeekEventBars({ week, events, maxLanes, onEventClick, top }: WeekEventB
               backgroundColor: `color-mix(in srgb, ${accent} 12%, white)`,
               color: accent,
             }}
-            className="pointer-events-auto mx-2 flex min-w-0 items-center gap-2.5 rounded-full px-2 text-caption-sm leading-none font-semibold tracking-[-0.24px]"
+            className="text-caption-sm pointer-events-auto mx-2 flex min-w-0 items-center gap-2.5 rounded-full px-2 leading-none font-semibold tracking-[-0.24px]"
           >
             <span
               className="h-3.25 w-3.25 shrink-0 rounded-full"
