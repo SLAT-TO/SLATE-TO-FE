@@ -1,16 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Input from '../components/Input'
 import Select from '../components/Select'
 import Choice from '../components/Choice'
 import { Button } from '../components/Button'
+import { getInvitation, acceptInvitation } from '../api/projects'
+import { ApiError } from '../types/api'
+import { ROLE_OPTIONS } from '../constants/roles'
+import { navigate } from '../utils/navigation'
 import inviteBg from '../assets/images/invite-bg.png'
-
-const ROLE_OPTIONS = [
-  { value: 'director', label: '감독' },
-  { value: 'camera', label: '촬영' },
-  { value: 'editor', label: '편집' },
-  { value: 'etc', label: '기타' },
-]
 
 type Step = 'role' | 'name' | 'terms'
 
@@ -22,20 +19,59 @@ function Card({ children }: { children: React.ReactNode }) {
   )
 }
 
-// 워크스페이스 초대 수락 플로우. 역할 선택 -> 이름 설정 -> 약관 동의. 초대 수락 처리 로직은 이후 작업에서 연결.
-export function InviteAcceptPage() {
+function errorMessage(err: unknown): string {
+  if (err instanceof ApiError) {
+    if (err.code === 'PROJECT_MEMBER409') return '이미 참여한 프로젝트예요.'
+    return err.message
+  }
+  return '요청 처리 중 오류가 발생했습니다.'
+}
+
+// 워크스페이스 초대 수락 플로우. 역할 선택 -> 이름 설정 -> 약관 동의.
+export function InviteAcceptPage({ token }: { token: string }) {
   const [step, setStep] = useState<Step>('role')
   const [role, setRole] = useState('')
   const [name, setName] = useState('')
   const [allAgreed, setAllAgreed] = useState(false)
 
+  const [projectTitle, setProjectTitle] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    getInvitation(token)
+      .then((res) => {
+        if (!cancelled) setProjectTitle(res.projectTitle)
+      })
+      .catch((err) => {
+        if (!cancelled) setLoadError(errorMessage(err))
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [token])
+
+  const handleAccept = async () => {
+    setSubmitting(true)
+    setSubmitError(null)
+    try {
+      await acceptInvitation(token, { roleNames: role ? [role] : [] })
+      navigate('/workspace')
+    } catch (err) {
+      setSubmitError(errorMessage(err))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const inviteTitle = projectTitle
+    ? `${projectTitle}에 초대되었어요!`
+    : '초대 정보를 불러오는 중...'
+
   return (
-    <div
-      className="relative min-h-screen w-full overflow-hidden"
-      style={{
-        backgroundImage: 'linear-gradient(118deg, #9ff0ff 33.5%, #b9d6ff 98%)',
-      }}
-    >
+    <div className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(118deg,#9ff0ff_33.5%,#b9d6ff_98%)]">
       <img
         src={inviteBg}
         alt=""
@@ -47,72 +83,101 @@ export function InviteAcceptPage() {
       </p>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
-        {step === 'role' && (
+        {loadError && (
           <Card>
-            <p className="text-head-lg text-neutral-10 text-center font-bold">
-              브랜드 광고 프로젝트에 초대되었어요!
-            </p>
-            <div className="flex flex-col gap-4">
-              <p className="text-head-sm text-neutral-10 font-semibold">역할</p>
-              <Select
-                options={ROLE_OPTIONS}
-                value={role}
-                onChange={setRole}
-                placeholder="역할을 선택해주세요."
-              />
-            </div>
-            <Button type="button" fullWidth onClick={() => setStep('name')} className="mt-auto">
-              입장하기
-            </Button>
+            <p className="text-warning text-head-sm text-center font-semibold">{loadError}</p>
           </Card>
         )}
 
-        {step === 'name' && (
+        {!loadError && step === 'role' && (
           <Card>
-            <div className="text-neutral-10 flex flex-col items-center gap-3 text-center">
-              <p className="text-head-lg font-bold">브랜드 광고 프로젝트 영상1에 초대되었어요!</p>
-              <p className="text-body-lg">이름을 설정해주세요</p>
-            </div>
-            <div className="flex flex-col gap-4">
-              <p className="text-head-sm text-neutral-10 font-semibold">이름</p>
-              <Input
-                id="invite-name"
-                placeholder="댓글을 달 때 사용될 이름을 입력해주세요."
-                value={name}
-                onChange={setName}
-              />
-            </div>
-            <Button type="button" fullWidth onClick={() => setStep('terms')} className="mt-auto">
-              입장하기
-            </Button>
-          </Card>
-        )}
-
-        {step === 'terms' && (
-          <Card>
-            <div className="flex flex-col items-center gap-3">
-              <p className="text-head-lg text-neutral-10 font-bold">이용 약관 동의</p>
-              <Choice
-                type="checkbox"
-                checked={allAgreed}
-                onChange={setAllAgreed}
-                label="모두 동의합니다."
-              />
-            </div>
-            <div className="flex flex-col gap-4">
-              <Choice
-                type="checkbox"
-                checked={allAgreed}
-                onChange={setAllAgreed}
-                label="이용약관 (필수)"
-              />
-              <div className="bg-neutral-2 border-neutral-3 text-neutral-5 text-body-sm h-60 overflow-y-auto rounded-lg border p-4">
-                이용약관 내용이 여기에 표시됩니다.
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                setStep('name')
+              }}
+              className="flex flex-1 flex-col gap-[60px]"
+            >
+              <p className="text-head-lg text-neutral-10 text-center font-bold">{inviteTitle}</p>
+              <div className="flex flex-col gap-4">
+                <p className="text-head-sm text-neutral-10 font-semibold">역할</p>
+                <Select
+                  options={ROLE_OPTIONS}
+                  value={role}
+                  onChange={setRole}
+                  placeholder="역할을 선택해주세요."
+                />
               </div>
-            </div>
-            <Button type="submit" fullWidth className="mt-auto">
-              동의합니다.
-            </Button>
+              <Button type="submit" fullWidth className="mt-auto">
+                입장하기
+              </Button>
+            </form>
+          </Card>
+        )}
+
+        {!loadError && step === 'name' && (
+          <Card>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                setStep('terms')
+              }}
+              className="flex flex-1 flex-col gap-[60px]"
+            >
+              <div className="text-neutral-10 flex flex-col items-center gap-3 text-center">
+                <p className="text-head-lg font-bold">{inviteTitle}</p>
+                <p className="text-body-lg">이름을 설정해주세요</p>
+              </div>
+              <div className="flex flex-col gap-4">
+                <p className="text-head-sm text-neutral-10 font-semibold">이름</p>
+                <Input
+                  id="invite-name"
+                  placeholder="댓글을 달 때 사용될 이름을 입력해주세요."
+                  value={name}
+                  onChange={setName}
+                />
+              </div>
+              <Button type="submit" fullWidth className="mt-auto">
+                입장하기
+              </Button>
+            </form>
+          </Card>
+        )}
+
+        {!loadError && step === 'terms' && (
+          <Card>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                void handleAccept()
+              }}
+              className="flex flex-1 flex-col gap-[60px]"
+            >
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-head-lg text-neutral-10 font-bold">이용 약관 동의</p>
+                <Choice
+                  type="checkbox"
+                  checked={allAgreed}
+                  onChange={setAllAgreed}
+                  label="모두 동의합니다."
+                />
+              </div>
+              <div className="flex flex-col gap-4">
+                <Choice
+                  type="checkbox"
+                  checked={allAgreed}
+                  onChange={setAllAgreed}
+                  label="이용약관 (필수)"
+                />
+                <div className="bg-neutral-2 border-neutral-3 text-neutral-5 text-body-sm h-60 overflow-y-auto rounded-lg border p-4">
+                  이용약관 내용이 여기에 표시됩니다.
+                </div>
+              </div>
+              {submitError && <p className="text-warning text-caption-lg">{submitError}</p>}
+              <Button type="submit" fullWidth disabled={submitting} className="mt-auto">
+                동의합니다.
+              </Button>
+            </form>
           </Card>
         )}
       </div>
