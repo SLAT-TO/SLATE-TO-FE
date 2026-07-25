@@ -279,8 +279,8 @@ npm run format:check  # 포맷 위반 여부만 확인 (CI와 동일)
 | 로컬 BE    | `false`           | 비움                         | Vite proxy가 `/api` → `http://localhost:8080` (CORS 우회). **BE 연동 PR(#93) 머지 후** `vite.config.ts`에 proxy 설정. |
 | 원격 BE    | `false`           | `https://api.example.com` 등 | axios가 해당 origin으로 직결. BE CORS·쿠키(`withCredentials`) 필요.                                                   |
 
-- 개발 서버에서만 MSW가 켜집니다. (`import.meta.env.DEV` + `VITE_ENABLE_MSW=true`)
-- Production(Vercel)에서는 MSW를 끄고 실 API URL을 넣습니다. 예: `VITE_ENABLE_MSW=false`, `VITE_API_BASE_URL=https://api.slatto.cloud`
+- MSW는 `VITE_ENABLE_MSW=true`일 때 켜집니다. (로컬·Vercel Preview/Production 공통, `import.meta.env.DEV` 가드 없음)
+- 당분간 Vercel Preview·Production 모두 MSW mock을 씁니다. 실 BE 연동 시 Production만 `VITE_ENABLE_MSW=false` + `VITE_API_BASE_URL`을 넣습니다.
 - BE 응답 shape 차이는 BE 연동 PR(#93)의 `src/api/normalize.ts`에서 FE 도메인 모델로 맞춥니다.
 
 ## 화면 목록 및 플로우
