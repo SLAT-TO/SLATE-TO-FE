@@ -15,46 +15,53 @@ function AssetIcon({ svg, className }: { svg: string; className: string }) {
 
 interface DashboardNoticeCardProps {
   notices: ProjectNoticeListItem[]
+  onExpand: () => void
 }
 
-function formatNoticeMeta(notice: ProjectNoticeListItem): string {
-  const date = new Date(notice.createdAt)
-  if (Number.isNaN(date.getTime())) return notice.writer.nickname
+function formatNoticeDate(iso: string): string | null {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return null
   const month = date.getMonth() + 1
   const day = date.getDate()
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${notice.writer.nickname} ${month}월 ${day}일 ${hours}:${minutes}`
+  return `${month}월 ${day}일 ${hours}:${minutes}`
 }
 
-export default function DashboardNoticeCard({ notices }: DashboardNoticeCardProps) {
+export default function DashboardNoticeCard({ notices, onExpand }: DashboardNoticeCardProps) {
+  const previewNotices = notices.slice(0, 2)
+
   return (
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">공지 사항</h2>
-      <div className={`flex min-h-[183px] flex-col justify-center ${CARD_BASE} p-4`}>
-        {notices.length === 0 ? (
+      <button
+        type="button"
+        onClick={onExpand}
+        aria-label="공지 전체 보기"
+        className={`flex min-h-[183px] flex-col justify-center ${CARD_BASE} p-4 text-left`}
+      >
+        {previewNotices.length === 0 ? (
           <p className="text-caption-lg text-neutral-6">등록된 공지가 없습니다.</p>
         ) : (
           <ul className="flex flex-col gap-8">
-            {notices.map((notice) => (
-              <li
-                key={notice.id}
-                className="border-neutral-5 flex items-center justify-between gap-3 rounded-[8px] border-[0.75px] px-4 py-3"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <AssetIcon svg={bellIcon} className="size-[17px]" />
-                  <span className="text-body-sm text-neutral-11 min-w-0 truncate">
-                    {notice.title}
-                  </span>
-                </div>
-                <span className="text-caption-lg text-neutral-6 shrink-0">
-                  {formatNoticeMeta(notice)}
-                </span>
-              </li>
-            ))}
+            {previewNotices.map((notice) => {
+              const dateLabel = formatNoticeDate(notice.createdAt)
+              return (
+                <li key={notice.id} className="flex items-start gap-5">
+                  <AssetIcon svg={bellIcon} className="mt-0.5 size-[17px]" />
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <p className="text-body-sm text-neutral-11 line-clamp-2">{notice.title}</p>
+                    <p className="text-caption-lg text-neutral-6">
+                      <span className="font-semibold">{notice.writer.nickname}</span>
+                      {dateLabel && ` ${dateLabel}`}
+                    </p>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
-      </div>
+      </button>
     </section>
   )
 }

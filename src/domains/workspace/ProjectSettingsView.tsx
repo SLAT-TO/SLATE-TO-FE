@@ -8,12 +8,12 @@ import TextArea from '../../components/TextArea'
 import { PROJECT_LENGTH_TYPE_LABEL, PROJECT_TYPE_LABEL } from '../../constants/projectLabels'
 import { CARD_BASE } from '../../styles/card'
 import { navigate } from '../../utils/navigation'
-import type { Project } from '../../types/project'
+import type { ProjectDetailResponse } from '../../types/project'
 
 type ProjectSettingsViewProps = {
-  project: Project
+  project: ProjectDetailResponse
   onCancel: () => void
-  onSaved: (project: Project) => void
+  onSaved: (project: ProjectDetailResponse) => void
 }
 
 const TYPE_OPTIONS = Object.entries(PROJECT_TYPE_LABEL).map(([value, label]) => ({ value, label }))

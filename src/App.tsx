@@ -52,7 +52,7 @@ function AppRoutes({ pathname }: { pathname: string }) {
     return <HomePage />
   }
 
-  // /invitations/:token 등 화면 라우트는 각 기능 PR에서 여기에 추가
+  // /project-invitations/:token 등 화면 라우트는 각 기능 PR에서 여기에 추가
 
   return (
     <section className="flex flex-col gap-2">

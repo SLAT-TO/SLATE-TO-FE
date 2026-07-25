@@ -45,7 +45,7 @@ export const videoHandlers = [
 
     return HttpResponse.json(
       ok({
-        videos,
+        items: videos,
         nextCursor: videos.length ? videos[videos.length - 1].videoId : null,
         hasNext: false,
       }),
@@ -74,7 +74,7 @@ export const videoHandlers = [
       unreadCommentCount: 0,
       description: null,
       memo: body.memo ?? null,
-      categories: [],
+      projectTags: [],
       createdAt,
       updatedAt: createdAt,
     }
@@ -85,9 +85,9 @@ export const videoHandlers = [
         videoId,
         title: video.title,
         thumbnailUrl: video.thumbnailUrl,
+        durationSeconds: 1018,
         bookmarked: false,
         progressStatus: video.progressStatus,
-        commentCount: 0,
         createdAt,
       }),
       { status: 201 },
@@ -247,10 +247,18 @@ export const videoHandlers = [
     if (!safeUser()) return unauthorized()
     const feedback = db.feedbacks.find((f) => f.feedbackId === Number(params.feedbackId))
     if (!feedback) return notFound()
-    const body = (await request.json()) as { status: boolean }
+    const body = (await request.json()) as { userId?: number; status: boolean }
+    if (body.userId == null || body.status === undefined) return badRequest()
     feedback.status = body.status
     feedback.updatedAt = new Date().toISOString()
-    return HttpResponse.json(ok(feedback), { status: 200 })
+    return HttpResponse.json(
+      ok({
+        feedbackId: feedback.feedbackId,
+        status: feedback.status,
+        updatedAt: feedback.updatedAt,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.get(paths.feedbacks.replies(':feedbackId'), ({ params }) => {
