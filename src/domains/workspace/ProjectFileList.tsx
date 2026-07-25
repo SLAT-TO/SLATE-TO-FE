@@ -37,6 +37,7 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
   const [files, setFiles] = useState<ProjectFileListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [keyword, setKeyword] = useState('')
+  const [searchKeyword, setSearchKeyword] = useState('')
   const [uploadOpen, setUploadOpen] = useState(false)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [description, setDescription] = useState('')
@@ -44,12 +45,17 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
   const [deleteTarget, setDeleteTarget] = useState<ProjectFileListItem | null>(null)
 
   useEffect(() => {
+    const timer = window.setTimeout(() => setSearchKeyword(keyword), 400)
+    return () => window.clearTimeout(timer)
+  }, [keyword])
+
+  useEffect(() => {
     let cancelled = false
 
     async function load() {
       setLoading(true)
       try {
-        const page = await getProjectFiles(projectId, keyword.trim() || undefined)
+        const page = await getProjectFiles(projectId, searchKeyword.trim() || undefined)
         if (!cancelled) setFiles(page.items)
       } finally {
         if (!cancelled) setLoading(false)
@@ -60,7 +66,7 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
     return () => {
       cancelled = true
     }
-  }, [projectId, keyword])
+  }, [projectId, searchKeyword])
 
   const openUploadModal = () => {
     setUploadFile(null)

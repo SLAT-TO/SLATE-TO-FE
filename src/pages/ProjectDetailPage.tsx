@@ -56,6 +56,11 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
       .catch(() => setMeId(null))
   }, [])
 
+  const handleTabChange = (key: string) => {
+    setTab(key)
+    if (key !== 'dashboard') setNoticeView('main')
+  }
+
   if (loading) {
     return <p className="text-body-sm text-neutral-6">불러오는 중…</p>
   }
@@ -192,7 +197,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
       </header>
 
       <div className="[&_[role=tab][aria-selected=true]]:border-primary w-full [&_[role=tab]]:flex-1 [&_[role=tab]]:px-0 [&_[role=tab]]:text-center [&_[role=tab]]:text-[20px] [&_[role=tab][aria-selected=true]]:border-b-[3px] [&_[role=tablist]]:w-full">
-        <Tabs tabs={DETAIL_TABS} defaultTab="dashboard" onChange={setTab} />
+        <Tabs tabs={DETAIL_TABS} activeTab={tab} onChange={handleTabChange} />
       </div>
 
       {tab === 'dashboard' && noticeView === 'main' && (
