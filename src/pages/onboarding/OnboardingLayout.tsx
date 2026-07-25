@@ -63,7 +63,7 @@ export function OnboardingLayout({
 
         <div className={`w-full ${contentGapClassName}`}>{children}</div>
 
-        <div className={`w-full max-w-md ${footerGapClassName}`}>{footer}</div>
+        <div className={`w-flex justify-center ${footerGapClassName}`}>{footer}</div>
       </main>
     </div>
   )

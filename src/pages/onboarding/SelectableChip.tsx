@@ -24,7 +24,7 @@ export function SelectableChip({ label, selected, onToggle, variant }: Selectabl
       onClick={onToggle}
       className={`text-body-sm rounded-[6.828px] font-semibold shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none ${variantClass[variant]} ${
         selected
-          ? 'bg-primary text-white'
+          ? 'bg-neutral-4 text-black'
           : 'border-neutral-5 bg-neutral-1 hover:bg-main-1 text-neutral-9 border'
       }`}
     >

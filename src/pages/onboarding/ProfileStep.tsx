@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react'
 import profileDefault from '../../assets/images/profile_default.png'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
@@ -25,6 +25,15 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   // 새 이미지를 고를 때 이전 object URL을 정리하기 위해 마지막 값을 보관
   const objectUrlRef = useRef<string>('')
+
+  // 컴포넌트 언마운트 시 마지막 object URL 정리
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current)
+      }
+    }
+  }, [])
 
   // 텍스트 필드 갱신 + 입력 중이면 해당 필드 에러 해제 (제출 시 전체 재검증)
   const updateField = (field: 'name' | 'email' | 'intro', value: string) => {
