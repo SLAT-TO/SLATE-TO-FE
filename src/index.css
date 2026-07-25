@@ -2,16 +2,23 @@
 @import 'tailwindcss';
 
 @theme {
+  /* Breakpoint — 태블릿(md)부터 반응형 시작, 모바일은 md 레이아웃을 축소·핀치줌으로 사용 */
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+
   /* Font */
   --font-sans: 'Pretendard', sans-serif;
 
-  --font-size-head-lg: 32px;
-  --font-size-head-md: 28px;
-  --font-size-head-sm: 20px;
-  --font-size-body-lg: 20px;
-  --font-size-body-sm: 16px;
-  --font-size-caption-lg: 14px;
-  --font-size-caption-sm: 12px;
+  /* Tailwind v4는 폰트 크기 유틸(text-head-lg 등)을 --text-* 네임스페이스에서 생성한다.
+     (--font-size-* 는 유틸을 만들지 않아 text-* 클래스가 전부 무효였음) */
+  --text-head-lg: 32px;
+  --text-head-md: 28px;
+  --text-head-sm: 20px;
+  --text-body-lg: 20px;
+  --text-body-sm: 16px;
+  --text-caption-lg: 14px;
+  --text-caption-sm: 12px;
 
   /* Primitive - Main */
   --color-main-1: #edf4ff;
@@ -71,7 +78,20 @@
   --color-border-input: #e5e7eb;
 
   /* Gradation */
+
+  /* Panel shadow (Select·ActionMenu 드롭다운) */
+  --shadow-panel: 0 3px 12px rgba(169, 204, 244, 0.25);
+  /* Card shadow (대시보드 카드·피드백 패널 등 흰 배경 플로팅 카드) */
+  --shadow-card: 0px 2.957px 21.59px 3.697px rgba(169, 204, 244, 0.15);
   --color-gradation: #a9ccf4;
+
+  /* Tag (Figma 디자인 시스템) */
+  --color-tag-role-bg: #eaf1ff;
+  --color-tag-role-text: #5584ee;
+  --color-tag-active-bg: #eaf7e6;
+  --color-tag-active-text: #357a2b;
+  --color-tag-done-bg: #e2e8f0;
+  --color-tag-done-text: #64748b;
 
   /* Semantic - Success */
   --color-success-light: #dcfce7;
