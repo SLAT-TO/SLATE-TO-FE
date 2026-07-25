@@ -106,6 +106,12 @@ function formatFeedbackTime(feedback: Pick<Feedback, 'startTime' | 'endTime'>): 
   return `${formatTimestamp(feedback.startTime)} ~ ${formatTimestamp(feedback.endTime)}`
 }
 
+function videoProgressStatusColor(status: VideoProgressStatus): string {
+  return status === 'DONE'
+    ? 'bg-tag-done-bg text-tag-done-text'
+    : 'bg-tag-active-bg text-tag-active-text'
+}
+
 type VideoFeedbackTabWithSelectionProps = VideoFeedbackTabProps & {
   onSelectVideo: (videoId: number) => void
 }
@@ -297,8 +303,7 @@ export function VideoDetailView({
 
   /** 참여 인원 초대 — 초대 링크 생성 후 클립보드에 복사 (골격, 실제 초대 수락 화면은 별도 구현 필요) */
   const inviteMember = async () => {
-    const { token } = await createInvitation(projectId)
-    const inviteUrl = `${window.location.origin}/invitations/${token}`
+    const { inviteUrl } = await createInvitation(projectId)
     await navigator.clipboard.writeText(inviteUrl)
     setInviteCopied(true)
     setTimeout(() => setInviteCopied(false), 2000)
@@ -462,7 +467,7 @@ export function VideoDetailView({
               <button
                 type="button"
                 onClick={() => setStatusMenuOpen((v) => !v)}
-                className="bg-neutral-3 text-neutral-5 text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold"
+                className={`text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold ${videoProgressStatusColor(videoDetail.progressStatus)}`}
               >
                 {videoDetail.progressStatus === 'DONE' ? '완료' : '진행중'}
                 <InlineIcon svg={chevronDownIcon} className="size-3" />
@@ -523,7 +528,7 @@ export function VideoDetailView({
         <div className="flex min-w-0 flex-1 flex-col gap-6">
           <div
             ref={playerWrapperRef}
-            className="group relative w-full overflow-hidden rounded-[10px] bg-black"
+            className="group relative w-full max-w-[751px] overflow-hidden rounded-[10px] bg-black"
             style={{ aspectRatio: '752 / 360' }}
           >
             <YouTubeIframePlayer
@@ -532,7 +537,7 @@ export function VideoDetailView({
               hideControls
               onReady={handlePlayerReady}
               onStateChange={handleStateChange}
-              className="h-full max-w-none"
+              className="size-full max-w-none rounded-none"
             />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-3">
