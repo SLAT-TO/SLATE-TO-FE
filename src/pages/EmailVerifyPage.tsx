@@ -8,12 +8,7 @@ export function EmailVerifyPage() {
   const [email, setEmail] = useState('')
 
   return (
-    <div
-      className="relative min-h-screen w-full overflow-hidden"
-      style={{
-        backgroundImage: 'linear-gradient(118deg, #9ff0ff 33.5%, #b9d6ff 98%)',
-      }}
-    >
+    <div className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(118deg,#9ff0ff_33.5%,#b9d6ff_98%)]">
       <img
         src={emailVerifyBg}
         alt=""
@@ -25,7 +20,10 @@ export function EmailVerifyPage() {
       </p>
 
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-10 px-4 py-16">
-        <div className="flex w-full max-w-[1062px] flex-col items-start gap-10">
+        <form
+          onSubmit={(e) => e.preventDefault()}
+          className="flex w-full max-w-[1062px] flex-col items-start gap-10"
+        >
           <div className="text-neutral-1 flex max-w-[672px] flex-col gap-3">
             <p className="text-head-sm font-bold">가입하신 이메일 주소를 입력해 주세요.</p>
             <p className="text-body-sm">입력하신 이메일은 안전하게 보호됩니다.</p>
@@ -42,7 +40,7 @@ export function EmailVerifyPage() {
           <Button type="submit" fullWidth className="max-w-[410px] self-center">
             인증 메일 보내기
           </Button>
-        </div>
+        </form>
 
         <p className="text-caption-lg text-neutral-1 text-center">
           인증 메일이 오지 않나요?
