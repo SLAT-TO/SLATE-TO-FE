@@ -10,7 +10,7 @@ import JobDetailPage from './pages/JobDetailPage'
 import JobApplicantsPage from './pages/JobApplicantsPage'
 import WorkspacePage from './pages/WorkspacePage'
 import { usePathname } from './hooks/usePathname'
-import { LoginPage } from './pages/LoginPage'
+import { renderFullscreenRoute } from './routes/fullscreen'
 import { matchPath } from './utils/navigation'
 
 const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
@@ -79,15 +79,10 @@ function AppRoutes({ pathname }: { pathname: string }) {
   )
 }
 
-/** /login 등 — 각 기능 PR에서 경로 추가 */
-const FULLSCREEN_PATHS: string[] = ['/login']
-
 function App() {
   const pathname = usePathname()
-
-  if (FULLSCREEN_PATHS.includes(pathname)) {
-    return <LoginPage />
-  }
+  const fullscreen = renderFullscreenRoute(pathname)
+  if (fullscreen) return fullscreen
 
   return (
     <MainLayout userName={USER_NAME}>
