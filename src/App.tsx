@@ -5,6 +5,7 @@ import ProfileEditPage from './pages/ProfileEditPage'
 import ProjectDetailPage from './pages/ProjectDetailPage'
 import ProjectFormPage from './pages/ProjectFormPage'
 import ProjectOverviewPage from './pages/ProjectOverviewPage'
+import RecruitPage from './pages/RecruitPage'
 import WorkspacePage from './pages/WorkspacePage'
 import { usePathname } from './hooks/usePathname'
 import { matchPath } from './utils/navigation'
@@ -14,6 +15,7 @@ const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
 // 라우트별 헤더 타이틀 매핑
 function getHeaderTitle(pathname: string): string {
   if (pathname === '/' || pathname === '') return `안녕하세요 ${USER_NAME} 님`
+  if (pathname === '/matching') return '추천공고'
   if (pathname === '/mypage') return '마이페이지'
   if (pathname === '/mypage/edit') return '프로필 수정'
   if (pathname === '/mypage/project/new') return '프로젝트 추가'
@@ -34,6 +36,10 @@ function AppRoutes({ pathname }: { pathname: string }) {
 
   if (pathname === '/workspace') {
     return <WorkspacePage />
+  }
+
+  if (pathname === '/matching') {
+    return <RecruitPage />
   }
 
   if (pathname === '/mypage') return <MyPage />
