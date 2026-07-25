@@ -24,8 +24,9 @@ function formatTarget(names: string[]): string | undefined {
 function eventToFormValues(event: CalendarEvent): EventFormValues {
   return {
     title: event.title,
-    startDate: parse(event.date, 'yyyy-MM-dd', new Date()),
-    endDate: null,
+    startDate: parse(event.startDate, 'yyyy-MM-dd', new Date()),
+    endDate:
+      event.endDate === event.startDate ? null : parse(event.endDate, 'yyyy-MM-dd', new Date()),
     projectId: event.projectId ?? '',
     participantIds: event.participantIds ?? [],
     participantNames: [],
@@ -81,7 +82,7 @@ export default function CalendarPage() {
   const selectedDateEvents = useMemo(() => {
     if (!selectedDate) return []
     const key = toDateKey(selectedDate)
-    return filteredEvents.filter((event) => event.date === key)
+    return filteredEvents.filter((event) => event.startDate <= key && event.endDate >= key)
   }, [filteredEvents, selectedDate])
 
   // 같은 날짜를 다시 클릭하면 패널을 닫는다
@@ -89,11 +90,12 @@ export default function CalendarPage() {
     setSelectedDate((prev) => (prev && toDateKey(prev) === toDateKey(date) ? null : date))
   }
 
-  // TODO: 종료일은 스키마/BE 연동 전까지 저장하지 않음
   const handleCreateEvent = (values: EventFormValues) => {
+    const startDate = toDateKey(values.startDate ?? selectedDate ?? new Date())
     addEvent({
       id: crypto.randomUUID(),
-      date: toDateKey(values.startDate ?? selectedDate ?? new Date()),
+      startDate,
+      endDate: values.endDate ? toDateKey(values.endDate) : startDate,
       title: values.title.trim() || '새 일정',
       place: values.place.trim() || undefined,
       memo: values.memo.trim() || undefined,
@@ -104,8 +106,10 @@ export default function CalendarPage() {
   }
 
   const handleUpdateEvent = (id: string, values: EventFormValues) => {
+    const startDate = toDateKey(values.startDate ?? selectedDate ?? new Date())
     updateEvent(id, {
-      date: toDateKey(values.startDate ?? selectedDate ?? new Date()),
+      startDate,
+      endDate: values.endDate ? toDateKey(values.endDate) : startDate,
       title: values.title.trim() || '새 일정',
       place: values.place.trim() || undefined,
       memo: values.memo.trim() || undefined,
