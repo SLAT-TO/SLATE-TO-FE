@@ -1,3 +1,4 @@
+import { navigate } from '../utils/navigation'
 import landingBg from '../assets/images/landing-bg.png'
 
 function ArrowForwardIcon() {
@@ -39,6 +40,7 @@ export function LandingPage() {
 
         <button
           type="button"
+          onClick={() => navigate('/login')}
           className="flex w-fit items-center gap-3 rounded-full bg-white/20 px-8 py-4 text-lg font-semibold tracking-tight text-white"
         >
           워크 스페이스로 가기
