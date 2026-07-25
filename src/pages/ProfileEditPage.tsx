@@ -6,6 +6,8 @@ import { Button } from '../components/Button'
 import { ROLE_OPTIONS } from '../constants/roles'
 import { profileSchema, type ProfileFormValues } from '../schemas/profile'
 import { validateField } from '../utils/validateField'
+import { useHeaderSlot } from '../hooks/useHeaderSlot'
+import HeaderTitle from '../components/HeaderTitle'
 
 // 수정 진입 시 GET /api/v1/users/me 응답으로 초기값 채우기.
 // 등록(온보딩 직후)은 빈 값, 수정은 기존 값. 지금은 빈 값 고정.
@@ -19,7 +21,10 @@ const INITIAL_VALUES: ProfileFormValues = {
 
 type FormErrors = Partial<Record<keyof ProfileFormValues, string>>
 
+const HEADER = <HeaderTitle>프로필 수정</HeaderTitle>
+
 function ProfileEditPage() {
+  useHeaderSlot(HEADER)
   const [values, setValues] = useState<ProfileFormValues>(INITIAL_VALUES)
   const [errors, setErrors] = useState<FormErrors>({})
   // 프로필 이미지 업로드 API 연동 필요. 지금은 미리보기 URL만.
