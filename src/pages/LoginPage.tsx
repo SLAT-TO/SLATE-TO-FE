@@ -1,8 +1,24 @@
 import { useState } from 'react'
 import Input from '../components/Input'
 import { Button } from '../components/Button'
+import { navigate } from '../utils/navigation'
 import loginBg from '../assets/images/login-bg.png'
 import loginAvatar from '../assets/images/login-avatar.png'
+
+function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={to}
+      onClick={(e) => {
+        e.preventDefault()
+        navigate(to)
+      }}
+      className="hover:underline"
+    >
+      {children}
+    </a>
+  )
+}
 
 // 로그인 화면(페이지). 현재는 UI만 구현, 인증 로직은 이후 작업에서 연결.
 export function LoginPage() {
@@ -10,12 +26,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
 
   return (
-    <div
-      className="relative min-h-screen w-full overflow-hidden"
-      style={{
-        backgroundImage: 'linear-gradient(115deg, #9ff0ff 33.5%, #b9d6ff 98%)',
-      }}
-    >
+    <div className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(115deg,#9ff0ff_33.5%,#b9d6ff_98%)]">
       <img
         src={loginBg}
         alt=""
@@ -37,35 +48,36 @@ export function LoginPage() {
             </div>
           </div>
 
-          <div className="flex w-full flex-col gap-4">
-            <Input
-              id="login-email"
-              type="email"
-              placeholder="이메일을 입력하세요"
-              value={email}
-              onChange={setEmail}
-            />
-            <Input
-              id="login-password"
-              type="password"
-              placeholder="비밀번호를 입력하세요"
-              value={password}
-              onChange={setPassword}
-            />
-          </div>
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            className="flex w-full flex-col items-center gap-10"
+          >
+            <div className="flex w-full flex-col gap-4">
+              <Input
+                id="login-email"
+                type="email"
+                placeholder="이메일을 입력하세요"
+                value={email}
+                onChange={setEmail}
+              />
+              <Input
+                id="login-password"
+                type="password"
+                placeholder="비밀번호를 입력하세요"
+                value={password}
+                onChange={setPassword}
+              />
+            </div>
 
-          <Button type="submit" fullWidth className="max-w-[410px]">
-            로그인
-          </Button>
+            <Button type="submit" fullWidth className="max-w-[410px]">
+              로그인
+            </Button>
+          </form>
 
           <div className="text-caption-lg text-neutral-10 -mt-6 flex items-center gap-3">
-            <button type="button" className="hover:underline">
-              비밀번호 찾기
-            </button>
+            <NavLink to="/reset-password">비밀번호 찾기</NavLink>
             <span className="text-neutral-5">|</span>
-            <button type="button" className="hover:underline">
-              회원가입
-            </button>
+            <NavLink to="/signup">회원가입</NavLink>
           </div>
 
           <div className="flex w-full flex-col items-center gap-4">
