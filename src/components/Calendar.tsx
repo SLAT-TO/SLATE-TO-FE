@@ -2,14 +2,16 @@ import { useMemo } from 'react'
 import type { CalendarProps } from '../types/Calendar.types'
 import { assignEventLanes, chunkWeeks, getMonthGrid } from '../utils/calendarUtils'
 import { CalendarGrid } from './CalendarGrid'
-import { EventBarLayer } from './EventBarLayer'
+import { WeekEventBars } from './EventBarLayer'
 
 const DEFAULT_MAX_LANES = 2
 
-// 날짜 그리드(CalendarGrid)와 이벤트 바 오버레이(EventBarLayer)를 relative/absolute로 합성만 하는 조립 컴포넌트.
+// 날짜 그리드(CalendarGrid)와 이벤트 바 오버레이(WeekEventBars)를 조립하는 컴포넌트.
+// 주(week)마다 같은 높이(flex-1로 유동적)를 공유해야 해서, CalendarGrid에 주별 오버레이 렌더링을 위임한다.
 export function Calendar({
   month,
   events,
+  selectedDate,
   maxLanesPerDay = DEFAULT_MAX_LANES,
   onDateClick,
   onEventClick,
@@ -18,7 +20,7 @@ export function Calendar({
   const weeks = useMemo(() => chunkWeeks(days), [days])
 
   // 주(week)별 레인 배치를 여기서 한 번만 계산해 CalendarGrid(오버플로 배지)와
-  // EventBarLayer(이벤트 바)가 같은 결과를 나눠 쓴다 (각자 assignEventLanes를 다시 돌리지 않음).
+  // WeekEventBars(이벤트 바)가 같은 결과를 나눠 쓴다 (각자 assignEventLanes를 다시 돌리지 않음).
   const weekLanes = useMemo(
     () => weeks.map((week) => assignEventLanes(week, events, maxLanesPerDay)),
     [weeks, events, maxLanesPerDay],
@@ -33,14 +35,15 @@ export function Calendar({
   }, [weekLanes])
 
   return (
-    <div className="relative inline-block">
-      <CalendarGrid
-        month={month}
-        weeks={weeks}
-        onDateClick={onDateClick}
-        overflowByDate={overflowByDate}
-      />
-      <EventBarLayer weeks={weeks} weekLanes={weekLanes} onEventClick={onEventClick} />
-    </div>
+    <CalendarGrid
+      month={month}
+      weeks={weeks}
+      selectedDate={selectedDate}
+      onDateClick={onDateClick}
+      overflowByDate={overflowByDate}
+      renderWeekOverlay={(_week, weekIndex) => (
+        <WeekEventBars positioned={weekLanes[weekIndex].positioned} onEventClick={onEventClick} />
+      )}
+    />
   )
 }

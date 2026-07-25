@@ -5,9 +5,11 @@ interface ModalProps {
   isOpen: boolean
   onClose: () => void
   children: React.ReactNode
+  /** 콘텐츠 박스에 덧붙일 클래스 (너비·최대높이 등). 기존 bg·radius·padding·shadow와 충돌하는 클래스는 넣지 말 것 */
+  className?: string
 }
 
-export default function Modal({ isOpen, onClose, children }: ModalProps) {
+export default function Modal({ isOpen, onClose, children, className = '' }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null)
 
   // ESC 키로 닫기
@@ -57,7 +59,7 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
-        className="bg-bg-primary rounded-lg p-6 shadow-lg outline-none"
+        className={`bg-bg-primary rounded-lg p-6 shadow-lg outline-none ${className}`}
       >
         {children}
       </div>
