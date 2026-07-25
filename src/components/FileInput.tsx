@@ -56,6 +56,23 @@ const FileInput = ({
     if (!disabled) inputRef.current?.click()
   }
 
+  const fileMatchesAccept = (file: File) => {
+    if (!accept) return true
+    const patterns = accept
+      .split(',')
+      .map((pattern) => pattern.trim())
+      .filter(Boolean)
+    return patterns.some((pattern) => {
+      if (pattern.startsWith('.')) {
+        return file.name.toLowerCase().endsWith(pattern.toLowerCase())
+      }
+      if (pattern.endsWith('/*')) {
+        return file.type.startsWith(pattern.slice(0, -1))
+      }
+      return file.type === pattern
+    })
+  }
+
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     if (!disabled) setIsDragging(true)
@@ -69,7 +86,10 @@ const FileInput = ({
     e.preventDefault()
     setIsDragging(false)
     if (disabled) return
-    onChange(Array.from(e.dataTransfer.files))
+    let files = Array.from(e.dataTransfer.files).filter(fileMatchesAccept)
+    if (!multiple && files.length > 0) files = [files[0]!]
+    if (files.length === 0) return
+    onChange(files)
   }
 
   return (
