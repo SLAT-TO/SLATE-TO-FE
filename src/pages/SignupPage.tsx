@@ -63,10 +63,10 @@ export function SignupPage() {
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [agreed, setAgreed] = useState<Record<(typeof TERMS)[number]['key'], boolean>>({
-    age: true,
-    service: true,
-    privacy: true,
-    collect: true,
+    age: false,
+    service: false,
+    privacy: false,
+    collect: false,
   })
 
   const allAgreed = TERMS.every((t) => agreed[t.key])
@@ -76,12 +76,7 @@ export function SignupPage() {
   }
 
   return (
-    <div
-      className="relative min-h-screen w-full overflow-hidden"
-      style={{
-        backgroundImage: 'linear-gradient(118deg, #9ff0ff 33.5%, #b9d6ff 98%)',
-      }}
-    >
+    <div className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(118deg,#9ff0ff_33.5%,#b9d6ff_98%)]">
       <img
         src={signupBg}
         alt=""
@@ -93,7 +88,10 @@ export function SignupPage() {
       </p>
 
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-10 px-4 py-16">
-        <div className="flex w-full max-w-[1062px] flex-col gap-8">
+        <form
+          onSubmit={(e) => e.preventDefault()}
+          className="flex w-full max-w-[1062px] flex-col gap-8"
+        >
           <div className="flex flex-col gap-4">
             <p className="text-head-sm text-neutral-1 font-semibold">이름</p>
             <Input
@@ -193,7 +191,7 @@ export function SignupPage() {
           <Button type="submit" fullWidth className="max-w-[410px] self-center">
             시작하기
           </Button>
-        </div>
+        </form>
       </div>
     </div>
   )
