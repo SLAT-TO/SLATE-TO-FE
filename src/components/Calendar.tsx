@@ -1,12 +1,18 @@
 import { useMemo } from 'react'
-import { format, isSameMonth, isToday } from 'date-fns'
+import { format, isSameDay, isSameMonth, isToday } from 'date-fns'
 import type { CalendarProps } from '../types/Calendar.types'
 import type { CalendarEvent } from '../schemas/calendarEvent'
 import { getMonthGrid, toDateKey } from '../utils/calendarUtils'
 
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 
-export function Calendar({ month, events, onDateClick, onEventClick }: CalendarProps) {
+export function Calendar({
+  month,
+  events,
+  selectedDate,
+  onDateClick,
+  onEventClick,
+}: CalendarProps) {
   const days = useMemo(() => getMonthGrid(month), [month])
 
   // 날짜별로 이벤트를 묶어둔다 (매 셀마다 events 전체를 도는 걸 방지)
@@ -21,9 +27,9 @@ export function Calendar({ month, events, onDateClick, onEventClick }: CalendarP
   }, [events])
 
   return (
-    <div className="inline-block">
+    <div className="w-full min-w-0">
       {/* 요일 헤더 */}
-      <div className="grid grid-cols-[repeat(7,147px)]">
+      <div className="grid grid-cols-7">
         {WEEKDAYS.map((label) => (
           <div
             key={label}
@@ -35,11 +41,12 @@ export function Calendar({ month, events, onDateClick, onEventClick }: CalendarP
       </div>
 
       {/* 날짜 그리드 */}
-      <div className="border-border grid grid-cols-[repeat(7,147px)] border-t border-l">
+      <div className="border-border grid grid-cols-7 border-t border-l">
         {days.map((day) => {
           const key = toDateKey(day)
           const dayEvents = eventsByDay.get(key) ?? []
           const inMonth = isSameMonth(day, month)
+          const selected = !!selectedDate && isSameDay(day, selectedDate)
 
           return (
             <div
@@ -53,7 +60,9 @@ export function Calendar({ month, events, onDateClick, onEventClick }: CalendarP
                   onDateClick?.(day)
                 }
               }}
-              className="border-border bg-bg-primary flex h-[147px] cursor-pointer flex-col items-stretch gap-1 border-r border-b pt-2 pr-2 pl-2"
+              className={`border-border flex h-[147px] min-w-0 cursor-pointer flex-col items-stretch gap-1 border-r border-b pt-2 pr-2 pl-2 ${
+                selected ? 'bg-main-1' : 'bg-bg-primary'
+              }`}
             >
               <span
                 className={`text-sm ${inMonth ? 'text-neutral-10' : 'text-neutral-5'} ${

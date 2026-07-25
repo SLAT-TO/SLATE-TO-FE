@@ -23,7 +23,7 @@ export default function Input({
   label,
   required = false,
 }: InputProps) {
-  const borderClass = error ? 'border-warning' : 'border-neutral-3 focus:border-primary'
+  const borderClass = error ? 'border-warning' : 'border-border-input focus:border-primary'
 
   return (
     <div className="flex w-full flex-col gap-1.5">
