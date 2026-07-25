@@ -3,6 +3,7 @@ import {
   createFeedback,
   createReply,
   deleteFeedback,
+  deleteVideo,
   getFeedbacks,
   getReferenceFiles,
   getReplies,
@@ -23,12 +24,16 @@ import ActionMenu from '../../components/ActionMenu'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
 import InlineIcon from '../../components/InlineIcon'
+import ConfirmModal from '../../components/ConfirmModal'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import YouTubeIframePlayer from '../../components/YouTubeIframePlayer'
 import { CARD_BASE } from '../../styles/card'
+import VideoCard from './VideoCard'
+import { formatRelativeTime } from '../../utils/formatRelativeTime'
 import type { VideoDetail, VideoListItem, VideoProgressStatus } from '../../types/video'
 import type { Feedback, FeedbackReply } from '../../types/feedback'
+import { ApiError } from '../../types/api'
 import type { ReferenceFile } from '../../types/video'
 import type { ProjectFileListItem } from '../../types/file'
 import type { ProjectLengthType, ProjectMember } from '../../types/project'
@@ -102,6 +107,12 @@ function formatFeedbackTime(feedback: Pick<Feedback, 'startTime' | 'endTime'>): 
   return `${formatTimestamp(feedback.startTime)} ~ ${formatTimestamp(feedback.endTime)}`
 }
 
+function videoProgressStatusColor(status: VideoProgressStatus): string {
+  return status === 'DONE'
+    ? 'bg-tag-done-bg text-tag-done-text'
+    : 'bg-tag-active-bg text-tag-active-text'
+}
+
 type VideoFeedbackTabWithSelectionProps = VideoFeedbackTabProps & {
   onSelectVideo: (videoId: number) => void
 }
@@ -112,6 +123,8 @@ export default function VideoFeedbackTab({
 }: VideoFeedbackTabWithSelectionProps) {
   const [videos, setVideos] = useState<VideoListItem[]>([])
   const [videosLoading, setVideosLoading] = useState(true)
+  const [deleteTarget, setDeleteTarget] = useState<VideoListItem | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -132,30 +145,57 @@ export default function VideoFeedbackTab({
     }
   }, [projectId])
 
+  const confirmDeleteVideo = async () => {
+    if (!deleteTarget) return
+    setDeleteError(null)
+    try {
+      await deleteVideo(projectId, deleteTarget.videoId)
+      setVideos((prev) => prev.filter((v) => v.videoId !== deleteTarget.videoId))
+      setDeleteTarget(null)
+    } catch (err) {
+      setDeleteError(
+        err instanceof ApiError ? err.message : '영상 삭제에 실패했습니다. 다시 시도해 주세요.',
+      )
+    }
+  }
+
   return (
     <section className="flex flex-col gap-3">
+      <ConfirmModal
+        isOpen={deleteTarget !== null}
+        onClose={() => {
+          setDeleteTarget(null)
+          setDeleteError(null)
+        }}
+        onConfirm={confirmDeleteVideo}
+        title="영상 삭제"
+        description={
+          deleteError ?? '이 영상을 삭제할까요?'
+        }
+        confirmText="삭제"
+      />
       {videosLoading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
       {!videosLoading && videos.length === 0 && (
         <p className="text-caption-lg text-neutral-6">등록된 영상이 없습니다.</p>
       )}
       {!videosLoading && videos.length > 0 && (
-        <ul className="border-border divide-border divide-y border-y">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {videos.map((video) => (
-            <li key={video.videoId}>
-              <button
-                type="button"
-                onClick={() => onSelectVideo(video.videoId)}
-                className="hover:bg-neutral-2 flex w-full items-center justify-between gap-3 px-1 py-4 text-left"
-              >
-                <span className="text-body-sm text-neutral-11 font-medium">{video.title}</span>
-                <span className="text-caption-lg text-neutral-6 shrink-0">
-                  {video.progressStatus === 'DONE' ? '완료' : '진행중'}
-                  {video.unreadCommentCount > 0 ? ` · 안읽음 ${video.unreadCommentCount}` : ''}
-                </span>
-              </button>
-            </li>
+            <VideoCard
+              key={video.videoId}
+              title={video.title}
+              thumbnailUrl={video.thumbnailUrl}
+              progressStatus={video.progressStatus}
+              relativeTime={formatRelativeTime(video.updatedAt)}
+              unreadCommentCount={video.unreadCommentCount}
+              onClick={() => onSelectVideo(video.videoId)}
+              onDelete={() => {
+                setDeleteError(null)
+                setDeleteTarget(video)
+              }}
+            />
           ))}
-        </ul>
+        </div>
       )}
     </section>
   )
@@ -445,7 +485,7 @@ export function VideoDetailView({
               <button
                 type="button"
                 onClick={() => setStatusMenuOpen((v) => !v)}
-                className="bg-neutral-3 text-neutral-5 text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold"
+                className={`text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold ${videoProgressStatusColor(videoDetail.progressStatus)}`}
               >
                 {videoDetail.progressStatus === 'DONE' ? '완료' : '진행중'}
                 <InlineIcon svg={chevronDownIcon} className="size-3" />
@@ -506,7 +546,7 @@ export function VideoDetailView({
         <div className="flex min-w-0 flex-1 flex-col gap-6">
           <div
             ref={playerWrapperRef}
-            className="group relative w-full overflow-hidden rounded-[10px] bg-black"
+            className="group relative w-full max-w-[751px] overflow-hidden rounded-[10px] bg-black"
             style={{ aspectRatio: '752 / 360' }}
           >
             <YouTubeIframePlayer
@@ -515,7 +555,7 @@ export function VideoDetailView({
               hideControls
               onReady={handlePlayerReady}
               onStateChange={handleStateChange}
-              className="h-full max-w-none"
+              className="size-full max-w-none rounded-none"
             />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-3">
