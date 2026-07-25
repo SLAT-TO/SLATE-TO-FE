@@ -11,7 +11,10 @@ export type Feedback = {
   videoId: number
   actor: FeedbackActor
   content: string
-  timestampSec: number | null
+  /** 타임코드 시작 시간(초). 없으면 null */
+  startTime: number | null
+  /** 타임코드 종료 시간(초). 단일 시점이면 null, startTime 없이는 값 가질 수 없음 */
+  endTime: number | null
   /** 해결 여부. "피드백 해결 상태 변경" API 스펙(boolean) 기준 — 목록 조회 API는 문자열(Y/N)로 명세돼 있어 실제 연동 시 재확인 필요 */
   status: boolean
   createdAt: string
@@ -29,12 +32,16 @@ export type FeedbackReply = {
 
 export type CreateFeedbackRequest = {
   content: string
-  timestampSec?: number
+  /** 타임코드 시작 시간(초). endTime만 있고 startTime이 없으면 400 */
+  startTime?: number
+  /** 타임코드 종료 시간(초). 단일 시점이면 생략 */
+  endTime?: number
 }
 
 export type UpdateFeedbackRequest = {
   content?: string
-  timestampSec?: number
+  startTime?: number
+  endTime?: number
 }
 
 export type UpdateFeedbackStatusRequest = {

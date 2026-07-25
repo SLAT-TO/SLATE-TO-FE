@@ -1,19 +1,26 @@
 import MainLayout from './layouts/MainLayout'
-import { usePathname } from './hooks/usePathname'
-import { matchPath } from './utils/navigation'
+import HomePage from './pages/HomePage'
 import MyPage from './pages/MyPage'
 import ProfileEditPage from './pages/ProfileEditPage'
-import ProjectOverviewPage from './pages/ProjectOverviewPage'
+import ProjectDetailPage from './pages/ProjectDetailPage'
 import ProjectFormPage from './pages/ProjectFormPage'
+import ProjectOverviewPage from './pages/ProjectOverviewPage'
+import WorkspacePage from './pages/WorkspacePage'
+import { usePathname } from './hooks/usePathname'
+import { matchPath } from './utils/navigation'
 
 function AppRoutes({ pathname }: { pathname: string }) {
-  if (pathname === '/' || pathname === '') {
-    return (
-      <section className="flex flex-col gap-2">
-        <h1 className="text-head-sm text-neutral-11 font-bold">홈</h1>
-        <p className="text-body-sm text-neutral-6">홈 대시보드는 이후 조립 예정입니다.</p>
-      </section>
-    )
+  const projectMatch = matchPath('/workspace/projects/:projectId', pathname)
+  if (projectMatch) {
+    const projectId = Number(projectMatch.projectId)
+    if (!Number.isFinite(projectId)) {
+      return <p className="text-body-sm text-warning">잘못된 프로젝트 경로입니다.</p>
+    }
+    return <ProjectDetailPage projectId={projectId} />
+  }
+
+  if (pathname === '/workspace') {
+    return <WorkspacePage />
   }
 
   if (pathname === '/mypage') return <MyPage />
@@ -30,6 +37,12 @@ function AppRoutes({ pathname }: { pathname: string }) {
     return <ProjectOverviewPage />
   }
 
+  if (pathname === '/' || pathname === '') {
+    return <HomePage />
+  }
+
+  // /invitations/:token 등 화면 라우트는 각 기능 PR에서 여기에 추가
+
   return (
     <section className="flex flex-col gap-2">
       <h1 className="text-head-sm text-neutral-11 font-bold">준비 중</h1>
@@ -40,6 +53,7 @@ function AppRoutes({ pathname }: { pathname: string }) {
   )
 }
 
+/** /login 등 — 각 기능 PR에서 경로 추가 */
 const FULLSCREEN_PATHS: string[] = []
 
 function App() {
@@ -50,7 +64,7 @@ function App() {
   }
 
   return (
-    <MainLayout userName="서정현">
+    <MainLayout userName="김수민">
       <AppRoutes pathname={pathname} />
     </MainLayout>
   )
