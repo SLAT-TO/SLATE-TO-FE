@@ -18,19 +18,10 @@ function ChevronIcon({ className = '' }: { className?: string }) {
   )
 }
 
-// index.css 팔레트의 main-1~10 (CSS 변수 참조라 팔레트 값이 바뀌어도 자동으로 따라감)
-const EVENT_COLORS = Array.from({ length: 10 }, (_, i) => `var(--color-main-${i + 1})`)
-
-function randomEventColor() {
-  return EVENT_COLORS[Math.floor(Math.random() * EVENT_COLORS.length)]
-}
-
 // 캘린더 화면(페이지). 데이터 소유 + 컴포넌트 콜백 처리 담당.
 export function CalendarPage() {
   const [month, setMonth] = useState(new Date())
   const events = useCalendarStore((s) => s.events)
-  const addEvent = useCalendarStore((s) => s.addEvent)
-  const removeEvent = useCalendarStore((s) => s.removeEvent)
 
   return (
     <div className="mx-auto max-w-4xl p-6">
@@ -58,17 +49,7 @@ export function CalendarPage() {
       <Calendar
         month={month}
         events={events}
-        onDateClick={(date) => {
-          const key = format(date, 'yyyy-MM-dd')
-          addEvent({
-            id: crypto.randomUUID(),
-            startDate: key,
-            endDate: key,
-            title: '새 일정',
-            color: randomEventColor(),
-          })
-        }}
-        onEventClick={(event) => removeEvent(event.id)}
+        onDateClick={() => {}}
       />
     </div>
   )
