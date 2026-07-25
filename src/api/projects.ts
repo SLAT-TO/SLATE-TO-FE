@@ -1,14 +1,4 @@
 import { request } from './client'
-import {
-  normalizeMemberList,
-  normalizeProjectList,
-  toProject,
-  toProjectMember,
-  type BeMember,
-  type BeMemberListResult,
-  type BeProjectListRaw,
-  type BeProjectSummary,
-} from './normalize'
 import { paths } from './paths'
 import type {
   AcceptInvitationRequest,
@@ -17,10 +7,14 @@ import type {
   CreateProjectRequest,
   CreateProjectResult,
   CursorPage,
-  Project,
+  MemberSummary,
   ProjectActivity,
-  ProjectInvitation,
-  ProjectMember,
+  ProjectDetailResponse,
+  ProjectInvitationDetailResponse,
+  ProjectListResponse,
+  ProjectMemberDetailResponse,
+  ProjectMemberListResponse,
+  ProjectResponse,
   UpdateProjectRequest,
 } from '../types/project'
 import type {
@@ -38,27 +32,24 @@ import type {
   UpdateNoticeRequest,
 } from '../types/notice'
 
-export async function getProjects(): Promise<Project[]> {
-  const result = await request<BeProjectListRaw>({ method: 'GET', url: paths.projects.root })
-  return normalizeProjectList(result)
+export async function getProjects(
+  params?: { status?: string; cursor?: number; size?: number },
+): Promise<ProjectListResponse> {
+  return request({ method: 'GET', url: paths.projects.root, params })
 }
 
 export async function createProject(body: CreateProjectRequest): Promise<CreateProjectResult> {
-  return request<CreateProjectResult>({ method: 'POST', url: paths.projects.root, data: body })
+  return request({ method: 'POST', url: paths.projects.root, data: body })
 }
 
-export async function getProject(projectId: number): Promise<Project> {
-  const result = await request<BeProjectSummary>({
-    method: 'GET',
-    url: paths.projects.byId(projectId),
-  })
-  return toProject(result)
+export async function getProject(projectId: number): Promise<ProjectDetailResponse> {
+  return request({ method: 'GET', url: paths.projects.byId(projectId) })
 }
 
 export async function updateProject(
   projectId: number,
   body: UpdateProjectRequest,
-): Promise<{ id: number; title?: string; status?: string; updatedAt: string }> {
+): Promise<ProjectResponse> {
   return request({ method: 'PATCH', url: paths.projects.byId(projectId), data: body })
 }
 
@@ -66,36 +57,30 @@ export async function deleteProject(projectId: number): Promise<null> {
   return request({ method: 'DELETE', url: paths.projects.byId(projectId) })
 }
 
-export async function getProjectMembers(projectId: number): Promise<ProjectMember[]> {
-  const result = await request<BeMemberListResult>({
-    method: 'GET',
-    url: paths.projects.members(projectId),
-  })
-  return normalizeMemberList(result)
+export async function getProjectMembers(projectId: number): Promise<ProjectMemberListResponse> {
+  return request({ method: 'GET', url: paths.projects.members(projectId) })
 }
 
 export async function getProjectMember(
   projectId: number,
   memberId: number,
-): Promise<ProjectMember> {
-  const result = await request<BeMember>({
+): Promise<ProjectMemberDetailResponse> {
+  return request({
     method: 'GET',
     url: paths.projects.member(projectId, memberId),
   })
-  return toProjectMember(result)
 }
 
 export async function updateMemberRole(
   projectId: number,
   memberId: number,
   roleNames: string[],
-): Promise<ProjectMember> {
-  const result = await request<BeMember>({
+): Promise<ProjectMemberDetailResponse> {
+  return request({
     method: 'PATCH',
     url: paths.projects.member(projectId, memberId),
     data: { roleNames },
   })
-  return toProjectMember(result)
 }
 
 export async function removeMember(projectId: number, memberId: number): Promise<null> {
@@ -110,7 +95,7 @@ export async function createInvitation(projectId: number): Promise<CreateInvitat
   return request({ method: 'POST', url: paths.projects.invitations(projectId) })
 }
 
-export async function getInvitation(token: string): Promise<ProjectInvitation> {
+export async function getInvitation(token: string): Promise<ProjectInvitationDetailResponse> {
   return request({ method: 'GET', url: paths.projectInvitations.byToken(token) })
 }
 
@@ -138,11 +123,22 @@ export async function getProjectFiles(
   })
 }
 
+export async function getProjectFile(projectId: number, fileId: number): Promise<ProjectFile> {
+  return request({ method: 'GET', url: paths.projects.file(projectId, fileId) })
+}
+
 export async function getUploadUrl(
   projectId: number,
   body: UploadUrlRequest,
 ): Promise<UploadUrlResult> {
   return request({ method: 'POST', url: paths.projects.uploadUrl(projectId), data: body })
+}
+
+export async function createUploadUrl(
+  projectId: number,
+  body: UploadUrlRequest,
+): Promise<UploadUrlResult> {
+  return getUploadUrl(projectId, body)
 }
 
 export async function registerFile(
@@ -180,15 +176,25 @@ export async function getProjectNotices(
   return request({ method: 'GET', url: paths.projects.notices(projectId) })
 }
 
+export async function getProjectNotice(
+  projectId: number,
+  noticeId: number,
+): Promise<ProjectNoticeListItem> {
+  return request({ method: 'GET', url: paths.projects.notice(projectId, noticeId) })
+}
+
 export async function createProjectNotice(
   projectId: number,
   body: CreateNoticeRequest,
 ): Promise<ProjectNoticeListItem> {
-  return request({
-    method: 'POST',
-    url: paths.projects.notices(projectId),
-    data: body,
-  })
+  return request({ method: 'POST', url: paths.projects.notices(projectId), data: body })
+}
+
+export async function createNotice(
+  projectId: number,
+  body: CreateNoticeRequest,
+): Promise<ProjectNoticeListItem> {
+  return createProjectNotice(projectId, body)
 }
 
 export async function updateProjectNotice(
@@ -203,6 +209,20 @@ export async function updateProjectNotice(
   })
 }
 
+export async function updateNotice(
+  projectId: number,
+  noticeId: number,
+  body: UpdateNoticeRequest,
+): Promise<ProjectNoticeListItem> {
+  return updateProjectNotice(projectId, noticeId, body)
+}
+
 export async function deleteProjectNotice(projectId: number, noticeId: number): Promise<null> {
   return request({ method: 'DELETE', url: paths.projects.notice(projectId, noticeId) })
 }
+
+export async function deleteNotice(projectId: number, noticeId: number): Promise<null> {
+  return deleteProjectNotice(projectId, noticeId)
+}
+
+export type { MemberSummary }

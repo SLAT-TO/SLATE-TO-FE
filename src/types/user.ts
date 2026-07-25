@@ -1,4 +1,4 @@
-export type SocialType = 'GOOGLE'
+export type SocialType = 'EMAIL' | 'GOOGLE' | 'KAKAO'
 
 export type UserRole =
   | 'DIRECTOR'

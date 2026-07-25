@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
 import type { CreateProjectRequest, UpdateProjectRequest } from '../../types/project'
 import type { CreateNoticeRequest, UpdateNoticeRequest } from '../../types/notice'
-import { allocId, db, getCurrentUser, requireUser } from '../db'
+import { allocId, db, getCurrentUser, requireUser, type MockMemberRecord, type MockProjectRecord } from '../db'
 import { paginateByCursor } from '../pagination'
 import { badRequest, domainError, notFound, unauthorized } from '../errors'
 import { created, ok } from '../response'
@@ -47,10 +47,93 @@ function toFileListItem(file: (typeof db.files)[number]) {
   }
 }
 
+function findProjectOwner(project: MockProjectRecord) {
+  return db.users.find((u) => u.id === project.ownerUserId) ?? db.users[0]!
+}
+
+function toMemberSummary(member: MockMemberRecord) {
+  return {
+    memberId: member.memberId,
+    userId: member.userId,
+    nickname: member.nickname,
+    profileImageUrl: member.profileImageUrl,
+    permission: member.permission,
+    roleNames: member.roleNames,
+    joinedAt: member.joinedAt,
+  }
+}
+
+function toMemberDetail(member: MockMemberRecord) {
+  return {
+    ...toMemberSummary(member),
+    email: member.email,
+    bio: member.bio,
+  }
+}
+
+function toProjectSummary(project: MockProjectRecord) {
+  const memberPreviewImageUrls = db.members
+    .map((m) => m.profileImageUrl)
+    .filter((url): url is string => Boolean(url))
+    .slice(0, 4)
+
+  return {
+    id: project.id,
+    title: project.title,
+    type: project.type,
+    lengthType: project.lengthType,
+    status: project.status,
+    kind: project.kind,
+    startDate: project.startDate,
+    endDate: project.endDate,
+    deadlineProgressPercent: null,
+    lastActivityAt: project.updatedAt,
+    memberPreviewImageUrls,
+    memberCount: db.members.length,
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+  }
+}
+
+function toProjectDetail(project: MockProjectRecord, currentUserId: number) {
+  const owner = findProjectOwner(project)
+  const me = db.members.find((m) => m.userId === currentUserId)
+
+  return {
+    id: project.id,
+    title: project.title,
+    type: project.type,
+    lengthType: project.lengthType,
+    description: project.description,
+    startDate: project.startDate,
+    endDate: project.endDate,
+    clientName: project.clientName,
+    status: project.status,
+    kind: project.kind,
+    owner: {
+      id: owner.id,
+      nickname: owner.nickname,
+      profileImageUrl: owner.profileImageUrl,
+    },
+    myPermission: me?.permission ?? 'MEMBER',
+    roleNames: me?.roleNames ?? [],
+    memberCount: db.members.length,
+    canEdit: me?.permission === 'ADMIN',
+    canDelete: me?.permission === 'ADMIN',
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+  }
+}
+
+function isInvitationExpired(expiresAt: string): boolean {
+  return new Date(expiresAt).getTime() < Date.now()
+}
+
 export const projectHandlers = [
   http.get(paths.projects.root, () => {
     if (!safeUser()) return unauthorized()
-    return HttpResponse.json(ok({ items: db.projects, nextCursor: null, hasNext: false }), {
+    const items = db.projects.map(toProjectSummary)
+    return HttpResponse.json(ok({ items, nextCursor: null, hasNext: false }), {
       status: 200,
     })
   }),
@@ -74,31 +157,33 @@ export const projectHandlers = [
     }
 
     const now = new Date().toISOString()
-    const project = {
+    const project: MockProjectRecord = {
       id: allocId(),
       title: body.title,
       description: body.description,
       type: body.type,
-      customTypeName: body.customTypeName ?? null,
       lengthType: body.lengthType,
       clientName: body.clientName ?? null,
       status: 'PREPARING',
+      kind: body.kind ?? 'PERSONAL',
+      startDate: now.slice(0, 10),
       endDate: body.endDate,
+      ownerUserId: user.id,
       createdAt: now,
       updatedAt: now,
     }
     db.projects.unshift(project)
 
     db.members.unshift({
-      id: allocId(),
+      memberId: allocId(),
       userId: user.id,
-      name: user.nickname,
+      nickname: user.nickname,
       profileImageUrl: user.profileImageUrl,
       email: user.email,
-      region: user.region ?? user.location,
-      jobRole: body.roleNames[0],
+      bio: user.bio,
+      permission: 'ADMIN',
       roleNames: body.roleNames,
-      isAdmin: true,
+      joinedAt: now,
     })
 
     return HttpResponse.json(
@@ -115,18 +200,28 @@ export const projectHandlers = [
 
   http.get(paths.projects.byId(':projectId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
+    const user = requireUser()
     const project = db.projects.find((p) => p.id === Number(params.projectId))
-    if (!project) return notFound()
-    return HttpResponse.json(ok(project), { status: 200 })
+    if (!project) return domainError('PROJECT404', '프로젝트를 찾을 수 없습니다.')
+    return HttpResponse.json(ok(toProjectDetail(project, user.id)), { status: 200 })
   }),
 
   http.patch(paths.projects.byId(':projectId'), async ({ request, params }) => {
     if (!safeUser()) return unauthorized()
     const project = db.projects.find((p) => p.id === Number(params.projectId))
-    if (!project) return notFound()
+    if (!project) return domainError('PROJECT404', '프로젝트를 찾을 수 없습니다.')
     const body = (await request.json()) as UpdateProjectRequest
     Object.assign(project, body, { updatedAt: new Date().toISOString() })
-    return HttpResponse.json(ok({ id: project.id, updatedAt: project.updatedAt }), { status: 200 })
+    return HttpResponse.json(
+      ok({
+        id: project.id,
+        title: project.title,
+        status: project.status,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.delete(paths.projects.byId(':projectId'), ({ params }) => {
@@ -139,69 +234,38 @@ export const projectHandlers = [
 
   http.get(paths.projects.members(':projectId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
-    if (!db.projects.some((p) => p.id === Number(params.projectId))) return notFound()
-    const items = db.members.map((m) => ({
-      memberId: m.id,
-      userId: m.userId,
-      nickname: m.name,
-      profileImageUrl: m.profileImageUrl,
-      permission: m.isAdmin ? 'ADMIN' : 'MEMBER',
-      roleNames: m.roleNames?.length ? m.roleNames : [m.jobRole],
-      joinedAt: '2026-06-01T09:00:00Z',
-    }))
+    if (!db.projects.some((p) => p.id === Number(params.projectId))) {
+      return domainError('PROJECT404', '프로젝트를 찾을 수 없습니다.')
+    }
+    const items = db.members.map(toMemberSummary)
     return HttpResponse.json(ok({ items, memberCount: items.length }), { status: 200 })
   }),
 
   http.get(paths.projects.member(':projectId', ':memberId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
-    const member = db.members.find((m) => m.id === Number(params.memberId))
-    if (!member) return notFound()
-    return HttpResponse.json(
-      ok({
-        memberId: member.id,
-        userId: member.userId,
-        nickname: member.name,
-        email: member.email,
-        profileImageUrl: member.profileImageUrl,
-        bio: null,
-        permission: member.isAdmin ? 'ADMIN' : 'MEMBER',
-        roleNames: member.roleNames?.length ? member.roleNames : [member.jobRole],
-        joinedAt: '2026-06-01T09:00:00Z',
-      }),
-      { status: 200 },
-    )
+    const member = db.members.find((m) => m.memberId === Number(params.memberId))
+    if (!member) return domainError('PROJECT_MEMBER404', '프로젝트 멤버를 찾을 수 없습니다.')
+    return HttpResponse.json(ok(toMemberDetail(member)), { status: 200 })
   }),
 
   http.patch(paths.projects.member(':projectId', ':memberId'), async ({ request, params }) => {
     if (!safeUser()) return unauthorized()
-    const member = db.members.find((m) => m.id === Number(params.memberId))
-    if (!member) return notFound()
+    const member = db.members.find((m) => m.memberId === Number(params.memberId))
+    if (!member) return domainError('PROJECT_MEMBER404', '프로젝트 멤버를 찾을 수 없습니다.')
     const body = (await request.json()) as { roleNames?: string[] }
     if (body.roleNames?.length) {
       member.roleNames = body.roleNames
-      member.jobRole = body.roleNames[0]
     }
-    return HttpResponse.json(
-      ok({
-        memberId: member.id,
-        userId: member.userId,
-        nickname: member.name,
-        email: member.email,
-        profileImageUrl: member.profileImageUrl,
-        bio: null,
-        permission: member.isAdmin ? 'ADMIN' : 'MEMBER',
-        roleNames: member.roleNames,
-        joinedAt: '2026-06-01T09:00:00Z',
-      }),
-      { status: 200 },
-    )
+    return HttpResponse.json(ok(toMemberDetail(member)), { status: 200 })
   }),
 
   http.delete(paths.projects.member(':projectId', ':memberId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const id = Number(params.memberId)
-    if (!db.members.some((m) => m.id === id)) return notFound()
-    db.members = db.members.filter((m) => m.id !== id)
+    if (!db.members.some((m) => m.memberId === id)) {
+      return domainError('PROJECT_MEMBER404', '프로젝트 멤버를 찾을 수 없습니다.')
+    }
+    db.members = db.members.filter((m) => m.memberId !== id)
     return HttpResponse.json(ok(null), { status: 200 })
   }),
 
@@ -234,10 +298,13 @@ export const projectHandlers = [
   http.get(paths.projectInvitations.byToken(':token'), ({ params }) => {
     const invitation = db.invitations.find((i) => i.token === params.token)
     if (!invitation) {
-      return domainError('INVITE400', '유효하지 않거나 만료된 초대 링크입니다.')
+      return domainError('PROJECT_INVITATION404', '초대 링크를 찾을 수 없습니다.')
+    }
+    if (isInvitationExpired(invitation.expiresAt)) {
+      return domainError('PROJECT_INVITATION_EXPIRED400', '만료된 초대 링크입니다.')
     }
     const project = db.projects.find((p) => p.id === invitation.projectId)
-    if (!project) return notFound()
+    if (!project) return domainError('PROJECT404', '프로젝트를 찾을 수 없습니다.')
     return HttpResponse.json(
       ok({
         projectId: project.id,
@@ -255,22 +322,28 @@ export const projectHandlers = [
     if (!user) return unauthorized()
     const invitation = db.invitations.find((i) => i.token === params.token)
     if (!invitation) {
-      return domainError('INVITE400', '유효하지 않거나 만료된 초대 링크입니다.')
+      return domainError('PROJECT_INVITATION404', '초대 링크를 찾을 수 없습니다.')
+    }
+    if (isInvitationExpired(invitation.expiresAt)) {
+      return domainError('PROJECT_INVITATION_EXPIRED400', '만료된 초대 링크입니다.')
+    }
+    if (db.members.some((m) => m.userId === user.id)) {
+      return domainError('PROJECT_MEMBER409', '이미 프로젝트에 참여 중인 멤버입니다.')
     }
     const body = (await request.json()) as { roleNames?: string[] }
     if (!body.roleNames?.length) return badRequest()
     const memberId = allocId()
     const joinedAt = new Date().toISOString()
     db.members.unshift({
-      id: memberId,
+      memberId,
       userId: user.id,
-      name: user.nickname,
+      nickname: user.nickname,
       profileImageUrl: user.profileImageUrl,
       email: user.email,
-      region: user.region ?? user.location,
-      jobRole: body.roleNames[0],
+      bio: user.bio,
+      permission: 'MEMBER',
       roleNames: body.roleNames,
-      isAdmin: false,
+      joinedAt,
     })
     return HttpResponse.json(
       ok({
@@ -332,7 +405,7 @@ export const projectHandlers = [
     }
     if (!body.fileName || !body.contentType || body.fileSize == null) return badRequest()
     if (body.fileSize > 100 * 1024 * 1024) {
-      return domainError('FILE400', '지원하지 않는 파일이거나 파일 크기가 제한을 초과했습니다.')
+      return domainError('PROJECT_FILE_SIZE400', '프로젝트 파일은 최대 100MB까지 업로드할 수 있습니다.')
     }
 
     return HttpResponse.json(

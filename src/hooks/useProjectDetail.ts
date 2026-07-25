@@ -6,12 +6,16 @@ import {
   getProjectNotices,
 } from '../api/projects'
 import { ApiError } from '../types/api'
-import type { Project, ProjectActivity, ProjectMember } from '../types/project'
+import type {
+  MemberSummary,
+  ProjectActivity,
+  ProjectDetailResponse,
+} from '../types/project'
 import type { ProjectNoticeListItem } from '../types/notice'
 
 export function useProjectDetail(projectId: number) {
-  const [project, setProject] = useState<Project | null>(null)
-  const [members, setMembers] = useState<ProjectMember[]>([])
+  const [project, setProject] = useState<ProjectDetailResponse | null>(null)
+  const [members, setMembers] = useState<MemberSummary[]>([])
   const [activities, setActivities] = useState<ProjectActivity[]>([])
   const [notices, setNotices] = useState<ProjectNoticeListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,16 +31,15 @@ export function useProjectDetail(projectId: number) {
         const emptyActivities = { items: [] as ProjectActivity[], nextCursor: null, hasNext: false }
         const [projectResult, activityPage, noticePage, memberList] = await Promise.all([
           getProject(projectId),
-          // BE activities API 미구현 — 연동 전엔 빈 목록으로 상세 로드 유지
           getProjectActivities(projectId).catch(() => emptyActivities),
           getProjectNotices(projectId),
-          getProjectMembers(projectId).catch(() => [] as ProjectMember[]),
+          getProjectMembers(projectId).catch(() => ({ items: [] as MemberSummary[], memberCount: 0 })),
         ])
         if (cancelled) return
         setProject(projectResult)
         setActivities(activityPage.items)
         setNotices(noticePage.items)
-        setMembers(memberList)
+        setMembers(memberList.items)
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof ApiError ? err.message : '프로젝트 정보를 불러오지 못했습니다.')

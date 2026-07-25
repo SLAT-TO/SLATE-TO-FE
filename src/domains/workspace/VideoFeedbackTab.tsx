@@ -32,7 +32,7 @@ import type { VideoDetail, VideoListItem, VideoProgressStatus } from '../../type
 import type { Feedback, FeedbackReply } from '../../types/feedback'
 import type { ReferenceFile } from '../../types/video'
 import type { ProjectFileListItem } from '../../types/file'
-import type { ProjectLengthType, ProjectMember } from '../../types/project'
+import type { MemberSummary, ProjectLengthType } from '../../types/project'
 import { PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
 import clockIcon from '../../assets/icons/clock.svg?raw'
@@ -193,7 +193,7 @@ export function VideoDetailView({
   const [fileSearch, setFileSearch] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [projectFiles, setProjectFiles] = useState<ProjectFileListItem[]>([])
-  const [members, setMembers] = useState<ProjectMember[]>([])
+  const [members, setMembers] = useState<MemberSummary[]>([])
   const [inviteCopied, setInviteCopied] = useState(false)
   const [statusMenuOpen, setStatusMenuOpen] = useState(false)
   const statusMenuRef = useRef<HTMLDivElement>(null)
@@ -230,13 +230,13 @@ export function VideoDetailView({
           getVideo(projectId, videoId),
           getReferenceFiles(videoId),
           getFeedbacks(videoId),
-          getProjectMembers(projectId).catch(() => [] as ProjectMember[]),
+          getProjectMembers(projectId).catch(() => ({ items: [] as MemberSummary[], memberCount: 0 })),
         ])
         if (cancelled) return
         setVideoDetail(detail)
         setReferenceFiles(refFiles.items)
         setFeedbacks(feedbackPage.items)
-        setMembers(memberList)
+        setMembers(memberList.items)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -494,11 +494,11 @@ export function VideoDetailView({
               <div className="flex -space-x-2">
                 {members.slice(0, 4).map((member) => (
                   <Avatar
-                    key={member.id}
+                    key={member.memberId}
                     src={member.profileImageUrl ?? undefined}
-                    alt={member.name}
+                    alt={member.nickname}
                     size={28}
-                    fallback={member.name.slice(0, 1)}
+                    fallback={member.nickname.slice(0, 1)}
                     border="gray"
                     className="bg-neutral-2"
                   />
@@ -561,14 +561,14 @@ export function VideoDetailView({
 
           <div className="flex flex-col gap-3">
             <h2 className="text-head-sm text-neutral-9 font-semibold">프로젝트 소개글</h2>
-            {(videoDetail.categories.length > 0 || lengthType) && (
+            {(videoDetail.projectTags.length > 0 || lengthType) && (
               <div className="flex flex-wrap gap-2">
-                {videoDetail.categories.map((category) => (
+                {videoDetail.projectTags.map((tag) => (
                   <span
-                    key={category}
+                    key={tag}
                     className="bg-tag-role-bg text-tag-role-text text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
                   >
-                    {category}
+                    {tag}
                   </span>
                 ))}
                 {lengthType && (

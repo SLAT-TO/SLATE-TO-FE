@@ -3,7 +3,7 @@ import type { Feedback, FeedbackReply, ShareLink } from '../types/feedback'
 import type { ProjectFile } from '../types/file'
 import type { AppNotification } from '../types/notification'
 import type { Portfolio } from '../types/portfolio'
-import type { Project, ProjectActivity, ProjectMember } from '../types/project'
+import type { ProjectActivity } from '../types/project'
 import type { Application, Recruitment } from '../types/recruitment'
 import type { Schedule } from '../types/schedule'
 import type { ProjectNotice } from '../types/notice'
@@ -88,6 +88,34 @@ export function allocId(): number {
   return nextId
 }
 
+export type MockProjectRecord = {
+  id: number
+  title: string
+  description: string
+  type: string
+  lengthType: string | null
+  clientName: string | null
+  status: string
+  kind: string | null
+  startDate: string | null
+  endDate: string | null
+  ownerUserId: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type MockMemberRecord = {
+  memberId: number
+  userId: number
+  nickname: string
+  email: string
+  profileImageUrl: string | null
+  bio: string | null
+  permission: 'ADMIN' | 'MEMBER'
+  roleNames: string[]
+  joinedAt: string
+}
+
 /* 모의 데이터베이스 타입 정의 */
 export type MockDb = {
   currentUserId: number | null
@@ -95,8 +123,8 @@ export type MockDb = {
   users: MeUser[]
   notificationSettings: Record<number, NotificationSettings>
   portfolios: Portfolio[]
-  projects: Project[]
-  members: ProjectMember[]
+  projects: MockProjectRecord[]
+  members: MockMemberRecord[]
   files: ProjectFile[]
   videos: VideoDetail[]
   referenceFiles: ReferenceFile[]
@@ -162,11 +190,13 @@ export const db: MockDb = {
       title: '위로, 또 위로',
       description: '다큐멘터리 프로젝트',
       type: 'DOCUMENTARY',
-      customTypeName: null,
       lengthType: 'LONG_FORM',
       clientName: '독립제작사',
       status: 'PREPARING',
+      kind: 'PERSONAL',
+      startDate: '2026-06-01',
       endDate: '2026-12-31',
+      ownerUserId: completeUser.id,
       createdAt: '2026-06-01T09:00:00Z',
       updatedAt: '2026-07-01T09:00:00Z',
     },
@@ -175,37 +205,39 @@ export const db: MockDb = {
       title: '브랜드 필름 A',
       description: '광고 영상',
       type: 'AD_BRAND',
-      customTypeName: null,
-      lengthType: null,
+      lengthType: 'SHORT_FORM',
       clientName: '브랜드A',
       status: 'EDITING',
+      kind: 'EXTERNAL',
+      startDate: '2026-05-01',
       endDate: '2026-08-15',
+      ownerUserId: completeUser.id,
       createdAt: '2026-05-01T09:00:00Z',
       updatedAt: '2026-07-05T09:00:00Z',
     },
   ],
   members: [
     {
-      id: 1,
+      memberId: 1,
       userId: completeUser.id,
-      name: completeUser.nickname,
+      nickname: completeUser.nickname,
       profileImageUrl: completeUser.profileImageUrl,
       email: completeUser.email,
-      region: 'SEOUL',
-      jobRole: 'DIRECTOR',
+      bio: completeUser.bio,
+      permission: 'ADMIN',
       roleNames: ['DIRECTOR'],
-      isAdmin: true,
+      joinedAt: '2026-06-01T09:00:00Z',
     },
     {
-      id: 2,
+      memberId: 2,
       userId: publicEditor.id,
-      name: publicEditor.nickname,
+      nickname: publicEditor.nickname,
       profileImageUrl: publicEditor.profileImageUrl,
       email: publicEditor.email,
-      region: 'SEOUL',
-      jobRole: 'EDITOR',
+      bio: publicEditor.bio,
+      permission: 'MEMBER',
       roleNames: ['EDITOR'],
-      isAdmin: false,
+      joinedAt: '2026-06-02T09:00:00Z',
     },
   ],
   files: [
@@ -251,7 +283,7 @@ export const db: MockDb = {
       unreadCommentCount: 3,
       description: '프로젝트 소개글',
       memo: '1차 피드백 반영 예정',
-      categories: ['다큐'],
+      projectTags: ['다큐'],
       createdAt: '2026-05-20T00:00:00Z',
       updatedAt: '2026-05-25T00:00:00Z',
     },
@@ -267,7 +299,7 @@ export const db: MockDb = {
       unreadCommentCount: 0,
       description: null,
       memo: null,
-      categories: [],
+      projectTags: [],
       createdAt: '2026-05-10T00:00:00Z',
       updatedAt: '2026-05-12T00:00:00Z',
     },
