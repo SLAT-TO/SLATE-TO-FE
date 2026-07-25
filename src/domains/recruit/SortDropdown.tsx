@@ -35,7 +35,7 @@ function SortDropdown({ value, onChange }: SortDropdownProps) {
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        className="border-primary text-primary text-caption-lg flex items-center gap-1 rounded-lg border bg-white px-4 py-2"
+        className="border-primary text-primary text-caption-lg flex items-center gap-1 rounded-lg border bg-bg-primary px-4 py-2"
       >
         정렬
         <svg
@@ -53,7 +53,7 @@ function SortDropdown({ value, onChange }: SortDropdownProps) {
       {isOpen && (
         <ul
           role="listbox"
-          className="shadow-panel absolute top-full left-0 z-20 mt-2 w-32 overflow-hidden rounded-lg bg-white py-1"
+          className="shadow-panel absolute top-full left-0 z-20 mt-2 w-32 overflow-hidden rounded-lg bg-bg-primary py-1"
         >
           {SORT_OPTIONS.map((option) => (
             <li key={option.value}>
