@@ -183,11 +183,11 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
           <div className="flex shrink-0 -space-x-2 pt-1">
             {members.slice(0, 4).map((member) => (
               <Avatar
-                key={member.id}
+                key={member.memberId}
                 src={member.profileImageUrl ?? undefined}
-                alt={member.name}
+                alt={member.nickname}
                 size={33}
-                fallback={member.name.slice(0, 1)}
+                fallback={member.nickname.slice(0, 1)}
                 border="gray"
                 className="bg-neutral-2"
               />

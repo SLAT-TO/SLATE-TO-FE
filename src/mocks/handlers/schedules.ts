@@ -115,11 +115,11 @@ export const scheduleHandlers = [
     if (!safeUser()) return unauthorized()
     if (!db.projects.some((p) => p.id === Number(params.projectId))) return notFound()
     const items = db.members.map((m) => ({
-      memberId: m.id,
+      memberId: m.memberId,
       userId: m.userId,
-      name: m.name,
+      nickname: m.nickname,
       profileImageUrl: m.profileImageUrl,
-      jobRole: m.jobRole,
+      roleNames: m.roleNames,
     }))
     return HttpResponse.json(ok({ items }), { status: 200 })
   }),
