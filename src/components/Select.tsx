@@ -1,13 +1,17 @@
 //현재 ts.config의 기본 설정으로 리엑트 관련 타입들은 import 없이 사용할 수 있지만 명시적으로 표시
 import {
+  memo,
+  useCallback,
   useEffect,
   useId,
   useRef,
   useState,
   type FocusEvent,
   type KeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
   type Ref,
 } from 'react'
+import { selectOptionClass, selectPanelClass } from '../styles/dropdown'
 
 interface SelectOption {
   value: string
@@ -15,7 +19,7 @@ interface SelectOption {
 }
 
 interface SelectProps {
-  options: SelectOption[]
+  options: ReadonlyArray<SelectOption>
   /** 선택된 값 (controlled). 미선택은 '' */
   value: string
   /** 이벤트 대신 선택된 값(string)만 넘김 -> 상태 도구(useState·Context·zustand) 무관하게 연결 */
@@ -39,8 +43,15 @@ interface SelectProps {
   ref?: Ref<HTMLButtonElement>
 }
 
+const TRIGGER_CLASS =
+  'text-body-sm flex h-12 w-full items-center justify-between gap-2 rounded-lg border px-4 text-left transition-colors outline-none'
+
+const PANEL_CLASS = selectPanelClass
+
+const OPTION_CLASS = selectOptionClass
+
 // 콤보박스(직접입력)·다중선택·검색은 회의 후 확장 예정. 지금은 일반 단일선택만.
-const Select = ({
+const Select = memo(function Select({
   options,
   value,
   onChange,
@@ -55,7 +66,7 @@ const Select = ({
   id,
   className = '',
   ref,
-}: SelectProps) => {
+}: SelectProps) {
   // 부모가 id를 안 넘겨도 label-트리거 연결이 깨지지 않도록 폴백 id 생성
   const reactId = useId()
   const triggerId = id ?? reactId
@@ -82,46 +93,61 @@ const Select = ({
     return () => document.removeEventListener('mousedown', onMouseDown)
   }, [open])
 
-  const openList = () => {
+  const openList = useCallback(() => {
     if (options.length === 0) setActiveIndex(-1)
     else {
       const idx = options.findIndex((o) => o.value === value)
       setActiveIndex(idx >= 0 ? idx : 0)
     }
     setOpen(true)
-  }
+  }, [options, value])
 
-  const choose = (v: string) => {
-    onChange(v)
-    setOpen(false)
-  }
+  const choose = useCallback(
+    (v: string) => {
+      onChange(v)
+      setOpen(false)
+    },
+    [onChange],
+  )
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
-    if (disabled) return
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault()
-        if (!open) openList()
-        else if (options.length > 0)
-          setActiveIndex((i) => (i + 1 > options.length - 1 ? options.length - 1 : i + 1))
-        break
-      case 'ArrowUp':
-        e.preventDefault()
-        if (!open) openList()
-        else if (options.length > 0) setActiveIndex((i) => (i - 1 < 0 ? 0 : i - 1))
-        break
-      case 'Enter':
-      case ' ':
-        e.preventDefault()
-        if (open && activeIndex >= 0 && options[activeIndex]) choose(options[activeIndex].value)
-        else openList()
-        break
-      case 'Escape':
-      case 'Tab':
-        setOpen(false)
-        break
-    }
-  }
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLButtonElement>) => {
+      if (disabled) return
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault()
+          if (!open) openList()
+          else if (options.length > 0)
+            setActiveIndex((i) => (i + 1 > options.length - 1 ? options.length - 1 : i + 1))
+          break
+        case 'ArrowUp':
+          e.preventDefault()
+          if (!open) openList()
+          else if (options.length > 0) setActiveIndex((i) => (i - 1 < 0 ? 0 : i - 1))
+          break
+        case 'Enter':
+        case ' ':
+          e.preventDefault()
+          if (open && activeIndex >= 0 && options[activeIndex]) choose(options[activeIndex].value)
+          else openList()
+          break
+        case 'Escape':
+        case 'Tab':
+          setOpen(false)
+          break
+      }
+    },
+    [activeIndex, choose, disabled, open, openList, options],
+  )
+
+  const handleToggle = useCallback(() => {
+    if (open) setOpen(false)
+    else openList()
+  }, [open, openList])
+
+  const handleOptionMouseDown = useCallback((e: ReactMouseEvent) => {
+    e.preventDefault()
+  }, [])
 
   return (
     <div ref={rootRef} className={`flex w-full flex-col gap-1 ${className}`}>
@@ -138,7 +164,7 @@ const Select = ({
           id={triggerId}
           type="button"
           disabled={disabled}
-          onClick={() => (open ? setOpen(false) : openList())}
+          onClick={handleToggle}
           onBlur={onBlur}
           onKeyDown={handleKeyDown}
           aria-haspopup="listbox"
@@ -148,9 +174,11 @@ const Select = ({
           aria-invalid={!!error}
           aria-describedby={messageId}
           aria-activedescendant={open && activeIndex >= 0 ? optionId(activeIndex) : undefined}
-          className={`text-body-sm flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left transition-colors outline-none ${
-            error ? 'border-warning focus:border-warning' : 'border-border focus:border-primary'
-          } ${disabled ? 'bg-neutral-2 cursor-not-allowed' : 'bg-bg-primary cursor-pointer'}`}
+          className={`${TRIGGER_CLASS} ${
+            error
+              ? 'border-warning focus:border-warning'
+              : 'border-border-input focus:border-primary'
+          } ${disabled ? 'bg-neutral-2 cursor-not-allowed' : 'bg-neutral-2 cursor-pointer'}`}
         >
           <span className={selected ? 'text-neutral-10' : 'text-neutral-5'}>
             {selected?.label ?? placeholder}
@@ -169,27 +197,20 @@ const Select = ({
         </button>
 
         {open && (
-          <ul
-            id={listboxId}
-            role="listbox"
-            className="border-border bg-bg-primary absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border py-1 shadow-md"
-          >
+          <ul id={listboxId} role="listbox" className={PANEL_CLASS}>
             {options.map((o, i) => {
-              const isSelected = o.value === value
               const isActive = i === activeIndex
               return (
                 <li
                   key={o.value}
                   id={optionId(i)}
                   role="option"
-                  aria-selected={isSelected}
+                  aria-selected={o.value === value}
                   // 트리거가 blur되어 목록이 닫히기 전에 클릭이 처리되도록 mousedown 기본동작 차단
-                  onMouseDown={(e) => e.preventDefault()}
+                  onMouseDown={handleOptionMouseDown}
                   onMouseEnter={() => setActiveIndex(i)}
                   onClick={() => choose(o.value)}
-                  className={`text-body-sm cursor-pointer px-3 py-2 ${isActive ? 'bg-neutral-2' : ''} ${
-                    isSelected ? 'text-primary font-semibold' : 'text-neutral-10'
-                  }`}
+                  className={`${OPTION_CLASS} ${isActive ? 'bg-neutral-2' : ''}`}
                 >
                   {o.label}
                 </li>
@@ -212,6 +233,6 @@ const Select = ({
       )}
     </div>
   )
-}
+})
 
 export default Select

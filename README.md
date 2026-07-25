@@ -19,16 +19,20 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 
 ## 기술 스택
 
-| 분류        | 기술                       |
-| ----------- | -------------------------- |
-| Framework   | React 19, TypeScript, Vite |
-| Styling     | Tailwind CSS 4             |
-| 상태 관리   | Zustand 5                  |
-| 유효성 검사 | Zod 4                      |
-| 날짜 처리   | date-fns 4                 |
-| 날짜 선택   | react-day-picker 10        |
-| 코드 품질   | ESLint, Prettier           |
-| 배포        | Vercel                     |
+| 분류        | 기술                                       |
+| ----------- | ------------------------------------------ |
+| Framework   | React 19.2.7, TypeScript 6.0.2, Vite 8.1.0 |
+| Styling     | Tailwind CSS 4.3.1                         |
+| HTTP        | axios                                      |
+| API Mock    | MSW 2                                      |
+| 상태 관리   | Zustand 5.0.14                             |
+| 유효성 검사 | Zod 4.4.3                                  |
+| 날짜 처리   | date-fns 4.4.0                             |
+| 날짜 선택   | react-day-picker 10                        |
+| 코드 품질   | ESLint 10.5.0, Prettier 3.8.4              |
+| 배포        | Vercel                                     |
+
+> 버전은 `package.json` 기준이며, 이후 업데이트 시 여기도 함께 갱신합니다.
 
 ## 폴더 구조
 
@@ -36,26 +40,31 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 SLATE_TO_FE/
 ├── .vscode/
 ├── src/
-│   ├── api/              # API 호출
+│   ├── api/              # API 호출 · paths (BE normalize는 #93 이후)
 │   ├── assets/
 │   │   ├── images/
 │   │   ├── icons/        # 아이콘 SVG (Flaticon UIcons)
 │   │   └── fonts/
 │   ├── components/       # 공통 컴포넌트
-│   ├── constants/        # 도메인 상수 (역할·영상 카테고리·피드백 유형)
+│   ├── constants/        # 도메인·UI 상수 (카테고리, ActionMenu 액션 enum 등)
+│   ├── domains/          # 화면별 도메인 UI (workspace · mypage 등)
 │   ├── hooks/            # 커스텀 훅
 │   ├── layouts/          # 공통 레이아웃
+│   ├── mocks/            # MSW handlers · browser worker
 │   ├── pages/            # 라우트 단위 페이지
 │   ├── schemas/          # Zod 스키마
 │   ├── stores/           # Zustand 스토어
+│   ├── styles/           # 공유 Tailwind 클래스 조합 (토큰은 index.css @theme)
 │   ├── types/            # 전역 타입
-│   └── utils/            # 순수 함수
+│   └── utils/            # 순수 함수 · 임시 pathname 라우팅
 ├── .editorconfig
 ├── .env.example
 ├── eslint.config.js
 ├── vite.config.ts
 └── tsconfig.json
 ```
+
+> 라우팅은 React Router가 아니라 `usePathname` + `matchPath` 임시 골격입니다. (`src/utils/navigation.ts`, `App.tsx`)
 
 ## 브랜치 전략
 
@@ -66,7 +75,7 @@ main        # 배포 브랜치
 ```
 
 - 기능 개발은 `feature/이름-기능명` 브랜치에서 시작
-- 문서·설정·버그 등 비기능 작업은 `docs/`·`chore/`·`fix/` prefix 사용 (예: `docs/kcleverp-readme-convention`)
+- 문서·설정·버그·리팩토링 등 비기능 작업은 `docs/`·`chore/`·`fix/`·`refactor/` prefix 사용 (예: `docs/kcleverp-readme-convention`)
 - `feature` → `dev` PR 후 팀장 코드 리뷰 필수
 - dev merge 후 통합 테스트 진행
 - `dev` → `main` 은 배포 시점에만 병합
@@ -104,14 +113,24 @@ feat: 로그인 페이지 UI 구현 (#12)
 - 소셜 로그인 버튼 배치
 ```
 
+## 이슈 컨벤션
+
+- 제목: 커밋 컨벤션과 동일한 `type: 작업 내용 (#이슈번호)` 형식 (예: `feat: 로그인 페이지 구현 (#12)`)
+- 작업 시작 전 이슈부터 생성 — 브랜치·커밋·PR에서 이슈 번호로 연결
+- 종류에 맞는 [템플릿](.github/ISSUE_TEMPLATE) 사용
+  - 기능 개발: 작업 내용 · 상세 작업(체크리스트) · 완료 조건(체크리스트) · 참고(피그마 링크 등)
+  - 버그 리포트: 재현 방법 · 예상/실제 동작 · 스크린샷 · 환경
+- 라벨은 템플릿 선택 시 자동 부여(`enhancement`/`bug`) — 리포지토리에 커스텀 `feature` 라벨은 없음
+
 ## PR 컨벤션
 
-- 제목: `type: 작업 내용` (예: `feat: 로그인 페이지 구현`)
+- 제목: `type: 작업 내용 (#이슈번호)` (예: `feat: 로그인 페이지 구현 (#12)`)
+- 본문: [템플릿](.github/PULL_REQUEST_TEMPLATE.md) — `## 이슈` · `## 변경 사항` · `## 스크린샷` · `## 리뷰 포인트` · `## 체크리스트`
+- `## 이슈`에 `Closes #번호`로 이슈 연결
 - 팀장 리뷰 후 머지
 - PR 단위는 화면 또는 기능 단위로 분리
-- UI 변경이 있으면 스크린샷 첨부
+- UI 변경이 있으면 스크린샷 첨부 (문서-only PR은 «해당 없음»)
 - 리뷰 포인트가 있으면 본문에 작성
-- PR 본문은 [템플릿](.github/PULL_REQUEST_TEMPLATE.md)을 따릅니다
 
 ## 스타일 가이드
 
@@ -129,6 +148,8 @@ feat: 로그인 페이지 UI 구현 (#12)
 - **Primitive** — 디자인 시스템 원본 팔레트 (`bg-main-7`, `text-neutral-6` 등)
 - **Semantic** — 용도 기반 별칭으로 Primitive를 참조 (`bg-primary`, `bg-secondary` 등)
 - 가능하면 Semantic 우선 사용, 없는 경우 Primitive 직접 사용
+
+**스타일 조합** — `src/index.css`의 `@theme` 토큰을 Tailwind 클래스로 묶은 문자열은 `src/styles/`에 둡니다. 도메인 데이터는 `constants/`에만 둡니다.
 
 ## 공용 폼 컨트롤 규약
 
@@ -230,6 +251,8 @@ export type Size = 'sm' | 'md' | 'lg'
 
 ## 실행 방법
 
+> Node.js 20 이상 권장 (CI 기준 버전)
+
 ```bash
 # 패키지 설치
 npm install
@@ -239,9 +262,26 @@ npm run dev
 
 # 빌드
 npm run build
+
+# 코드 검사 (커밋 전 확인)
+npm run lint
+npm run format        # 포맷 자동 수정
+npm run format:check  # 포맷 위반 여부만 확인 (CI와 동일)
 ```
 
-환경변수는 `.env.example`을 참고해 `.env.local` 파일을 생성하세요.
+환경변수는 `.env.example`을 참고해 `.env.local` 파일을 생성하세요. 각 변수의 용도·필수 여부는 `.env.example`의 주석에 기재합니다.
+
+### 로컬 실행 · API 연동
+
+| 모드       | `VITE_ENABLE_MSW` | `VITE_API_BASE_URL`          | 설명                                                                                                                  |
+| ---------- | ----------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| MSW (기본) | `true`            | 비움                         | `src/mocks`가 `/api/v1` 요청을 가로챕니다.                                                                            |
+| 로컬 BE    | `false`           | 비움                         | Vite proxy가 `/api` → `http://localhost:8080` (CORS 우회). **BE 연동 PR(#93) 머지 후** `vite.config.ts`에 proxy 설정. |
+| 원격 BE    | `false`           | `https://api.example.com` 등 | axios가 해당 origin으로 직결. BE CORS·쿠키(`withCredentials`) 필요.                                                   |
+
+- MSW는 `VITE_ENABLE_MSW=true`일 때 켜집니다. (로컬·Vercel Preview/Production 공통, `import.meta.env.DEV` 가드 없음)
+- 당분간 Vercel Preview·Production 모두 MSW mock을 씁니다. 실 BE 연동 시 Production만 `VITE_ENABLE_MSW=false` + `VITE_API_BASE_URL`을 넣습니다.
+- BE 응답 shape 차이는 BE 연동 PR(#93)의 `src/api/normalize.ts`에서 FE 도메인 모델로 맞춥니다.
 
 ## 화면 목록 및 플로우
 
