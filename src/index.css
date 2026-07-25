@@ -98,6 +98,9 @@
   --color-warning-light: #ffebee;
   --color-warning: #ff4d4f;
   --color-warning-dark: #991b1b;
+
+  /* Calendar */
+  --color-calendar-header-bg: #e9f2fe;
 }
 
 /* Primitive - Event (캘린더 이벤트 바 색상). `static`으로 선언 —

@@ -4,10 +4,10 @@ import type { CalendarEvent } from '../schemas/calendarEvent'
 // 월요일 시작 (일요일 시작이면 weekStartsOn: 0)
 const WEEK_OPTIONS = { weekStartsOn: 1 } as const
 
-// CalendarGrid의 Tailwind 클래스(h-12, h-36.75, grid-cols-[repeat(7,147px)])와 반드시 일치해야 함 —
-// EventBarLayer가 주(week)별 오버레이를 절대 위치로 겹칠 때 세로 offset 계산에 사용
-export const CALENDAR_HEADER_HEIGHT_PX = 48 // h-12
-export const CALENDAR_CELL_HEIGHT_PX = 147 // h-36.75
+// CalendarGrid(헤더·셀 높이)와 EventBarLayer(주별 오버레이 세로 offset)가 공유하는 단일 소스.
+// 값이 어긋나면 이벤트 바가 날짜 셀과 안 맞게 겹치므로, 두 컴포넌트 모두 여기서 import해서 쓴다.
+export const CALENDAR_HEADER_HEIGHT_PX = 48
+export const CALENDAR_CELL_HEIGHT_PX = 147
 
 // 해당 달의 달력 그리드를 만든다.
 // 앞뒤 달의 날짜까지 채워서 항상 주 단위(7칸 배수)로 떨어지게 함.
@@ -59,8 +59,15 @@ export function assignEventLanes(
       const segEndKey = event.endDate < weekEndKey ? event.endDate : weekEndKey
       const startCol = weekDays.findIndex((day) => toDateKey(day) === segStartKey)
       const endCol = weekDays.findIndex((day) => toDateKey(day) === segEndKey)
-      return { event, startCol, span: endCol - startCol + 1 }
+      return { event, startCol, endCol }
     })
+    // startDate/endDate가 주 형식과 안 맞는 등 findIndex가 못 찾은 segment는 배치하지 않음
+    .filter((seg) => seg.startCol !== -1 && seg.endCol !== -1)
+    .map((seg) => ({
+      event: seg.event,
+      startCol: seg.startCol,
+      span: seg.endCol - seg.startCol + 1,
+    }))
     .sort((a, b) => a.startCol - b.startCol || a.span - b.span)
 
   // 레인별로 "다음 빈 컬럼"을 기록해두고, 시작 컬럼이 그 이상이면 그 레인에 배정
@@ -87,18 +94,4 @@ export function assignEventLanes(
   }
 
   return { positioned, overflowByDay }
-}
-
-// weeks 전체의 overflowByDay를 날짜 키 하나의 맵으로 합친다 (CalendarGrid의 "+N" 배지용).
-export function getOverflowCounts(
-  weeks: Date[][],
-  events: CalendarEvent[],
-  maxLanes: number,
-): Map<string, number> {
-  const counts = new Map<string, number>()
-  for (const week of weeks) {
-    const { overflowByDay } = assignEventLanes(week, events, maxLanes)
-    overflowByDay.forEach((count, key) => counts.set(key, count))
-  }
-  return counts
 }

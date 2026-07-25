@@ -1,5 +1,9 @@
 import { format, getDay, isSameMonth, isToday } from 'date-fns'
-import { toDateKey } from '../utils/calendarUtils'
+import {
+  CALENDAR_CELL_HEIGHT_PX,
+  CALENDAR_HEADER_HEIGHT_PX,
+  toDateKey,
+} from '../utils/calendarUtils'
 
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 
@@ -12,7 +16,8 @@ interface CalendarGridProps {
 }
 
 // 날짜 그리드(틀) — 요일 헤더 + 날짜 셀 배경만 담당. events를 몰라도 단독으로 렌더링 가능.
-// 셀 크기(h-36.75)·헤더 높이(h-12)는 EventBarLayer의 offset 계산과 반드시 일치해야 함(calendarUtils 상수 참고).
+// 셀 크기·헤더 높이는 CALENDAR_CELL_HEIGHT_PX/CALENDAR_HEADER_HEIGHT_PX(calendarUtils)를 그대로 써서
+// EventBarLayer의 offset 계산과 어긋나지 않게 한다.
 export function CalendarGrid({ month, weeks, onDateClick, overflowByDate }: CalendarGridProps) {
   const clickable = Boolean(onDateClick)
 
@@ -23,7 +28,8 @@ export function CalendarGrid({ month, weeks, onDateClick, overflowByDate }: Cale
         {WEEKDAYS.map((label, index) => (
           <div
             key={label}
-            className={`text-caption-lg flex h-12 items-start bg-[#E9F2FE] pt-2 pl-2 ${
+            style={{ height: CALENDAR_HEADER_HEIGHT_PX }}
+            className={`text-caption-lg flex items-start bg-(--color-calendar-header-bg) pt-2 pl-2 ${
               index === 6 ? 'text-warning' : 'text-neutral-6'
             }`}
           >
@@ -60,7 +66,8 @@ export function CalendarGrid({ month, weeks, onDateClick, overflowByDate }: Cale
                       }
                     : undefined
                 }
-                className={`border-border bg-bg-primary h-36.75 border-r border-b pt-2 pr-2 pl-2 ${
+                style={{ height: CALENDAR_CELL_HEIGHT_PX }}
+                className={`border-border bg-bg-primary border-r border-b pt-2 pr-2 pl-2 ${
                   clickable ? 'cursor-pointer' : ''
                 }`}
               >
