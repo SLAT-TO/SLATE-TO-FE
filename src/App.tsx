@@ -7,8 +7,11 @@ import ProjectDetailPage from './pages/ProjectDetailPage'
 import ProjectFormPage from './pages/ProjectFormPage'
 import ProjectOverviewPage from './pages/ProjectOverviewPage'
 import RecruitPage from './pages/RecruitPage'
+import JobDetailPage from './pages/JobDetailPage'
+import JobApplicantsPage from './pages/JobApplicantsPage'
 import WorkspacePage from './pages/WorkspacePage'
 import { usePathname } from './hooks/usePathname'
+import { LoginPage } from './pages/LoginPage'
 import { matchPath } from './utils/navigation'
 
 const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
@@ -42,6 +45,24 @@ function AppRoutes({ pathname }: { pathname: string }) {
 
   if (pathname === '/calendar') {
     return <CalendarPage />
+  const applicantsMatch = matchPath('/matching/:jobId/applicants', pathname)
+  if (applicantsMatch) {
+    const jobId = Number(applicantsMatch.jobId)
+    if (!Number.isFinite(jobId)) {
+      return <p className="text-body-sm text-warning">잘못된 공고 경로입니다.</p>
+    }
+    return <JobApplicantsPage jobId={jobId} />
+  }
+
+  const jobMatch = matchPath('/matching/:jobId', pathname)
+  if (jobMatch) {
+    const jobId = Number(jobMatch.jobId)
+    if (!Number.isFinite(jobId)) {
+      return <p className="text-body-sm text-warning">잘못된 공고 경로입니다.</p>
+    }
+    return <JobDetailPage jobId={jobId} />
+  }
+
   if (pathname === '/matching') {
     return <RecruitPage />
   }
@@ -75,17 +96,17 @@ function AppRoutes({ pathname }: { pathname: string }) {
 }
 
 /** /login 등 — 각 기능 PR에서 경로 추가 */
-const FULLSCREEN_PATHS: string[] = []
+const FULLSCREEN_PATHS: string[] = ['/login']
 
 function App() {
   const pathname = usePathname()
 
   if (FULLSCREEN_PATHS.includes(pathname)) {
-    // return <LoginPage /> 등
+    return <LoginPage />
   }
 
   return (
-    <MainLayout userName={USER_NAME} headerTitle={getHeaderTitle(pathname)}>
+    <MainLayout userName={USER_NAME}>
       <AppRoutes pathname={pathname} />
     </MainLayout>
   )

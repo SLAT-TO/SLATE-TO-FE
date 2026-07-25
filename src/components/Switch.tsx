@@ -6,8 +6,7 @@ interface SwitchProps {
   className?: string
 }
 
-// on/off 토글 스위치 (크기 고정 58×31)
-// ※ 색상 미정 — 스펙 준 기본값(검정 테두리, 흰 배경, 회색 동그라미)으로, 확정 후 커스텀 예정
+// on/off 토글 스위치 (크기 고정 48×28)
 export function Switch({ checked, onChange, disabled = false, ariaLabel, className }: SwitchProps) {
   return (
     <button
@@ -17,11 +16,13 @@ export function Switch({ checked, onChange, disabled = false, ariaLabel, classNa
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative h-[31px] w-[58px] shrink-0 rounded-[15.5px] border border-black bg-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${className ?? ''}`}
+      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+        checked ? 'bg-primary' : 'bg-neutral-5'
+      } ${className ?? ''}`}
     >
       <span
-        className={`absolute top-1/2 left-[3px] h-[22px] w-[22px] -translate-y-1/2 rounded-full bg-[#D9D9D9] transition-transform ${
-          checked ? 'translate-x-[28px]' : 'translate-x-0'
+        className={`bg-neutral-1 absolute top-1/2 left-1 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${
+          checked ? 'translate-x-5' : 'translate-x-0'
         }`}
       />
     </button>
