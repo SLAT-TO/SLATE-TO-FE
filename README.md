@@ -19,16 +19,18 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 
 ## 기술 스택
 
-| 분류        | 기술                       |
-| ----------- | -------------------------- |
-| Framework   | React 19, TypeScript, Vite |
-| Styling     | Tailwind CSS 4             |
-| 상태 관리   | Zustand 5                  |
-| 유효성 검사 | Zod 4                      |
-| 날짜 처리   | date-fns 4                 |
-| 날짜 선택   | react-day-picker 10        |
-| 코드 품질   | ESLint, Prettier           |
-| 배포        | Vercel                     |
+| 분류        | 기술                                       |
+| ----------- | ------------------------------------------ |
+| Framework   | React 19.2.7, TypeScript 6.0.2, Vite 8.1.0 |
+| Styling     | Tailwind CSS 4.3.1                         |
+| 상태 관리   | Zustand 5.0.14                             |
+| 유효성 검사 | Zod 4.4.3                                  |
+| 날짜 처리   | date-fns 4.4.0                             |
+| 날짜 선택   | react-day-picker 10                        |
+| 코드 품질   | ESLint 10.5.0, Prettier 3.8.4              |
+| 배포        | Vercel                                     |
+
+> 버전은 `package.json` 기준이며, 이후 업데이트 시 여기도 함께 갱신합니다.
 
 ## 폴더 구조
 
@@ -42,12 +44,13 @@ SLATE_TO_FE/
 │   │   ├── icons/        # 아이콘 SVG (Flaticon UIcons)
 │   │   └── fonts/
 │   ├── components/       # 공통 컴포넌트
-│   ├── constants/        # 도메인 상수 (역할·영상 카테고리·피드백 유형)
+│   ├── constants/        # 도메인·UI 상수 (카테고리, ActionMenu 액션 enum 등)
 │   ├── hooks/            # 커스텀 훅
 │   ├── layouts/          # 공통 레이아웃
 │   ├── pages/            # 라우트 단위 페이지
 │   ├── schemas/          # Zod 스키마
 │   ├── stores/           # Zustand 스토어
+│   ├── styles/           # 공유 Tailwind 클래스 조합 (토큰은 index.css @theme)
 │   ├── types/            # 전역 타입
 │   └── utils/            # 순수 함수
 ├── .editorconfig
@@ -66,7 +69,7 @@ main        # 배포 브랜치
 ```
 
 - 기능 개발은 `feature/이름-기능명` 브랜치에서 시작
-- 문서·설정·버그 등 비기능 작업은 `docs/`·`chore/`·`fix/` prefix 사용 (예: `docs/kcleverp-readme-convention`)
+- 문서·설정·버그·리팩토링 등 비기능 작업은 `docs/`·`chore/`·`fix/`·`refactor/` prefix 사용 (예: `docs/kcleverp-readme-convention`)
 - `feature` → `dev` PR 후 팀장 코드 리뷰 필수
 - dev merge 후 통합 테스트 진행
 - `dev` → `main` 은 배포 시점에만 병합
@@ -104,6 +107,15 @@ feat: 로그인 페이지 UI 구현 (#12)
 - 소셜 로그인 버튼 배치
 ```
 
+## 이슈 컨벤션
+
+- 제목: 커밋 컨벤션과 동일한 `type: 작업 내용` 형식 (예: `feat: 로그인 페이지 구현`)
+- 작업 시작 전 이슈부터 생성 — 브랜치·커밋·PR에서 이슈 번호로 연결
+- 종류에 맞는 [템플릿](.github/ISSUE_TEMPLATE) 사용
+  - 기능 개발: 작업 내용 · 상세 작업(체크리스트) · 완료 조건(체크리스트) · 참고(피그마 링크 등)
+  - 버그 리포트: 재현 방법 · 예상/실제 동작 · 스크린샷 · 환경
+- 라벨은 템플릿 선택 시 자동 부여(`enhancement`/`bug`) — 리포지토리에 커스텀 `feature` 라벨은 없음
+
 ## PR 컨벤션
 
 - 제목: `type: 작업 내용` (예: `feat: 로그인 페이지 구현`)
@@ -129,6 +141,8 @@ feat: 로그인 페이지 UI 구현 (#12)
 - **Primitive** — 디자인 시스템 원본 팔레트 (`bg-main-7`, `text-neutral-6` 등)
 - **Semantic** — 용도 기반 별칭으로 Primitive를 참조 (`bg-primary`, `bg-secondary` 등)
 - 가능하면 Semantic 우선 사용, 없는 경우 Primitive 직접 사용
+
+**스타일 조합** — `src/index.css`의 `@theme` 토큰을 Tailwind 클래스로 묶은 문자열은 `src/styles/`에 둡니다. 도메인 데이터는 `constants/`에만 둡니다.
 
 ## 공용 폼 컨트롤 규약
 
@@ -230,6 +244,8 @@ export type Size = 'sm' | 'md' | 'lg'
 
 ## 실행 방법
 
+> Node.js 20 이상 권장 (CI 기준 버전)
+
 ```bash
 # 패키지 설치
 npm install
@@ -239,9 +255,14 @@ npm run dev
 
 # 빌드
 npm run build
+
+# 코드 검사 (커밋 전 확인)
+npm run lint
+npm run format        # 포맷 자동 수정
+npm run format:check  # 포맷 위반 여부만 확인 (CI와 동일)
 ```
 
-환경변수는 `.env.example`을 참고해 `.env.local` 파일을 생성하세요.
+환경변수는 `.env.example`을 참고해 `.env.local` 파일을 생성하세요. 각 변수의 용도·필수 여부는 `.env.example`의 주석에 기재합니다.
 
 ## 화면 목록 및 플로우
 

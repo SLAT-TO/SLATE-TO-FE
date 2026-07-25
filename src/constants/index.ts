@@ -1,5 +1,6 @@
 export { FEEDBACK_TYPE_LABELS, FEEDBACK_TYPE_OPTIONS, type FeedbackType } from './feedbackTypes'
-export { ROLE_LABELS, ROLE_OPTIONS, type Role } from './roles'
+export { ROLE_LABELS, ROLE_OPTIONS, roleLabel, type Role } from './roles'
+export { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL, projectMetaTags } from './projectLabels'
 export {
   FILM_LENGTH_LABELS,
   FILM_LENGTH_OPTIONS,
