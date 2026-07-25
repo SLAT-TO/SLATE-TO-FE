@@ -230,7 +230,10 @@ export function VideoDetailView({
           getVideo(projectId, videoId),
           getReferenceFiles(videoId),
           getFeedbacks(videoId),
-          getProjectMembers(projectId).catch(() => ({ items: [] as MemberSummary[], memberCount: 0 })),
+          getProjectMembers(projectId).catch(() => ({
+            items: [] as MemberSummary[],
+            memberCount: 0,
+          })),
         ])
         if (cancelled) return
         setVideoDetail(detail)

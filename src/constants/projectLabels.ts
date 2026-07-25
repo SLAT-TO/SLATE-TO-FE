@@ -15,7 +15,10 @@ export const PROJECT_TYPE_LABEL: Record<string, string> = {
   ETC: '기타',
 }
 
-export function projectMetaTags(project: { type?: string | null; lengthType?: string | null }): string[] {
+export function projectMetaTags(project: {
+  type?: string | null
+  lengthType?: string | null
+}): string[] {
   const tags: string[] = []
   if (project.type) tags.push(PROJECT_TYPE_LABEL[project.type] ?? project.type)
   if (project.lengthType) {

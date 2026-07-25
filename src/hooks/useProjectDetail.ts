@@ -6,11 +6,7 @@ import {
   getProjectNotices,
 } from '../api/projects'
 import { ApiError } from '../types/api'
-import type {
-  MemberSummary,
-  ProjectActivity,
-  ProjectDetailResponse,
-} from '../types/project'
+import type { MemberSummary, ProjectActivity, ProjectDetailResponse } from '../types/project'
 import type { ProjectNoticeListItem } from '../types/notice'
 
 export function useProjectDetail(projectId: number) {
@@ -33,7 +29,10 @@ export function useProjectDetail(projectId: number) {
           getProject(projectId),
           getProjectActivities(projectId).catch(() => emptyActivities),
           getProjectNotices(projectId),
-          getProjectMembers(projectId).catch(() => ({ items: [] as MemberSummary[], memberCount: 0 })),
+          getProjectMembers(projectId).catch(() => ({
+            items: [] as MemberSummary[],
+            memberCount: 0,
+          })),
         ])
         if (cancelled) return
         setProject(projectResult)

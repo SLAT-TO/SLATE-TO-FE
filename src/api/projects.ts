@@ -32,9 +32,11 @@ import type {
   UpdateNoticeRequest,
 } from '../types/notice'
 
-export async function getProjects(
-  params?: { status?: string; cursor?: number; size?: number },
-): Promise<ProjectListResponse> {
+export async function getProjects(params?: {
+  status?: string
+  cursor?: number
+  size?: number
+}): Promise<ProjectListResponse> {
   return request({ method: 'GET', url: paths.projects.root, params })
 }
 

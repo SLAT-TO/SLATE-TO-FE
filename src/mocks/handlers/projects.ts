@@ -2,7 +2,14 @@ import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
 import type { CreateProjectRequest, UpdateProjectRequest } from '../../types/project'
 import type { CreateNoticeRequest, UpdateNoticeRequest } from '../../types/notice'
-import { allocId, db, getCurrentUser, requireUser, type MockMemberRecord, type MockProjectRecord } from '../db'
+import {
+  allocId,
+  db,
+  getCurrentUser,
+  requireUser,
+  type MockMemberRecord,
+  type MockProjectRecord,
+} from '../db'
 import { paginateByCursor } from '../pagination'
 import { badRequest, domainError, notFound, unauthorized } from '../errors'
 import { created, ok } from '../response'
@@ -405,7 +412,10 @@ export const projectHandlers = [
     }
     if (!body.fileName || !body.contentType || body.fileSize == null) return badRequest()
     if (body.fileSize > 100 * 1024 * 1024) {
-      return domainError('PROJECT_FILE_SIZE400', '프로젝트 파일은 최대 100MB까지 업로드할 수 있습니다.')
+      return domainError(
+        'PROJECT_FILE_SIZE400',
+        '프로젝트 파일은 최대 100MB까지 업로드할 수 있습니다.',
+      )
     }
 
     return HttpResponse.json(

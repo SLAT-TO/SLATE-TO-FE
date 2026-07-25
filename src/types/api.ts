@@ -1,13 +1,7 @@
 export type CommonSuccessCode = 'COMMON200' | 'COMMON201'
 
 export type CommonErrorCode =
-  | 'COMMON400'
-  | 'COMMON401'
-  | 'COMMON403'
-  | 'COMMON404'
-  | 'COMMON405'
-  | 'COMMON409'
-  | 'COMMON500'
+  'COMMON400' | 'COMMON401' | 'COMMON403' | 'COMMON404' | 'COMMON405' | 'COMMON409' | 'COMMON500'
 
 /** BE AuthErrorCode */
 export type AuthErrorCode = 'AUTH401'
