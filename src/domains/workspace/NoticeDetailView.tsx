@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { deleteProjectNotice, updateProjectNotice } from '../../api/projects'
-import { getMe } from '../../api/users'
 import ActionMenu from '../../components/ActionMenu'
 import { Button } from '../../components/Button'
 import ConfirmModal from '../../components/ConfirmModal'
@@ -12,6 +11,7 @@ import { CARD_BASE } from '../../styles/card'
 interface NoticeDetailViewProps {
   projectId: number
   notice: ProjectNoticeListItem
+  meId: number | null
   onBack: () => void
   onUpdated: (notice: ProjectNoticeListItem) => void
   onDeleted: (noticeId: number) => void
@@ -30,22 +30,16 @@ function formatNoticeMeta(notice: ProjectNoticeListItem): string {
 export default function NoticeDetailView({
   projectId,
   notice,
+  meId,
   onBack,
   onUpdated,
   onDeleted,
 }: NoticeDetailViewProps) {
-  const [meId, setMeId] = useState<number | null>(null)
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(notice.title)
   const [content, setContent] = useState(notice.content)
   const [saving, setSaving] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-
-  useEffect(() => {
-    getMe()
-      .then((me) => setMeId(me.id))
-      .catch(() => setMeId(null))
-  }, [])
 
   const isMine = meId !== null && notice.writer.id === meId
 

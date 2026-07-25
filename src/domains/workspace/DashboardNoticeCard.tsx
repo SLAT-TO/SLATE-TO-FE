@@ -37,6 +37,7 @@ export default function DashboardNoticeCard({ notices, onExpand }: DashboardNoti
       <button
         type="button"
         onClick={onExpand}
+        aria-label="공지 전체 보기"
         className={`flex min-h-[183px] flex-col justify-center ${CARD_BASE} p-4 text-left`}
       >
         {previewNotices.length === 0 ? (

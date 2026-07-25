@@ -247,6 +247,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
             <NoticeDetailView
               projectId={projectId}
               notice={selectedNotice}
+              meId={meId}
               onBack={() => setNoticeView('list')}
               onUpdated={(updated) => {
                 setNotices((prev) => prev.map((n) => (n.id === updated.id ? updated : n)))
