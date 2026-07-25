@@ -1,19 +1,23 @@
-/** 온보딩·프로필 — 역할 카테고리 */
-export const ROLE_LABELS = [
-  '연출',
-  'PD',
-  '촬영',
-  '편집',
-  '미술',
-  '사운드',
-  '작가',
-  '조명',
-  '배우',
-  '기타',
-] as const
+import type { UserRole } from '../types/user'
+
+/** BE RoleName 기준 */
+export const ROLE_OPTIONS: ReadonlyArray<{ value: UserRole; label: string }> = [
+  { value: 'DIRECTOR', label: '연출' },
+  { value: 'PD', label: 'PD' },
+  { value: 'CINEMATOGRAPHER', label: '촬영' },
+  { value: 'EDITOR', label: '편집' },
+  { value: 'ART', label: '미술' },
+  { value: 'SOUND', label: '사운드' },
+  { value: 'WRITER', label: '작가' },
+  { value: 'LIGHTING', label: '조명' },
+  { value: 'ACTOR', label: '배우' },
+  { value: 'ETC', label: '기타' },
+]
+
+export const ROLE_LABELS = ROLE_OPTIONS.map((o) => o.label)
 
 export type Role = (typeof ROLE_LABELS)[number]
 
-export const ROLE_OPTIONS: ReadonlyArray<{ value: Role; label: string }> = ROLE_LABELS.map(
-  (label) => ({ value: label, label }),
-)
+export function roleLabel(role: string): string {
+  return ROLE_OPTIONS.find((o) => o.value === role)?.label ?? role
+}

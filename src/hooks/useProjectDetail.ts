@@ -24,9 +24,11 @@ export function useProjectDetail(projectId: number) {
       setLoading(true)
       setError(null)
       try {
+        const emptyActivities = { items: [] as ProjectActivity[], nextCursor: null, hasNext: false }
         const [projectResult, activityPage, noticePage, memberList] = await Promise.all([
           getProject(projectId),
-          getProjectActivities(projectId),
+          // BE activities API 미구현 — 연동 전엔 빈 목록으로 상세 로드 유지
+          getProjectActivities(projectId).catch(() => emptyActivities),
           getProjectNotices(projectId),
           getProjectMembers(projectId).catch(() => [] as ProjectMember[]),
         ])

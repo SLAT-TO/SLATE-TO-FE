@@ -28,7 +28,7 @@ export type VideoDetail = {
 }
 
 export type VideoListResult = {
-  videos: VideoListItem[]
+  items: VideoListItem[]
   nextCursor: number | null
   hasNext: boolean
 }

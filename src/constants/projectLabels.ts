@@ -5,13 +5,16 @@ export const PROJECT_LENGTH_TYPE_LABEL: Record<string, string> = {
   SHORT_FORM: '단편',
 }
 
+/** BE CategoryName 기준 */
 export const PROJECT_TYPE_LABEL: Record<string, string> = {
-  FILM: '영화',
-  DOCUMENTARY: '다큐/시사/교양',
-  DRAMA: '드라마',
+  YOUTUBE_CONTENT: '유튜브 콘텐츠',
+  AD_BRAND: '광고/브랜드 영상',
   MUSIC_VIDEO: '뮤직비디오',
-  ENTERTAINMENT: '예능/오락',
-  COMMERCIAL: '광고/홍보영상',
+  WEDDING_EVENT: '웨딩/이벤트 영상',
+  DOCUMENTARY: '다큐멘터리',
+  FILM_DRAMA: '영화/드라마',
+  CORPORATE_PROMO: '기업 홍보 영상',
+  ETC: '기타',
 }
 
 export function projectMetaTags(project: Project): string[] {

@@ -45,6 +45,8 @@ export type UpdateFeedbackRequest = {
 }
 
 export type UpdateFeedbackStatusRequest = {
+  /** BE FeedbackStatusReqDTO — 필수 */
+  userId: number
   status: boolean
 }
 
