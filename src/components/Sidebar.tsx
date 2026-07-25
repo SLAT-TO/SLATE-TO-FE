@@ -109,41 +109,6 @@ export default function Sidebar() {
           )
         })}
       </nav>
-
-      <div className="border-border mt-auto flex flex-col gap-[5px] border-t px-5 py-4">
-        <a
-          href="/mypage"
-          onClick={(event) => {
-            event.preventDefault()
-            navigate('/mypage')
-          }}
-          className="text-caption-lg text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 flex h-8 w-[144px] items-center gap-[13px] rounded-lg px-[7px]"
-        >
-          <span className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center">
-            <svg width="17" height="17" viewBox="0 0 20 20" fill="currentColor">
-              <circle cx="10" cy="7" r="4" />
-              <path d="M2 19C2 15.134 5.582 12 10 12C14.418 12 18 15.134 18 19H2Z" />
-            </svg>
-          </span>
-          마이페이지
-        </a>
-        <a
-          href="/settings"
-          onClick={(event) => {
-            event.preventDefault()
-            navigate('/settings')
-          }}
-          className="text-caption-lg text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 flex h-8 w-[144px] items-center gap-[13px] rounded-lg px-[7px]"
-        >
-          <span className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center">
-            <svg width="17" height="17" viewBox="0 0 20 20" fill="currentColor">
-              <circle cx="10" cy="10" r="2.5" />
-              <path d="M17.14 10.94a7.17 7.17 0 0 0 .06-.94 7.17 7.17 0 0 0-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.62l-1.92-3.32a.49.49 0 0 0-.59-.21l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54A.48.48 0 0 0 12 .5H8a.48.48 0 0 0-.47.41l-.36 2.54a7.03 7.03 0 0 0-1.62.94l-2.39-.96a.48.48 0 0 0-.59.21L.65 6.96a.47.47 0 0 0 .12.62l2.03 1.58a7.27 7.27 0 0 0 0 1.88L.77 12.62a.47.47 0 0 0-.12.62l1.92 3.32c.12.21.37.29.59.21l2.39-.96c.5.36 1.04.67 1.62.94l.36 2.54c.06.24.27.41.47.41h4c.24 0 .44-.17.47-.41l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.21l1.92-3.32a.47.47 0 0 0-.12-.62l-2.03-1.58Z" />
-            </svg>
-          </span>
-          설정
-        </a>
-      </div>
     </aside>
   )
 }
