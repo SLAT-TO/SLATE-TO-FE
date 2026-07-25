@@ -3,7 +3,7 @@ import type { Feedback, FeedbackReply, ShareLink } from '../types/feedback'
 import type { ProjectFile } from '../types/file'
 import type { AppNotification } from '../types/notification'
 import type { Portfolio } from '../types/portfolio'
-import type { Project, ProjectActivity, ProjectMember } from '../types/project'
+import type { ProjectActivity } from '../types/project'
 import type { Application, Recruitment } from '../types/recruitment'
 import type { Schedule } from '../types/schedule'
 import type { ProjectNotice } from '../types/notice'
@@ -24,6 +24,7 @@ const incompleteUser: MeUser = {
   onboardingCompleted: false,
   primaryRole: null,
   roles: [],
+  region: null,
   location: null,
   categories: [],
   bio: null,
@@ -41,14 +42,15 @@ const completeUser: MeUser = {
   onboardingCompleted: true,
   primaryRole: 'DIRECTOR',
   roles: ['DIRECTOR', 'PD', 'EDITOR'],
-  location: '서울시',
-  categories: ['DRAMA', 'MUSIC_VIDEO'],
+  region: 'SEOUL',
+  location: 'SEOUL',
+  categories: ['FILM_DRAMA', 'MUSIC_VIDEO'],
   bio: '사랑의 이야기를 영상으로 담아내는 것을 좋아합니다.',
   createdAt: '2026-06-01T10:00:00Z',
   stats: {
     projectTypes: [
-      { type: 'COMMERCIAL', label: '브랜드 영상', count: 8 },
-      { type: 'MUSIC_VIDEO', label: '뮤직 비디오', count: 4 },
+      { type: 'AD_BRAND', label: '광고/브랜드 영상', count: 8 },
+      { type: 'MUSIC_VIDEO', label: '뮤직비디오', count: 4 },
     ],
     roles: [
       { role: 'DIRECTOR', label: '연출', count: 9 },
@@ -68,12 +70,13 @@ const publicEditor: MeUser = {
   onboardingCompleted: true,
   primaryRole: 'EDITOR',
   roles: ['EDITOR'],
-  location: '서울시',
+  region: 'SEOUL',
+  location: 'SEOUL',
   categories: ['DOCUMENTARY'],
   bio: '디테일에 강한 편집자입니다.',
   createdAt: '2026-05-01T10:00:00Z',
   stats: {
-    projectTypes: [{ type: 'DOCUMENTARY', label: '다큐/시사/교양', count: 5 }],
+    projectTypes: [{ type: 'DOCUMENTARY', label: '다큐멘터리', count: 5 }],
     roles: [{ role: 'EDITOR', label: '편집', count: 5 }],
   },
 }
@@ -85,6 +88,34 @@ export function allocId(): number {
   return nextId
 }
 
+export type MockProjectRecord = {
+  id: number
+  title: string
+  description: string
+  type: string
+  lengthType: string | null
+  clientName: string | null
+  status: string
+  kind: string | null
+  startDate: string | null
+  endDate: string | null
+  ownerUserId: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type MockMemberRecord = {
+  memberId: number
+  userId: number
+  nickname: string
+  email: string
+  profileImageUrl: string | null
+  bio: string | null
+  permission: 'ADMIN' | 'MEMBER'
+  roleNames: string[]
+  joinedAt: string
+}
+
 /* 모의 데이터베이스 타입 정의 */
 export type MockDb = {
   currentUserId: number | null
@@ -92,8 +123,8 @@ export type MockDb = {
   users: MeUser[]
   notificationSettings: Record<number, NotificationSettings>
   portfolios: Portfolio[]
-  projects: Project[]
-  members: ProjectMember[]
+  projects: MockProjectRecord[]
+  members: MockMemberRecord[]
   files: ProjectFile[]
   videos: VideoDetail[]
   referenceFiles: ReferenceFile[]
@@ -143,7 +174,7 @@ export const db: MockDb = {
     {
       id: 10,
       title: '연애혁명',
-      type: 'DRAMA',
+      type: 'FILM_DRAMA',
       kind: 'EXTERNAL',
       clientName: '스튜디오 X',
       roles: ['DIRECTOR', 'EDITOR'],
@@ -159,11 +190,13 @@ export const db: MockDb = {
       title: '위로, 또 위로',
       description: '다큐멘터리 프로젝트',
       type: 'DOCUMENTARY',
-      customTypeName: null,
       lengthType: 'LONG_FORM',
       clientName: '독립제작사',
       status: 'PREPARING',
+      kind: 'PERSONAL',
+      startDate: '2026-06-01',
       endDate: '2026-12-31',
+      ownerUserId: completeUser.id,
       createdAt: '2026-06-01T09:00:00Z',
       updatedAt: '2026-07-01T09:00:00Z',
     },
@@ -171,36 +204,40 @@ export const db: MockDb = {
       id: 2,
       title: '브랜드 필름 A',
       description: '광고 영상',
-      type: 'COMMERCIAL',
-      customTypeName: null,
-      lengthType: null,
+      type: 'AD_BRAND',
+      lengthType: 'SHORT_FORM',
       clientName: '브랜드A',
-      status: 'IN_PROGRESS',
+      status: 'EDITING',
+      kind: 'EXTERNAL',
+      startDate: '2026-05-01',
       endDate: '2026-08-15',
+      ownerUserId: completeUser.id,
       createdAt: '2026-05-01T09:00:00Z',
       updatedAt: '2026-07-05T09:00:00Z',
     },
   ],
   members: [
     {
-      id: 1,
+      memberId: 1,
       userId: completeUser.id,
-      name: completeUser.nickname,
+      nickname: completeUser.nickname,
       profileImageUrl: completeUser.profileImageUrl,
       email: completeUser.email,
-      region: '서울시',
-      jobRole: 'DIRECTOR',
-      isAdmin: true,
+      bio: completeUser.bio,
+      permission: 'ADMIN',
+      roleNames: ['DIRECTOR'],
+      joinedAt: '2026-06-01T09:00:00Z',
     },
     {
-      id: 2,
+      memberId: 2,
       userId: publicEditor.id,
-      name: publicEditor.nickname,
+      nickname: publicEditor.nickname,
       profileImageUrl: publicEditor.profileImageUrl,
       email: publicEditor.email,
-      region: '서울시',
-      jobRole: 'EDITOR',
-      isAdmin: false,
+      bio: publicEditor.bio,
+      permission: 'MEMBER',
+      roleNames: ['EDITOR'],
+      joinedAt: '2026-06-02T09:00:00Z',
     },
   ],
   files: [
@@ -246,7 +283,7 @@ export const db: MockDb = {
       unreadCommentCount: 3,
       description: '프로젝트 소개글',
       memo: '1차 피드백 반영 예정',
-      categories: ['다큐'],
+      projectTags: ['다큐'],
       createdAt: '2026-05-20T00:00:00Z',
       updatedAt: '2026-05-25T00:00:00Z',
     },
@@ -262,7 +299,7 @@ export const db: MockDb = {
       unreadCommentCount: 0,
       description: null,
       memo: null,
-      categories: [],
+      projectTags: [],
       createdAt: '2026-05-10T00:00:00Z',
       updatedAt: '2026-05-12T00:00:00Z',
     },
@@ -328,7 +365,7 @@ export const db: MockDb = {
       title: '웹드라마 편집자 모집',
       description: '감정선 살리는 편집 가능하신 분',
       roles: ['EDITOR'],
-      categories: ['DRAMA'],
+      categories: ['FILM_DRAMA'],
       regions: ['SEOUL'],
       status: 'OPEN',
       viewCount: 120,
@@ -519,7 +556,7 @@ export function requireUser(): MeUser {
   return user
 }
 
-/* GET /users/me 응답 변환 */
+/* GET /users/me 응답 변환 — BE는 region */
 export function toMeProfile(user: MeUser) {
   return {
     id: user.id,
@@ -527,7 +564,8 @@ export function toMeProfile(user: MeUser) {
     nickname: user.nickname,
     profileImageUrl: user.profileImageUrl,
     bio: user.bio,
-    location: user.location,
+    region: user.region ?? user.location,
+    location: user.location ?? user.region,
     socialType: user.socialType,
     primaryRole: user.primaryRole,
     roles: user.roles,

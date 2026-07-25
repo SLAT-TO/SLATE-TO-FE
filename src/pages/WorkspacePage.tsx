@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import { getProjects } from '../api/projects'
 import { projectMetaTags } from '../constants/projectLabels'
 import { projectStatusColor, projectStatusLabel } from '../constants/projectStatus'
-import type { Project } from '../types/project'
+import type { ProjectSummary } from '../types/project'
 import { ApiError } from '../types/api'
 import { navigate } from '../utils/navigation'
 
 export default function WorkspacePage() {
-  const [projects, setProjects] = useState<Project[]>([])
+  const [projects, setProjects] = useState<ProjectSummary[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -19,7 +19,7 @@ export default function WorkspacePage() {
       setError(null)
       try {
         const result = await getProjects()
-        if (!cancelled) setProjects(result)
+        if (!cancelled) setProjects(result.items)
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof ApiError ? err.message : '프로젝트 목록을 불러오지 못했습니다.')

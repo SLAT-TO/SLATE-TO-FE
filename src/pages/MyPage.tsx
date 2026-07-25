@@ -3,6 +3,8 @@ import ProfileOverviewCard from '../domains/mypage/ProfileOverviewCard'
 import ProjectHistoryCard from '../domains/mypage/ProjectHistoryCard'
 import type { ProfileSummary, StatItem, ProjectHistoryItem } from '../types/MyPage.types'
 import { navigate } from '../utils/navigation'
+import { useHeaderSlot } from '../hooks/useHeaderSlot'
+import HeaderTitle from '../components/HeaderTitle'
 
 // 아래 하드코딩 데이터는 추후 API 연동 시 교체
 // GET /api/users/me, GET /api/users/me/stats, GET /api/users/me/projects 등으로 대체 예정
@@ -81,7 +83,11 @@ const MOCK_PROJECT_HISTORY: ProjectHistoryItem[] = [
   },
 ]
 
+const HEADER = <HeaderTitle>마이페이지</HeaderTitle>
+
 function MyPage() {
+  useHeaderSlot(HEADER)
+
   // 프로필 수정 폼 라우트 확정되면 이동 로직 연결
   const handleEditClick = () => {
     navigate('/mypage/edit')

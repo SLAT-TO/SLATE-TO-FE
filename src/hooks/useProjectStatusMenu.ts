@@ -1,11 +1,11 @@
 import { useEffect, useState, type Dispatch, type RefObject, type SetStateAction } from 'react'
 import { updateProject } from '../api/projects'
-import type { Project, ProjectStatus } from '../types/project'
+import type { ProjectDetailResponse, ProjectStatus } from '../types/project'
 
 export function useProjectStatusMenu(
   projectId: number,
-  project: Project | null,
-  setProject: Dispatch<SetStateAction<Project | null>>,
+  project: ProjectDetailResponse | null,
+  setProject: Dispatch<SetStateAction<ProjectDetailResponse | null>>,
   containerRef: RefObject<HTMLDivElement | null>,
 ) {
   const [open, setOpen] = useState(false)

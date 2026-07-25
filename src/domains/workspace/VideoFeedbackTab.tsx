@@ -19,6 +19,7 @@ import {
   getProjectFiles,
   getProjectMembers,
 } from '../../api/projects'
+import { getMe } from '../../api/users'
 import ActionMenu from '../../components/ActionMenu'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
@@ -31,7 +32,7 @@ import type { VideoDetail, VideoListItem, VideoProgressStatus } from '../../type
 import type { Feedback, FeedbackReply } from '../../types/feedback'
 import type { ReferenceFile } from '../../types/video'
 import type { ProjectFileListItem } from '../../types/file'
-import type { ProjectLengthType, ProjectMember } from '../../types/project'
+import type { MemberSummary, ProjectLengthType } from '../../types/project'
 import { PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
 import clockIcon from '../../assets/icons/clock.svg?raw'
@@ -120,7 +121,7 @@ export default function VideoFeedbackTab({
       setVideosLoading(true)
       try {
         const result = await getVideos(projectId)
-        if (!cancelled) setVideos(result.videos)
+        if (!cancelled) setVideos(result.items)
       } finally {
         if (!cancelled) setVideosLoading(false)
       }
@@ -192,7 +193,7 @@ export function VideoDetailView({
   const [fileSearch, setFileSearch] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [projectFiles, setProjectFiles] = useState<ProjectFileListItem[]>([])
-  const [members, setMembers] = useState<ProjectMember[]>([])
+  const [members, setMembers] = useState<MemberSummary[]>([])
   const [inviteCopied, setInviteCopied] = useState(false)
   const [statusMenuOpen, setStatusMenuOpen] = useState(false)
   const statusMenuRef = useRef<HTMLDivElement>(null)
@@ -229,13 +230,16 @@ export function VideoDetailView({
           getVideo(projectId, videoId),
           getReferenceFiles(videoId),
           getFeedbacks(videoId),
-          getProjectMembers(projectId).catch(() => [] as ProjectMember[]),
+          getProjectMembers(projectId).catch(() => ({
+            items: [] as MemberSummary[],
+            memberCount: 0,
+          })),
         ])
         if (cancelled) return
         setVideoDetail(detail)
         setReferenceFiles(refFiles.items)
         setFeedbacks(feedbackPage.items)
-        setMembers(memberList)
+        setMembers(memberList.items)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -278,10 +282,9 @@ export function VideoDetailView({
     setVideoDetail((prev) => (prev ? { ...prev, progressStatus: status } : prev))
   }
 
-  /** 참여 인원 초대 — 초대 링크 생성 후 클립보드에 복사 (골격, 실제 초대 수락 화면은 별도 구현 필요) */
+  /** 참여 인원 초대 — BE가 내려준 inviteUrl을 클립보드에 복사 */
   const inviteMember = async () => {
-    const { token } = await createInvitation(projectId)
-    const inviteUrl = `${window.location.origin}/invitations/${token}`
+    const { inviteUrl } = await createInvitation(projectId)
     await navigator.clipboard.writeText(inviteUrl)
     setInviteCopied(true)
     setTimeout(() => setInviteCopied(false), 2000)
@@ -354,8 +357,18 @@ export function VideoDetailView({
   }
 
   const toggleResolved = async (feedback: Feedback) => {
-    const updated = await updateFeedbackStatus(feedback.feedbackId, { status: !feedback.status })
-    setFeedbacks((prev) => prev.map((f) => (f.feedbackId === updated.feedbackId ? updated : f)))
+    const me = await getMe()
+    const updated = await updateFeedbackStatus(feedback.feedbackId, {
+      userId: me.id,
+      status: !feedback.status,
+    })
+    setFeedbacks((prev) =>
+      prev.map((f) =>
+        f.feedbackId === updated.feedbackId
+          ? { ...f, status: updated.status, updatedAt: updated.updatedAt }
+          : f,
+      ),
+    )
   }
 
   const removeFeedback = async (feedbackId: number) => {
@@ -484,11 +497,11 @@ export function VideoDetailView({
               <div className="flex -space-x-2">
                 {members.slice(0, 4).map((member) => (
                   <Avatar
-                    key={member.id}
+                    key={member.memberId}
                     src={member.profileImageUrl ?? undefined}
-                    alt={member.name}
+                    alt={member.nickname}
                     size={28}
-                    fallback={member.name.slice(0, 1)}
+                    fallback={member.nickname.slice(0, 1)}
                     border="gray"
                     className="bg-neutral-2"
                   />
@@ -551,14 +564,14 @@ export function VideoDetailView({
 
           <div className="flex flex-col gap-3">
             <h2 className="text-head-sm text-neutral-9 font-semibold">프로젝트 소개글</h2>
-            {(videoDetail.categories.length > 0 || lengthType) && (
+            {(videoDetail.projectTags.length > 0 || lengthType) && (
               <div className="flex flex-wrap gap-2">
-                {videoDetail.categories.map((category) => (
+                {videoDetail.projectTags.map((tag) => (
                   <span
-                    key={category}
+                    key={tag}
                     className="bg-tag-role-bg text-tag-role-text text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
                   >
-                    {category}
+                    {tag}
                   </span>
                 ))}
                 {lengthType && (
