@@ -1,18 +1,73 @@
 import MainLayout from './layouts/MainLayout'
+import HomePage from './pages/HomePage'
+import MyPage from './pages/MyPage'
+import ProfileEditPage from './pages/ProfileEditPage'
+import ProjectDetailPage from './pages/ProjectDetailPage'
+import ProjectFormPage from './pages/ProjectFormPage'
+import ProjectOverviewPage from './pages/ProjectOverviewPage'
+import RecruitPage from './pages/RecruitPage'
+import JobDetailPage from './pages/JobDetailPage'
+import JobApplicantsPage from './pages/JobApplicantsPage'
+import WorkspacePage from './pages/WorkspacePage'
 import { usePathname } from './hooks/usePathname'
 import { LoginPage } from './pages/LoginPage'
+import { matchPath } from './utils/navigation'
+
+const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
 
 function AppRoutes({ pathname }: { pathname: string }) {
-  if (pathname === '/' || pathname === '') {
-    return (
-      <section className="flex flex-col gap-2">
-        <h1 className="text-head-sm text-neutral-11 font-bold">홈</h1>
-        <p className="text-body-sm text-neutral-6">홈 대시보드는 이후 조립 예정입니다.</p>
-      </section>
-    )
+  const projectMatch = matchPath('/workspace/projects/:projectId', pathname)
+  if (projectMatch) {
+    const projectId = Number(projectMatch.projectId)
+    if (!Number.isFinite(projectId)) {
+      return <p className="text-body-sm text-warning">잘못된 프로젝트 경로입니다.</p>
+    }
+    return <ProjectDetailPage projectId={projectId} />
   }
 
-  // /workspace, /invitations/:token 등 화면 라우트는 각 기능 PR에서 여기에 추가
+  if (pathname === '/workspace') {
+    return <WorkspacePage />
+  }
+
+  const applicantsMatch = matchPath('/matching/:jobId/applicants', pathname)
+  if (applicantsMatch) {
+    const jobId = Number(applicantsMatch.jobId)
+    if (!Number.isFinite(jobId)) {
+      return <p className="text-body-sm text-warning">잘못된 공고 경로입니다.</p>
+    }
+    return <JobApplicantsPage jobId={jobId} />
+  }
+
+  const jobMatch = matchPath('/matching/:jobId', pathname)
+  if (jobMatch) {
+    const jobId = Number(jobMatch.jobId)
+    if (!Number.isFinite(jobId)) {
+      return <p className="text-body-sm text-warning">잘못된 공고 경로입니다.</p>
+    }
+    return <JobDetailPage jobId={jobId} />
+  }
+
+  if (pathname === '/matching') {
+    return <RecruitPage />
+  }
+
+  if (pathname === '/mypage') return <MyPage />
+  if (pathname === '/mypage/edit') return <ProfileEditPage />
+  if (pathname === '/mypage/project/new') return <ProjectFormPage mode="create" />
+
+  if (matchPath('/mypage/project/:id/edit', pathname)) {
+    return <ProjectFormPage mode="edit" />
+  }
+
+  if (matchPath('/mypage/project/:id', pathname)) {
+    return <ProjectOverviewPage />
+  }
+
+  if (pathname === '/' || pathname === '') {
+    return <HomePage />
+  }
+
+  // /project-invitations/:token 등 화면 라우트는 각 기능 PR에서 여기에 추가
 
   return (
     <section className="flex flex-col gap-2">
@@ -35,7 +90,7 @@ function App() {
   }
 
   return (
-    <MainLayout userName="김수민">
+    <MainLayout userName={USER_NAME}>
       <AppRoutes pathname={pathname} />
     </MainLayout>
   )

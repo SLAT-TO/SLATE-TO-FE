@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { HeaderSlotContext } from '../layouts/headerSlotContext'
 type HeaderProps = {
   userName?: string
 }
@@ -12,12 +14,11 @@ function BellIcon() {
 }
 
 export default function Header({ userName = '000' }: HeaderProps) {
+  const headerLeft = useContext(HeaderSlotContext)?.headerLeft ?? null
+
   return (
-    <header className="border-border bg-bg-primary flex h-[90px] flex-shrink-0 items-center justify-between border-b px-8">
-      {/* 인사말 */}
-      <div>
-        <h1 className="text-body-sm text-neutral-11 font-semibold">안녕하세요 {userName} 님</h1>
-      </div>
+    <header className="bg-bg-secondary flex h-16 flex-shrink-0 items-center justify-between px-8">
+      <div className="flex items-center gap-3">{headerLeft}</div>
 
       {/* 우측 액션 영역 */}
       <div className="flex items-center gap-4">
