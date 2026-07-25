@@ -1,9 +1,20 @@
 import { useEffect, useState } from 'react'
 import { acceptInvitation, getInvitation } from '../api/projects'
 import { Button } from '../components/Button'
+import Select from '../components/Select'
 import { ApiError } from '../types/api'
 import type { ProjectInvitation } from '../types/project'
+import type { UserRole } from '../types/user'
 import { navigate } from '../utils/navigation'
+
+const INVITATION_ROLE_OPTIONS: ReadonlyArray<{ value: UserRole; label: string }> = [
+  { value: 'DIRECTOR', label: '연출' },
+  { value: 'PD', label: 'PD' },
+  { value: 'EDITOR', label: '편집' },
+  { value: 'CINEMATOGRAPHER', label: '촬영' },
+  { value: 'ART', label: '미술' },
+  { value: 'SOUND', label: '사운드' },
+]
 
 type InvitationAcceptPageProps = {
   token: string
@@ -28,6 +39,7 @@ function formatExpiresAt(iso: string): string {
 
 export default function InvitationAcceptPage({ token }: InvitationAcceptPageProps) {
   const [state, setState] = useState<ViewState>({ phase: 'loading' })
+  const [selectedRole, setSelectedRole] = useState<UserRole>('EDITOR')
 
   useEffect(() => {
     let cancelled = false
@@ -59,7 +71,7 @@ export default function InvitationAcceptPage({ token }: InvitationAcceptPageProp
     const { invitation } = state
     setState({ phase: 'accepting', invitation })
     try {
-      const result = await acceptInvitation(token, { roleNames: ['EDITOR'] })
+      const result = await acceptInvitation(token, { roleNames: [selectedRole] })
       setState({ phase: 'accepted', projectId: result.projectId })
     } catch (err) {
       if (err instanceof ApiError && err.code === 'PROJECT409') {
@@ -122,6 +134,15 @@ export default function InvitationAcceptPage({ token }: InvitationAcceptPageProp
       </div>
 
       {state.phase === 'error' && <p className="text-caption-lg text-warning">{state.message}</p>}
+
+      <Select
+        label="참여 역할"
+        required
+        value={selectedRole}
+        onChange={(value) => setSelectedRole(value as UserRole)}
+        options={INVITATION_ROLE_OPTIONS}
+        className="w-full text-left"
+      />
 
       <Button
         variant="primary"
