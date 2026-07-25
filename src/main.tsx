@@ -9,6 +9,9 @@ async function enableMocking() {
   if (!import.meta.env.DEV || import.meta.env.VITE_ENABLE_MSW !== 'true') return
   /* mock가 작동 할떄만 동적으로 import -> 성능을 위해서 -> 그냥 import는 코드 블록 내부에 넣을 수 없음 */
   const { worker } = await import('./mocks/browser')
+  const { setAccessToken } = await import('./api/client')
+  /* mock 시드 유저와 맞춰 Authorization 헤더를 붙여 둔다 */
+  setAccessToken('mock-access-token')
   await worker.start({
     /* mock에서 다루지 않을 요청일때 -> 유튜브나 미리보기라면 그냥 넘어감 -> 아니면 warning 출력 */
     onUnhandledRequest(request, print) {

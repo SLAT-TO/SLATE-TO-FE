@@ -61,7 +61,6 @@ function ProfileEditPage() {
     <div className="flex flex-col gap-8 p-6">
       {/* 프로필 사진 */}
       <section className="flex flex-col gap-4">
-        <h2 className="text-neutral-11 text-base font-semibold">프로필 사진</h2>
         <div className="flex items-center gap-5">
           <img
             src={imagePreview}
