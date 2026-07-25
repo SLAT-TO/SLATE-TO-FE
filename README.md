@@ -40,7 +40,7 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 SLATE_TO_FE/
 ├── .vscode/
 ├── src/
-│   ├── api/              # API 호출 · paths · BE 응답 normalize
+│   ├── api/              # API 호출 · paths (BE normalize는 #93 이후)
 │   ├── assets/
 │   │   ├── images/
 │   │   ├── icons/        # 아이콘 SVG (Flaticon UIcons)
@@ -115,7 +115,7 @@ feat: 로그인 페이지 UI 구현 (#12)
 
 ## 이슈 컨벤션
 
-- 제목: 커밋 컨벤션과 동일한 `type: 작업 내용` 형식 (예: `feat: 로그인 페이지 구현`)
+- 제목: 커밋 컨벤션과 동일한 `type: 작업 내용 (#이슈번호)` 형식 (예: `feat: 로그인 페이지 구현 (#12)`)
 - 작업 시작 전 이슈부터 생성 — 브랜치·커밋·PR에서 이슈 번호로 연결
 - 종류에 맞는 [템플릿](.github/ISSUE_TEMPLATE) 사용
   - 기능 개발: 작업 내용 · 상세 작업(체크리스트) · 완료 조건(체크리스트) · 참고(피그마 링크 등)
@@ -124,12 +124,13 @@ feat: 로그인 페이지 UI 구현 (#12)
 
 ## PR 컨벤션
 
-- 제목: `type: 작업 내용` (예: `feat: 로그인 페이지 구현`)
+- 제목: `type: 작업 내용 (#이슈번호)` (예: `feat: 로그인 페이지 구현 (#12)`)
+- 본문: [템플릿](.github/PULL_REQUEST_TEMPLATE.md) — `## 이슈` · `## 변경 사항` · `## 스크린샷` · `## 리뷰 포인트` · `## 체크리스트`
+- `## 이슈`에 `Closes #번호`로 이슈 연결
 - 팀장 리뷰 후 머지
 - PR 단위는 화면 또는 기능 단위로 분리
-- UI 변경이 있으면 스크린샷 첨부
+- UI 변경이 있으면 스크린샷 첨부 (문서-only PR은 «해당 없음»)
 - 리뷰 포인트가 있으면 본문에 작성
-- PR 본문은 [템플릿](.github/PULL_REQUEST_TEMPLATE.md)을 따릅니다
 
 ## 스타일 가이드
 
@@ -275,12 +276,12 @@ npm run format:check  # 포맷 위반 여부만 확인 (CI와 동일)
 | 모드 | `VITE_ENABLE_MSW` | `VITE_API_BASE_URL` | 설명 |
 | ---- | ----------------- | ------------------- | ---- |
 | MSW (기본) | `true` | 비움 | `src/mocks`가 `/api/v1` 요청을 가로챕니다. |
-| 로컬 BE | `false` | 비움 | Vite proxy가 `/api` → `http://localhost:8080` (CORS 우회). BE를 8080에서 띄운 뒤 사용. |
+| 로컬 BE | `false` | 비움 | Vite proxy가 `/api` → `http://localhost:8080` (CORS 우회). **BE 연동 PR(#93) 머지 후** `vite.config.ts`에 proxy 설정. |
 | 원격 BE | `false` | `https://api.example.com` 등 | axios가 해당 origin으로 직결. BE CORS·쿠키(`withCredentials`) 필요. |
 
 - 개발 서버에서만 MSW가 켜집니다. (`import.meta.env.DEV` + `VITE_ENABLE_MSW=true`)
 - Production(Vercel)에서는 MSW를 끄고 실 API URL을 넣습니다. 예: `VITE_ENABLE_MSW=false`, `VITE_API_BASE_URL=https://api.slatto.cloud`
-- BE 응답 shape 차이는 `src/api/normalize.ts`에서 FE 도메인 모델로 맞춥니다.
+- BE 응답 shape 차이는 BE 연동 PR(#93)의 `src/api/normalize.ts`에서 FE 도메인 모델로 맞춥니다.
 
 ## 화면 목록 및 플로우
 
