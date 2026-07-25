@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { DateSingleCalendar } from './DateSingleCalendar'
+import { DATE_FIELD_CLASS } from './dateFieldStyles'
 import { useOutsideClick } from '../hooks/useOutsideClick'
 import { formatDate } from '../utils/formatDate'
 
@@ -8,8 +9,7 @@ interface DateFieldProps {
   onChange: (date: Date | undefined) => void
 }
 
-// input(트리거) + 팝업 달력을 묶은 단일 날짜 선택 필드
-// ※ 트리거는 임시 구현. 팀 Input 컴포넌트 머지되면 교체 예정
+// input(트리거) + 트리거 아래에 펼쳐지는 달력을 묶은 단일 날짜 선택 필드
 export function DateSingleField({ value, onChange }: DateFieldProps) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -26,19 +26,22 @@ export function DateSingleField({ value, onChange }: DateFieldProps) {
   }
 
   return (
-    <div ref={containerRef} className="relative inline-block">
+    <div ref={containerRef} className="inline-block">
       {/* 트리거 */}
       <button
         type="button"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label="날짜 선택"
         onClick={() => setOpen(true)}
-        className="bg-neutral-2 text-neutral-8 rounded-md px-4 py-2 text-left text-sm"
+        className={DATE_FIELD_CLASS}
       >
-        {formatDate(value)}
+        <span className={value ? 'text-neutral-10' : 'text-neutral-5'}>{formatDate(value)}</span>
       </button>
 
-      {/* 팝업 달력 (열렸을 때만) */}
+      {/* 달력 (열렸을 때 트리거 아래에 가운데 정렬로 표시, 배경·테두리 없음) */}
       {open && (
-        <div className="border-neutral-3 absolute top-full left-0 z-10 mt-2 rounded-lg border bg-white shadow-lg">
+        <div className="mt-2 flex justify-center">
           <DateSingleCalendar value={value} onChange={handleChange} />
         </div>
       )}
