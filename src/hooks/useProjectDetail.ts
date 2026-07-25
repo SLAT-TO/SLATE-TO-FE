@@ -50,5 +50,5 @@ export function useProjectDetail(projectId: number) {
     }
   }, [projectId])
 
-  return { project, setProject, members, activities, notices, loading, error }
+  return { project, setProject, members, activities, notices, setNotices, loading, error }
 }
