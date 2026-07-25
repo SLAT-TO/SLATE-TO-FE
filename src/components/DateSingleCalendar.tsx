@@ -22,7 +22,7 @@ export function DateSingleCalendar({ value, onChange }: DateCalendarProps) {
         <button
           type="button"
           onClick={() => setMonth((prev) => subMonths(prev, 1))}
-          className="text-neutral-10 hover:opacity-70 flex h-4 w-4 items-center justify-center"
+          className="text-neutral-10 flex h-4 w-4 items-center justify-center hover:opacity-70"
         >
           <ChevronLeftIcon />
         </button>
@@ -32,7 +32,7 @@ export function DateSingleCalendar({ value, onChange }: DateCalendarProps) {
         <button
           type="button"
           onClick={() => setMonth((prev) => addMonths(prev, 1))}
-          className="text-neutral-10 hover:opacity-70 flex h-4 w-4 items-center justify-center"
+          className="text-neutral-10 flex h-4 w-4 items-center justify-center hover:opacity-70"
         >
           <ChevronRightIcon />
         </button>

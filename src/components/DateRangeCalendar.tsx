@@ -56,7 +56,7 @@ export function DateRangeCalendar({ value, onChange, onComplete }: DateRangeCale
         <button
           type="button"
           onClick={() => setMonth((prev) => subMonths(prev, 1))}
-          className="text-neutral-10 hover:opacity-70 flex h-4 w-4 items-center justify-center"
+          className="text-neutral-10 flex h-4 w-4 items-center justify-center hover:opacity-70"
         >
           <ChevronLeftIcon />
         </button>
@@ -66,7 +66,7 @@ export function DateRangeCalendar({ value, onChange, onComplete }: DateRangeCale
         <button
           type="button"
           onClick={() => setMonth((prev) => addMonths(prev, 1))}
-          className="text-neutral-10 hover:opacity-70 flex h-4 w-4 items-center justify-center"
+          className="text-neutral-10 flex h-4 w-4 items-center justify-center hover:opacity-70"
         >
           <ChevronRightIcon />
         </button>
@@ -102,7 +102,9 @@ export function DateRangeCalendar({ value, onChange, onComplete }: DateRangeCale
               className="relative flex h-7.5 w-7.5 items-center justify-center"
             >
               {hasRange && isMiddle && <div className="bg-main-1 absolute inset-0" />}
-              {hasRange && isStart && <div className="bg-main-1 absolute inset-y-0 right-0 w-1/2" />}
+              {hasRange && isStart && (
+                <div className="bg-main-1 absolute inset-y-0 right-0 w-1/2" />
+              )}
               {hasRange && isEnd && <div className="bg-main-1 absolute inset-y-0 left-0 w-1/2" />}
 
               <button
