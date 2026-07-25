@@ -73,15 +73,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
       .catch(() => setMeId(null))
   }, [])
 
-  // 같은 컴포넌트 인스턴스에서 projectId만 바뀔 때 서브뷰/모달 잔존 방지
-  useEffect(() => {
-    setTab('dashboard')
-    setView('main')
-    setDeleteOpen(false)
-    setSelectedVideoId(null)
-    setNoticeView('main')
-    setCheckedActivityIds(new Set())
-  }, [projectId])
+  // 서브상태 리셋은 App의 <ProjectDetailPage key={projectId} /> 리마운트에 위임
 
   const handleTabChange = (key: string) => {
     setTab(key)

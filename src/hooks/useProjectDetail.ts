@@ -20,15 +20,9 @@ export function useProjectDetail(projectId: number) {
   useEffect(() => {
     let cancelled = false
 
-    // projectId 변경 직후 이전 프로젝트 데이터가 한 프레임 남는 것을 막는다
-    setProject(null)
-    setMembers([])
-    setActivities([])
-    setNotices([])
-    setLoading(true)
-    setError(null)
-
     async function load() {
+      setLoading(true)
+      setError(null)
       try {
         const emptyActivities = { items: [] as ProjectActivity[], nextCursor: null, hasNext: false }
         const [projectResult, activityPage, noticePage, memberList] = await Promise.all([
