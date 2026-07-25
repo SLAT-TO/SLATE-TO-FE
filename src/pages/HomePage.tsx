@@ -9,8 +9,13 @@ import { useRecommendedJobs } from '../hooks/useRecommendedJobs'
 
 export default function HomePage() {
   const { projects, briefing, todaySchedules, loading, error } = useHomeDashboard()
-  const { jobs, bookmarkedIds, toggleBookmark, loading: jobsLoading, error: jobsError } =
-    useRecommendedJobs()
+  const {
+    jobs,
+    bookmarkedIds,
+    toggleBookmark,
+    loading: jobsLoading,
+    error: jobsError,
+  } = useRecommendedJobs()
 
   return (
     <div className="flex flex-col gap-4.75">

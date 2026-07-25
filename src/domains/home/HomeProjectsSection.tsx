@@ -20,7 +20,11 @@ export default function HomeProjectsSection({ projects, loading }: HomeProjectsS
           <p className="text-body-sm text-neutral-6">
             진행중인 프로젝트가 없어요. 프로젝트를 추가해보세요.
           </p>
-          <Button variant="secondary" className="w-50" onClick={() => navigate('/mypage/project/new')}>
+          <Button
+            variant="secondary"
+            className="w-50"
+            onClick={() => navigate('/mypage/project/new')}
+          >
             프로젝트 추가
           </Button>
         </div>

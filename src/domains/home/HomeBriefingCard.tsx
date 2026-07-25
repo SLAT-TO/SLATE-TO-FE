@@ -23,7 +23,7 @@ export default function HomeBriefingCard({ briefing, loading }: HomeBriefingCard
           lines.map((line, i) => (
             <p
               key={i}
-              className="text-body-sm text-neutral-11 leading-[25px] tracking-[-0.32px] font-normal"
+              className="text-body-sm text-neutral-11 leading-[25px] font-normal tracking-[-0.32px]"
             >
               {line}
             </p>
