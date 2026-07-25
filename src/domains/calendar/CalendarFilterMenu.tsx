@@ -43,12 +43,13 @@ export function CalendarFilterMenu({ options, value, onChange }: CalendarFilterM
     <div ref={containerRef} className="relative inline-block">
       <Button
         variant="secondary"
+        size="sm"
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="w-50"
+        width={200}
       >
-        <span className="flex w-full items-center justify-center gap-1">
+        <span className="flex w-full items-center justify-center gap-2.5">
           일정 필터
           <InlineIcon
             svg={chevronDownIcon}

@@ -4,6 +4,7 @@ import ActionMenu from '../../components/ActionMenu'
 import ConfirmModal from '../../components/ConfirmModal'
 import InlineIcon from '../../components/InlineIcon'
 import type { CalendarEvent } from '../../schemas/calendarEvent'
+import { pickEventColor } from '../../utils/calendarUtils'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
 import paperPlaneIcon from '../../assets/icons/paper-plane.svg?raw'
 import pencilIcon from '../../assets/icons/pencil.svg?raw'
@@ -38,8 +39,8 @@ export function EventDetailCard({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <header className="flex items-center gap-6">
+    <div className="flex flex-col gap-3">
+      <header className="flex items-center gap-4">
         <button
           type="button"
           onClick={onBack}
@@ -65,8 +66,11 @@ export function EventDetailCard({
       {(event.place || event.target) && (
         <div className="flex flex-col gap-3">
           {event.place && (
-            <div className="flex items-center gap-2">
-              <span className="bg-primary size-2 shrink-0" />
+            <div className="flex items-center gap-4">
+              <span
+                className="size-2 shrink-0"
+                style={{ backgroundColor: event.color ?? 'var(--color-event-1)' }}
+              />
               <div className="flex items-center gap-4">
                 <span className={LABEL_CLASS}>장소</span>
                 <span className={VALUE_CLASS}>{event.place}</span>
@@ -74,8 +78,11 @@ export function EventDetailCard({
             </div>
           )}
           {event.target && (
-            <div className="flex items-center gap-2">
-              <span className="bg-warning size-2 shrink-0" />
+            <div className="flex items-center gap-4">
+              <span
+                className="size-2 shrink-0"
+                style={{ backgroundColor: pickEventColor(event.id, event.color) }}
+              />
               <div className="flex items-center gap-4">
                 <span className={LABEL_CLASS}>대상</span>
                 <span className={VALUE_CLASS}>{event.target}</span>
@@ -86,7 +93,7 @@ export function EventDetailCard({
       )}
 
       {event.memo && (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <InlineIcon svg={pencilIcon} className="text-neutral-10 size-3 shrink-0" />
           <span className="text-caption-sm text-neutral-10 flex-1 font-semibold tracking-[-0.24px] capitalize underline">
             {event.memo}
@@ -101,7 +108,7 @@ export function EventDetailCard({
         </div>
       )}
 
-      <div className="border-neutral-5 flex h-26 w-full max-w-[258px] flex-col gap-1 rounded-[8.675px] border-[0.542px] p-4">
+      <div className="border-neutral-5 flex h-27 w-full max-w-[258px] flex-col gap-2 rounded-[8.675px] border-[0.542px] p-4">
         <span className="text-caption-sm text-neutral-5 font-semibold tracking-[-0.24px] capitalize">
           참고 (나에게만 보여요)
         </span>
@@ -120,7 +127,10 @@ export function EventDetailCard({
             aria-label="메모 저장"
             className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2378FE]"
           >
-            <InlineIcon svg={paperPlaneIcon} className="text-neutral-1 size-4" />
+            <InlineIcon
+              svg={paperPlaneIcon}
+              className="text-neutral-1 translate-x-0.45 size-4 translate-y-0.5"
+            />
           </button>
         </div>
       </div>

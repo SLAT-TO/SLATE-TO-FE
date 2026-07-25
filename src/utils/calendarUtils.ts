@@ -4,10 +4,30 @@ import type { CalendarEvent } from '../schemas/calendarEvent'
 // 월요일 시작 (일요일 시작이면 weekStartsOn: 0)
 const WEEK_OPTIONS = { weekStartsOn: 1 } as const
 
-// CalendarGrid(헤더·셀 높이)와 EventBarLayer(주별 오버레이 세로 offset)가 공유하는 단일 소스.
-// 값이 어긋나면 이벤트 바가 날짜 셀과 안 맞게 겹치므로, 두 컴포넌트 모두 여기서 import해서 쓴다.
+// 요일 헤더 높이(px). 날짜 그리드 행은 화면 높이에 맞춰 유동적으로 6등분되므로 고정값이 아님.
 export const CALENDAR_HEADER_HEIGHT_PX = 48
-export const CALENDAR_CELL_HEIGHT_PX = 147
+
+// index.css 팔레트의 event-1~10 (CSS 변수 참조라 팔레트 값이 바뀌어도 자동으로 따라감)
+export const CALENDAR_EVENT_COLORS = Array.from(
+  { length: 10 },
+  (_, i) => `var(--color-event-${i + 1})`,
+)
+
+// seed(예: event.id)로 팔레트에서 색 하나를 고정 배정한다.
+// Math.random()과 달리 같은 seed는 항상 같은 색을 반환해 리렌더마다 색이 바뀌지 않는다.
+// exclude와 우연히 같은 색으로 뽑히면 바로 다음 색으로 넘어가 겹치지 않게 한다.
+export function pickEventColor(seed: string, exclude?: string): string {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0
+  }
+  const index = Math.abs(hash) % CALENDAR_EVENT_COLORS.length
+  const color = CALENDAR_EVENT_COLORS[index]
+  if (exclude && color === exclude) {
+    return CALENDAR_EVENT_COLORS[(index + 1) % CALENDAR_EVENT_COLORS.length]
+  }
+  return color
+}
 
 // 해당 달의 달력 그리드를 만든다.
 // 앞뒤 달의 날짜까지 채워서 항상 주 단위(7칸 배수)로 떨어지게 함.

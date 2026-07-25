@@ -9,9 +9,17 @@ import type { ProjectSummary } from '../types/project'
 import { CalendarFilterMenu } from '../domains/calendar/CalendarFilterMenu'
 import { CalendarDaySchedulePanel } from '../domains/calendar/CalendarDaySchedulePanel'
 import { EventFormModal, type EventFormValues } from '../domains/calendar/EventFormModal'
+import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons/ChevronIcons'
 import { useCalendarStore } from '../stores/calendarStore'
 import { toDateKey } from '../utils/calendarUtils'
 import plusIcon from '../assets/icons/plus.svg?raw'
+
+// index.css 팔레트의 event-1~10 (CSS 변수 참조라 팔레트 값이 바뀌어도 자동으로 따라감)
+const EVENT_COLORS = Array.from({ length: 10 }, (_, i) => `var(--color-event-${i + 1})`)
+
+function randomEventColor() {
+  return EVENT_COLORS[Math.floor(Math.random() * EVENT_COLORS.length)]
+}
 
 // "김수민님 외 1인" 형태로 "대상" 표시 문구를 만든다
 function formatTarget(names: string[]): string | undefined {
@@ -46,7 +54,6 @@ export default function CalendarPage() {
   const [projects, setProjects] = useState<ProjectSummary[]>([])
   const events = useCalendarStore((s) => s.events)
   const addEvent = useCalendarStore((s) => s.addEvent)
-  const removeEvent = useCalendarStore((s) => s.removeEvent)
   const updateEvent = useCalendarStore((s) => s.updateEvent)
 
   // 일정 필터·일정 추가 폼이 공유하는 실제 프로젝트 목록
@@ -97,6 +104,7 @@ export default function CalendarPage() {
       startDate,
       endDate: values.endDate ? toDateKey(values.endDate) : startDate,
       title: values.title.trim() || '새 일정',
+      color: randomEventColor(),
       place: values.place.trim() || undefined,
       memo: values.memo.trim() || undefined,
       participantIds: values.participantIds.length > 0 ? values.participantIds : undefined,
@@ -120,24 +128,26 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex h-full flex-col gap-4">
       {/* 월 이동 헤더 + 버튼 — 페이지 전체 폭 기준으로 고정, 패널 유무와 무관하게 자리 유지 */}
-      <header className="flex items-center justify-between gap-3">
+      <header className="flex shrink-0 items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-neutral-11 text-base font-bold">{format(month, 'yyyy년 M월')}</h2>
           <button
             type="button"
             onClick={() => setMonth(subMonths(month, 1))}
-            className="hover:bg-neutral-2 rounded-md px-1 py-1"
+            aria-label="이전 달"
+            className="bg-main-2 text-main-5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
           >
-            &lt;
+            <ChevronLeftIcon className="size-5" />
           </button>
+          <h2 className="text-neutral-11 text-base font-bold">{format(month, 'yyyy년 M월')}</h2>
           <button
             type="button"
             onClick={() => setMonth(addMonths(month, 1))}
-            className="rounded-md px-1 py-1 hover:bg-gray-100"
+            aria-label="다음 달"
+            className="bg-main-2 text-main-5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
           >
-            &gt;
+            <ChevronRightIcon className="size-5" />
           </button>
         </div>
 
@@ -149,10 +159,11 @@ export default function CalendarPage() {
           />
           <Button
             variant="secondary"
-            className="w-50"
+            size="sm"
+            width={200}
             onClick={() => setFormModal({ mode: 'create' })}
           >
-            <span className="flex w-full items-center justify-center gap-1">
+            <span className="flex w-full items-center justify-center gap-2">
               <InlineIcon svg={plusIcon} className="text-primary size-6" />
               일정 추가
             </span>
@@ -160,15 +171,14 @@ export default function CalendarPage() {
         </div>
       </header>
 
-      {/* 헤더 아래: 캘린더(가변폭) + 선택한 날짜의 일정 패널 — stretch로 패널 높이를 캘린더에 맞춘다 */}
-      <div className="flex items-stretch gap-6">
-        <div className="min-w-0 flex-1">
+      {/* 헤더 아래: 캘린더(가변폭·가변높이) + 선택한 날짜의 일정 패널 — stretch로 패널 높이를 캘린더에 맞춘다 */}
+      <div className="flex min-h-0 flex-1 items-stretch gap-6">
+        <div className="h-full min-w-0 flex-1">
           <Calendar
             month={month}
             events={filteredEvents}
             selectedDate={selectedDate}
             onDateClick={handleDateClick}
-            onEventClick={(event) => removeEvent(event.id)}
           />
         </div>
 

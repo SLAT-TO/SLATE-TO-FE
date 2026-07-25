@@ -75,7 +75,7 @@ export function ParticipantSelect({
         <ul
           role="listbox"
           aria-multiselectable="true"
-          className={`${DROPDOWN_PANEL_BASE} absolute top-full left-0 z-10 mt-1 max-h-60 w-full overflow-auto`}
+          className={`${DROPDOWN_PANEL_BASE} mt-1 max-h-60 w-full overflow-auto`}
         >
           {members.length === 0 && (
             <li className="text-caption-lg text-neutral-5 flex h-10 items-center justify-center">

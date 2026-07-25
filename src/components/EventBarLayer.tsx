@@ -1,47 +1,19 @@
 import type { CalendarEvent } from '../schemas/calendarEvent'
-import {
-  CALENDAR_CELL_HEIGHT_PX,
-  CALENDAR_HEADER_HEIGHT_PX,
-  toDateKey,
-  type PositionedEvent,
-} from '../utils/calendarUtils'
-
-interface EventBarLayerProps {
-  weeks: Date[][]
-  /** Calendar.tsx가 한 번만 계산해 넘겨주는 주별 레인 배치 결과 (positioned만 사용, overflow는 CalendarGrid 담당) */
-  weekLanes: { positioned: PositionedEvent[] }[]
-  onEventClick?: (event: CalendarEvent) => void
-}
-
-// 이벤트 바 오버레이 — CalendarGrid 위에 절대 위치로 겹쳐진다.
-// 각 주(week)의 세로 offset은 헤더 높이 + (주 인덱스 * 셀 높이)로 계산한다.
-export function EventBarLayer({ weeks, weekLanes, onEventClick }: EventBarLayerProps) {
-  return (
-    <div className="pointer-events-none absolute inset-0">
-      {weeks.map((week, weekIndex) => (
-        <WeekEventBars
-          key={toDateKey(week[0])}
-          positioned={weekLanes[weekIndex].positioned}
-          onEventClick={onEventClick}
-          top={CALENDAR_HEADER_HEIGHT_PX + weekIndex * CALENDAR_CELL_HEIGHT_PX}
-        />
-      ))}
-    </div>
-  )
-}
+import type { PositionedEvent } from '../utils/calendarUtils'
 
 interface WeekEventBarsProps {
   positioned: PositionedEvent[]
   onEventClick?: (event: CalendarEvent) => void
-  top: number
 }
 
-// 한 주(week)의 이벤트 바를 그린다. maxLanes를 넘는 이벤트는 CalendarGrid의 "+N" 배지로 표시됨.
-function WeekEventBars({ positioned, onEventClick, top }: WeekEventBarsProps) {
+// 한 주(week)의 이벤트 바 오버레이. CalendarGrid가 그 주의 relative 래퍼(높이는 flex-1로 유동적) 안에
+// 겹쳐서 렌더링하므로, 이 컴포넌트는 부모 높이에 absolute inset-0로만 맞추면 된다 (픽셀 계산 불필요).
+// maxLanes를 넘는 이벤트는 여기서 안 그리고 CalendarGrid의 "+N" 배지로 표시됨.
+export function WeekEventBars({ positioned, onEventClick }: WeekEventBarsProps) {
   return (
     <div
-      className="absolute grid grid-cols-[repeat(7,147px)] gap-y-1 pt-7"
-      style={{ top, left: 0, right: 0, height: CALENDAR_CELL_HEIGHT_PX, gridAutoRows: '30px' }}
+      className="pointer-events-none absolute inset-0 grid grid-cols-7 gap-y-1 pt-7"
+      style={{ gridAutoRows: '22px' }}
     >
       {positioned.map(({ event, startCol, span, lane }) => {
         const accent = event.color ?? 'var(--color-event-1)'
@@ -73,10 +45,7 @@ function WeekEventBars({ positioned, onEventClick, top }: WeekEventBarsProps) {
             }}
             className="text-caption-sm pointer-events-auto mx-2 flex min-w-0 items-center gap-2.5 rounded-full px-2 leading-none font-semibold tracking-[-0.24px]"
           >
-            <span
-              className="h-3.25 w-3.25 shrink-0 rounded-full"
-              style={{ backgroundColor: accent }}
-            />
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: accent }} />
             <span className="min-w-0 flex-1 truncate">{event.title}</span>
           </div>
         )

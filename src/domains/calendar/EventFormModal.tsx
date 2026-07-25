@@ -1,17 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
-import { addMonths, subMonths } from 'date-fns'
+import { useEffect, useState } from 'react'
 import { getProjectMembers } from '../../api/projects'
 import { Button } from '../../components/Button'
+import { DateRangeField } from '../../components/DateRangeField'
 import Input from '../../components/Input'
 import Modal from '../../components/Modal'
 import Select from '../../components/Select'
 import type { MemberSummary } from '../../types/project'
-import { CalendarDatePickerField } from './CalendarDatePickerField'
 import type { CalendarFilterOption } from './CalendarFilterMenu'
-import { CalendarMiniPicker } from './CalendarMiniPicker'
 import { ParticipantSelect } from './ParticipantSelect'
-
-type DateField = 'start' | 'end'
 
 export interface EventFormValues {
   title: string
@@ -48,7 +44,7 @@ const EMPTY_VALUES = (initialDate?: Date | null): EventFormValues => ({
   memo: '',
 })
 
-const LABEL_CLASS = 'text-head-sm text-neutral-10 font-semibold capitalize'
+const LABEL_CLASS = 'text-body-sm text-neutral-10 font-semibold capitalize'
 
 // "일정 추가/수정" 팝업. 필드는 전부 이 모달이 소유하고, 확인 시 값을 부모(CalendarPage)에 통째로 넘긴다.
 export function EventFormModal({
@@ -65,32 +61,9 @@ export function EventFormModal({
     () => initialValues ?? EMPTY_VALUES(initialDate),
   )
 
-  // 기간 시작/종료 중 어느 필드의 미니 캘린더가 떠 있는지 — 캘린더는 "기간" 행 아래 하나만 가운데 정렬로 뜬다
-  const [activeDateField, setActiveDateField] = useState<DateField | null>(null)
-  const [pickerMonth, setPickerMonth] = useState(new Date())
-  const periodGroupRef = useRef<HTMLDivElement>(null)
-
   // 선택된 프로젝트의 실제 멤버 목록 — "참여 인원"에서 고를 후보
   const [members, setMembers] = useState<MemberSummary[]>([])
   const [membersLoading, setMembersLoading] = useState(false)
-
-  useEffect(() => {
-    if (!activeDateField) return
-
-    const handlePointerDown = (e: PointerEvent) => {
-      if (!periodGroupRef.current?.contains(e.target as Node)) setActiveDateField(null)
-    }
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setActiveDateField(null)
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [activeDateField])
 
   useEffect(() => {
     let cancelled = false
@@ -117,17 +90,6 @@ export function EventFormModal({
     }
   }, [values.projectId])
 
-  const openDateField = (field: DateField) => {
-    setPickerMonth(values[field === 'start' ? 'startDate' : 'endDate'] ?? new Date())
-    setActiveDateField((prev) => (prev === field ? null : field))
-  }
-
-  const handleSelectDate = (date: Date) => {
-    if (activeDateField === 'start') setValues((v) => ({ ...v, startDate: date }))
-    else if (activeDateField === 'end') setValues((v) => ({ ...v, endDate: date }))
-    setActiveDateField(null)
-  }
-
   const handleSubmit = () => {
     const participantNames = members
       .filter((m) => values.participantIds.includes(String(m.memberId)))
@@ -140,13 +102,13 @@ export function EventFormModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      className="flex max-h-280 w-250 flex-col overflow-y-auto px-27 py-18.5"
+      className="flex max-h-180 w-220 flex-col overflow-y-auto px-24 py-12"
     >
-      <h2 className="text-head-md text-neutral-10 mb-10 font-bold capitalize">
+      <h2 className="text-head-sm text-neutral-10 mb-8 font-bold capitalize">
         {isEditMode ? '일정 수정' : '일정 추가'}
       </h2>
 
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-3">
           <span className={LABEL_CLASS}>일정명</span>
           <Input
@@ -156,33 +118,18 @@ export function EventFormModal({
           />
         </div>
 
-        <div ref={periodGroupRef} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
           <span className={LABEL_CLASS}>기간</span>
-          <div className="flex items-start gap-3">
-            <CalendarDatePickerField
-              value={values.startDate}
-              active={activeDateField === 'start'}
-              onClick={() => openDateField('start')}
-            />
-            <span className="text-body-sm text-neutral-6 mt-3 shrink-0">~</span>
-            <CalendarDatePickerField
-              value={values.endDate}
-              active={activeDateField === 'end'}
-              onClick={() => openDateField('end')}
-            />
-          </div>
-
-          {activeDateField && (
-            <div className="mt-7 mb-2 flex justify-center">
-              <CalendarMiniPicker
-                month={pickerMonth}
-                selectedDate={activeDateField === 'start' ? values.startDate : values.endDate}
-                onPrevMonth={() => setPickerMonth((m) => subMonths(m, 1))}
-                onNextMonth={() => setPickerMonth((m) => addMonths(m, 1))}
-                onSelectDate={handleSelectDate}
-              />
-            </div>
-          )}
+          <DateRangeField
+            value={{ from: values.startDate ?? undefined, to: values.endDate ?? undefined }}
+            onChange={(range) =>
+              setValues((v) => ({
+                ...v,
+                startDate: range?.from ?? null,
+                endDate: range?.to ?? null,
+              }))
+            }
+          />
         </div>
 
         <div className="flex flex-col gap-3">
@@ -231,10 +178,10 @@ export function EventFormModal({
       </div>
 
       <div className="mt-10 flex justify-center gap-4">
-        <Button variant="primary" className="w-60" onClick={handleSubmit}>
+        <Button variant="primary" size="sm" className="w-60" onClick={handleSubmit}>
           확인
         </Button>
-        <Button variant="secondary" className="w-60" onClick={onClose}>
+        <Button variant="secondary" size="sm" className="w-60" onClick={onClose}>
           취소
         </Button>
       </div>
