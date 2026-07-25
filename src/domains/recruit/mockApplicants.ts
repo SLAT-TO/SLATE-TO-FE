@@ -4,6 +4,7 @@ import type { RecruitApplicant } from '../../types/Recruit.types'
 export const MOCK_APPLICANTS: RecruitApplicant[] = [
   {
     id: 1,
+    recruitmentId: 101,
     applicantId: 11,
     applicantName: '김수민',
     applicantProfileImageUrl: 'https://placehold.co/32x32',
@@ -12,6 +13,7 @@ export const MOCK_APPLICANTS: RecruitApplicant[] = [
   },
   {
     id: 2,
+    recruitmentId: 101,
     applicantId: 12,
     applicantName: '유희진',
     applicantProfileImageUrl: 'https://placehold.co/32x32',
@@ -20,6 +22,7 @@ export const MOCK_APPLICANTS: RecruitApplicant[] = [
   },
   {
     id: 3,
+    recruitmentId: 101,
     applicantId: 13,
     applicantName: '서정현',
     applicantProfileImageUrl: 'https://placehold.co/32x32',

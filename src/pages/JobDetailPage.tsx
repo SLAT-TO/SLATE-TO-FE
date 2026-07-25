@@ -14,7 +14,8 @@ interface JobDetailPageProps {
 function JobDetailPage({ jobId }: JobDetailPageProps) {
   const [isApplyOpen, setIsApplyOpen] = useState(false)
   // TODO: API 연동 — GET /recruitments/:id
-  const detail = MOCK_JOB_DETAILS.find((item) => item.id === jobId)
+  // mock에는 상세 데이터가 1건뿐이라 미존재 id는 첫 항목으로 대체
+  const detail = MOCK_JOB_DETAILS.find((item) => item.id === jobId) ?? MOCK_JOB_DETAILS[0]
 
   if (!detail) {
     return <p className="text-body-sm text-neutral-6">공고를 찾을 수 없습니다.</p>

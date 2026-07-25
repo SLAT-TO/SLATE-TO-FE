@@ -9,8 +9,7 @@ interface JobApplicantsPageProps {
 function JobApplicantsPage({ jobId }: JobApplicantsPageProps) {
   // TODO: API 연동 — GET /recruitments/:id, GET /recruitments/:id/applications
   const detail = MOCK_JOB_DETAILS.find((item) => item.id === jobId)
-  const applicants = MOCK_APPLICANTS
-
+  const applicants = MOCK_APPLICANTS.filter((item) => item.recruitmentId === jobId)
   return (
     <div className="flex flex-col gap-6 px-8 py-6">
       <h2 className="text-head-sm text-neutral-11 font-bold">

@@ -51,6 +51,7 @@ function RecruitPage() {
               {...post}
               isBookmarked={bookmarkedIds.includes(post.id)}
               onBookmarkClick={() => handleToggleBookmark(post.id)}
+              onClick={() => navigate(`/matching/${post.id}`)}
             />
           ))}
         </div>
