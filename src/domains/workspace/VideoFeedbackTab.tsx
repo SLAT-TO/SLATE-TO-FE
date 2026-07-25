@@ -33,6 +33,7 @@ import VideoCard from './VideoCard'
 import { formatRelativeTime } from '../../utils/formatRelativeTime'
 import type { VideoDetail, VideoListItem, VideoProgressStatus } from '../../types/video'
 import type { Feedback, FeedbackReply } from '../../types/feedback'
+import { ApiError } from '../../types/api'
 import type { ReferenceFile } from '../../types/video'
 import type { ProjectFileListItem } from '../../types/file'
 import type { ProjectLengthType, ProjectMember } from '../../types/project'
@@ -123,6 +124,7 @@ export default function VideoFeedbackTab({
   const [videos, setVideos] = useState<VideoListItem[]>([])
   const [videosLoading, setVideosLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<VideoListItem | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -145,19 +147,31 @@ export default function VideoFeedbackTab({
 
   const confirmDeleteVideo = async () => {
     if (!deleteTarget) return
-    await deleteVideo(projectId, deleteTarget.videoId)
-    setVideos((prev) => prev.filter((v) => v.videoId !== deleteTarget.videoId))
-    setDeleteTarget(null)
+    setDeleteError(null)
+    try {
+      await deleteVideo(projectId, deleteTarget.videoId)
+      setVideos((prev) => prev.filter((v) => v.videoId !== deleteTarget.videoId))
+      setDeleteTarget(null)
+    } catch (err) {
+      setDeleteError(
+        err instanceof ApiError ? err.message : '영상 삭제에 실패했습니다. 다시 시도해 주세요.',
+      )
+    }
   }
 
   return (
     <section className="flex flex-col gap-3">
       <ConfirmModal
         isOpen={deleteTarget !== null}
-        onClose={() => setDeleteTarget(null)}
+        onClose={() => {
+          setDeleteTarget(null)
+          setDeleteError(null)
+        }}
         onConfirm={confirmDeleteVideo}
         title="영상 삭제"
-        description="이 영상을 삭제할까요?"
+        description={
+          deleteError ?? '이 영상을 삭제할까요?'
+        }
         confirmText="삭제"
       />
       {videosLoading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
@@ -175,7 +189,10 @@ export default function VideoFeedbackTab({
               relativeTime={formatRelativeTime(video.updatedAt)}
               unreadCommentCount={video.unreadCommentCount}
               onClick={() => onSelectVideo(video.videoId)}
-              onDelete={() => setDeleteTarget(video)}
+              onDelete={() => {
+                setDeleteError(null)
+                setDeleteTarget(video)
+              }}
             />
           ))}
         </div>

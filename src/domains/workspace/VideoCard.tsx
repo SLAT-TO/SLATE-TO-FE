@@ -46,6 +46,7 @@ export default function VideoCard({
         type="button"
         onClick={onClick}
         disabled={!onClick}
+        aria-label={title}
         className="bg-neutral-3 aspect-video w-full overflow-hidden rounded-lg"
       >
         {thumbnailUrl && <img src={thumbnailUrl} alt="" className="h-full w-full object-cover" />}
