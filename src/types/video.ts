@@ -7,6 +7,7 @@ export type VideoListItem = {
   bookmarked: boolean
   progressStatus: VideoProgressStatus
   unreadCommentCount: number
+  updatedAt: string
 }
 
 export type VideoDetail = {
@@ -27,7 +28,7 @@ export type VideoDetail = {
 }
 
 export type VideoListResult = {
-  videos: VideoListItem[]
+  items: VideoListItem[]
   nextCursor: number | null
   hasNext: boolean
 }

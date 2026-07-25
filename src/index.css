@@ -81,6 +81,8 @@
 
   /* Panel shadow (Select·ActionMenu 드롭다운) */
   --shadow-panel: 0 3px 12px rgba(169, 204, 244, 0.25);
+  /* Card shadow (대시보드 카드·피드백 패널 등 흰 배경 플로팅 카드) */
+  --shadow-card: 0px 2.957px 21.59px 3.697px rgba(169, 204, 244, 0.15);
   --color-gradation: #a9ccf4;
 
   /* Tag (Figma 디자인 시스템) */
