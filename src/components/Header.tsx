@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { navigate } from '../utils/navigation'
 
 import { useContext } from 'react'
