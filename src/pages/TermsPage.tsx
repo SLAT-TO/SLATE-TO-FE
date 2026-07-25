@@ -27,12 +27,7 @@ export function TermsPage() {
   }
 
   return (
-    <div
-      className="relative min-h-screen w-full overflow-hidden"
-      style={{
-        backgroundImage: 'linear-gradient(118deg, #9ff0ff 33.5%, #b9d6ff 98%)',
-      }}
-    >
+    <div className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(118deg,#9ff0ff_33.5%,#b9d6ff_98%)]">
       <img
         src={termsBg}
         alt=""
@@ -44,7 +39,10 @@ export function TermsPage() {
       </p>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
-        <div className="bg-neutral-1 flex w-full max-w-[1062px] flex-col gap-12 rounded-xl p-12 shadow-[0_3px_12px_rgba(169,204,244,0.15)]">
+        <form
+          onSubmit={(e) => e.preventDefault()}
+          className="bg-neutral-1 flex w-full max-w-[1062px] flex-col gap-12 rounded-xl p-12 shadow-[0_3px_12px_rgba(169,204,244,0.15)]"
+        >
           <div className="flex items-center gap-6">
             <img src={termsAvatar} alt="" className="size-[100px] rounded-full object-cover" />
             <div className="text-neutral-10 flex flex-col">
@@ -76,7 +74,7 @@ export function TermsPage() {
           <Button type="submit" fullWidth>
             동의하고 시작하기
           </Button>
-        </div>
+        </form>
       </div>
     </div>
   )
