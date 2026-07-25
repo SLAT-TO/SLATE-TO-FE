@@ -82,7 +82,7 @@ function ProjectFormPage({ mode = 'create' }: ProjectFormPageProps) {
 
   return (
     <div className="flex flex-col gap-8 p-6">
-      <h2 className="text-text-primary text-xl font-bold">
+      <h2 className="text-neutral-11 text-xl font-bold">
         {mode === 'create' ? '프로젝트 추가' : '프로젝트 수정'}
       </h2>
 

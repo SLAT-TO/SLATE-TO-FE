@@ -1,7 +1,7 @@
 // src/components/ProjectHistoryCard.tsx
 import { useEffect, useRef, useState } from 'react'
-import type { ProjectHistoryItem } from '../types/MyPage.types'
-import Tag from './Tag'
+import type { ProjectHistoryItem } from '../../types/MyPage.types'
+import Tag from '../../components/Tag'
 
 interface ProjectHistoryCardProps {
   project: ProjectHistoryItem
@@ -46,7 +46,7 @@ function ProjectHistoryCard({ project, onEdit, onDelete, onClick }: ProjectHisto
       className="cursor-pointer overflow-hidden rounded-xl bg-white shadow-xs"
     >
       <div className="relative flex items-center justify-between p-3 pb-2">
-        <h4 className="text-text-primary text-sm font-semibold">{title}</h4>
+        <h4 className="text-neutral-11 text-sm font-semibold">{title}</h4>
 
         <button
           type="button"
@@ -57,7 +57,7 @@ function ProjectHistoryCard({ project, onEdit, onDelete, onClick }: ProjectHisto
           aria-label="프로젝트 옵션 더보기"
           aria-haspopup="menu"
           aria-expanded={isMenuOpen}
-          className="text-text-secondary hover:bg-surface-hover shrink-0 rounded p-1"
+          className="text-neutral-7 hover:bg-neutral-1 shrink-0 rounded p-1"
         >
           {/* 인라인 SVG - svgr 미도입 상태라 인라인 방식 유지 */}
           <svg
@@ -83,7 +83,7 @@ function ProjectHistoryCard({ project, onEdit, onDelete, onClick }: ProjectHisto
               type="button"
               role="menuitem"
               onClick={handleEditClick}
-              className="text-text-primary hover:bg-surface-hover block w-full px-4 py-2 text-left text-sm"
+              className="text-neutral-11 hover:bg-neutral-1 block w-full px-4 py-2 text-left text-sm"
             >
               수정하기
             </button>
@@ -91,7 +91,7 @@ function ProjectHistoryCard({ project, onEdit, onDelete, onClick }: ProjectHisto
               type="button"
               role="menuitem"
               onClick={handleDeleteClick}
-              className="text-text-primary hover:bg-surface-hover block w-full px-4 py-2 text-left text-sm"
+              className="text-neutral-11 hover:bg-neutral-1 block w-full px-4 py-2 text-left text-sm"
             >
               삭제하기
             </button>

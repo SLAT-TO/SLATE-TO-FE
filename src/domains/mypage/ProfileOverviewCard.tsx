@@ -1,6 +1,6 @@
 import ProfileSummaryCard from './ProfileSummaryCard'
 import StatBarSection from './StatBarSection'
-import type { ProfileSummary, StatItem } from '../types/MyPage.types'
+import type { ProfileSummary, StatItem } from '../../types/MyPage.types'
 
 interface ProfileOverviewCardProps {
   profile: ProfileSummary
@@ -23,7 +23,7 @@ function ProfileOverviewCard({
       </div>
 
       {/* 통계 영역 — 절반, 사이에만 세로선 */}
-      <div className="flex flex-col gap-8 border-t border-[#A3A3A3] pt-6 lg:w-1/2 lg:flex-row lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+      <div className="border-border flex flex-col gap-8 border-t pt-6 lg:w-1/2 lg:flex-row lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
         <div className="flex-1">
           <StatBarSection title="많이 한 프로젝트 유형" items={projectTypeStats} />
         </div>

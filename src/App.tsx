@@ -1,5 +1,6 @@
 import MainLayout from './layouts/MainLayout'
 import { usePathname } from './hooks/usePathname'
+import { matchPath } from './utils/navigation'
 import MyPage from './pages/MyPage'
 import ProfileEditPage from './pages/ProfileEditPage'
 import ProjectOverviewPage from './pages/ProjectOverviewPage'
@@ -15,24 +16,18 @@ function AppRoutes({ pathname }: { pathname: string }) {
     )
   }
 
-  if (pathname === '/mypage') {
-    return <MyPage />
-  }
+  if (pathname === '/mypage') return <MyPage />
+  if (pathname === '/mypage/edit') return <ProfileEditPage />
+  if (pathname === '/mypage/project/new') return <ProjectFormPage mode="create" />
 
-  if (pathname === '/mypage/edit') {
-    return <ProfileEditPage />
-  }
-
-  if (pathname === '/mypage/project/1') {
-    return <ProjectOverviewPage />
-  }
-
-  if (pathname === '/mypage/project/new') {
-    return <ProjectFormPage mode="create" />
-  }
-
-  if (pathname === '/mypage/project/1/edit') {
+  // 수정 폼: /mypage/project/:id/edit
+  if (matchPath('/mypage/project/:id/edit', pathname)) {
     return <ProjectFormPage mode="edit" />
+  }
+
+  // 개요: /mypage/project/:id
+  if (matchPath('/mypage/project/:id', pathname)) {
+    return <ProjectOverviewPage />
   }
 
   return (

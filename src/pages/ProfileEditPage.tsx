@@ -61,7 +61,7 @@ function ProfileEditPage() {
     <div className="flex flex-col gap-8 p-6">
       {/* 프로필 사진 */}
       <section className="flex flex-col gap-4">
-        <h2 className="text-text-primary text-base font-semibold">프로필 사진</h2>
+        <h2 className="text-neutral-11 text-base font-semibold">프로필 사진</h2>
         <div className="flex items-center gap-5">
           <img
             src={imagePreview}
@@ -71,7 +71,7 @@ function ProfileEditPage() {
           {/* 이름 + 안내문구 수직 세트 & 우측 버튼 레이아웃 */}
           <div className="flex items-center gap-8">
             <div className="flex flex-col gap-1">
-              <span className="text-text-primary text-lg font-semibold">
+              <span className="text-neutral-11 text-lg font-semibold">
                 {values.nickname || '이름'}
               </span>
               <span className="text-neutral-5 text-xs">Png, Jpg 파일 5MB 이하</span>

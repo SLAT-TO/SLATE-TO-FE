@@ -1,6 +1,6 @@
 // src/pages/MyPage.tsx
-import ProfileOverviewCard from '../components/ProfileOverviewCard'
-import ProjectHistoryCard from '../components/ProjectHistoryCard'
+import ProfileOverviewCard from '../domains/mypage/ProfileOverviewCard'
+import ProjectHistoryCard from '../domains/mypage/ProjectHistoryCard'
 import type { ProfileSummary, StatItem, ProjectHistoryItem } from '../types/MyPage.types'
 import { navigate } from '../utils/navigation'
 
@@ -9,7 +9,7 @@ import { navigate } from '../utils/navigation'
 // 라벨(브랜드 영상, 연출 등)은 constants/videoCategories.ts, constants/roles.ts의 상수 참조로 교체할 것
 
 // 빈 상태 / 일반 상태 전환용 테스트 플래그 (API 연동 시 제거)
-const IS_EMPTY_TEST = false
+const IS_EMPTY_TEST = true
 
 const MOCK_PROFILE_FILLED: ProfileSummary = {
   profileImageUrl: 'https://placehold.co/64x64',
@@ -127,7 +127,7 @@ function MyPage() {
 
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-text-primary text-base font-semibold">프로젝트 이력</h3>
+          <h3 className="text-neutral-11 text-base font-semibold">프로젝트 이력</h3>
           {!isEmpty && (
             <button
               type="button"
@@ -140,14 +140,14 @@ function MyPage() {
         </div>
 
         {isEmpty ? (
-          <div className="border-border bg-surface flex flex-col items-center gap-4 rounded-xl border py-14">
-            <p className="text-text-secondary text-sm">
+          <div className="flex flex-col items-center gap-4 rounded-xl bg-white py-14 shadow-xs">
+            <p className="text-neutral-7 text-sm">
               프로젝트 이력이 없어요. 프로젝트를 추가해보세요.
             </p>
             <button
               type="button"
               onClick={handleAddProject}
-              className="border-accent text-accent hover:bg-accent-subtle rounded-md border px-4 py-2 text-sm font-medium"
+              className="border-primary text-primary hover:bg-main-1 rounded-md border px-8 py-2 text-sm font-medium"
             >
               프로젝트 추가
             </button>
