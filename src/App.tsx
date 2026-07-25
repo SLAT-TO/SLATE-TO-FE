@@ -1,5 +1,4 @@
 import MainLayout from './layouts/MainLayout'
-import OnboardingPage from './pages/onboarding/OnboardingPage'
 import HomePage from './pages/HomePage'
 import MyPage from './pages/MyPage'
 import ProfileEditPage from './pages/ProfileEditPage'
