@@ -5,8 +5,8 @@ import App from './App.tsx'
 
 /* 동적 import 와 msw의 start(비동기 작업)을 위한 async 함수 처리 */
 async function enableMocking() {
-  /* DEV:vite에서 넣어주는 값 -> 개발 서버면 true -> 개발서버가 아니거나 msw 설정이 true가 아니면 mock 작동 x */
-  if (!import.meta.env.DEV || import.meta.env.VITE_ENABLE_MSW !== 'true') return
+  /* Preview(Vercel)·로컬 모두 VITE_ENABLE_MSW=true일 때만 MSW. Production은 false. */
+  if (import.meta.env.VITE_ENABLE_MSW !== 'true') return
   /* mock가 작동 할떄만 동적으로 import -> 성능을 위해서 -> 그냥 import는 코드 블록 내부에 넣을 수 없음 */
   const { worker } = await import('./mocks/browser')
   const { setAccessToken } = await import('./api/client')
