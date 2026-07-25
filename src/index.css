@@ -123,4 +123,23 @@
   --color-warning-light: #ffebee;
   --color-warning: #ff4d4f;
   --color-warning-dark: #991b1b;
+
+  /* Calendar */
+  --color-calendar-header-bg: #e9f2fe;
+}
+
+/* Primitive - Event (캘린더 이벤트 바 색상). `static`으로 선언 —
+   CalendarPage에서 `var(--color-event-${i})`처럼 동적 문자열로만 참조되어
+   Tailwind의 사용 여부 스캔에 리터럴로 안 잡히므로, 안 그러면 tree-shaking으로 제거됨. */
+@theme static {
+  --color-event-1: #1968fc;
+  --color-event-2: #0078bc;
+  --color-event-3: #00979a;
+  --color-event-4: #1fb157;
+  --color-event-5: #8cab24;
+  --color-event-6: #fab40c;
+  --color-event-7: #ff8336;
+  --color-event-8: #fd6f7c;
+  --color-event-9: #ff5ec6;
+  --color-event-10: #8f56ec;
 }
