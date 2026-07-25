@@ -24,6 +24,7 @@ import ActionMenu from '../../components/ActionMenu'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
 import InlineIcon from '../../components/InlineIcon'
+import ConfirmModal from '../../components/ConfirmModal'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import YouTubeIframePlayer from '../../components/YouTubeIframePlayer'
@@ -115,6 +116,7 @@ export default function VideoFeedbackTab({
 }: VideoFeedbackTabWithSelectionProps) {
   const [videos, setVideos] = useState<VideoListItem[]>([])
   const [videosLoading, setVideosLoading] = useState(true)
+  const [deleteTarget, setDeleteTarget] = useState<VideoListItem | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -135,13 +137,23 @@ export default function VideoFeedbackTab({
     }
   }, [projectId])
 
-  const removeVideo = async (videoId: number) => {
-    await deleteVideo(projectId, videoId)
-    setVideos((prev) => prev.filter((v) => v.videoId !== videoId))
+  const confirmDeleteVideo = async () => {
+    if (!deleteTarget) return
+    await deleteVideo(projectId, deleteTarget.videoId)
+    setVideos((prev) => prev.filter((v) => v.videoId !== deleteTarget.videoId))
+    setDeleteTarget(null)
   }
 
   return (
     <section className="flex flex-col gap-3">
+      <ConfirmModal
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteVideo}
+        title="영상 삭제"
+        description="이 영상을 삭제할까요?"
+        confirmText="삭제"
+      />
       {videosLoading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
       {!videosLoading && videos.length === 0 && (
         <p className="text-caption-lg text-neutral-6">등록된 영상이 없습니다.</p>
@@ -157,7 +169,7 @@ export default function VideoFeedbackTab({
               relativeTime={formatRelativeTime(video.updatedAt)}
               unreadCommentCount={video.unreadCommentCount}
               onClick={() => onSelectVideo(video.videoId)}
-              onDelete={() => removeVideo(video.videoId)}
+              onDelete={() => setDeleteTarget(video)}
             />
           ))}
         </div>
