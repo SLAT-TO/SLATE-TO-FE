@@ -3,7 +3,7 @@ import { useNotifications } from '../hooks/useNotifications'
 import type { AppNotification } from '../types/notification'
 import { navigate } from '../utils/navigation'
 
-const CARD_SHADOW = 'shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]'
+const CARD_SHADOW = 'shadow-(--shadow-card)'
 
 function ChevronLeftIcon() {
   return (
@@ -37,12 +37,14 @@ function NotificationCard({
       >
         {!notification.isRead && (
           <span
-            className="absolute top-4 right-6 size-2.75 shrink-0 rounded-full bg-[#FF8989]"
+            className="bg-warning absolute top-4 right-6 size-2.75 shrink-0 rounded-full"
             aria-hidden
           />
         )}
-        <span className="text-head-sm pr-4 font-semibold text-black">{notification.title}</span>
-        <span className="text-body-sm font-normal tracking-[-0.32px] text-black">
+        <span className="text-head-sm text-neutral-11 pr-4 font-semibold">
+          {notification.title}
+        </span>
+        <span className="text-body-sm text-neutral-11 font-normal tracking-[-0.32px]">
           {notification.body}
         </span>
       </button>
@@ -65,13 +67,13 @@ export default function NotificationPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => window.history.back()}
+            onClick={() => navigate('/')}
             aria-label="뒤로가기"
             className="text-neutral-11 flex size-8 items-center justify-center"
           >
             <ChevronLeftIcon />
           </button>
-          <h1 className="text-head-lg leading-[1.7] font-bold text-[#112642]">알림</h1>
+          <h1 className="text-head-lg text-neutral-11 leading-[1.7] font-bold">알림</h1>
         </div>
         <Button
           variant="secondary"
