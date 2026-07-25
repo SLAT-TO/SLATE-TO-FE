@@ -4,6 +4,7 @@ import JobFilterBar from '../domains/recruit/JobFilterBar'
 import { MOCK_JOB_POSTS, MOCK_RECOMMENDED_POSTS } from '../domains/recruit/mockJobPosts'
 import { FILTER_CONFIGS, type SortValue } from '../constants'
 import type { FilterCategory, SelectedFilterChip, SelectedFilters } from '../types/Recruit.types'
+import { navigate } from '../utils/navigation'
 
 const INITIAL_FILTERS: SelectedFilters = { region: [], videoType: [], role: [] }
 
@@ -72,7 +73,7 @@ function RecruitPage() {
           {/* TODO: 공고 작성 페이지(후속 이슈) 연결 */}
           <button
             type="button"
-            className="border-primary text-primary text-caption-lg hover:bg-main-1 flex items-center gap-2 rounded-lg border bg-bg-primary px-5 py-2.5"
+            className="border-primary text-primary text-caption-lg hover:bg-main-1 bg-bg-primary flex items-center gap-2 rounded-lg border px-5 py-2.5"
           >
             <span aria-hidden>+</span>
             공고 올리기
@@ -86,6 +87,7 @@ function RecruitPage() {
               {...post}
               isBookmarked={bookmarkedIds.includes(post.id)}
               onBookmarkClick={() => handleToggleBookmark(post.id)}
+              onClick={() => navigate(`/matching/${post.id}`)}
             />
           ))}
         </div>

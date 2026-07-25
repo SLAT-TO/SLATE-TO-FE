@@ -32,3 +32,44 @@ export interface JobPost {
   price?: string
   dDay: string
 }
+
+export interface RecruitmentDetail {
+  id: number
+  title: string
+  /** 외주/단편영화 등 상단 태그 */
+  type: string
+  category: string
+  status: '모집 중' | '모집 완료'
+  dDay: string
+  createdAt: string
+  viewCount: number
+  /** 공고 정보 */
+  recruitPart: string
+  shootingRegion: string
+  videoType: string
+  videoLength: string
+  pay: string
+  participationPeriod: string
+  deadline: string
+  contact: string
+  description: string
+  author: RecruitmentAuthor
+}
+
+export interface RecruitmentAuthor {
+  userId: number
+  name: string
+  role: string
+  region: string
+  email: string
+  profileImageUrl: string
+}
+
+export interface Application {
+  id: number
+  applicantId: number
+  applicantName: string
+  applicantProfileImageUrl: string
+  appliedAt: string
+  introduction: string
+}

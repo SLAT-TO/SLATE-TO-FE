@@ -1,0 +1,64 @@
+import AuthorCard from '../domains/recruit/AuthorCard'
+import JobInfoCard from '../domains/recruit/JobInfoCard'
+import JobDetailHeader from '../domains/recruit/JobDetailHeader'
+import { Button } from '../components/Button'
+import { useState } from 'react'
+import { navigate } from '../utils/navigation'
+import ApplyModal from '../domains/recruit/ApplyModal'
+import { MOCK_JOB_DETAILS, IS_OWNER_TEST } from '../domains/recruit/mockJobDetail'
+
+interface JobDetailPageProps {
+  jobId: number
+}
+
+function JobDetailPage({ jobId }: JobDetailPageProps) {
+  const [isApplyOpen, setIsApplyOpen] = useState(false)
+  // TODO: API 연동 — GET /recruitments/:id
+  const detail = MOCK_JOB_DETAILS.find((item) => item.id === jobId)
+
+  if (!detail) {
+    return <p className="text-body-sm text-neutral-6">공고를 찾을 수 없습니다.</p>
+  }
+
+  const isOwner = IS_OWNER_TEST
+
+  return (
+    <div className="flex flex-col gap-6 px-8 py-6">
+      <JobDetailHeader detail={detail} isOwner={isOwner} />
+
+      <div className="flex flex-col gap-5.25 lg:flex-row">
+        <JobInfoCard detail={detail} />
+        <AuthorCard author={detail.author} />
+      </div>
+
+      <section className="bg-bg-primary shadow-card min-h-70 rounded-xl p-6">
+        <p className="text-caption-lg text-neutral-6 whitespace-pre-wrap">{detail.description}</p>
+      </section>
+
+      <div className="flex justify-center pt-2">
+        <Button
+          onClick={() => {
+            if (isOwner) {
+              navigate(`/matching/${jobId}/applicants`)
+            } else {
+              setIsApplyOpen(true)
+            }
+          }}
+          className="w-52"
+        >
+          {isOwner ? '지원자 확인' : '지원하기'}
+        </Button>
+      </div>
+      <ApplyModal
+        isOpen={isApplyOpen}
+        onClose={() => setIsApplyOpen(false)}
+        onSubmit={(values) => {
+          // TODO: API 연동 — POST /recruitments/:id/applications
+          console.log('지원:', values)
+        }}
+      />
+    </div>
+  )
+}
+
+export default JobDetailPage
