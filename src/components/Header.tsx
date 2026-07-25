@@ -16,7 +16,7 @@ function BellIcon() {
 
 export default function Header({ title, userName = '000' }: HeaderProps) {
   return (
-    <header className="border-border bg-bg-primary flex h-[90px] flex-shrink-0 items-center justify-between border-b px-8">
+    <header className="bg-bg-secondary flex h-16 flex-shrink-0 items-center justify-between px-8">
       <div>
         {typeof title === 'string' ? (
           <h1 className="text-body-sm text-neutral-11 font-semibold">{title}</h1>
