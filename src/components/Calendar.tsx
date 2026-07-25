@@ -1,94 +1,46 @@
 import { useMemo } from 'react'
-import { format, isSameMonth, isToday } from 'date-fns'
 import type { CalendarProps } from '../types/Calendar.types'
-import type { CalendarEvent } from '../schemas/calendarEvent'
-import { getMonthGrid, toDateKey } from '../utils/calendarUtils'
+import { assignEventLanes, chunkWeeks, getMonthGrid } from '../utils/calendarUtils'
+import { CalendarGrid } from './CalendarGrid'
+import { EventBarLayer } from './EventBarLayer'
 
-const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
+const DEFAULT_MAX_LANES = 2
 
-export function Calendar({ month, events, onDateClick, onEventClick }: CalendarProps) {
+// 날짜 그리드(CalendarGrid)와 이벤트 바 오버레이(EventBarLayer)를 relative/absolute로 합성만 하는 조립 컴포넌트.
+export function Calendar({
+  month,
+  events,
+  maxLanesPerDay = DEFAULT_MAX_LANES,
+  onDateClick,
+  onEventClick,
+}: CalendarProps) {
   const days = useMemo(() => getMonthGrid(month), [month])
+  const weeks = useMemo(() => chunkWeeks(days), [days])
 
-  // 날짜별로 이벤트를 묶어둔다 (매 셀마다 events 전체를 도는 걸 방지)
-  const eventsByDay = useMemo(() => {
-    const map = new Map<string, CalendarEvent[]>()
-    for (const event of events) {
-      const list = map.get(event.date) ?? []
-      list.push(event)
-      map.set(event.date, list)
+  // 주(week)별 레인 배치를 여기서 한 번만 계산해 CalendarGrid(오버플로 배지)와
+  // EventBarLayer(이벤트 바)가 같은 결과를 나눠 쓴다 (각자 assignEventLanes를 다시 돌리지 않음).
+  const weekLanes = useMemo(
+    () => weeks.map((week) => assignEventLanes(week, events, maxLanesPerDay)),
+    [weeks, events, maxLanesPerDay],
+  )
+
+  const overflowByDate = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const { overflowByDay } of weekLanes) {
+      overflowByDay.forEach((count, key) => counts.set(key, count))
     }
-    return map
-  }, [events])
+    return counts
+  }, [weekLanes])
 
   return (
-    <div className="inline-block">
-      {/* 요일 헤더 */}
-      <div className="grid grid-cols-[repeat(7,147px)]">
-        {WEEKDAYS.map((label) => (
-          <div
-            key={label}
-            className="text-neutral-6 flex h-12 items-start bg-[#E9F2FE] pt-2 pl-2 text-sm"
-          >
-            {label}
-          </div>
-        ))}
-      </div>
-
-      {/* 날짜 그리드 */}
-      <div className="border-border grid grid-cols-[repeat(7,147px)] border-t border-l">
-        {days.map((day) => {
-          const key = toDateKey(day)
-          const dayEvents = eventsByDay.get(key) ?? []
-          const inMonth = isSameMonth(day, month)
-
-          return (
-            <div
-              key={key}
-              role="button"
-              tabIndex={0}
-              onClick={() => onDateClick?.(day)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  onDateClick?.(day)
-                }
-              }}
-              className="border-border bg-bg-primary flex h-[147px] cursor-pointer flex-col items-stretch gap-1 border-r border-b pt-2 pr-2 pl-2"
-            >
-              <span
-                className={`text-sm ${inMonth ? 'text-neutral-10' : 'text-neutral-5'} ${
-                  isToday(day) ? 'text-primary font-bold' : ''
-                }`}
-              >
-                {format(day, 'd')}
-              </span>
-
-              {dayEvents.map((event) => (
-                <div
-                  key={event.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onEventClick?.(event)
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      onEventClick?.(event)
-                    }
-                  }}
-                  className="truncate rounded-md px-2 py-1 text-xs font-medium text-white"
-                  style={{ backgroundColor: event.color ?? '#3B5BFF' }}
-                >
-                  {event.title}
-                </div>
-              ))}
-            </div>
-          )
-        })}
-      </div>
+    <div className="relative inline-block">
+      <CalendarGrid
+        month={month}
+        weeks={weeks}
+        onDateClick={onDateClick}
+        overflowByDate={overflowByDate}
+      />
+      <EventBarLayer weeks={weeks} weekLanes={weekLanes} onEventClick={onEventClick} />
     </div>
   )
 }

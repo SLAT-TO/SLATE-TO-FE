@@ -7,6 +7,8 @@ import { ROLE_OPTIONS } from '../constants/roles'
 import { VIDEO_CATEGORY_OPTIONS } from '../constants/videoCategories'
 import { portfolioSchema, type PortfolioFormValues } from '../schemas/portfolio'
 import { validateField } from '../utils/validateField'
+import { useHeaderSlot } from '../hooks/useHeaderSlot'
+import HeaderTitle from '../components/HeaderTitle'
 
 type ProjectFormMode = 'create' | 'edit'
 
@@ -42,7 +44,11 @@ function getYoutubeThumbnail(url: string): string | null {
   return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null
 }
 
-function ProjectFormPage({ mode = 'create' }: ProjectFormPageProps) {
+const CREATE_HEADER = <HeaderTitle>프로젝트 추가</HeaderTitle>
+const EDIT_HEADER = <HeaderTitle>프로젝트 수정</HeaderTitle>
+
+function ProjectFormPage({ mode }: ProjectFormPageProps) {
+  useHeaderSlot(mode === 'edit' ? EDIT_HEADER : CREATE_HEADER)
   // 수정 모드면 기존 값, 추가 모드면 빈 값
   const [values, setValues] = useState<PortfolioFormValues>(
     mode === 'edit' ? MOCK_EDIT_VALUES : CREATE_VALUES,

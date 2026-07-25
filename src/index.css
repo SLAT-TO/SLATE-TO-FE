@@ -1,5 +1,14 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap');
 @import 'tailwindcss';
+
+@font-face {
+  font-family: 'Dela Gothic One';
+  src: url('./assets/fonts/DelaGothicOne.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 @theme {
   /* Breakpoint — 태블릿(md)부터 반응형 시작, 모바일은 md 레이아웃을 축소·핀치줌으로 사용 */
@@ -9,6 +18,8 @@
 
   /* Font */
   --font-sans: 'Pretendard', sans-serif;
+  /* 로그인 등 진입 화면 워드마크 전용 (Figma 지정 폰트) */
+  --font-logo: 'Dela Gothic One', sans-serif;
 
   /* Tailwind v4는 폰트 크기 유틸(text-head-lg 등)을 --text-* 네임스페이스에서 생성한다.
      (--font-size-* 는 유틸을 만들지 않아 text-* 클래스가 전부 무효였음) */
@@ -112,4 +123,23 @@
   --color-warning-light: #ffebee;
   --color-warning: #ff4d4f;
   --color-warning-dark: #991b1b;
+
+  /* Calendar */
+  --color-calendar-header-bg: #e9f2fe;
+}
+
+/* Primitive - Event (캘린더 이벤트 바 색상). `static`으로 선언 —
+   CalendarPage에서 `var(--color-event-${i})`처럼 동적 문자열로만 참조되어
+   Tailwind의 사용 여부 스캔에 리터럴로 안 잡히므로, 안 그러면 tree-shaking으로 제거됨. */
+@theme static {
+  --color-event-1: #1968fc;
+  --color-event-2: #0078bc;
+  --color-event-3: #00979a;
+  --color-event-4: #1fb157;
+  --color-event-5: #8cab24;
+  --color-event-6: #fab40c;
+  --color-event-7: #ff8336;
+  --color-event-8: #fd6f7c;
+  --color-event-9: #ff5ec6;
+  --color-event-10: #8f56ec;
 }
