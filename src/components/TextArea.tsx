@@ -96,7 +96,7 @@ const TextArea = ({
   const messageId = message ? `${inputId}-desc` : undefined
 
   return (
-    <div className="flex w-full flex-col gap-1">
+    <div className="flex w-full flex-col gap-1.5">
       {label && (
         <label htmlFor={inputId} className="text-caption-lg text-neutral-9 font-semibold">
           {label}
@@ -117,9 +117,9 @@ const TextArea = ({
         aria-required={required}
         aria-invalid={!!error}
         aria-describedby={messageId}
-        className={`text-body-sm text-neutral-10 placeholder:text-neutral-5 w-full resize-none overflow-y-auto rounded-md border px-3 py-2 transition-colors outline-none ${
-          error ? 'border-warning focus:border-warning' : 'border-border focus:border-primary'
-        } ${disabled ? 'bg-neutral-2 text-neutral-8 cursor-not-allowed' : 'bg-bg-primary'} ${className}`}
+        className={`text-body-sm text-neutral-10 placeholder:text-neutral-5 w-full resize-none overflow-y-auto rounded-lg border px-4 py-3 transition-colors outline-none ${
+          error ? 'border-warning focus:border-warning' : 'border-neutral-3 focus:border-primary'
+        } ${disabled ? 'bg-neutral-2 text-neutral-8 cursor-not-allowed opacity-40' : 'bg-neutral-1'} ${className}`}
       />
       {(message || typeof maxLength === 'number') && (
         //에러/힌트 메시지가 있거나 maxLength가 있을때만 렌더링 (error 우선, 없으면 hint)
