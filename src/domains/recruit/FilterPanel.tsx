@@ -10,7 +10,7 @@ function FilterPanel({ config, selected, onToggle }: FilterPanelProps) {
   const visibleGroups = config.groups.filter((group) => group.showWhen?.(selected) ?? true)
 
   return (
-    <div className="shadow-panel flex gap-12 rounded-xl bg-bg-primary pt-[34px] pr-8 pb-[55px] pl-[33px]">
+    <div className="shadow-panel bg-bg-primary flex gap-12 rounded-xl pt-[34px] pr-8 pb-[55px] pl-[33px]">
       {visibleGroups.map((group) => (
         <section
           key={`${group.label}-${group.span ?? 'default'}`}

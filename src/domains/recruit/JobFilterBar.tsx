@@ -56,7 +56,7 @@ function JobFilterBar({
             type="button"
             onClick={() => onOpenCategoryChange(openCategory === config.key ? null : config.key)}
             aria-expanded={openCategory === config.key}
-            className="border-primary text-primary text-caption-lg flex items-center gap-1 rounded-lg border bg-bg-primary px-4 py-2"
+            className="border-primary text-primary text-caption-lg bg-bg-primary flex items-center gap-1 rounded-lg border px-4 py-2"
           >
             {config.buttonLabel}
             <svg
