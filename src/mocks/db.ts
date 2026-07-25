@@ -24,6 +24,7 @@ const incompleteUser: MeUser = {
   onboardingCompleted: false,
   primaryRole: null,
   roles: [],
+  region: null,
   location: null,
   categories: [],
   bio: null,
@@ -41,14 +42,15 @@ const completeUser: MeUser = {
   onboardingCompleted: true,
   primaryRole: 'DIRECTOR',
   roles: ['DIRECTOR', 'PD', 'EDITOR'],
-  location: '서울시',
-  categories: ['DRAMA', 'MUSIC_VIDEO'],
+  region: 'SEOUL',
+  location: 'SEOUL',
+  categories: ['FILM_DRAMA', 'MUSIC_VIDEO'],
   bio: '사랑의 이야기를 영상으로 담아내는 것을 좋아합니다.',
   createdAt: '2026-06-01T10:00:00Z',
   stats: {
     projectTypes: [
-      { type: 'COMMERCIAL', label: '브랜드 영상', count: 8 },
-      { type: 'MUSIC_VIDEO', label: '뮤직 비디오', count: 4 },
+      { type: 'AD_BRAND', label: '광고/브랜드 영상', count: 8 },
+      { type: 'MUSIC_VIDEO', label: '뮤직비디오', count: 4 },
     ],
     roles: [
       { role: 'DIRECTOR', label: '연출', count: 9 },
@@ -68,12 +70,13 @@ const publicEditor: MeUser = {
   onboardingCompleted: true,
   primaryRole: 'EDITOR',
   roles: ['EDITOR'],
-  location: '서울시',
+  region: 'SEOUL',
+  location: 'SEOUL',
   categories: ['DOCUMENTARY'],
   bio: '디테일에 강한 편집자입니다.',
   createdAt: '2026-05-01T10:00:00Z',
   stats: {
-    projectTypes: [{ type: 'DOCUMENTARY', label: '다큐/시사/교양', count: 5 }],
+    projectTypes: [{ type: 'DOCUMENTARY', label: '다큐멘터리', count: 5 }],
     roles: [{ role: 'EDITOR', label: '편집', count: 5 }],
   },
 }
@@ -143,7 +146,7 @@ export const db: MockDb = {
     {
       id: 10,
       title: '연애혁명',
-      type: 'DRAMA',
+      type: 'FILM_DRAMA',
       kind: 'EXTERNAL',
       clientName: '스튜디오 X',
       roles: ['DIRECTOR', 'EDITOR'],
@@ -171,11 +174,11 @@ export const db: MockDb = {
       id: 2,
       title: '브랜드 필름 A',
       description: '광고 영상',
-      type: 'COMMERCIAL',
+      type: 'AD_BRAND',
       customTypeName: null,
       lengthType: null,
       clientName: '브랜드A',
-      status: 'IN_PROGRESS',
+      status: 'EDITING',
       endDate: '2026-08-15',
       createdAt: '2026-05-01T09:00:00Z',
       updatedAt: '2026-07-05T09:00:00Z',
@@ -188,8 +191,9 @@ export const db: MockDb = {
       name: completeUser.nickname,
       profileImageUrl: completeUser.profileImageUrl,
       email: completeUser.email,
-      region: '서울시',
+      region: 'SEOUL',
       jobRole: 'DIRECTOR',
+      roleNames: ['DIRECTOR'],
       isAdmin: true,
     },
     {
@@ -198,8 +202,9 @@ export const db: MockDb = {
       name: publicEditor.nickname,
       profileImageUrl: publicEditor.profileImageUrl,
       email: publicEditor.email,
-      region: '서울시',
+      region: 'SEOUL',
       jobRole: 'EDITOR',
+      roleNames: ['EDITOR'],
       isAdmin: false,
     },
   ],
@@ -328,7 +333,7 @@ export const db: MockDb = {
       title: '웹드라마 편집자 모집',
       description: '감정선 살리는 편집 가능하신 분',
       roles: ['EDITOR'],
-      categories: ['DRAMA'],
+      categories: ['FILM_DRAMA'],
       regions: ['SEOUL'],
       status: 'OPEN',
       viewCount: 120,
@@ -455,7 +460,7 @@ export function requireUser(): MeUser {
   return user
 }
 
-/* GET /users/me 응답 변환 */
+/* GET /users/me 응답 변환 — BE는 region */
 export function toMeProfile(user: MeUser) {
   return {
     id: user.id,
@@ -463,7 +468,8 @@ export function toMeProfile(user: MeUser) {
     nickname: user.nickname,
     profileImageUrl: user.profileImageUrl,
     bio: user.bio,
-    location: user.location,
+    region: user.region ?? user.location,
+    location: user.location ?? user.region,
     socialType: user.socialType,
     primaryRole: user.primaryRole,
     roles: user.roles,
