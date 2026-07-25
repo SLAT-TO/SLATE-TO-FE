@@ -303,7 +303,8 @@ export function VideoDetailView({
 
   /** 참여 인원 초대 — 초대 링크 생성 후 클립보드에 복사 (골격, 실제 초대 수락 화면은 별도 구현 필요) */
   const inviteMember = async () => {
-    const { inviteUrl } = await createInvitation(projectId)
+    const { token } = await createInvitation(projectId)
+    const inviteUrl = `${window.location.origin}/invitations/${token}`
     await navigator.clipboard.writeText(inviteUrl)
     setInviteCopied(true)
     setTimeout(() => setInviteCopied(false), 2000)
