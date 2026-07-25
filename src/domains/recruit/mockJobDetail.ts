@@ -1,7 +1,7 @@
 import type { RecruitmentDetail } from '../../types/Recruit.types'
 
 /** 지원자/작성자 시점 전환 테스트용. API 연동 시 detail.author.userId === 내 userId 로 판단 */
-export const IS_OWNER_TEST = true
+export const IS_OWNER_TEST = false
 
 // API 연동 시 제거 — GET /recruitments/:id
 export const MOCK_JOB_DETAILS: RecruitmentDetail[] = [
