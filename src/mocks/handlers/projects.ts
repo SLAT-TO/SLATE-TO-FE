@@ -235,7 +235,7 @@ export const projectHandlers = [
       name: user.nickname,
       profileImageUrl: user.profileImageUrl,
       email: user.email,
-      region: user.region ?? user.location,
+      region: user.location,
       jobRole: body.roleNames[0],
       roleNames: body.roleNames,
       isAdmin: false,

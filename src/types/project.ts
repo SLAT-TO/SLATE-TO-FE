@@ -50,15 +50,19 @@ export type ProjectMember = {
   profileImageUrl: string | null
   email: string
   region: string | null
+  /** 표시용 — roleNames[0] */
   jobRole: string
+  roleNames?: string[]
   isAdmin: boolean
 }
+
+export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | string
 
 export type ProjectInvitation = {
   projectId: number
   projectTitle: string
   inviterName: string
-  status: ProjectStatus
+  status: InvitationStatus
   expiresAt: string
 }
 
@@ -83,4 +87,20 @@ export type CursorPage<T> = {
   items: T[]
   nextCursor: number | null
   hasNext: boolean
+}
+
+export type CreateInvitationResult = {
+  inviteUrl: string
+  expiresAt: string
+}
+
+export type AcceptInvitationRequest = {
+  roleNames: string[]
+}
+
+export type AcceptInvitationResult = {
+  projectId: number
+  memberId: number
+  roleNames: string[]
+  joinedAt: string
 }

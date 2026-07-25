@@ -1,6 +1,9 @@
 import { request } from './client'
 import { paths } from './paths'
 import type {
+  AcceptInvitationRequest,
+  AcceptInvitationResult,
+  CreateInvitationResult,
   CreateProjectRequest,
   CreateProjectResult,
   CursorPage,
@@ -79,9 +82,7 @@ export async function leaveProject(projectId: number): Promise<null> {
   return request({ method: 'DELETE', url: paths.projects.leave(projectId) })
 }
 
-export async function createInvitation(
-  projectId: number,
-): Promise<{ token: string; expiresAt: string }> {
+export async function createInvitation(projectId: number): Promise<CreateInvitationResult> {
   return request({ method: 'POST', url: paths.projects.invitations(projectId) })
 }
 
@@ -91,8 +92,9 @@ export async function getInvitation(token: string): Promise<ProjectInvitation> {
 
 export async function acceptInvitation(
   token: string,
-): Promise<{ projectId: number; joined: boolean }> {
-  return request({ method: 'POST', url: paths.projectInvitations.accept(token) })
+  body: AcceptInvitationRequest,
+): Promise<AcceptInvitationResult> {
+  return request({ method: 'POST', url: paths.projectInvitations.accept(token), data: body })
 }
 
 export async function getProjectActivities(
