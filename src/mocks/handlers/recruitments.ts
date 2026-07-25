@@ -26,7 +26,7 @@ export const recruitmentHandlers = [
 
   http.get(paths.recruitments.recommended, () => {
     if (!safeUser()) return unauthorized()
-    return HttpResponse.json(ok({ content: db.recruitments.slice(0, 3) }), { status: 200 })
+    return HttpResponse.json(ok({ content: db.recruitments.slice(0, 6) }), { status: 200 })
   }),
 
   http.get(paths.recruitments.byId(':recruitmentId'), ({ params }) => {
