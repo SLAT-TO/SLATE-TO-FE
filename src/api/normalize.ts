@@ -9,7 +9,7 @@ export type CursorPageResult<T> = {
   hasNext: boolean
 }
 
-type BeProjectSummary = {
+export type BeProjectSummary = {
   id: number
   title: string
   type?: string | null
@@ -23,7 +23,7 @@ type BeProjectSummary = {
   updatedAt: string
 }
 
-type BeMember = {
+export type BeMember = {
   memberId?: number
   id?: number
   userId: number
@@ -39,10 +39,19 @@ type BeMember = {
   joinedAt?: string
 }
 
-type BeMe = Omit<MeProfile, 'location'> & {
+export type BeMemberListResult = BeMember[] | { items: BeMember[]; memberCount?: number }
+
+export type BeMe = Omit<MeProfile, 'location'> & {
   region?: string | null
   location?: string | null
 }
+
+export type BeVideoListRaw =
+  | VideoListResult
+  | CursorPageResult<VideoListItem>
+  | { videos: VideoListItem[]; nextCursor: number | null; hasNext: boolean }
+
+export type BeProjectListRaw = BeProjectSummary[] | CursorPageResult<BeProjectSummary>
 
 export function toProject(raw: BeProjectSummary): Project {
   return {
@@ -83,19 +92,12 @@ export function toProjectMember(raw: BeMember): ProjectMember {
   }
 }
 
-export function normalizeMemberList(
-  result: BeMember[] | { items: BeMember[]; memberCount?: number },
-): ProjectMember[] {
+export function normalizeMemberList(result: BeMemberListResult): ProjectMember[] {
   const items = Array.isArray(result) ? result : result.items
   return items.map(toProjectMember)
 }
 
-export function normalizeVideoList(
-  result:
-    | VideoListResult
-    | CursorPageResult<VideoListItem>
-    | { videos: VideoListItem[]; nextCursor: number | null; hasNext: boolean },
-): VideoListResult {
+export function normalizeVideoList(result: BeVideoListRaw): VideoListResult {
   if ('videos' in result && Array.isArray(result.videos)) {
     return {
       items: result.videos,

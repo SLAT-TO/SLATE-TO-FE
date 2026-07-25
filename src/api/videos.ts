@@ -1,5 +1,5 @@
 import { request } from './client'
-import { normalizeVideoList } from './normalize'
+import { normalizeVideoList, type BeVideoListRaw } from './normalize'
 import { paths } from './paths'
 import type {
   BookmarkVideoRequest,
@@ -29,7 +29,7 @@ export async function getVideos(
   cursor?: number,
   size = 20,
 ): Promise<VideoListResult> {
-  const result = await request({
+  const result = await request<BeVideoListRaw>({
     method: 'GET',
     url: paths.projects.videos(projectId),
     params: { cursor, size },

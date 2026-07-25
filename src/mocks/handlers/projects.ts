@@ -50,10 +50,9 @@ function toFileListItem(file: (typeof db.files)[number]) {
 export const projectHandlers = [
   http.get(paths.projects.root, () => {
     if (!safeUser()) return unauthorized()
-    return HttpResponse.json(
-      ok({ items: db.projects, nextCursor: null, hasNext: false }),
-      { status: 200 },
-    )
+    return HttpResponse.json(ok({ items: db.projects, nextCursor: null, hasNext: false }), {
+      status: 200,
+    })
   }),
 
   http.post(paths.projects.root, async ({ request }) => {
@@ -227,10 +226,9 @@ export const projectHandlers = [
     }
     db.invitations.push(invitation)
     const inviteUrl = `http://localhost:3000/project-invitations/${token}`
-    return HttpResponse.json(
-      created({ inviteUrl, expiresAt: invitation.expiresAt }),
-      { status: 201 },
-    )
+    return HttpResponse.json(created({ inviteUrl, expiresAt: invitation.expiresAt }), {
+      status: 201,
+    })
   }),
 
   http.get(paths.projectInvitations.byToken(':token'), ({ params }) => {

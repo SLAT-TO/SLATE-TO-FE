@@ -4,6 +4,10 @@ import {
   normalizeProjectList,
   toProject,
   toProjectMember,
+  type BeMember,
+  type BeMemberListResult,
+  type BeProjectListRaw,
+  type BeProjectSummary,
 } from './normalize'
 import { paths } from './paths'
 import type {
@@ -35,7 +39,7 @@ import type {
 } from '../types/notice'
 
 export async function getProjects(): Promise<Project[]> {
-  const result = await request({ method: 'GET', url: paths.projects.root })
+  const result = await request<BeProjectListRaw>({ method: 'GET', url: paths.projects.root })
   return normalizeProjectList(result)
 }
 
@@ -44,7 +48,10 @@ export async function createProject(body: CreateProjectRequest): Promise<CreateP
 }
 
 export async function getProject(projectId: number): Promise<Project> {
-  const result = await request({ method: 'GET', url: paths.projects.byId(projectId) })
+  const result = await request<BeProjectSummary>({
+    method: 'GET',
+    url: paths.projects.byId(projectId),
+  })
   return toProject(result)
 }
 
@@ -60,7 +67,10 @@ export async function deleteProject(projectId: number): Promise<null> {
 }
 
 export async function getProjectMembers(projectId: number): Promise<ProjectMember[]> {
-  const result = await request({ method: 'GET', url: paths.projects.members(projectId) })
+  const result = await request<BeMemberListResult>({
+    method: 'GET',
+    url: paths.projects.members(projectId),
+  })
   return normalizeMemberList(result)
 }
 
@@ -68,7 +78,10 @@ export async function getProjectMember(
   projectId: number,
   memberId: number,
 ): Promise<ProjectMember> {
-  const result = await request({ method: 'GET', url: paths.projects.member(projectId, memberId) })
+  const result = await request<BeMember>({
+    method: 'GET',
+    url: paths.projects.member(projectId, memberId),
+  })
   return toProjectMember(result)
 }
 
@@ -77,7 +90,7 @@ export async function updateMemberRole(
   memberId: number,
   roleNames: string[],
 ): Promise<ProjectMember> {
-  const result = await request({
+  const result = await request<BeMember>({
     method: 'PATCH',
     url: paths.projects.member(projectId, memberId),
     data: { roleNames },
