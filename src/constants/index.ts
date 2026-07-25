@@ -15,7 +15,7 @@ export {
   ONBOARDING_VIDEO_CATEGORY_OPTIONS,
   type OnboardingVideoCategory,
 } from './onboardingVideoCategories'
-export { REGION_LABELS, REGION_OPTIONS, type Region } from './regions'
+export { ONBOARDING_REGION_LABELS, ONBOARDING_REGION_OPTIONS, type Region } from './regions'
 
 export {
   FILM_LENGTH_LABELS,

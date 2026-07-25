@@ -30,7 +30,7 @@ export function SelectionStep({
       contentGapClassName="mt-16"
       footerGapClassName="mt-19.25"
       footer={
-        <Button fullWidth onClick={onNext} disabled={selected.length === 0}>
+        <Button onClick={onNext} disabled={selected.length === 0}>
           다음
         </Button>
       }

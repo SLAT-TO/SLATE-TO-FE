@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   ONBOARDING_ROLE_OPTIONS,
   ONBOARDING_VIDEO_CATEGORY_OPTIONS,
-  REGION_OPTIONS,
+  ONBOARDING_REGION_OPTIONS,
 } from '../../constants'
 import type { OnboardingRole } from '../../constants/onboardingRoles'
 import type { OnboardingVideoCategory } from '../../constants/onboardingVideoCategories'
@@ -66,7 +66,7 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
       return (
         <SelectionStep
           title="주로 활동하는 지역을 선택해 주세요."
-          options={REGION_OPTIONS}
+          options={ONBOARDING_REGION_OPTIONS}
           selected={regions}
           onToggle={(v) => toggleRegion(v as Region)}
           columns={4}
@@ -88,3 +88,5 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
       return <ProfileStep onComplete={() => onComplete?.()} />
   }
 }
+
+export default OnboardingPage

@@ -1,5 +1,5 @@
 /** 온보딩·프로필 — 주요 활동 지역 */
-export const REGION_LABELS = [
+export const ONBOARDING_REGION_LABELS = [
   '서울시',
   '경기도',
   '강원도',
@@ -13,8 +13,10 @@ export const REGION_LABELS = [
   '전국',
 ] as const
 
-export type Region = (typeof REGION_LABELS)[number]
+export type Region = (typeof ONBOARDING_REGION_LABELS)[number]
 
-export const REGION_OPTIONS: ReadonlyArray<{ value: Region; label: string }> = REGION_LABELS.map(
-  (label) => ({ value: label, label }),
-)
+export const ONBOARDING_REGION_OPTIONS: ReadonlyArray<{ value: Region; label: string }> =
+  ONBOARDING_REGION_LABELS.map((label) => ({
+    value: label,
+    label,
+  }))

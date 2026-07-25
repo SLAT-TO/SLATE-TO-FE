@@ -31,7 +31,7 @@ export function OnboardingLayout({
     <div className="relative flex min-h-screen w-full flex-col overflow-hidden">
       {/* 배경 이미지 (블러) */}
       <div
-        className="absolute inset-0 scale-110 bg-cover bg-center bg-no-repeat blur-[5px]"
+        className="absolute inset-0 scale-110 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${onboardingBg})` }}
       />
 
@@ -63,7 +63,7 @@ export function OnboardingLayout({
 
         <div className={`w-full ${contentGapClassName}`}>{children}</div>
 
-        <div className={`w-flex justify-center ${footerGapClassName}`}>{footer}</div>
+        <div className={`flex justify-center ${footerGapClassName}`}>{footer}</div>
       </main>
     </div>
   )

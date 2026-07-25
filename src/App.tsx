@@ -1,4 +1,5 @@
 import MainLayout from './layouts/MainLayout'
+import OnboardingPage from './pages/onboarding/OnboardingPage'
 import HomePage from './pages/HomePage'
 import MyPage from './pages/MyPage'
 import ProfileEditPage from './pages/ProfileEditPage'
@@ -71,13 +72,14 @@ function AppRoutes({ pathname }: { pathname: string }) {
 }
 
 /** /login 등 — 각 기능 PR에서 경로 추가 */
-const FULLSCREEN_PATHS: string[] = []
+const FULLSCREEN_PATHS: string[] = ['/onboarding']
 
 function App() {
   const pathname = usePathname()
 
   if (FULLSCREEN_PATHS.includes(pathname)) {
     // return <LoginPage /> 등
+    return <OnboardingPage />
   }
 
   return (

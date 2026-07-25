@@ -12,7 +12,7 @@ interface ProfileStepProps {
   onComplete: () => void
 }
 
-// 온보딩 마지막 단계 — 프로필 입력. 이름·이메일은 필수(blur/제출 검증), 소개는 선택.
+// 온보딩 마지막 단계 — 프로필 입력. 이름·이메일은 필수(제출 검증), 소개는 선택.
 export function ProfileStep({ onComplete }: ProfileStepProps) {
   const profile = useOnboardingStore((s) => s.profile)
   const setProfileField = useOnboardingStore((s) => s.setProfileField)
@@ -52,7 +52,7 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
   }
 
   const handleSubmit = () => {
-    // 제출 시 전체 스키마로 재검증 (blur를 안 거친 필드까지)
+    // 제출 시 전체 스키마로 재검증
     const result = profileSchema.safeParse({
       name: profile.name,
       email: profile.email,
@@ -76,11 +76,7 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
       title="프로필을 만들어 주세요."
       subtitle="나중에 변경할 수 있어요"
       titleAlign="left"
-      footer={
-        <Button fullWidth onClick={handleSubmit}>
-          다음
-        </Button>
-      }
+      footer={<Button onClick={handleSubmit}>다음</Button>}
     >
       {/* 160(아바타) + 86(gap) + 736(입력 필드 채우기) = 982px */}
       <div className="mx-auto flex w-full max-w-245.5 flex-col items-center gap-21.5 sm:flex-row sm:items-start">
@@ -96,6 +92,7 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
             accept="image/*"
             onChange={handleAvatarChange}
             className="sr-only"
+            aria-label="프로필 사진 변경"
           />
         </div>
 
