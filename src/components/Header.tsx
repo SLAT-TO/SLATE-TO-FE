@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { navigate } from '../utils/navigation'
 
 type HeaderProps = {
   title?: ReactNode
@@ -30,6 +31,7 @@ export default function Header({ title, userName = '000' }: HeaderProps) {
         {/* 알림 */}
         <button
           type="button"
+          onClick={() => navigate('/notifications')}
           className="text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 flex h-10 w-10 items-center justify-center rounded-full transition-colors"
           aria-label="알림"
         >
