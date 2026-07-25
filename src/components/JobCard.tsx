@@ -10,6 +10,7 @@ interface JobCardProps {
   price?: string
   dDay: string
   isBookmarked: boolean
+  onClick?: () => void
   onBookmarkClick: () => void
 }
 
@@ -22,10 +23,16 @@ function JobCard({
   price,
   dDay,
   isBookmarked,
+  onClick,
   onBookmarkClick,
 }: JobCardProps) {
   return (
-    <article className="bg-bg-primary flex w-full flex-col gap-6 rounded-xl p-4 shadow-[0_4px_12px_color-mix(in_srgb,var(--color-gradation)_15%,transparent)]">
+    <article
+      onClick={onClick}
+      className={`bg-bg-primary flex w-full flex-col gap-6 rounded-xl p-4 shadow-[0_4px_12px_color-mix(in_srgb,var(--color-gradation)_15%,transparent)] ${
+        onClick ? 'cursor-pointer' : ''
+      }`}
+    >
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3.5">
@@ -35,7 +42,10 @@ function JobCard({
 
           <button
             type="button"
-            onClick={onBookmarkClick}
+            onClick={(e) => {
+              e.stopPropagation() // 카드 클릭(상세 이동) 막기
+              onBookmarkClick()
+            }}
             aria-pressed={isBookmarked}
             aria-label={isBookmarked ? '북마크 해제' : '북마크 추가'}
             className={`shrink-0 ${isBookmarked ? 'text-primary' : 'text-neutral-11'}`}

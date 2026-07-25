@@ -4,6 +4,7 @@ import JobFilterBar from '../domains/recruit/JobFilterBar'
 import { MOCK_JOB_POSTS, MOCK_RECOMMENDED_POSTS } from '../domains/recruit/mockJobPosts'
 import { FILTER_CONFIGS, type SortValue } from '../constants'
 import type { FilterCategory, SelectedFilterChip, SelectedFilters } from '../types/Recruit.types'
+import { navigate } from '../utils/navigation'
 
 const INITIAL_FILTERS: SelectedFilters = { region: [], videoType: [], role: [] }
 
@@ -50,6 +51,7 @@ function RecruitPage() {
               {...post}
               isBookmarked={bookmarkedIds.includes(post.id)}
               onBookmarkClick={() => handleToggleBookmark(post.id)}
+              onClick={() => navigate(`/matching/${post.id}`)}
             />
           ))}
         </div>
@@ -86,6 +88,7 @@ function RecruitPage() {
               {...post}
               isBookmarked={bookmarkedIds.includes(post.id)}
               onBookmarkClick={() => handleToggleBookmark(post.id)}
+              onClick={() => navigate(`/matching/${post.id}`)}
             />
           ))}
         </div>
