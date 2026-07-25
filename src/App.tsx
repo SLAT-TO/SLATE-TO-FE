@@ -9,6 +9,19 @@ import WorkspacePage from './pages/WorkspacePage'
 import { usePathname } from './hooks/usePathname'
 import { matchPath } from './utils/navigation'
 
+const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
+
+// 라우트별 헤더 타이틀 매핑
+function getHeaderTitle(pathname: string): string {
+  if (pathname === '/' || pathname === '') return `안녕하세요 ${USER_NAME} 님`
+  if (pathname === '/mypage') return '마이페이지'
+  if (pathname === '/mypage/edit') return '프로필 수정'
+  if (pathname === '/mypage/project/new') return '프로젝트 추가'
+  if (matchPath('/mypage/project/:id/edit', pathname)) return '프로젝트 수정'
+  if (matchPath('/mypage/project/:id', pathname)) return '프로젝트 개요'
+  return ''
+}
+
 function AppRoutes({ pathname }: { pathname: string }) {
   const projectMatch = matchPath('/workspace/projects/:projectId', pathname)
   if (projectMatch) {
@@ -27,12 +40,10 @@ function AppRoutes({ pathname }: { pathname: string }) {
   if (pathname === '/mypage/edit') return <ProfileEditPage />
   if (pathname === '/mypage/project/new') return <ProjectFormPage mode="create" />
 
-  // 수정 폼: /mypage/project/:id/edit
   if (matchPath('/mypage/project/:id/edit', pathname)) {
     return <ProjectFormPage mode="edit" />
   }
 
-  // 개요: /mypage/project/:id
   if (matchPath('/mypage/project/:id', pathname)) {
     return <ProjectOverviewPage />
   }
@@ -64,7 +75,7 @@ function App() {
   }
 
   return (
-    <MainLayout userName="김수민">
+    <MainLayout userName={USER_NAME} headerTitle={getHeaderTitle(pathname)}>
       <AppRoutes pathname={pathname} />
     </MainLayout>
   )

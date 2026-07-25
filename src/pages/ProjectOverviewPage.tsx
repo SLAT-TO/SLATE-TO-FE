@@ -41,8 +41,6 @@ function ProjectOverviewPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <h2 className="text-neutral-11 text-xl font-bold">프로젝트 개요</h2>
-
       {/* 정보 카드 */}
       <section className="rounded-xl bg-white p-6 shadow-xs">
         <div className="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-3">
