@@ -273,11 +273,11 @@ npm run format:check  # 포맷 위반 여부만 확인 (CI와 동일)
 
 ### 로컬 실행 · API 연동
 
-| 모드 | `VITE_ENABLE_MSW` | `VITE_API_BASE_URL` | 설명 |
-| ---- | ----------------- | ------------------- | ---- |
-| MSW (기본) | `true` | 비움 | `src/mocks`가 `/api/v1` 요청을 가로챕니다. |
-| 로컬 BE | `false` | 비움 | Vite proxy가 `/api` → `http://localhost:8080` (CORS 우회). **BE 연동 PR(#93) 머지 후** `vite.config.ts`에 proxy 설정. |
-| 원격 BE | `false` | `https://api.example.com` 등 | axios가 해당 origin으로 직결. BE CORS·쿠키(`withCredentials`) 필요. |
+| 모드       | `VITE_ENABLE_MSW` | `VITE_API_BASE_URL`          | 설명                                                                                                                  |
+| ---------- | ----------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| MSW (기본) | `true`            | 비움                         | `src/mocks`가 `/api/v1` 요청을 가로챕니다.                                                                            |
+| 로컬 BE    | `false`           | 비움                         | Vite proxy가 `/api` → `http://localhost:8080` (CORS 우회). **BE 연동 PR(#93) 머지 후** `vite.config.ts`에 proxy 설정. |
+| 원격 BE    | `false`           | `https://api.example.com` 등 | axios가 해당 origin으로 직결. BE CORS·쿠키(`withCredentials`) 필요.                                                   |
 
 - 개발 서버에서만 MSW가 켜집니다. (`import.meta.env.DEV` + `VITE_ENABLE_MSW=true`)
 - Production(Vercel)에서는 MSW를 끄고 실 API URL을 넣습니다. 예: `VITE_ENABLE_MSW=false`, `VITE_API_BASE_URL=https://api.slatto.cloud`
