@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import Tag from '../components/Tag'
 import type { Portfolio } from '../types/portfolio'
+import { useHeaderSlot } from '../hooks/useHeaderSlot'
+import HeaderTitle from '../components/HeaderTitle'
 
 // GET /api/v1/portfolios/:id 응답으로 교체. 지금은 목 데이터.
 const MOCK_PORTFOLIO: Portfolio = {
@@ -35,7 +37,10 @@ function OverviewField({ label, children }: { label: string; children: ReactNode
   )
 }
 
+const HEADER = <HeaderTitle>프로젝트 개요</HeaderTitle>
+
 function ProjectOverviewPage() {
+  useHeaderSlot(HEADER)
   const portfolio = MOCK_PORTFOLIO
   const { type, kind, clientName, roles, description, comment, youtubeUrl } = portfolio
 
