@@ -23,6 +23,8 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 | ----------- | ------------------------------------------ |
 | Framework   | React 19.2.7, TypeScript 6.0.2, Vite 8.1.0 |
 | Styling     | Tailwind CSS 4.3.1                         |
+| HTTP        | axios                                      |
+| API Mock    | MSW 2                                      |
 | 상태 관리   | Zustand 5.0.14                             |
 | 유효성 검사 | Zod 4.4.3                                  |
 | 날짜 처리   | date-fns 4.4.0                             |
@@ -38,27 +40,31 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 SLATE_TO_FE/
 ├── .vscode/
 ├── src/
-│   ├── api/              # API 호출
+│   ├── api/              # API 호출 · paths · BE 응답 normalize
 │   ├── assets/
 │   │   ├── images/
 │   │   ├── icons/        # 아이콘 SVG (Flaticon UIcons)
 │   │   └── fonts/
 │   ├── components/       # 공통 컴포넌트
 │   ├── constants/        # 도메인·UI 상수 (카테고리, ActionMenu 액션 enum 등)
+│   ├── domains/          # 화면별 도메인 UI (workspace · mypage 등)
 │   ├── hooks/            # 커스텀 훅
 │   ├── layouts/          # 공통 레이아웃
+│   ├── mocks/            # MSW handlers · browser worker
 │   ├── pages/            # 라우트 단위 페이지
 │   ├── schemas/          # Zod 스키마
 │   ├── stores/           # Zustand 스토어
 │   ├── styles/           # 공유 Tailwind 클래스 조합 (토큰은 index.css @theme)
 │   ├── types/            # 전역 타입
-│   └── utils/            # 순수 함수
+│   └── utils/            # 순수 함수 · 임시 pathname 라우팅
 ├── .editorconfig
 ├── .env.example
 ├── eslint.config.js
 ├── vite.config.ts
 └── tsconfig.json
 ```
+
+> 라우팅은 React Router가 아니라 `usePathname` + `matchPath` 임시 골격입니다. (`src/utils/navigation.ts`, `App.tsx`)
 
 ## 브랜치 전략
 
@@ -263,6 +269,18 @@ npm run format:check  # 포맷 위반 여부만 확인 (CI와 동일)
 ```
 
 환경변수는 `.env.example`을 참고해 `.env.local` 파일을 생성하세요. 각 변수의 용도·필수 여부는 `.env.example`의 주석에 기재합니다.
+
+### 로컬 실행 · API 연동
+
+| 모드 | `VITE_ENABLE_MSW` | `VITE_API_BASE_URL` | 설명 |
+| ---- | ----------------- | ------------------- | ---- |
+| MSW (기본) | `true` | 비움 | `src/mocks`가 `/api/v1` 요청을 가로챕니다. |
+| 로컬 BE | `false` | 비움 | Vite proxy가 `/api` → `http://localhost:8080` (CORS 우회). BE를 8080에서 띄운 뒤 사용. |
+| 원격 BE | `false` | `https://api.example.com` 등 | axios가 해당 origin으로 직결. BE CORS·쿠키(`withCredentials`) 필요. |
+
+- 개발 서버에서만 MSW가 켜집니다. (`import.meta.env.DEV` + `VITE_ENABLE_MSW=true`)
+- Production(Vercel)에서는 MSW를 끄고 실 API URL을 넣습니다. 예: `VITE_ENABLE_MSW=false`, `VITE_API_BASE_URL=https://api.slatto.cloud`
+- BE 응답 shape 차이는 `src/api/normalize.ts`에서 FE 도메인 모델로 맞춥니다.
 
 ## 화면 목록 및 플로우
 
