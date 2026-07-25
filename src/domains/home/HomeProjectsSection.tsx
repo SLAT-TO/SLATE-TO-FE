@@ -1,10 +1,9 @@
-import { Button } from '../../components/Button'
 import HomeProjectCard from './HomeProjectCard'
-import type { HomeProject } from '../../hooks/useHomeDashboard'
+import type { ProjectSummary } from '../../types/project'
 import { navigate } from '../../utils/navigation'
 
 interface HomeProjectsSectionProps {
-  projects: HomeProject[]
+  projects: ProjectSummary[]
   loading: boolean
 }
 
@@ -20,20 +19,23 @@ export default function HomeProjectsSection({ projects, loading }: HomeProjectsS
           <p className="text-body-sm text-neutral-6">
             진행중인 프로젝트가 없어요. 프로젝트를 추가해보세요.
           </p>
-          <Button
-            variant="secondary"
-            className="w-50"
-            onClick={() => navigate('/mypage/project/new')}
+          <a
+            href="/mypage/project/new"
+            onClick={(e) => {
+              e.preventDefault()
+              navigate('/mypage/project/new')
+            }}
+            className="border-secondary text-secondary hover:border-secondary-hover hover:text-secondary-hover inline-flex h-10 w-50 items-center justify-center gap-2.5 rounded-lg border bg-white px-4 text-base font-semibold tracking-[-0.176px] transition-colors"
           >
             프로젝트 추가
-          </Button>
+          </a>
         </div>
       )}
 
       {!loading && projects.length > 0 && (
         <div className="grid grid-cols-1 gap-x-10.5 gap-y-10 sm:grid-cols-2">
-          {projects.map(({ project, members }) => (
-            <HomeProjectCard key={project.id} project={project} members={members} />
+          {projects.map((project) => (
+            <HomeProjectCard key={project.id} project={project} />
           ))}
         </div>
       )}
