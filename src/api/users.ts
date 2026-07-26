@@ -2,6 +2,8 @@ import { request } from './client'
 import { normalizeMe, type BeMe } from './normalize'
 import { paths } from './paths'
 import type {
+  ChangePasswordRequest,
+  DeleteAccountRequest,
   MeProfile,
   NotificationSettings,
   OnboardingRequest,
@@ -39,8 +41,12 @@ export async function updateProfile(body: UpdateProfileRequest): Promise<MeProfi
   return normalizeMe(result)
 }
 
-export async function deleteAccount(agreed: boolean): Promise<null> {
-  return request<null>({ method: 'DELETE', url: paths.users.me, data: { agreed } })
+export async function deleteAccount(body: DeleteAccountRequest): Promise<null> {
+  return request<null>({ method: 'DELETE', url: paths.users.me, data: body })
+}
+
+export async function changePassword(body: ChangePasswordRequest): Promise<null> {
+  return request<null>({ method: 'PATCH', url: paths.users.changePassword, data: body })
 }
 
 export async function getPublicProfile(userId: number): Promise<PublicUser> {

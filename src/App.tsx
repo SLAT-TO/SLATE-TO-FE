@@ -11,6 +11,10 @@ import ProjectOverviewPage from './pages/ProjectOverviewPage'
 import RecruitPage from './pages/RecruitPage'
 import JobDetailPage from './pages/JobDetailPage'
 import JobApplicantsPage from './pages/JobApplicantsPage'
+import SettingsPage from './pages/SettingsPage'
+import SettingsNotificationsPage from './pages/SettingsNotificationsPage'
+import SettingsPasswordPage from './pages/SettingsPasswordPage'
+import SettingsInquiryPage from './pages/SettingsInquiryPage'
 import WorkspacePage from './pages/WorkspacePage'
 import HeaderTitle from './components/HeaderTitle'
 import { usePathname } from './hooks/usePathname'
@@ -79,6 +83,11 @@ function AppRoutes({ pathname }: { pathname: string }) {
   if (pathname === '/matching') {
     return <RecruitPage />
   }
+
+  if (pathname === '/settings') return <SettingsPage />
+  if (pathname === '/settings/notifications') return <SettingsNotificationsPage />
+  if (pathname === '/settings/password') return <SettingsPasswordPage />
+  if (pathname === '/settings/inquiry') return <SettingsInquiryPage />
 
   if (pathname === '/mypage') return <MyPage />
   if (pathname === '/mypage/edit') return <ProfileEditPage />

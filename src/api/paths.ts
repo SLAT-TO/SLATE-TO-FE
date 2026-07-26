@@ -16,6 +16,8 @@ export const paths = {
     byId: (userId: number | string) => `${API_PREFIX}/users/${userId}`,
     portfolios: (userId: number | string) => `${API_PREFIX}/users/${userId}/portfolios`,
     notificationSettings: `${API_PREFIX}/users/me/notification-settings`,
+    /** FE mock 전용 — BE 비밀번호 변경 API 미구현 */
+    changePassword: `${API_PREFIX}/users/me/password`,
     myPortfolios: `${API_PREFIX}/users/me/portfolios`,
     myPortfolio: (portfolioId: number | string) =>
       `${API_PREFIX}/users/me/portfolios/${portfolioId}`,
@@ -104,5 +106,9 @@ export const paths = {
     unreadCount: `${API_PREFIX}/notifications/unread-count`,
     read: (notificationId: number | string) => `${API_PREFIX}/notifications/${notificationId}/read`,
     readAll: `${API_PREFIX}/notifications/read-all`,
+  },
+  /** FE mock 전용 — BE 문의하기 API 미구현 */
+  inquiries: {
+    root: `${API_PREFIX}/inquiries`,
   },
 } as const

@@ -8,6 +8,7 @@ import type { Application, Recruitment } from '../types/recruitment'
 import type { Schedule } from '../types/schedule'
 import type { ProjectNotice } from '../types/notice'
 import type { MeUser, NotificationSettings } from '../types/user'
+import type { Inquiry } from '../types/inquiry'
 import type { ReferenceFile, VideoDetail } from '../types/video'
 /* stats에 값을 업데이트해도 빈값 객체가 변질 되지 않도록 객체 생성 함수로 정의하여 사용용 */
 function emptyStats() {
@@ -123,6 +124,9 @@ export type MockDb = {
   tokens: AuthTokens | null
   users: MeUser[]
   notificationSettings: Record<number, NotificationSettings>
+  /** FE mock 전용 — 비밀번호 변경/회원탈퇴 확인용. 실 BE엔 없는 필드라 MeProfile엔 포함하지 않음 */
+  passwords: Record<number, string>
+  inquiries: Inquiry[]
   portfolios: Portfolio[]
   projects: MockProjectRecord[]
   members: MockMemberRecord[]
@@ -171,6 +175,13 @@ export const db: MockDb = {
     [completeUser.id]: defaultNotificationSettings(),
     [publicEditor.id]: defaultNotificationSettings(),
   },
+  /** mock 기본 비밀번호 — 비밀번호 변경/회원탈퇴 확인 플로우 테스트용 */
+  passwords: {
+    [incompleteUser.id]: 'password123',
+    [completeUser.id]: 'password123',
+    [publicEditor.id]: 'password123',
+  },
+  inquiries: [],
   portfolios: [
     {
       id: 10,

@@ -1,6 +1,11 @@
 import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
-import type { OnboardingRequest, UpdateProfileRequest } from '../../types/user'
+import type {
+  ChangePasswordRequest,
+  DeleteAccountRequest,
+  OnboardingRequest,
+  UpdateProfileRequest,
+} from '../../types/user'
 import { allocId, db, requireUser, toMeProfile, toPublicUser } from '../db'
 import { badRequest, domainError, notFound, unauthorized } from '../errors'
 import { created, ok } from '../response'
@@ -83,12 +88,26 @@ export const userHandlers = [
   http.delete(paths.users.me, async ({ request }) => {
     const user = safeUser()
     if (!user) return unauthorized()
-    const body = (await request.json()) as { agreed?: boolean }
+    const body = (await request.json()) as Partial<DeleteAccountRequest>
     if (!body.agreed) return badRequest('동의(agreed) 누락')
+    if (body.password !== db.passwords[user.id]) return badRequest('비밀번호가 일치하지 않습니다.')
 
     db.users = db.users.filter((u) => u.id !== user.id)
+    delete db.passwords[user.id]
     db.tokens = null
     db.currentUserId = null
+    return HttpResponse.json(ok(null), { status: 200 })
+  }),
+
+  http.patch(paths.users.changePassword, async ({ request }) => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+    const body = (await request.json()) as Partial<ChangePasswordRequest>
+    if (!body.currentPassword || !body.newPassword) return badRequest()
+    if (body.currentPassword !== db.passwords[user.id]) {
+      return badRequest('현재 비밀번호가 일치하지 않습니다.')
+    }
+    db.passwords[user.id] = body.newPassword
     return HttpResponse.json(ok(null), { status: 200 })
   }),
 
