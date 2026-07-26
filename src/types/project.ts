@@ -17,6 +17,7 @@ export type ProjectSummary = {
   endDate: string | null
   deadlineProgressPercent: number | null
   lastActivityAt: string | null
+  isPinned: boolean
   memberPreviewImageUrls: string[]
   memberCount: number
   createdAt: string
