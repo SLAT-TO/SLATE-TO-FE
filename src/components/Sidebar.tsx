@@ -76,7 +76,7 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="border-border bg-bg-primary flex h-screen w-[210px] flex-shrink-0 flex-col border-r">
+    <aside className="border-border bg-bg-primary hidden h-screen w-[210px] flex-shrink-0 flex-col border-r md:flex">
       <div className="flex items-center pt-[46px] pl-[34px]">
         <span
           role="img"
