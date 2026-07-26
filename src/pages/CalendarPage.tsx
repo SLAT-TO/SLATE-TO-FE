@@ -55,6 +55,7 @@ export default function CalendarPage() {
   const events = useCalendarStore((s) => s.events)
   const addEvent = useCalendarStore((s) => s.addEvent)
   const updateEvent = useCalendarStore((s) => s.updateEvent)
+  const removeEvent = useCalendarStore((s) => s.removeEvent)
 
   // 일정 필터·일정 추가 폼이 공유하는 실제 프로젝트 목록
   useEffect(() => {
@@ -188,6 +189,8 @@ export default function CalendarPage() {
             events={selectedDateEvents}
             onDeselect={() => setSelectedDate(null)}
             onEditEvent={(event) => setFormModal({ mode: 'edit', event })}
+            onDeleteEvent={(event) => removeEvent(event.id)}
+            onSaveNote={(event, note) => updateEvent(event.id, { note })}
           />
         )}
       </div>

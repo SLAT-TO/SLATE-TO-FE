@@ -1,5 +1,4 @@
 import type { CalendarEvent } from '../../schemas/calendarEvent'
-import { useCalendarStore } from '../../stores/calendarStore'
 import { EventDetailCard } from './EventDetailCard'
 
 interface CalendarDaySchedulePanelProps {
@@ -7,8 +6,12 @@ interface CalendarDaySchedulePanelProps {
   events: CalendarEvent[]
   /** 카드의 뒤로가기 — 목록 단계가 없으므로 날짜 선택 자체를 해제한다 */
   onDeselect: () => void
-  /** "수정하기" 클릭 시 — 일정 추가 폼을 이 일정 데이터로 채워서 열도록 부모(CalendarPage)에 위임 */
+  /** "수정하기" 클릭 시 — 일정 추가 폼을 이 일정 데이터로 채워서 열도록 부모에 위임 */
   onEditEvent: (event: CalendarEvent) => void
+  /** 일정 삭제 — 실제 저장소(Zustand store 혹은 API)는 부모가 소유 */
+  onDeleteEvent: (event: CalendarEvent) => void
+  /** "나에게만 보이는" 참고 메모 저장 */
+  onSaveNote: (event: CalendarEvent, note: string) => void
 }
 
 const PANEL_SHADOW = 'shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]'
@@ -19,10 +22,9 @@ export function CalendarDaySchedulePanel({
   events,
   onDeselect,
   onEditEvent,
+  onDeleteEvent,
+  onSaveNote,
 }: CalendarDaySchedulePanelProps) {
-  const removeEvent = useCalendarStore((s) => s.removeEvent)
-  const updateEvent = useCalendarStore((s) => s.updateEvent)
-
   if (events.length === 0) {
     return (
       <div
@@ -51,8 +53,8 @@ export function CalendarDaySchedulePanel({
             event={event}
             onBack={onDeselect}
             onEdit={() => onEditEvent(event)}
-            onDelete={() => removeEvent(event.id)}
-            onSaveNote={(note) => updateEvent(event.id, { note })}
+            onDelete={() => onDeleteEvent(event)}
+            onSaveNote={(note) => onSaveNote(event, note)}
           />
         </div>
       ))}

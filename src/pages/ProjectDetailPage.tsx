@@ -13,6 +13,7 @@ import DashboardActivityCard from '../domains/workspace/DashboardActivityCard'
 import NoticeListView from '../domains/workspace/NoticeListView'
 import NoticeDetailView from '../domains/workspace/NoticeDetailView'
 import ProjectFileList from '../domains/workspace/ProjectFileList'
+import { ProjectScheduleTab } from '../domains/workspace/ProjectScheduleTab'
 import { useProjectDetail } from '../hooks/useProjectDetail'
 import { useProjectStatusMenu } from '../hooks/useProjectStatusMenu'
 import { projectMetaTags } from '../constants/projectLabels'
@@ -204,7 +205,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         <div className="flex flex-col gap-8">
           <div className="grid gap-8 lg:grid-cols-2">
             <DashboardNoticeCard notices={notices} onExpand={() => setNoticeView('list')} />
-            <DashboardTodayScheduleCard />
+            <DashboardTodayScheduleCard projectId={projectId} />
           </div>
 
           <DashboardActivityCard
@@ -222,11 +223,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         </div>
       )}
 
-      {tab === 'schedule' && (
-        <p className="text-caption-lg text-neutral-6">
-          일정 화면은 캘린더 컴포넌트 리디자인 이후 별도로 구현합니다.
-        </p>
-      )}
+      {tab === 'schedule' && <ProjectScheduleTab projectId={projectId} members={members} />}
 
       {tab === 'dashboard' && noticeView === 'list' && (
         <NoticeListView
