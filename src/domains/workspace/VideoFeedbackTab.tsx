@@ -505,7 +505,10 @@ export function VideoDetailView({
     if (!videoDetail) return null
     return (
       <div className="flex items-center gap-4">
-        <ActionMenu items={[{ action: 'delete', onClick: () => setDeleteOpen(true) }]} ariaLabel="영상 메뉴" />
+        <ActionMenu
+          items={[{ action: 'delete', onClick: () => setDeleteOpen(true) }]}
+          ariaLabel="영상 메뉴"
+        />
         <Button variant="primary" size="sm" onClick={inviteMember}>
           {inviteCopied ? '링크 복사됨' : '+ 초대'}
         </Button>

@@ -9,7 +9,14 @@ export function HeaderSlotProvider({ children }: { children: ReactNode }) {
   const clearHeaderRight = useCallback(() => setHeaderRight(null), [])
 
   const value = useMemo(
-    () => ({ headerLeft, setHeaderLeft, clearHeaderLeft, headerRight, setHeaderRight, clearHeaderRight }),
+    () => ({
+      headerLeft,
+      setHeaderLeft,
+      clearHeaderLeft,
+      headerRight,
+      setHeaderRight,
+      clearHeaderRight,
+    }),
     [headerLeft, clearHeaderLeft, headerRight, clearHeaderRight],
   )
 
