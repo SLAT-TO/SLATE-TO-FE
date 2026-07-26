@@ -35,6 +35,8 @@ export interface JobPost {
 
 export interface RecruitmentDetail {
   id: number
+  /** TODO: API 연동 시 제거 — author.userId === 내 userId로 판단 */
+  isOwner: boolean
   title: string
   /** 외주/단편영화 등 상단 태그 */
   type: string
@@ -73,4 +75,15 @@ export interface RecruitApplicant {
   applicantProfileImageUrl: string
   appliedAt: string
   introduction: string
+}
+
+export interface JobPostFormValues {
+  deadline?: Date
+  recruitPart: string
+  shootingRegion: string
+  videoType: string
+  videoLength: string
+  participationPeriod?: { from?: Date; to?: Date }
+  pay: string
+  description: string
 }
