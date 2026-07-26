@@ -5,6 +5,7 @@ import {
   getProjectFiles,
   getUploadUrl,
   registerFile,
+  updateFile,
 } from '../../api/projects'
 import ActionMenu from '../../components/ActionMenu'
 import { Button } from '../../components/Button'
@@ -17,6 +18,7 @@ import type { ProjectFileListItem } from '../../types/file'
 import documentIcon from '../../assets/icons/document.svg?raw'
 import downloadIcon from '../../assets/icons/download.svg?raw'
 import searchIcon from '../../assets/icons/search.svg?raw'
+import starIcon from '../../assets/icons/star.svg?raw'
 import { CARD_BASE } from '../../styles/card'
 
 interface ProjectFileListProps {
@@ -111,6 +113,16 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
     setDeleteTarget(null)
   }
 
+  const toggleFilePin = async (file: ProjectFileListItem) => {
+    const next = !file.isPinned
+    setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, isPinned: next } : f)))
+    try {
+      await updateFile(projectId, file.id, { isPinned: next })
+    } catch {
+      setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, isPinned: !next } : f)))
+    }
+  }
+
   return (
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">파일</h2>
@@ -156,6 +168,14 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
                 {formatDateTime(file.createdAt)}
               </span>
               <span className="text-caption-lg text-neutral-6">{file.uploader.nickname}</span>
+              <button
+                type="button"
+                onClick={() => toggleFilePin(file)}
+                aria-label={file.isPinned ? '즐겨찾기 해제' : '즐겨찾기'}
+                className={file.isPinned ? 'text-caution' : 'text-neutral-4 hover:text-neutral-6'}
+              >
+                <InlineIcon svg={starIcon} className="size-4" />
+              </button>
               <button
                 type="button"
                 onClick={() => downloadFile(file.id)}

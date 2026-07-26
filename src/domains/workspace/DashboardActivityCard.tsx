@@ -1,18 +1,11 @@
-import Choice from '../../components/Choice'
 import type { ProjectActivity } from '../../types/project'
 import { CARD_BASE } from '../../styles/card'
 
 interface DashboardActivityCardProps {
   activities: ProjectActivity[]
-  checkedActivityIds: Set<number>
-  onToggle: (activityId: number, checked: boolean) => void
 }
 
-export default function DashboardActivityCard({
-  activities,
-  checkedActivityIds,
-  onToggle,
-}: DashboardActivityCardProps) {
+export default function DashboardActivityCard({ activities }: DashboardActivityCardProps) {
   return (
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">최근 활동</h2>
@@ -24,14 +17,8 @@ export default function DashboardActivityCard({
         ) : (
           <ul className="flex flex-col gap-4">
             {activities.map((activity) => (
-              <li key={activity.id}>
-                <Choice
-                  type="checkbox"
-                  className="relative"
-                  checked={checkedActivityIds.has(activity.id)}
-                  onChange={(checked) => onToggle(activity.id, checked)}
-                  label={activity.content}
-                />
+              <li key={activity.id} className="text-body-sm text-neutral-10">
+                {activity.content}
               </li>
             ))}
           </ul>

@@ -352,13 +352,17 @@ export function VideoDetailView({
     }
   }
 
+  /** 플레이어 탐색 + 진행바/시간 표시 상태를 함께 갱신 — 둘 중 하나만 하면 화면이 실제 재생 위치와 어긋남 */
+  const seekTo = useCallback((seconds: number) => {
+    playerRef.current?.seekTo(seconds, true)
+    setCurrentTime(seconds)
+  }, [])
+
   const handleSeekClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!duration) return
     const rect = e.currentTarget.getBoundingClientRect()
     const fraction = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
-    const target = fraction * duration
-    playerRef.current?.seekTo(target, true)
-    setCurrentTime(target)
+    seekTo(fraction * duration)
   }
 
   const attachCurrentTime = () => {
@@ -739,7 +743,7 @@ export function VideoDetailView({
                       {feedback.startTime !== null && (
                         <button
                           type="button"
-                          onClick={() => playerRef.current?.seekTo(feedback.startTime ?? 0, true)}
+                          onClick={() => seekTo(feedback.startTime ?? 0)}
                           className="text-caption-sm text-primary font-bold underline"
                         >
                           {formatFeedbackTime(feedback)}

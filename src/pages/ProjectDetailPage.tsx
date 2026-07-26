@@ -66,8 +66,6 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   const [meId, setMeId] = useState<number | null>(null)
   /** 대시보드 탭 내부 공지사항 서브뷰 — 'main'=대시보드, 'list'=공지사항 목록, number=공지 상세(noticeId) */
   const [noticeView, setNoticeView] = useState<'main' | 'list' | number>('main')
-  /** 활동 완료 토글 — API 연동 전 로컬 상태 */
-  const [checkedActivityIds, setCheckedActivityIds] = useState<Set<number>>(() => new Set())
 
   useEffect(() => {
     getMe()
@@ -263,18 +261,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
             <DashboardTodayScheduleCard projectId={projectId} />
           </div>
 
-          <DashboardActivityCard
-            activities={activities}
-            checkedActivityIds={checkedActivityIds}
-            onToggle={(activityId, checked) => {
-              setCheckedActivityIds((prev) => {
-                const next = new Set(prev)
-                if (checked) next.add(activityId)
-                else next.delete(activityId)
-                return next
-              })
-            }}
-          />
+          <DashboardActivityCard activities={activities} />
         </div>
       )}
 
