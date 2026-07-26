@@ -26,7 +26,13 @@ function SettingsPage() {
   const [withdrawError, setWithdrawError] = useState('')
 
   const handleLogout = async () => {
-    await logout()
+    // logout()은 요청 성공 여부와 무관하게 finally에서 로컬 토큰을 지우므로,
+    // 요청 자체가 실패해도(예: 이미 만료된 세션) 로그인 화면으로는 이동시킨다.
+    try {
+      await logout()
+    } catch {
+      // 토큰은 이미 지워졌으므로 무시하고 진행
+    }
     navigate('/login')
   }
 
