@@ -28,17 +28,17 @@ export default function HomeRecommendedJobsSection({
   loading,
 }: HomeRecommendedJobsSectionProps) {
   return (
-    <section className="flex flex-col gap-5">
+    <section className="flex flex-col gap-2.5">
       <h2 className="text-head-sm text-neutral-11 font-bold">추천 공고</h2>
 
-      {loading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
+      {loading && <p className="text-caption-sm text-neutral-6">불러오는 중…</p>}
 
       {!loading && jobs.length === 0 && (
-        <p className="text-body-sm text-neutral-6">추천 공고가 없어요.</p>
+        <p className="text-caption-sm text-neutral-6">추천 공고가 없어요.</p>
       )}
 
       {!loading && jobs.length > 0 && (
-        <div className="grid grid-cols-1 gap-x-10.5 gap-y-10 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-x-10.5 gap-y-5 sm:grid-cols-2">
           {jobs.map((job) => (
             <JobCard
               key={job.id}

@@ -9,13 +9,13 @@ interface HomeProjectsSectionProps {
 
 export default function HomeProjectsSection({ projects, loading }: HomeProjectsSectionProps) {
   return (
-    <section className="flex flex-col gap-5">
+    <section className="flex flex-col gap-2.5">
       <h2 className="text-head-sm text-neutral-11 font-bold">진행 중인 프로젝트</h2>
 
       {loading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
 
       {!loading && projects.length === 0 && (
-        <div className="flex flex-col items-center gap-5 py-6">
+        <div className="flex h-46 flex-col items-center justify-center gap-5 rounded-[10.242px] bg-white shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]">
           <p className="text-body-sm text-neutral-6">
             진행중인 프로젝트가 없어요. 프로젝트를 추가해보세요.
           </p>

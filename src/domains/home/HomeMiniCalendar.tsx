@@ -41,13 +41,17 @@ function getSundayStartGrid(month: Date): Date[] {
   return eachDayOfInterval({ start, end: addDays(start, 41) })
 }
 
-export default function HomeMiniCalendar() {
+interface HomeMiniCalendarProps {
+  className?: string
+}
+
+export default function HomeMiniCalendar({ className = '' }: HomeMiniCalendarProps) {
   const [month, setMonth] = useState(new Date())
   const days = useMemo(() => getSundayStartGrid(month), [month])
 
   return (
-    <div className="flex flex-col items-start gap-2">
-      <div className="flex items-center gap-2">
+    <div className={`flex flex-col items-start gap-2 ${className}`}>
+      <div className="flex items-center gap-2.5">
         <button
           type="button"
           onClick={() => setMonth((m) => subMonths(m, 1))}
@@ -56,7 +60,7 @@ export default function HomeMiniCalendar() {
         >
           <PrevIcon />
         </button>
-        <span className="text-body-sm text-neutral-10 text-center font-semibold tracking-[-0.32px]">
+        <span className="text-caption-lg text-neutral-10 text-center font-semibold tracking-[-0.32px]">
           {format(month, 'yyyy.M')}
         </span>
         <button
@@ -69,25 +73,25 @@ export default function HomeMiniCalendar() {
         </button>
       </div>
 
-      <div className="grid grid-cols-[repeat(7,30px)] gap-1.5">
+      <div className="grid grid-cols-[repeat(7,30px)] gap-0">
         {WEEKDAYS.map((day) => (
           <span
             key={day}
-            className="text-neutral-11 flex h-[30px] w-[30px] items-center justify-center text-center text-[18px] leading-[30px] tracking-[-0.36px]"
+            className="text-neutral-11 text-caption-lg flex h-6 w-6 items-center justify-center text-center leading-6 tracking-[-0.36px]"
           >
             {day}
           </span>
         ))}
       </div>
 
-      <div className="grid grid-cols-[repeat(7,30px)] gap-1.5">
+      <div className="grid grid-cols-[repeat(7,30px)] gap-0">
         {days.map((day) => {
           const inMonth = isSameMonth(day, month)
           const today = isToday(day)
           return (
             <span
               key={day.toISOString()}
-              className={`flex h-[30px] w-[30px] items-center justify-center text-center text-[18px] leading-[30px] tracking-[-0.36px] ${
+              className={`text-caption-lg flex h-6 w-6 items-center justify-center text-center leading-6 tracking-[-0.36px] ${
                 inMonth ? 'text-neutral-10' : 'text-neutral-4'
               } ${today ? 'text-primary font-bold' : ''}`}
             >
