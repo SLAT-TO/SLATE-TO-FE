@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { deleteProject } from '../api/projects'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { deleteProject, updateProjectBookmark } from '../api/projects'
 import { getMe } from '../api/users'
 import ActionMenu from '../components/ActionMenu'
 import { Avatar } from '../components/Avatar'
@@ -13,8 +13,10 @@ import DashboardActivityCard from '../domains/workspace/DashboardActivityCard'
 import NoticeListView from '../domains/workspace/NoticeListView'
 import NoticeDetailView from '../domains/workspace/NoticeDetailView'
 import ProjectFileList from '../domains/workspace/ProjectFileList'
+import { ProjectScheduleTab } from '../domains/workspace/ProjectScheduleTab'
 import { useProjectDetail } from '../hooks/useProjectDetail'
 import { useProjectStatusMenu } from '../hooks/useProjectStatusMenu'
+import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import { projectMetaTags } from '../constants/projectLabels'
 import {
   PROJECT_STATUS_LABEL,
@@ -23,6 +25,23 @@ import {
 } from '../constants/projectStatus'
 import type { ProjectStatus } from '../types/project'
 import { navigate } from '../utils/navigation'
+
+/** 즐겨찾기 별 아이콘 — 클릭 시 북마크 토글 (fill 여부로 상태 표시) */
+function BookmarkStarIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    >
+      <path d="M12 2L14.9 8.6L22 9.3L16.7 14.1L18.2 21L12 17.3L5.8 21L7.3 14.1L2 9.3L9.1 8.6L12 2Z" />
+    </svg>
+  )
+}
 
 const DETAIL_TABS = [
   { key: 'dashboard', label: '대시보드' },
@@ -60,6 +79,72 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     setTab(key)
     if (key !== 'dashboard') setNoticeView('main')
   }
+
+  const handleToggleBookmark = useCallback(async () => {
+    if (!project) return
+    const next = !project.bookmarked
+    setProject((prev) => (prev ? { ...prev, bookmarked: next } : prev))
+    try {
+      await updateProjectBookmark(projectId, { bookmarked: next })
+    } catch {
+      setProject((prev) => (prev ? { ...prev, bookmarked: !next } : prev))
+    }
+  }, [project, projectId, setProject])
+
+  /** 전역 헤더 한 줄에 제목·즐겨찾기·멤버 아바타(왼쪽)와 ActionMenu(오른쪽)를 채운다. 설정/영상 상세 서브뷰에서는 비운다.
+   * useMemo로 감싸지 않으면 매 렌더 새 JSX가 만들어져 useHeaderSlot의 effect가 무한 반복된다. */
+  const showProjectHeader = Boolean(project) && view === 'main' && selectedVideoId === null
+
+  const headerLeftContent = useMemo(() => {
+    if (!showProjectHeader || !project) return null
+    return (
+      <div className="flex w-full items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <h1 className="text-head-md text-neutral-11 font-bold">{project.title}</h1>
+          <button
+            type="button"
+            onClick={handleToggleBookmark}
+            aria-pressed={project.bookmarked}
+            aria-label={project.bookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+            className={project.bookmarked ? 'text-caution' : 'text-neutral-6'}
+          >
+            <BookmarkStarIcon filled={project.bookmarked} />
+          </button>
+        </div>
+
+        {members.length > 0 && (
+          <div className="flex shrink-0 -space-x-2">
+            {members.slice(0, 4).map((member) => (
+              <Avatar
+                key={member.memberId}
+                src={member.profileImageUrl ?? undefined}
+                alt={member.nickname}
+                size={33}
+                fallback={member.nickname.slice(0, 1)}
+                border="gray"
+                className="bg-neutral-2"
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }, [showProjectHeader, project, members, handleToggleBookmark])
+
+  const headerRightContent = useMemo(() => {
+    if (!showProjectHeader) return null
+    return (
+      <ActionMenu
+        items={[
+          { action: 'edit', onClick: () => setView('settings') },
+          { action: 'delete', onClick: () => setDeleteOpen(true) },
+        ]}
+        ariaLabel="프로젝트 메뉴"
+      />
+    )
+  }, [showProjectHeader])
+
+  useHeaderSlot(headerLeftContent, headerRightContent)
 
   if (loading) {
     return <p className="text-body-sm text-neutral-6">불러오는 중…</p>
@@ -114,87 +199,58 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   return (
     <section className="flex w-full flex-col gap-8">
-      <header className="flex items-start justify-between gap-6">
-        <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <div className="flex items-center justify-between gap-2">
-            <h1 className="text-head-md text-neutral-11 font-bold">{project.title}</h1>
-            <ActionMenu
-              items={[
-                { action: 'edit', onClick: () => setView('settings') },
-                { action: 'delete', onClick: () => setDeleteOpen(true) },
-              ]}
-              ariaLabel="프로젝트 메뉴"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {metaTags.map((tag) => (
-              <span
-                key={tag}
-                className="bg-main-1 text-main-6 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
-              >
-                {tag}
-              </span>
-            ))}
-            <div className="relative" ref={statusMenuRef}>
-              <button
-                type="button"
-                onClick={statusMenu.toggle}
-                className={`text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold ${projectStatusColor(project.status)}`}
-              >
-                {projectStatusLabel(project.status)}
-                <svg viewBox="0 0 12 12" fill="none" className="size-3">
-                  <path
-                    d="M2.5 4.5L6 8l3.5-3.5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-              {statusMenu.open && (
-                <ul className="border-neutral-3 bg-bg-primary absolute top-full left-0 z-10 mt-1 w-32 rounded-lg border py-1 shadow-md">
-                  {(Object.keys(PROJECT_STATUS_LABEL) as ProjectStatus[]).map((status) => (
-                    <li key={status}>
-                      <button
-                        type="button"
-                        onClick={() => statusMenu.changeStatus(status)}
-                        className="hover:bg-neutral-2 text-caption-lg text-neutral-10 block w-full px-3 py-2 text-left"
-                      >
-                        {PROJECT_STATUS_LABEL[status]}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <h2 className="text-head-sm text-neutral-11 font-bold">프로젝트 소개</h2>
-            <p className="text-body-sm text-neutral-10 tracking-[-0.32px]">
-              {project.description ?? '설명 없음'}
-            </p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {metaTags.map((tag) => (
+            <span
+              key={tag}
+              className="bg-main-1 text-main-6 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
+            >
+              {tag}
+            </span>
+          ))}
+          <div className="relative" ref={statusMenuRef}>
+            <button
+              type="button"
+              onClick={statusMenu.toggle}
+              className={`text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold ${projectStatusColor(project.status)}`}
+            >
+              {projectStatusLabel(project.status)}
+              <svg viewBox="0 0 12 12" fill="none" className="size-3">
+                <path
+                  d="M2.5 4.5L6 8l3.5-3.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            {statusMenu.open && (
+              <ul className="border-neutral-3 bg-bg-primary absolute top-full left-0 z-10 mt-1 w-32 rounded-lg border py-1 shadow-md">
+                {(Object.keys(PROJECT_STATUS_LABEL) as ProjectStatus[]).map((status) => (
+                  <li key={status}>
+                    <button
+                      type="button"
+                      onClick={() => statusMenu.changeStatus(status)}
+                      className="hover:bg-neutral-2 text-caption-lg text-neutral-10 block w-full px-3 py-2 text-left"
+                    >
+                      {PROJECT_STATUS_LABEL[status]}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
-        {members.length > 0 && (
-          <div className="flex shrink-0 -space-x-2 pt-1">
-            {members.slice(0, 4).map((member) => (
-              <Avatar
-                key={member.memberId}
-                src={member.profileImageUrl ?? undefined}
-                alt={member.nickname}
-                size={33}
-                fallback={member.nickname.slice(0, 1)}
-                border="gray"
-                className="bg-neutral-2"
-              />
-            ))}
-          </div>
-        )}
-      </header>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-head-sm text-neutral-11 font-bold">프로젝트 소개</h2>
+          <p className="text-body-sm text-neutral-10 tracking-[-0.32px]">
+            {project.description ?? '설명 없음'}
+          </p>
+        </div>
+      </div>
 
       <div className="[&_[role=tab][aria-selected=true]]:border-primary w-full [&_[role=tab]]:flex-1 [&_[role=tab]]:px-0 [&_[role=tab]]:text-center [&_[role=tab]]:text-[20px] [&_[role=tab][aria-selected=true]]:border-b-[3px] [&_[role=tablist]]:w-full">
         <Tabs tabs={DETAIL_TABS} activeTab={tab} onChange={handleTabChange} />
@@ -204,7 +260,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         <div className="flex flex-col gap-8">
           <div className="grid gap-8 lg:grid-cols-2">
             <DashboardNoticeCard notices={notices} onExpand={() => setNoticeView('list')} />
-            <DashboardTodayScheduleCard />
+            <DashboardTodayScheduleCard projectId={projectId} />
           </div>
 
           <DashboardActivityCard
@@ -222,11 +278,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         </div>
       )}
 
-      {tab === 'schedule' && (
-        <p className="text-caption-lg text-neutral-6">
-          일정 화면은 캘린더 컴포넌트 리디자인 이후 별도로 구현합니다.
-        </p>
-      )}
+      {tab === 'schedule' && <ProjectScheduleTab projectId={projectId} members={members} />}
 
       {tab === 'dashboard' && noticeView === 'list' && (
         <NoticeListView

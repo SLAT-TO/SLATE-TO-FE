@@ -12,6 +12,7 @@ import { EventFormModal, type EventFormValues } from '../domains/calendar/EventF
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons/ChevronIcons'
 import { useCalendarStore } from '../stores/calendarStore'
 import { toDateKey } from '../utils/calendarUtils'
+import { formatTarget } from '../utils/scheduleAdapter'
 import plusIcon from '../assets/icons/plus.svg?raw'
 
 // index.css 팔레트의 event-1~10 (CSS 변수 참조라 팔레트 값이 바뀌어도 자동으로 따라감)
@@ -19,13 +20,6 @@ const EVENT_COLORS = Array.from({ length: 10 }, (_, i) => `var(--color-event-${i
 
 function randomEventColor() {
   return EVENT_COLORS[Math.floor(Math.random() * EVENT_COLORS.length)]
-}
-
-// "김수민님 외 1인" 형태로 "대상" 표시 문구를 만든다
-function formatTarget(names: string[]): string | undefined {
-  if (names.length === 0) return undefined
-  if (names.length === 1) return `${names[0]}님`
-  return `${names[0]}님 외 ${names.length - 1}인`
 }
 
 // 저장된 CalendarEvent를 "수정하기" 폼의 초기값으로 되돌린다
@@ -55,6 +49,7 @@ export default function CalendarPage() {
   const events = useCalendarStore((s) => s.events)
   const addEvent = useCalendarStore((s) => s.addEvent)
   const updateEvent = useCalendarStore((s) => s.updateEvent)
+  const removeEvent = useCalendarStore((s) => s.removeEvent)
 
   // 일정 필터·일정 추가 폼이 공유하는 실제 프로젝트 목록
   useEffect(() => {
@@ -188,6 +183,8 @@ export default function CalendarPage() {
             events={selectedDateEvents}
             onDeselect={() => setSelectedDate(null)}
             onEditEvent={(event) => setFormModal({ mode: 'edit', event })}
+            onDeleteEvent={(event) => removeEvent(event.id)}
+            onSaveNote={(event, note) => updateEvent(event.id, { note })}
           />
         )}
       </div>

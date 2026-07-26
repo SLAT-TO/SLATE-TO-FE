@@ -55,6 +55,8 @@ export type ProjectDetailResponse = {
   memberCount: number
   canEdit: boolean
   canDelete: boolean
+  /** FE mock 전용 — BE 프로젝트 북마크 API 미구현 */
+  bookmarked: boolean
   createdAt: string
   updatedAt: string
 }
@@ -176,4 +178,15 @@ export type AcceptInvitationResult = {
   memberId: number
   roleNames: string[]
   joinedAt: string
+}
+
+/** FE mock 전용 — BE 프로젝트 북마크 API 미구현 */
+export type BookmarkProjectRequest = {
+  bookmarked: boolean
+}
+
+/** FE mock 전용 — BE 프로젝트 북마크 API 미구현 */
+export type BookmarkProjectResult = {
+  projectId: number
+  bookmarked: boolean
 }

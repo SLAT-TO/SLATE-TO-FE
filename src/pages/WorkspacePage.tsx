@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { getProjects } from '../api/projects'
+import ProjectCard from '../domains/project/ProjectCard'
 import { projectMetaTags } from '../constants/projectLabels'
-import { projectStatusColor, projectStatusLabel } from '../constants/projectStatus'
+import { projectStatusLabel } from '../constants/projectStatus'
 import type { ProjectSummary } from '../types/project'
 import { ApiError } from '../types/api'
 import { navigate } from '../utils/navigation'
@@ -49,43 +50,20 @@ export default function WorkspacePage() {
       )}
 
       {!loading && !error && projects.length > 0 && (
-        <ul className="border-border divide-border divide-y border-y">
-          {projects.map((project) => {
-            const tags = projectMetaTags(project)
-            return (
-              <li key={project.id}>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/workspace/projects/${project.id}`)}
-                  className="hover:bg-neutral-2 flex w-full items-start justify-between gap-4 px-1 py-4 text-left"
-                >
-                  <div className="flex min-w-0 flex-col gap-2">
-                    <span className="text-body-sm text-neutral-11 font-medium">
-                      {project.title}
-                    </span>
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="bg-main-1 text-main-6 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <span
-                    className={`text-caption-sm shrink-0 rounded-[3px] px-[19px] py-1 font-semibold ${projectStatusColor(project.status)}`}
-                  >
-                    {projectStatusLabel(project.status)}
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+        <div className="grid grid-cols-1 gap-x-10.5 gap-y-10 sm:grid-cols-2">
+          {projects.map((project) => (
+            <ProjectCard
+              key={project.id}
+              title={project.title}
+              statusLabel={projectStatusLabel(project.status)}
+              statusVariant={project.status === 'COMPLETED' ? 'ghost' : 'secondary'}
+              tags={projectMetaTags(project)}
+              progress={project.deadlineProgressPercent ?? undefined}
+              members={project.memberPreviewImageUrls.map((src) => ({ src }))}
+              onClick={() => navigate(`/workspace/projects/${project.id}`)}
+            />
+          ))}
+        </div>
       )}
     </section>
   )

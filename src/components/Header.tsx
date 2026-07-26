@@ -16,14 +16,16 @@ function BellIcon() {
 }
 
 export default function Header({ userName = '000' }: HeaderProps) {
-  const headerLeft = useContext(HeaderSlotContext)?.headerLeft ?? null
+  const slot = useContext(HeaderSlotContext)
+  const headerLeft = slot?.headerLeft ?? null
+  const headerRight = slot?.headerRight ?? null
 
   return (
-    <header className="bg-bg-secondary flex h-16 flex-shrink-0 items-center justify-between px-8">
-      <div className="flex items-center gap-3">{headerLeft}</div>
+    <header className="bg-bg-secondary flex h-16 shrink-0 items-center justify-between px-8">
+      <div className="flex min-w-0 flex-1 items-center gap-3">{headerLeft}</div>
 
       {/* 우측 액션 영역 */}
-      <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-4">
         {/* 알림 */}
         <button
           type="button"
@@ -42,6 +44,9 @@ export default function Header({ userName = '000' }: HeaderProps) {
         >
           {userName.charAt(0)}
         </button>
+
+        {/* 페이지별 추가 영역 (예: ProjectDetailPage의 ActionMenu) */}
+        {headerRight}
       </div>
     </header>
   )
