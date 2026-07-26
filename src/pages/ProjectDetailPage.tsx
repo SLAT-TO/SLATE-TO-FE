@@ -82,7 +82,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   const handleToggleBookmark = useCallback(async () => {
     if (!project) return
     const next = !project.bookmarked
-    setProject({ ...project, bookmarked: next })
+    setProject((prev) => (prev ? { ...prev, bookmarked: next } : prev))
     try {
       await updateProjectBookmark(projectId, { bookmarked: next })
     } catch {

@@ -250,6 +250,7 @@ export const projectHandlers = [
     const project = db.projects.find((p) => p.id === Number(params.projectId))
     if (!project) return domainError('PROJECT404', '프로젝트를 찾을 수 없습니다.')
     const body = (await request.json()) as BookmarkProjectRequest
+    if (typeof body.bookmarked !== 'boolean') return badRequest()
     project.bookmarked = body.bookmarked
     return HttpResponse.json(ok({ projectId: project.id, bookmarked: project.bookmarked }), {
       status: 200,
