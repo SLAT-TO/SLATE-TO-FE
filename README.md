@@ -283,6 +283,12 @@ npm run format:check  # 포맷 위반 여부만 확인 (CI와 동일)
 - 당분간 Vercel Preview·Production 모두 MSW mock을 씁니다. 실 BE 연동 시 Production만 `VITE_ENABLE_MSW=false` + `VITE_API_BASE_URL`을 넣습니다.
 - BE 응답 shape 차이는 BE 연동 PR(#93)의 `src/api/normalize.ts`에서 FE 도메인 모델로 맞춥니다.
 
+### 로그인 → 온보딩 체험 플로우 (mock 하드코딩)
+
+`/login`의 "구글 로그인 / 회원가입" 버튼은 신규 유저(`mockUser=new`)로 로그인해 `/onboarding`으로 이동하도록 **체험용으로 하드코딩**되어 있습니다(실 인증 연동 전까지 임시). 온보딩 완료 시 홈(`/`)으로 이동합니다.
+
+> ⚠️ 온보딩에서 선택한 역할·지역·카테고리·프로필 값은 **아직 API로 전송되지 않습니다**(`ProfileStep`이 로컬 상태만 갖고 `onComplete`를 바로 호출). 즉 온보딩에서 무엇을 선택하든 이후 화면(홈·마이페이지 등)에는 mock 유저의 기존 고정 데이터가 그대로 표시됩니다 — UI 플로우 확인용이며, 실제 데이터 반영은 BE 연동 후 작업 예정입니다.
+
 ## 화면 목록 및 플로우
 
 | 영역          | 화면                                                                                |
