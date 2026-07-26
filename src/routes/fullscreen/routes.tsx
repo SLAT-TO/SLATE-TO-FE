@@ -5,6 +5,7 @@ import { InviteAcceptPage } from '../../pages/InviteAcceptPage'
 import { SignupPage } from '../../pages/SignupPage'
 import { LandingPage } from '../../pages/LandingPage'
 import { OnboardingPage } from '../../pages/onboarding/OnboardingPage'
+import { navigate } from '../../utils/navigation'
 import type { FullscreenRoute } from './types'
 
 /** 각 기능 PR은 이 배열에만 경로 추가 (App.tsx 수정 금지) */
@@ -18,5 +19,5 @@ export const fullscreenRoutes: FullscreenRoute[] = [
   },
   { path: '/signup', render: () => <SignupPage /> },
   { path: '/landing', render: () => <LandingPage /> },
-  { path: '/onboarding', render: () => <OnboardingPage /> },
+  { path: '/onboarding', render: () => <OnboardingPage onComplete={() => navigate('/')} /> },
 ]
