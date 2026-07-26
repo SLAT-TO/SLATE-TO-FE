@@ -119,6 +119,7 @@ export default function VideoFeedbackTab({
   const [videos, setVideos] = useState<VideoListItem[]>([])
   const [videosLoading, setVideosLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<VideoListItem | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -141,13 +142,20 @@ export default function VideoFeedbackTab({
 
   const confirmDeleteVideo = async () => {
     if (!deleteTarget) return
-    await deleteVideo(projectId, deleteTarget.videoId)
-    setVideos((prev) => prev.filter((v) => v.videoId !== deleteTarget.videoId))
-    setDeleteTarget(null)
+    setDeleteError(null)
+    try {
+      await deleteVideo(projectId, deleteTarget.videoId)
+      setVideos((prev) => prev.filter((v) => v.videoId !== deleteTarget.videoId))
+      setDeleteTarget(null)
+    } catch {
+      setDeleteError('영상을 삭제하지 못했습니다. 다시 시도해주세요.')
+      setDeleteTarget(null)
+    }
   }
 
   return (
     <section className="flex flex-col gap-3">
+      {deleteError && <p className="text-caption-lg text-warning">{deleteError}</p>}
       {videosLoading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
       {!videosLoading && videos.length === 0 && (
         <p className="text-caption-lg text-neutral-6">등록된 영상이 없습니다.</p>
