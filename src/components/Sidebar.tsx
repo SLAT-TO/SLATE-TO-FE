@@ -81,7 +81,7 @@ export default function Sidebar() {
         <span
           role="img"
           aria-label="SLATE-TO"
-          className="[&_svg]:h-[20px] [&_svg]:w-[143px]"
+          className="text-primary [&_svg]:h-[20px] [&_svg]:w-[143px]"
           dangerouslySetInnerHTML={{ __html: logo }}
         />
       </div>
