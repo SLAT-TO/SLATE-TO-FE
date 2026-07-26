@@ -10,7 +10,7 @@ SLATE-TO는 영상 제작자들이 구인구직, 프로젝트 관리, 팀 협업
 
 | 이름   | 담당 페이지                                           | 담당 공용 컴포넌트                                              |
 | ------ | ----------------------------------------------------- | --------------------------------------------------------------- |
-| 클레버 | 워크스페이스 · 프로젝트 상세 (영상 피드백)            | TextArea · YouTube Iframe Player · Select · Choice · ActionMenu |
+| 클레버 | 워크스페이스 · 프로젝트 상세 (영상 피드백) · 설정(계정) | TextArea · YouTube Iframe Player · Select · Choice · ActionMenu |
 | 디아   | 로그인 / 인증 (토큰 · 소셜 · 라우팅 가드)             | Input · 영상 미리보기 · Tag · FileInput                         |
 | 이브   | 온보딩 · 홈 · 캘린더 · 알림                           | Button · Calendar(라이브러리) · Avatar · DatePicker · Switch    |
 | 재희   | 레이아웃 (골격) · 구인구직 · 마이페이지 · 전역 스타일 | ProgressBar · Modal(껍데기+ConfirmModal) · Tabs · 레이아웃      |
@@ -294,6 +294,7 @@ npm run format:check  # 포맷 위반 여부만 확인 (CI와 동일)
 | 프로필        | 마이 프로필, 공개 프로필, 북마크                                                    |
 | 워크스페이스  | 프로젝트 목록, 설정, 공지, 활동                                                     |
 | 프로젝트 상세 | 대시보드, 일정, 파일, 피드백                                                        |
+| 설정(계정)    | 알림 설정, 비밀번호 변경, 문의, 회원탈퇴                                            |
 
 ```mermaid
 flowchart TD
