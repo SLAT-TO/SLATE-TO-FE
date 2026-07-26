@@ -1,4 +1,5 @@
 import { authHandlers } from './auth'
+import { inquiryHandlers } from './inquiries'
 import { projectHandlers } from './projects'
 import { recruitmentHandlers } from './recruitments'
 import { scheduleHandlers } from './schedules'
@@ -12,6 +13,7 @@ export const handlers = [
   ...videoHandlers,
   ...recruitmentHandlers,
   ...scheduleHandlers,
+  ...inquiryHandlers,
 ]
 
 // 스프레드 연산자가 없으면 [[1], [2], [3]] 형태의 2차원 배열 형태가 됨

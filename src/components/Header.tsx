@@ -2,6 +2,7 @@ import { navigate } from '../utils/navigation'
 
 import { useContext } from 'react'
 import { HeaderSlotContext } from '../layouts/headerSlotContext'
+import HeaderProfileMenu from './HeaderProfileMenu'
 type HeaderProps = {
   userName?: string
 }
@@ -36,14 +37,8 @@ export default function Header({ userName = '000' }: HeaderProps) {
           <BellIcon />
         </button>
 
-        {/* 아바타 */}
-        <button
-          type="button"
-          className="bg-neutral-3 text-caption-sm text-neutral-7 hover:bg-neutral-4 flex h-10 w-10 items-center justify-center rounded-full font-medium"
-          aria-label="프로필"
-        >
-          {userName.charAt(0)}
-        </button>
+        {/* 아바타 (클릭 시 나의 구인구직/마이페이지/설정 드롭다운) */}
+        <HeaderProfileMenu userName={userName} />
 
         {/* 페이지별 추가 영역 (예: ProjectDetailPage의 ActionMenu) */}
         {headerRight}

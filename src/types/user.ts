@@ -109,3 +109,15 @@ export type NotificationSettings = {
   emailNewApplicant: boolean
   emailMissedSummary: boolean
 }
+
+/** FE mock 전용 — BE 비밀번호 변경 API 미구현 */
+export type ChangePasswordRequest = {
+  currentPassword: string
+  newPassword: string
+}
+
+/** FE mock 전용 — 회원탈퇴 시 비밀번호 재확인 (BE 미구현) */
+export type DeleteAccountRequest = {
+  agreed: boolean
+  password: string
+}
