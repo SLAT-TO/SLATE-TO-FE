@@ -9,6 +9,7 @@ export const paths = {
     refresh: `${API_PREFIX}/auth/refresh`,
   },
   users: {
+    /** GET/PATCH만 BE 구현. DELETE(회원탈퇴)는 BE 미구현 — FE mock 전용 */
     me: `${API_PREFIX}/users/me`,
     /** Notion DB에 GET /users/me 중복 등록 — 통계는 임시 path 분리 */
     activityStats: `${API_PREFIX}/users/me/activity-stats`,
@@ -28,7 +29,7 @@ export const paths = {
   projects: {
     root: `${API_PREFIX}/projects`,
     byId: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}`,
-    bookmark: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/bookmark`,
+    pin: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/pin`,
     videos: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/videos`,
     video: (projectId: number | string, videoId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/videos/${videoId}`,
@@ -37,10 +38,8 @@ export const paths = {
     files: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/files`,
     file: (projectId: number | string, fileId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/files/${fileId}`,
-    uploadUrl: (projectId: number | string) =>
-      `${API_PREFIX}/projects/${projectId}/files/upload-url`,
-    downloadUrl: (projectId: number | string, fileId: number | string) =>
-      `${API_PREFIX}/projects/${projectId}/files/${fileId}/download-url`,
+    download: (projectId: number | string, fileId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/files/${fileId}/download`,
     invitations: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/invitations`,
     members: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/members`,
     member: (projectId: number | string, memberId: number | string) =>
@@ -73,6 +72,7 @@ export const paths = {
   },
   replies: {
     byId: (replyId: number | string) => `${API_PREFIX}/replies/${replyId}`,
+    status: (replyId: number | string) => `${API_PREFIX}/replies/${replyId}/status`,
   },
   shareLinks: {
     byToken: (token: string) => `${API_PREFIX}/share-links/${token}`,

@@ -22,6 +22,7 @@ import type {
   ShareLinkAccess,
   UpdateFeedbackRequest,
   UpdateFeedbackStatusRequest,
+  UpdateReplyStatusRequest,
 } from '../types/feedback'
 
 export async function getVideos(
@@ -137,6 +138,13 @@ export async function updateReply(
   body: { content?: string; deleted?: boolean },
 ): Promise<FeedbackReply | null> {
   return request({ method: 'PATCH', url: paths.replies.byId(replyId), data: body })
+}
+
+export async function updateReplyStatus(
+  replyId: number,
+  body: UpdateReplyStatusRequest,
+): Promise<{ replyId: number; status: boolean; updatedAt: string }> {
+  return request({ method: 'PATCH', url: paths.replies.status(replyId), data: body })
 }
 
 export async function createShareLink(videoId: number): Promise<ShareLink> {

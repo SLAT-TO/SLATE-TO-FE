@@ -133,31 +133,4 @@ export const scheduleHandlers = [
     schedule.updatedAt = new Date().toISOString()
     return HttpResponse.json(ok(schedule), { status: 200 })
   }),
-
-  http.get(paths.notifications.unreadCount, () => {
-    if (!safeUser()) return unauthorized()
-    const count = db.notifications.filter((n) => !n.isRead).length
-    return HttpResponse.json(ok({ count }), { status: 200 })
-  }),
-
-  http.get(paths.notifications.root, () => {
-    if (!safeUser()) return unauthorized()
-    return HttpResponse.json(ok({ items: db.notifications }), { status: 200 })
-  }),
-
-  http.patch(paths.notifications.read(':notificationId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
-    const notification = db.notifications.find((n) => n.id === Number(params.notificationId))
-    if (!notification) return notFound()
-    notification.isRead = true
-    return HttpResponse.json(ok(notification), { status: 200 })
-  }),
-
-  http.patch(paths.notifications.readAll, () => {
-    if (!safeUser()) return unauthorized()
-    db.notifications.forEach((n) => {
-      n.isRead = true
-    })
-    return HttpResponse.json(ok({ count: db.notifications.length }), { status: 200 })
-  }),
 ]

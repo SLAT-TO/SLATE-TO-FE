@@ -1,10 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
-import type {
-  BookmarkProjectRequest,
-  CreateProjectRequest,
-  UpdateProjectRequest,
-} from '../../types/project'
+import type { CreateProjectRequest, UpdateProjectRequest } from '../../types/project'
 import type { CreateNoticeRequest, UpdateNoticeRequest } from '../../types/notice'
 import {
   allocId,
@@ -131,7 +127,8 @@ function toProjectDetail(project: MockProjectRecord, currentUserId: number) {
     memberCount: db.members.length,
     canEdit: me?.permission === 'ADMIN',
     canDelete: me?.permission === 'ADMIN',
-    bookmarked: project.bookmarked,
+    isPinned: project.isPinned,
+    pinnedAt: project.pinnedAt,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
   }
@@ -181,7 +178,8 @@ export const projectHandlers = [
       startDate: now.slice(0, 10),
       endDate: body.endDate,
       ownerUserId: user.id,
-      bookmarked: false,
+      isPinned: false,
+      pinnedAt: null,
       createdAt: now,
       updatedAt: now,
     }
@@ -245,16 +243,32 @@ export const projectHandlers = [
     return HttpResponse.json(ok({ deletedAt: new Date().toISOString() }), { status: 200 })
   }),
 
-  http.patch(paths.projects.bookmark(':projectId'), async ({ request, params }) => {
+  http.post(paths.projects.pin(':projectId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const project = db.projects.find((p) => p.id === Number(params.projectId))
     if (!project) return domainError('PROJECT404', '프로젝트를 찾을 수 없습니다.')
-    const body = (await request.json()) as BookmarkProjectRequest
-    if (typeof body.bookmarked !== 'boolean') return badRequest()
-    project.bookmarked = body.bookmarked
-    return HttpResponse.json(ok({ projectId: project.id, bookmarked: project.bookmarked }), {
-      status: 200,
-    })
+    project.isPinned = true
+    project.pinnedAt = new Date().toISOString()
+    return HttpResponse.json(
+      ok({ id: project.id, isPinned: project.isPinned, pinnedAt: project.pinnedAt }),
+      {
+        status: 200,
+      },
+    )
+  }),
+
+  http.delete(paths.projects.pin(':projectId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const project = db.projects.find((p) => p.id === Number(params.projectId))
+    if (!project) return domainError('PROJECT404', '프로젝트를 찾을 수 없습니다.')
+    project.isPinned = false
+    project.pinnedAt = null
+    return HttpResponse.json(
+      ok({ id: project.id, isPinned: project.isPinned, pinnedAt: project.pinnedAt }),
+      {
+        status: 200,
+      },
+    )
   }),
 
   http.get(paths.projects.members(':projectId'), ({ params }) => {
@@ -420,57 +434,41 @@ export const projectHandlers = [
     )
   }),
 
-  http.post(paths.projects.uploadUrl(':projectId'), async ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
-    if (!db.projects.some((p) => p.id === Number(params.projectId))) return notFound()
-    const body = (await request.json()) as {
+  http.post(paths.projects.files(':projectId'), async ({ request, params }) => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+    const projectId = Number(params.projectId)
+    if (!db.projects.some((p) => p.id === projectId)) return notFound()
+
+    const formData = await request.formData()
+    const filePart = formData.get('file')
+    const requestPart = formData.get('request')
+    if (!(filePart instanceof File) || typeof requestPart !== 'string') return badRequest()
+
+    const body = JSON.parse(requestPart) as {
       fileName: string
-      contentType: string
-      fileSize: number
+      description?: string
+      isFinal?: boolean
     }
-    if (!body.fileName || !body.contentType || body.fileSize == null) return badRequest()
-    if (body.fileSize > 100 * 1024 * 1024) {
+    if (!body.fileName) return badRequest()
+    if (filePart.size > 100 * 1024 * 1024) {
       return domainError(
         'PROJECT_FILE_SIZE400',
         '프로젝트 파일은 최대 100MB까지 업로드할 수 있습니다.',
       )
     }
 
-    return HttpResponse.json(
-      created({
-        uploadUrl: 'https://example.com/mock-upload',
-        storageKey: `projects/${params.projectId}/files/${body.fileName}`,
-        expiresAt: '2026-12-31T00:00:00Z',
-        requiredHeaders: { 'Content-Type': body.contentType },
-      }),
-      { status: 201 },
-    )
-  }),
-
-  http.post(paths.projects.files(':projectId'), async ({ request, params }) => {
-    const user = safeUser()
-    if (!user) return unauthorized()
-    const projectId = Number(params.projectId)
-    if (!db.projects.some((p) => p.id === projectId)) return notFound()
-    const body = (await request.json()) as {
-      fileName: string
-      description?: string
-      storageKey: string
-      contentType: string
-      fileSize: number
-      isPinned?: boolean
-    }
     const now = new Date().toISOString()
     const file = {
       id: allocId(),
       projectId,
       fileName: body.fileName,
       description: body.description ?? null,
-      storageKey: body.storageKey,
-      contentType: body.contentType,
-      fileSize: body.fileSize,
-      isPinned: body.isPinned ?? false,
-      isFinal: false,
+      storageKey: `projects/${projectId}/files/${body.fileName}`,
+      contentType: filePart.type || 'application/octet-stream',
+      fileSize: filePart.size,
+      isPinned: false,
+      isFinal: body.isFinal ?? false,
       uploaderId: user.id,
       createdAt: now,
       updatedAt: now,
@@ -496,17 +494,19 @@ export const projectHandlers = [
     return HttpResponse.json(ok({ deletedAt: new Date().toISOString() }), { status: 200 })
   }),
 
-  http.get(paths.projects.downloadUrl(':projectId', ':fileId'), ({ params }) => {
+  http.get(paths.projects.download(':projectId', ':fileId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const file = db.files.find((f) => f.id === Number(params.fileId))
     if (!file) return notFound()
-    return HttpResponse.json(
-      ok({
-        downloadUrl: `https://example.com/mock-download/${file.storageKey}`,
-        expiresAt: '2026-12-31T00:00:00Z',
-      }),
-      { status: 200 },
-    )
+    /** mock 환경엔 실제 업로드 바이트가 없어 파일명을 담은 텍스트로 대체 */
+    const body = `mock file content: ${file.fileName}`
+    return new HttpResponse(body, {
+      status: 200,
+      headers: {
+        'Content-Type': file.contentType,
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(file.fileName)}"`,
+      },
+    })
   }),
 
   http.get(paths.projects.notices(':projectId'), ({ request, params }) => {

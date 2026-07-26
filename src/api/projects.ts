@@ -1,15 +1,14 @@
-import { request } from './client'
+import { request, requestBlob } from './client'
 import { paths } from './paths'
 import type {
   AcceptInvitationRequest,
   AcceptInvitationResult,
-  BookmarkProjectRequest,
-  BookmarkProjectResult,
   CreateInvitationResult,
   CreateProjectRequest,
   CreateProjectResult,
   CursorPage,
   MemberSummary,
+  PinProjectResult,
   ProjectActivity,
   ProjectDetailResponse,
   ProjectInvitationDetailResponse,
@@ -20,13 +19,10 @@ import type {
   UpdateProjectRequest,
 } from '../types/project'
 import type {
-  DownloadUrlResult,
   ProjectFile,
   ProjectFileListItem,
-  RegisterFileRequest,
+  ProjectFileUploadRequest,
   UpdateFileRequest,
-  UploadUrlRequest,
-  UploadUrlResult,
 } from '../types/file'
 import type {
   CreateNoticeRequest,
@@ -61,11 +57,12 @@ export async function deleteProject(projectId: number): Promise<null> {
   return request({ method: 'DELETE', url: paths.projects.byId(projectId) })
 }
 
-export async function updateProjectBookmark(
-  projectId: number,
-  body: BookmarkProjectRequest,
-): Promise<BookmarkProjectResult> {
-  return request({ method: 'PATCH', url: paths.projects.bookmark(projectId), data: body })
+export async function pinProject(projectId: number): Promise<PinProjectResult> {
+  return request({ method: 'POST', url: paths.projects.pin(projectId) })
+}
+
+export async function unpinProject(projectId: number): Promise<PinProjectResult> {
+  return request({ method: 'DELETE', url: paths.projects.pin(projectId) })
 }
 
 export async function getProjectMembers(projectId: number): Promise<ProjectMemberListResponse> {
@@ -138,25 +135,21 @@ export async function getProjectFile(projectId: number, fileId: number): Promise
   return request({ method: 'GET', url: paths.projects.file(projectId, fileId) })
 }
 
-export async function getUploadUrl(
+/** multipart/form-data 직접 업로드 — file(바이너리) + request(JSON 메타데이터) 두 파트로 전송 */
+export async function uploadProjectFile(
   projectId: number,
-  body: UploadUrlRequest,
-): Promise<UploadUrlResult> {
-  return request({ method: 'POST', url: paths.projects.uploadUrl(projectId), data: body })
-}
-
-export async function createUploadUrl(
-  projectId: number,
-  body: UploadUrlRequest,
-): Promise<UploadUrlResult> {
-  return getUploadUrl(projectId, body)
-}
-
-export async function registerFile(
-  projectId: number,
-  body: RegisterFileRequest,
+  file: File,
+  body: ProjectFileUploadRequest,
 ): Promise<ProjectFile> {
-  return request({ method: 'POST', url: paths.projects.files(projectId), data: body })
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('request', new Blob([JSON.stringify(body)], { type: 'application/json' }))
+  return request({
+    method: 'POST',
+    url: paths.projects.files(projectId),
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
 }
 
 export async function updateFile(
@@ -174,11 +167,9 @@ export async function deleteFile(
   return request({ method: 'DELETE', url: paths.projects.file(projectId, fileId) })
 }
 
-export async function getDownloadUrl(
-  projectId: number,
-  fileId: number,
-): Promise<DownloadUrlResult> {
-  return request({ method: 'GET', url: paths.projects.downloadUrl(projectId, fileId) })
+/** BE가 presigned URL 대신 파일 바이너리를 직접 응답 */
+export async function downloadProjectFile(projectId: number, fileId: number): Promise<Blob> {
+  return requestBlob({ method: 'GET', url: paths.projects.download(projectId, fileId) })
 }
 
 export async function getProjectNotices(

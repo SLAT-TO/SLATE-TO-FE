@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { deleteProject, updateProjectBookmark } from '../api/projects'
+import { deleteProject, pinProject, unpinProject } from '../api/projects'
 import { getMe } from '../api/users'
 import ActionMenu from '../components/ActionMenu'
 import { Avatar } from '../components/Avatar'
@@ -82,12 +82,15 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   const handleToggleBookmark = useCallback(async () => {
     if (!project) return
-    const next = !project.bookmarked
-    setProject((prev) => (prev ? { ...prev, bookmarked: next } : prev))
+    const next = !project.isPinned
+    setProject((prev) => (prev ? { ...prev, isPinned: next } : prev))
     try {
-      await updateProjectBookmark(projectId, { bookmarked: next })
+      const result = next ? await pinProject(projectId) : await unpinProject(projectId)
+      setProject((prev) =>
+        prev ? { ...prev, isPinned: result.isPinned, pinnedAt: result.pinnedAt } : prev,
+      )
     } catch {
-      setProject((prev) => (prev ? { ...prev, bookmarked: !next } : prev))
+      setProject((prev) => (prev ? { ...prev, isPinned: !next } : prev))
     }
   }, [project, projectId, setProject])
 
@@ -104,11 +107,11 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
           <button
             type="button"
             onClick={handleToggleBookmark}
-            aria-pressed={project.bookmarked}
-            aria-label={project.bookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-            className={project.bookmarked ? 'text-caution' : 'text-neutral-6'}
+            aria-pressed={project.isPinned}
+            aria-label={project.isPinned ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+            className={project.isPinned ? 'text-caution' : 'text-neutral-6'}
           >
-            <BookmarkStarIcon filled={project.bookmarked} />
+            <BookmarkStarIcon filled={project.isPinned} />
           </button>
         </div>
 

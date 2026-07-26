@@ -30,6 +30,8 @@ export type FeedbackReply = {
   startTime: number | null
   /** FE mock 전용 — BE 답글 API 미지원 */
   endTime: number | null
+  /** 해결 여부. PATCH /replies/{replyId}/status 로 변경 */
+  status: boolean
   createdAt: string
   updatedAt: string
 }
@@ -60,6 +62,12 @@ export type CreateReplyRequest = {
   startTime?: number
   /** FE mock 전용 — BE 답글 API 미지원 */
   endTime?: number
+}
+
+export type UpdateReplyStatusRequest = {
+  /** BE ReplyStatusReqDTO — 필수 */
+  userId: number
+  status: boolean
 }
 
 export type ShareLink = {

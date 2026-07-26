@@ -280,6 +280,7 @@ export const videoHandlers = [
       content: body.content,
       startTime: body.startTime ?? null,
       endTime: body.endTime ?? null,
+      status: false,
       createdAt: now,
       updatedAt: now,
     }
@@ -301,6 +302,24 @@ export const videoHandlers = [
       reply.updatedAt = new Date().toISOString()
     }
     return HttpResponse.json(ok(reply), { status: 200 })
+  }),
+
+  http.patch(paths.replies.status(':replyId'), async ({ request, params }) => {
+    if (!safeUser()) return unauthorized()
+    const reply = db.replies.find((r) => r.replyId === Number(params.replyId))
+    if (!reply) return notFound()
+    const body = (await request.json()) as { userId?: number; status: boolean }
+    if (body.userId == null || body.status === undefined) return badRequest()
+    reply.status = body.status
+    reply.updatedAt = new Date().toISOString()
+    return HttpResponse.json(
+      ok({
+        replyId: reply.replyId,
+        status: reply.status,
+        updatedAt: reply.updatedAt,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.post(paths.videos.shareLinks(':videoId'), ({ params }) => {

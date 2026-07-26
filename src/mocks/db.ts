@@ -101,7 +101,8 @@ export type MockProjectRecord = {
   startDate: string | null
   endDate: string | null
   ownerUserId: number
-  bookmarked: boolean
+  isPinned: boolean
+  pinnedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -209,7 +210,8 @@ export const db: MockDb = {
       startDate: '2026-06-01',
       endDate: '2026-12-31',
       ownerUserId: completeUser.id,
-      bookmarked: false,
+      isPinned: false,
+      pinnedAt: null,
       createdAt: '2026-06-01T09:00:00Z',
       updatedAt: '2026-07-01T09:00:00Z',
     },
@@ -225,7 +227,8 @@ export const db: MockDb = {
       startDate: '2026-05-01',
       endDate: '2026-08-15',
       ownerUserId: completeUser.id,
-      bookmarked: false,
+      isPinned: false,
+      pinnedAt: null,
       createdAt: '2026-05-01T09:00:00Z',
       updatedAt: '2026-07-05T09:00:00Z',
     },
@@ -361,6 +364,7 @@ export const db: MockDb = {
       content: '확인했습니다, 수정하겠습니다',
       startTime: null,
       endTime: null,
+      status: false,
       createdAt: '2026-05-21T01:00:00Z',
       updatedAt: '2026-05-21T01:00:00Z',
     },
@@ -504,22 +508,26 @@ export const db: MockDb = {
   ],
   notifications: [
     {
-      id: 1,
-      type: 'SCHEDULE',
-      title: '오늘 일정이 있습니다',
-      body: '레퍼런스 회의 14:00',
+      notificationId: 1,
+      projectId: 1,
+      type: 'SCHEDULE_ASSIGNED',
+      content: '오늘 레퍼런스 회의 일정이 있습니다 (14:00)',
+      targetType: 'SCHEDULE',
+      targetId: 1,
       isRead: false,
+      readAt: null,
       createdAt: '2026-07-10T08:00:00Z',
-      link: '/calendar',
     },
     {
-      id: 2,
-      type: 'APPLICATION',
-      title: '새 지원자가 있습니다',
-      body: '웹드라마 편집자 모집',
+      notificationId: 2,
+      projectId: null,
+      type: 'RECRUITMENT_APPLIED',
+      content: '웹드라마 편집자 모집에 새 지원자가 있습니다',
+      targetType: 'RECRUITMENT',
+      targetId: 1,
       isRead: true,
+      readAt: '2026-06-16T02:00:00Z',
       createdAt: '2026-06-16T01:00:00Z',
-      link: '/jobs/1',
     },
   ],
   activities: [
