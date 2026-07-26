@@ -3,6 +3,8 @@ import { paths } from './paths'
 import type {
   AcceptInvitationRequest,
   AcceptInvitationResult,
+  BookmarkProjectRequest,
+  BookmarkProjectResult,
   CreateInvitationResult,
   CreateProjectRequest,
   CreateProjectResult,
@@ -57,6 +59,13 @@ export async function updateProject(
 
 export async function deleteProject(projectId: number): Promise<null> {
   return request({ method: 'DELETE', url: paths.projects.byId(projectId) })
+}
+
+export async function updateProjectBookmark(
+  projectId: number,
+  body: BookmarkProjectRequest,
+): Promise<BookmarkProjectResult> {
+  return request({ method: 'PATCH', url: paths.projects.bookmark(projectId), data: body })
 }
 
 export async function getProjectMembers(projectId: number): Promise<ProjectMemberListResponse> {

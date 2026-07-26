@@ -27,17 +27,19 @@ interface EventFormModalProps {
   onSubmit: (values: EventFormValues) => void
   /** 모달을 연 시점의 선택된 날짜 — 기간 시작일 기본값 (수정 모드에서는 initialValues가 우선) */
   initialDate?: Date | null
-  /** 관련 프로젝트 선택지 — 실제 프로젝트 목록은 부모(CalendarPage)가 소유 */
-  projectOptions: ReadonlyArray<CalendarFilterOption>
+  /** 관련 프로젝트 선택지 — 실제 프로젝트 목록은 부모(CalendarPage)가 소유. lockedProjectId가 있으면 쓰이지 않는다 */
+  projectOptions?: ReadonlyArray<CalendarFilterOption>
   /** 있으면 "일정 수정" 모드로 이 값들을 채워서 연다 */
   initialValues?: EventFormValues
+  /** 특정 프로젝트 안(워크스페이스 일정 탭)에서 열 때 — "관련 프로젝트" 선택 필드를 숨기고 이 값으로 고정한다 */
+  lockedProjectId?: string
 }
 
-const EMPTY_VALUES = (initialDate?: Date | null): EventFormValues => ({
+const EMPTY_VALUES = (initialDate?: Date | null, projectId = ''): EventFormValues => ({
   title: '',
   startDate: initialDate ?? null,
   endDate: null,
-  projectId: '',
+  projectId,
   participantIds: [],
   participantNames: [],
   place: '',
@@ -52,13 +54,14 @@ export function EventFormModal({
   onClose,
   onSubmit,
   initialDate,
-  projectOptions,
+  projectOptions = [],
   initialValues,
+  lockedProjectId,
 }: EventFormModalProps) {
   const isEditMode = !!initialValues
   // 부모가 열릴 때마다 새로 마운트해준다는 전제 하에 초기값만 계산 — 재오픈 시 자동으로 최신 initialDate/initialValues로 리셋됨
   const [values, setValues] = useState<EventFormValues>(
-    () => initialValues ?? EMPTY_VALUES(initialDate),
+    () => initialValues ?? EMPTY_VALUES(initialDate, lockedProjectId),
   )
 
   // 선택된 프로젝트의 실제 멤버 목록 — "참여 인원"에서 고를 후보
@@ -132,19 +135,21 @@ export function EventFormModal({
           />
         </div>
 
-        <div className="flex flex-col gap-3">
-          <span className={LABEL_CLASS}>관련 프로젝트 (선택)</span>
-          <Select
-            options={projectOptions}
-            value={values.projectId}
-            onChange={(projectId) =>
-              setValues((v) =>
-                projectId ? { ...v, projectId } : { ...v, projectId, participantIds: [] },
-              )
-            }
-            placeholder="프로젝트를 선택해주세요."
-          />
-        </div>
+        {!lockedProjectId && (
+          <div className="flex flex-col gap-3">
+            <span className={LABEL_CLASS}>관련 프로젝트 (선택)</span>
+            <Select
+              options={projectOptions}
+              value={values.projectId}
+              onChange={(projectId) =>
+                setValues((v) =>
+                  projectId ? { ...v, projectId } : { ...v, projectId, participantIds: [] },
+                )
+              }
+              placeholder="프로젝트를 선택해주세요."
+            />
+          </div>
+        )}
 
         {values.projectId && (
           <div className="flex flex-col gap-3">

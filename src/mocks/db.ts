@@ -100,6 +100,7 @@ export type MockProjectRecord = {
   startDate: string | null
   endDate: string | null
   ownerUserId: number
+  bookmarked: boolean
   createdAt: string
   updatedAt: string
 }
@@ -197,6 +198,7 @@ export const db: MockDb = {
       startDate: '2026-06-01',
       endDate: '2026-12-31',
       ownerUserId: completeUser.id,
+      bookmarked: false,
       createdAt: '2026-06-01T09:00:00Z',
       updatedAt: '2026-07-01T09:00:00Z',
     },
@@ -212,6 +214,7 @@ export const db: MockDb = {
       startDate: '2026-05-01',
       endDate: '2026-08-15',
       ownerUserId: completeUser.id,
+      bookmarked: false,
       createdAt: '2026-05-01T09:00:00Z',
       updatedAt: '2026-07-05T09:00:00Z',
     },
