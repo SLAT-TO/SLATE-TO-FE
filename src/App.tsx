@@ -53,7 +53,7 @@ function AppRoutes({ pathname }: { pathname: string }) {
   if (pathname === '/notifications') {
     return <NotificationPage />
   }
-  
+
   if (pathname === '/calendar') {
     return <CalendarPage />
   }
