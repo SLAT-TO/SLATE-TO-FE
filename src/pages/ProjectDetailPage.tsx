@@ -73,6 +73,8 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
       .catch(() => setMeId(null))
   }, [])
 
+  // 서브상태 리셋은 App의 <ProjectDetailPage key={projectId} /> 리마운트에 위임
+
   const handleTabChange = (key: string) => {
     setTab(key)
     if (key !== 'dashboard') setNoticeView('main')
@@ -281,7 +283,20 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         typeof noticeView === 'number' &&
         (() => {
           const selectedNotice = notices.find((n) => n.id === noticeView)
-          if (!selectedNotice) return null
+          if (!selectedNotice) {
+            return (
+              <section className="flex flex-col gap-3">
+                <p className="text-body-sm text-warning">공지를 찾을 수 없습니다.</p>
+                <button
+                  type="button"
+                  onClick={() => setNoticeView('list')}
+                  className="text-body-sm text-primary w-fit underline"
+                >
+                  공지 목록으로 돌아가기
+                </button>
+              </section>
+            )
+          }
           return (
             <NoticeDetailView
               projectId={projectId}

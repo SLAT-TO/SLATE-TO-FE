@@ -34,6 +34,7 @@ import YouTubeIframePlayer from '../../components/YouTubeIframePlayer'
 import VideoCard from './VideoCard'
 import { useHeaderSlot } from '../../hooks/useHeaderSlot'
 import { CARD_BASE } from '../../styles/card'
+import { ApiError } from '../../types/api'
 import type { VideoDetail, VideoListItem, VideoProgressStatus } from '../../types/video'
 import type { Feedback, FeedbackReply } from '../../types/feedback'
 import type { ReferenceFile } from '../../types/video'
@@ -251,6 +252,7 @@ export function VideoDetailView({
   const [referenceFiles, setReferenceFiles] = useState<ReferenceFile[]>([])
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [filter, setFilter] = useState<FeedbackFilter>('all')
   const [newFeedback, setNewFeedback] = useState('')
   const [pendingStart, setPendingStart] = useState<number | null>(null)
@@ -300,6 +302,8 @@ export function VideoDetailView({
 
     async function load() {
       setLoading(true)
+      setLoadError(null)
+      setVideoDetail(null)
       try {
         const [detail, refFiles, feedbackPage, memberList] = await Promise.all([
           getVideo(projectId, videoId),
@@ -315,6 +319,10 @@ export function VideoDetailView({
         setReferenceFiles(refFiles.items)
         setFeedbacks(feedbackPage.items)
         setMembers(memberList.items)
+      } catch (err) {
+        if (!cancelled) {
+          setLoadError(err instanceof ApiError ? err.message : '영상 정보를 불러오지 못했습니다.')
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -633,8 +641,23 @@ export function VideoDetailView({
 
   useHeaderSlot(headerLeftContent, headerRightContent)
 
-  if (loading || !videoDetail) {
+  if (loading) {
     return <p className="text-body-sm text-neutral-6">불러오는 중…</p>
+  }
+
+  if (loadError || !videoDetail) {
+    return (
+      <section className="flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-body-sm text-neutral-11 w-fit font-semibold"
+        >
+          {'< 영상 목록'}
+        </button>
+        <p className="text-body-sm text-warning">{loadError ?? '영상을 찾을 수 없습니다.'}</p>
+      </section>
+    )
   }
 
   return (

@@ -41,28 +41,31 @@ function AppRoutes({ pathname }: { pathname: string }) {
   const headerTitle = useMemo(() => getHeaderTitle(pathname), [pathname])
   useHeaderSlot(useMemo(() => <HeaderTitle>{headerTitle}</HeaderTitle>, [headerTitle]))
 
-  const projectMatch = matchPath('/workspace/projects/:projectId', pathname)
+  // trailing slash 정규화 (/workspace/ → /workspace)
+  const path = pathname.replace(/\/+$/, '') || '/'
+
+  const projectMatch = matchPath('/workspace/projects/:projectId', path)
   if (projectMatch) {
     const projectId = Number(projectMatch.projectId)
     if (!Number.isFinite(projectId)) {
       return <p className="text-body-sm text-warning">잘못된 프로젝트 경로입니다.</p>
     }
-    return <ProjectDetailPage projectId={projectId} />
+    return <ProjectDetailPage key={projectId} projectId={projectId} />
   }
 
-  if (pathname === '/workspace') {
+  if (path === '/workspace') {
     return <WorkspacePage />
   }
 
-  if (pathname === '/notifications') {
+  if (path === '/notifications') {
     return <NotificationPage />
   }
 
-  if (pathname === '/calendar') {
+  if (path === '/calendar') {
     return <CalendarPage />
   }
 
-  const applicantsMatch = matchPath('/matching/:jobId/applicants', pathname)
+  const applicantsMatch = matchPath('/matching/:jobId/applicants', path)
   if (applicantsMatch) {
     const jobId = Number(applicantsMatch.jobId)
     if (!Number.isFinite(jobId)) {
@@ -71,7 +74,7 @@ function AppRoutes({ pathname }: { pathname: string }) {
     return <JobApplicantsPage jobId={jobId} />
   }
 
-  const jobMatch = matchPath('/matching/:jobId', pathname)
+  const jobMatch = matchPath('/matching/:jobId', path)
   if (jobMatch) {
     const jobId = Number(jobMatch.jobId)
     if (!Number.isFinite(jobId)) {
@@ -80,28 +83,28 @@ function AppRoutes({ pathname }: { pathname: string }) {
     return <JobDetailPage jobId={jobId} />
   }
 
-  if (pathname === '/matching') {
+  if (path === '/matching') {
     return <RecruitPage />
   }
 
-  if (pathname === '/settings') return <SettingsPage />
-  if (pathname === '/settings/notifications') return <SettingsNotificationsPage />
-  if (pathname === '/settings/password') return <SettingsPasswordPage />
-  if (pathname === '/settings/inquiry') return <SettingsInquiryPage />
+  if (path === '/settings') return <SettingsPage />
+  if (path === '/settings/notifications') return <SettingsNotificationsPage />
+  if (path === '/settings/password') return <SettingsPasswordPage />
+  if (path === '/settings/inquiry') return <SettingsInquiryPage />
 
-  if (pathname === '/mypage') return <MyPage />
-  if (pathname === '/mypage/edit') return <ProfileEditPage />
-  if (pathname === '/mypage/project/new') return <ProjectFormPage mode="create" />
+  if (path === '/mypage') return <MyPage />
+  if (path === '/mypage/edit') return <ProfileEditPage />
+  if (path === '/mypage/project/new') return <ProjectFormPage mode="create" />
 
-  if (matchPath('/mypage/project/:id/edit', pathname)) {
+  if (matchPath('/mypage/project/:id/edit', path)) {
     return <ProjectFormPage mode="edit" />
   }
 
-  if (matchPath('/mypage/project/:id', pathname)) {
+  if (matchPath('/mypage/project/:id', path)) {
     return <ProjectOverviewPage />
   }
 
-  if (pathname === '/' || pathname === '') {
+  if (path === '/') {
     return <HomePage />
   }
 
