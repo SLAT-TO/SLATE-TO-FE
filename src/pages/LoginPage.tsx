@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Input from '../components/Input'
 import { Button } from '../components/Button'
 import { navigate } from '../utils/navigation'
+import { startGoogleLogin } from '../api/auth'
 import loginBg from '../assets/images/login-bg.png'
 import loginAvatar from '../assets/images/login-avatar.png'
 
@@ -89,6 +90,8 @@ export function LoginPage() {
 
             <button
               type="button"
+              // TODO: /auth/callback 페이지 생기면 redirectTo 제거하고 콜백에서 토큰 처리
+              onClick={() => startGoogleLogin({ redirectTo: '/workspace' })}
               className="bg-neutral-1 border-neutral-5 text-body-sm text-neutral-10 h-12 w-full max-w-[400px] rounded-lg border"
             >
               구글 로그인 / 회원가입
