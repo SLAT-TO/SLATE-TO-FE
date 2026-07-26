@@ -1,10 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
-import type {
-  BookmarkProjectRequest,
-  CreateProjectRequest,
-  UpdateProjectRequest,
-} from '../../types/project'
+import type { CreateProjectRequest, UpdateProjectRequest } from '../../types/project'
 import type { CreateNoticeRequest, UpdateNoticeRequest } from '../../types/notice'
 import {
   allocId,
@@ -99,6 +95,7 @@ function toProjectSummary(project: MockProjectRecord) {
     endDate: project.endDate,
     deadlineProgressPercent: null,
     lastActivityAt: project.updatedAt,
+    isPinned: project.isPinned,
     memberPreviewImageUrls,
     memberCount: db.members.length,
     createdAt: project.createdAt,
@@ -131,7 +128,8 @@ function toProjectDetail(project: MockProjectRecord, currentUserId: number) {
     memberCount: db.members.length,
     canEdit: me?.permission === 'ADMIN',
     canDelete: me?.permission === 'ADMIN',
-    bookmarked: project.bookmarked,
+    isPinned: project.isPinned,
+    pinnedAt: project.pinnedAt,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
   }
@@ -181,7 +179,8 @@ export const projectHandlers = [
       startDate: now.slice(0, 10),
       endDate: body.endDate,
       ownerUserId: user.id,
-      bookmarked: false,
+      isPinned: false,
+      pinnedAt: null,
       createdAt: now,
       updatedAt: now,
     }
@@ -245,16 +244,28 @@ export const projectHandlers = [
     return HttpResponse.json(ok({ deletedAt: new Date().toISOString() }), { status: 200 })
   }),
 
-  http.patch(paths.projects.bookmark(':projectId'), async ({ request, params }) => {
+  http.post(paths.projects.pin(':projectId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const project = db.projects.find((p) => p.id === Number(params.projectId))
     if (!project) return domainError('PROJECT404', '프로젝트를 찾을 수 없습니다.')
-    const body = (await request.json()) as BookmarkProjectRequest
-    if (typeof body.bookmarked !== 'boolean') return badRequest()
-    project.bookmarked = body.bookmarked
-    return HttpResponse.json(ok({ projectId: project.id, bookmarked: project.bookmarked }), {
-      status: 200,
-    })
+    project.isPinned = true
+    project.pinnedAt = new Date().toISOString()
+    return HttpResponse.json(
+      ok({ id: project.id, isPinned: project.isPinned, pinnedAt: project.pinnedAt }),
+      { status: 200 },
+    )
+  }),
+
+  http.delete(paths.projects.pin(':projectId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const project = db.projects.find((p) => p.id === Number(params.projectId))
+    if (!project) return domainError('PROJECT404', '프로젝트를 찾을 수 없습니다.')
+    project.isPinned = false
+    project.pinnedAt = null
+    return HttpResponse.json(
+      ok({ id: project.id, isPinned: project.isPinned, pinnedAt: project.pinnedAt }),
+      { status: 200 },
+    )
   }),
 
   http.get(paths.projects.members(':projectId'), ({ params }) => {
