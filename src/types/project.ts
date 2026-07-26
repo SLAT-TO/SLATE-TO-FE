@@ -17,6 +17,7 @@ export type ProjectSummary = {
   endDate: string | null
   deadlineProgressPercent: number | null
   lastActivityAt: string | null
+  isPinned: boolean
   memberPreviewImageUrls: string[]
   memberCount: number
   createdAt: string
@@ -55,8 +56,8 @@ export type ProjectDetailResponse = {
   memberCount: number
   canEdit: boolean
   canDelete: boolean
-  /** FE mock 전용 — BE 프로젝트 북마크 API 미구현 */
-  bookmarked: boolean
+  isPinned: boolean
+  pinnedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -180,13 +181,9 @@ export type AcceptInvitationResult = {
   joinedAt: string
 }
 
-/** FE mock 전용 — BE 프로젝트 북마크 API 미구현 */
-export type BookmarkProjectRequest = {
-  bookmarked: boolean
-}
-
-/** FE mock 전용 — BE 프로젝트 북마크 API 미구현 */
-export type BookmarkProjectResult = {
-  projectId: number
-  bookmarked: boolean
+/** POST/DELETE /projects/{projectId}/pin — 요청 body 없음 */
+export type PinProjectResult = {
+  id: number
+  isPinned: boolean
+  pinnedAt: string | null
 }

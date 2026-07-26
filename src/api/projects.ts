@@ -3,13 +3,12 @@ import { paths } from './paths'
 import type {
   AcceptInvitationRequest,
   AcceptInvitationResult,
-  BookmarkProjectRequest,
-  BookmarkProjectResult,
   CreateInvitationResult,
   CreateProjectRequest,
   CreateProjectResult,
   CursorPage,
   MemberSummary,
+  PinProjectResult,
   ProjectActivity,
   ProjectDetailResponse,
   ProjectInvitationDetailResponse,
@@ -61,11 +60,12 @@ export async function deleteProject(projectId: number): Promise<null> {
   return request({ method: 'DELETE', url: paths.projects.byId(projectId) })
 }
 
-export async function updateProjectBookmark(
-  projectId: number,
-  body: BookmarkProjectRequest,
-): Promise<BookmarkProjectResult> {
-  return request({ method: 'PATCH', url: paths.projects.bookmark(projectId), data: body })
+export async function pinProject(projectId: number): Promise<PinProjectResult> {
+  return request({ method: 'POST', url: paths.projects.pin(projectId) })
+}
+
+export async function unpinProject(projectId: number): Promise<PinProjectResult> {
+  return request({ method: 'DELETE', url: paths.projects.pin(projectId) })
 }
 
 export async function getProjectMembers(projectId: number): Promise<ProjectMemberListResponse> {
