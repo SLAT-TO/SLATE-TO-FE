@@ -28,7 +28,7 @@ export const paths = {
   projects: {
     root: `${API_PREFIX}/projects`,
     byId: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}`,
-    bookmark: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/bookmark`,
+    pin: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/pin`,
     videos: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/videos`,
     video: (projectId: number | string, videoId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/videos/${videoId}`,

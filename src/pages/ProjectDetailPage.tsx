@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { deleteProject, updateProjectBookmark } from '../api/projects'
+import { deleteProject, pinProject, unpinProject } from '../api/projects'
 import { getMe } from '../api/users'
 import ActionMenu from '../components/ActionMenu'
 import { Avatar } from '../components/Avatar'
 import ConfirmModal from '../components/ConfirmModal'
+import BookmarkStarIcon from '../components/icons/BookmarkStarIcon'
 import Tabs from '../components/Tabs'
 import VideoFeedbackTab, { VideoDetailView } from '../domains/workspace/VideoFeedbackTab'
 import ProjectSettingsView from '../domains/workspace/ProjectSettingsView'
@@ -26,23 +27,6 @@ import {
 import type { ProjectStatus } from '../types/project'
 import { navigate } from '../utils/navigation'
 
-/** 즐겨찾기 별 아이콘 — 클릭 시 북마크 토글 (fill 여부로 상태 표시) */
-function BookmarkStarIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill={filled ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinejoin="round"
-    >
-      <path d="M12 2L14.9 8.6L22 9.3L16.7 14.1L18.2 21L12 17.3L5.8 21L7.3 14.1L2 9.3L9.1 8.6L12 2Z" />
-    </svg>
-  )
-}
-
 const DETAIL_TABS = [
   { key: 'dashboard', label: '대시보드' },
   { key: 'schedule', label: '일정' },
@@ -60,7 +44,10 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   const statusMenuRef = useRef<HTMLDivElement>(null)
   const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
   const [tab, setTab] = useState('dashboard')
-  const [view, setView] = useState<'main' | 'settings'>('main')
+  /** 목록의 "설정" 메뉴에서 `?view=settings`로 진입하는 경우를 초기값에 반영 (최초 마운트 1회) */
+  const [view, setView] = useState<'main' | 'settings'>(() =>
+    new URLSearchParams(window.location.search).get('view') === 'settings' ? 'settings' : 'main',
+  )
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null)
   const [meId, setMeId] = useState<number | null>(null)
@@ -82,12 +69,15 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   const handleToggleBookmark = useCallback(async () => {
     if (!project) return
-    const next = !project.bookmarked
-    setProject((prev) => (prev ? { ...prev, bookmarked: next } : prev))
+    const next = !project.isPinned
+    setProject((prev) => (prev ? { ...prev, isPinned: next } : prev))
     try {
-      await updateProjectBookmark(projectId, { bookmarked: next })
+      const result = next ? await pinProject(projectId) : await unpinProject(projectId)
+      setProject((prev) =>
+        prev ? { ...prev, isPinned: result.isPinned, pinnedAt: result.pinnedAt } : prev,
+      )
     } catch {
-      setProject((prev) => (prev ? { ...prev, bookmarked: !next } : prev))
+      setProject((prev) => (prev ? { ...prev, isPinned: !next } : prev))
     }
   }, [project, projectId, setProject])
 
@@ -104,11 +94,11 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
           <button
             type="button"
             onClick={handleToggleBookmark}
-            aria-pressed={project.bookmarked}
-            aria-label={project.bookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-            className={project.bookmarked ? 'text-caution' : 'text-neutral-6'}
+            aria-pressed={project.isPinned}
+            aria-label={project.isPinned ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+            className={project.isPinned ? 'text-caution' : 'text-neutral-6'}
           >
-            <BookmarkStarIcon filled={project.bookmarked} />
+            <BookmarkStarIcon filled={project.isPinned} />
           </button>
         </div>
 
@@ -173,13 +163,20 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   }
 
   if (view === 'settings') {
+    // ?view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
+    const leaveSettings = () => {
+      if (window.location.search) {
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+      setView('main')
+    }
     return (
       <ProjectSettingsView
         project={project}
-        onCancel={() => setView('main')}
+        onCancel={leaveSettings}
         onSaved={(updated) => {
           setProject(updated)
-          setView('main')
+          leaveSettings()
         }}
       />
     )
