@@ -1,6 +1,10 @@
 import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
-import type { CreateProjectRequest, UpdateProjectRequest } from '../../types/project'
+import type {
+  BookmarkProjectRequest,
+  CreateProjectRequest,
+  UpdateProjectRequest,
+} from '../../types/project'
 import type { CreateNoticeRequest, UpdateNoticeRequest } from '../../types/notice'
 import {
   allocId,
@@ -127,6 +131,7 @@ function toProjectDetail(project: MockProjectRecord, currentUserId: number) {
     memberCount: db.members.length,
     canEdit: me?.permission === 'ADMIN',
     canDelete: me?.permission === 'ADMIN',
+    bookmarked: project.bookmarked,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
   }
@@ -176,6 +181,7 @@ export const projectHandlers = [
       startDate: now.slice(0, 10),
       endDate: body.endDate,
       ownerUserId: user.id,
+      bookmarked: false,
       createdAt: now,
       updatedAt: now,
     }
@@ -237,6 +243,17 @@ export const projectHandlers = [
     if (!db.projects.some((p) => p.id === id)) return notFound()
     db.projects = db.projects.filter((p) => p.id !== id)
     return HttpResponse.json(ok({ deletedAt: new Date().toISOString() }), { status: 200 })
+  }),
+
+  http.patch(paths.projects.bookmark(':projectId'), async ({ request, params }) => {
+    if (!safeUser()) return unauthorized()
+    const project = db.projects.find((p) => p.id === Number(params.projectId))
+    if (!project) return domainError('PROJECT404', '프로젝트를 찾을 수 없습니다.')
+    const body = (await request.json()) as BookmarkProjectRequest
+    project.bookmarked = body.bookmarked
+    return HttpResponse.json(ok({ projectId: project.id, bookmarked: project.bookmarked }), {
+      status: 200,
+    })
   }),
 
   http.get(paths.projects.members(':projectId'), ({ params }) => {
