@@ -9,7 +9,6 @@ import type {
   TodayBriefing,
   UpdateScheduleRequest,
 } from '../types/schedule'
-import type { AppNotification, UnreadCountResult } from '../types/notification'
 
 export async function getTodayBriefing(): Promise<TodayBriefing> {
   return request({ method: 'GET', url: paths.briefings.today })
@@ -61,20 +60,4 @@ export async function updatePrivateMemo(
   body: PrivateMemoRequest,
 ): Promise<Schedule> {
   return request({ method: 'PATCH', url: paths.schedules.privateMemo(scheduleId), data: body })
-}
-
-export async function getUnreadNotificationCount(): Promise<UnreadCountResult> {
-  return request({ method: 'GET', url: paths.notifications.unreadCount })
-}
-
-export async function getNotifications(): Promise<{ items: AppNotification[] }> {
-  return request({ method: 'GET', url: paths.notifications.root })
-}
-
-export async function readNotification(notificationId: number): Promise<AppNotification> {
-  return request({ method: 'PATCH', url: paths.notifications.read(notificationId) })
-}
-
-export async function readAllNotifications(): Promise<{ count: number }> {
-  return request({ method: 'PATCH', url: paths.notifications.readAll })
 }
