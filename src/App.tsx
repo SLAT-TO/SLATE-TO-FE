@@ -30,8 +30,6 @@ const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
 function getHeaderTitle(pathname: string): string {
   if (pathname === '/' || pathname === '') return `안녕하세요 ${USER_NAME} 님`
   if (pathname === '/calendar') return '통합 캘린더'
-  if (pathname === '/matching/my') return '나의 구인구직'
-  if (pathname === '/matching/new') return '공고 작성'
   if (pathname === '/matching') return '추천공고'
   if (pathname === '/mypage') return '마이페이지'
   if (pathname === '/mypage/edit') return '프로필 수정'
@@ -43,7 +41,9 @@ function getHeaderTitle(pathname: string): string {
 
 function AppRoutes({ pathname }: { pathname: string }) {
   const headerTitle = useMemo(() => getHeaderTitle(pathname), [pathname])
-  useHeaderSlot(useMemo(() => <HeaderTitle>{headerTitle}</HeaderTitle>, [headerTitle]))
+  useHeaderSlot(
+    useMemo(() => (headerTitle ? <HeaderTitle>{headerTitle}</HeaderTitle> : null), [headerTitle]),
+  )
 
   // trailing slash 정규화 (/workspace/ → /workspace)
   const path = pathname.replace(/\/+$/, '') || '/'
