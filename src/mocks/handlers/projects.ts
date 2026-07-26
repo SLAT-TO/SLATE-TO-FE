@@ -78,6 +78,17 @@ function toMemberDetail(member: MockMemberRecord) {
   }
 }
 
+/** 시작일~마감일 기준 경과율 (0~100). 날짜 정보가 없으면 null */
+function calcDeadlineProgress(startDate: string | null, endDate: string | null): number | null {
+  if (!startDate || !endDate) return null
+  const start = new Date(startDate).getTime()
+  const end = new Date(endDate).getTime()
+  if (end <= start) return null
+  const now = Date.now()
+  const ratio = (now - start) / (end - start)
+  return Math.round(Math.min(1, Math.max(0, ratio)) * 100)
+}
+
 function toProjectSummary(project: MockProjectRecord) {
   const memberPreviewImageUrls = db.members
     .map((m) => m.profileImageUrl)
@@ -93,8 +104,9 @@ function toProjectSummary(project: MockProjectRecord) {
     kind: project.kind,
     startDate: project.startDate,
     endDate: project.endDate,
-    deadlineProgressPercent: null,
+    deadlineProgressPercent: calcDeadlineProgress(project.startDate, project.endDate),
     lastActivityAt: project.updatedAt,
+    isPinned: project.isPinned,
     memberPreviewImageUrls,
     memberCount: db.members.length,
     createdAt: project.createdAt,
