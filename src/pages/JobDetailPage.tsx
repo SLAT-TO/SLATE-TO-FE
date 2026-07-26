@@ -5,7 +5,7 @@ import { Button } from '../components/Button'
 import { useState } from 'react'
 import { navigate } from '../utils/navigation'
 import ApplyModal from '../domains/recruit/ApplyModal'
-import { MOCK_JOB_DETAILS, IS_OWNER_TEST } from '../domains/recruit/mockJobDetail'
+import { MOCK_JOB_DETAILS } from '../domains/recruit/mockJobDetail'
 
 interface JobDetailPageProps {
   jobId: number
@@ -21,7 +21,7 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
     return <p className="text-body-sm text-neutral-6">공고를 찾을 수 없습니다.</p>
   }
 
-  const isOwner = IS_OWNER_TEST
+  const isOwner = detail.isOwner
 
   return (
     <div className="flex flex-col gap-6 px-8 py-6">

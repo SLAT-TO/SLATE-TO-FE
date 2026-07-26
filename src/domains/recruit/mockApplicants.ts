@@ -13,7 +13,7 @@ export const MOCK_APPLICANTS: RecruitApplicant[] = [
   },
   {
     id: 2,
-    recruitmentId: 101,
+    recruitmentId: 201,
     applicantId: 12,
     applicantName: '유희진',
     applicantProfileImageUrl: 'https://placehold.co/32x32',
@@ -22,7 +22,7 @@ export const MOCK_APPLICANTS: RecruitApplicant[] = [
   },
   {
     id: 3,
-    recruitmentId: 101,
+    recruitmentId: 301,
     applicantId: 13,
     applicantName: '서정현',
     applicantProfileImageUrl: 'https://placehold.co/32x32',
