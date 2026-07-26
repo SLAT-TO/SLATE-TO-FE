@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { deleteProject, getProjects, pinProject, unpinProject } from '../api/projects'
@@ -15,6 +15,7 @@ export default function WorkspacePage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -40,7 +41,7 @@ export default function WorkspacePage() {
     }
   }, [])
 
-  const handleTogglePin = async (project: ProjectSummary) => {
+  const handleTogglePin = useCallback(async (project: ProjectSummary) => {
     const next = !project.isPinned
     setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, isPinned: next } : p)))
     try {
@@ -51,14 +52,20 @@ export default function WorkspacePage() {
     } catch {
       setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, isPinned: !next } : p)))
     }
-  }
+  }, [])
 
-  const confirmDelete = async () => {
+  const confirmDelete = useCallback(async () => {
     if (!deleteTarget) return
-    await deleteProject(deleteTarget.id)
-    setProjects((prev) => prev.filter((p) => p.id !== deleteTarget.id))
-    setDeleteTarget(null)
-  }
+    try {
+      await deleteProject(deleteTarget.id)
+      setProjects((prev) => prev.filter((p) => p.id !== deleteTarget.id))
+      setDeleteTarget(null)
+      setDeleteError(null)
+    } catch (err) {
+      setDeleteTarget(null)
+      setDeleteError(err instanceof ApiError ? err.message : '프로젝트를 삭제하지 못했습니다.')
+    }
+  }, [deleteTarget])
 
   return (
     <section className="flex flex-col gap-6">
@@ -68,6 +75,7 @@ export default function WorkspacePage() {
 
       {loading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
       {error && <p className="text-body-sm text-warning">{error}</p>}
+      {deleteError && <p className="text-body-sm text-warning">{deleteError}</p>}
 
       {!loading && !error && projects.length === 0 && (
         <p className="text-body-sm text-neutral-6">아직 등록된 프로젝트가 없어요</p>

@@ -110,8 +110,8 @@ const ProjectCard = ({
           <div className="flex items-center justify-between gap-2">
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <Tag key={tag} variant="primary">
+                {tags.map((tag, index) => (
+                  <Tag key={`${tag}-${index}`} variant="primary">
                     {tag}
                   </Tag>
                 ))}
