@@ -12,10 +12,12 @@ import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import { navigate } from '../utils/navigation'
 import { validateField } from '../utils/validateField'
 import { jobPostSchema } from '../schemas/jobPost'
-import { ROLE_OPTIONS, VIDEO_CATEGORY_OPTIONS, FILM_LENGTH_OPTIONS } from '../constants'
-import { REGION_LABELS } from '../constants/recruitFilters'
-
-const REGION_OPTIONS = REGION_LABELS.map((label) => ({ value: label, label }))
+import {
+  ROLE_OPTIONS,
+  VIDEO_CATEGORY_OPTIONS,
+  FILM_LENGTH_OPTIONS,
+  REGION_OPTIONS,
+} from '../constants'
 
 function JobFormHeader() {
   return (
@@ -152,7 +154,7 @@ function JobFormPage() {
         <Input
           label="보수"
           required
-          placeholder="보수를 선택해주세요."
+          placeholder="보수를 입력해주세요."
           value={values.pay}
           onChange={handleChange('pay')}
           error={errors.pay}
@@ -162,7 +164,7 @@ function JobFormPage() {
       <TextArea
         label="상세설명"
         required
-        placeholder="장소를 입력하세요."
+        placeholder="상세설명을 입력하세요."
         value={values.description}
         onChange={handleChange('description')}
         onBlur={handleBlur('description')}
