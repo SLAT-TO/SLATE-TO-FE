@@ -110,6 +110,37 @@ function formatFeedbackTime(feedback: Pick<Feedback, 'startTime' | 'endTime'>): 
   return `${formatTimestamp(feedback.startTime)} ~ ${formatTimestamp(feedback.endTime)}`
 }
 
+/** 피드백/답글에 첨부된 시간 표시 — 구간이면 시작/종료 지점을 각각 클릭해 그 지점으로 이동할 수 있게 분리 */
+function FeedbackTimeLink({
+  feedback,
+  onSeek,
+  className,
+}: {
+  feedback: Pick<Feedback, 'startTime' | 'endTime'>
+  onSeek: (seconds: number) => void
+  className: string
+}) {
+  if (feedback.startTime === null) return null
+  if (feedback.endTime === null) {
+    return (
+      <button type="button" onClick={() => onSeek(feedback.startTime!)} className={className}>
+        {formatTimestamp(feedback.startTime)}
+      </button>
+    )
+  }
+  return (
+    <span className={className}>
+      <button type="button" onClick={() => onSeek(feedback.startTime!)}>
+        {formatTimestamp(feedback.startTime)}
+      </button>
+      {' ~ '}
+      <button type="button" onClick={() => onSeek(feedback.endTime!)}>
+        {formatTimestamp(feedback.endTime)}
+      </button>
+    </span>
+  )
+}
+
 /** 작성 중인 피드백/답글에 첨부된(아직 전송 전) 시간 — 없으면 null */
 function formatPendingTime(start: number | null, end: number | null): string | null {
   if (end !== null) return formatFeedbackTime({ startTime: start, endTime: end })
@@ -433,21 +464,26 @@ export function VideoDetailView({
     setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== feedbackId))
   }
 
-  /** 답글 입력창을 다른 피드백으로 옮기거나 닫을 때 이전 시간 첨부 상태가 남지 않도록 초기화 */
-  const resetReplyPending = () => {
+  const clearReplyPendingTime = () => {
     setReplyPendingStart(null)
     setReplyPendingEnd(null)
     setIsCapturingReplyRange(false)
   }
 
+  /** 답글 입력창을 다른 피드백으로 옮기거나 닫을 때 이전에 쓰던 텍스트·시간 첨부 상태가 남지 않도록 초기화 */
+  const resetReplyCompose = () => {
+    setNewReply('')
+    clearReplyPendingTime()
+  }
+
   const toggleReplies = async (feedbackId: number) => {
     if (expandedFeedbackId === feedbackId) {
       setExpandedFeedbackId(null)
-      resetReplyPending()
+      resetReplyCompose()
       return
     }
     setExpandedFeedbackId(feedbackId)
-    resetReplyPending()
+    resetReplyCompose()
     if (!repliesByFeedback[feedbackId]) {
       const page = await getReplies(feedbackId)
       setRepliesByFeedback((prev) => ({ ...prev, [feedbackId]: page.items }))
@@ -483,8 +519,7 @@ export function VideoDetailView({
       ...prev,
       [feedbackId]: [...(prev[feedbackId] ?? []), created],
     }))
-    setNewReply('')
-    resetReplyPending()
+    resetReplyCompose()
   }
 
   const openPicker = async () => {
@@ -788,15 +823,11 @@ export function VideoDetailView({
                         size={22}
                         fallback={feedback.actor.name.slice(0, 1)}
                       />
-                      {feedback.startTime !== null && (
-                        <button
-                          type="button"
-                          onClick={() => seekTo(feedback.startTime ?? 0)}
-                          className="text-caption-sm text-primary font-bold underline"
-                        >
-                          {formatFeedbackTime(feedback)}
-                        </button>
-                      )}
+                      <FeedbackTimeLink
+                        feedback={feedback}
+                        onSeek={seekTo}
+                        className="text-caption-sm text-primary font-bold underline"
+                      />
                       <span className="text-caption-sm text-neutral-9 font-medium">
                         {feedback.actor.name}
                       </span>
@@ -856,15 +887,11 @@ export function VideoDetailView({
                               <span className="text-caption-sm text-neutral-9 font-semibold">
                                 {reply.actor.name}
                               </span>
-                              {reply.startTime !== null && (
-                                <button
-                                  type="button"
-                                  onClick={() => seekTo(reply.startTime ?? 0)}
-                                  className="text-caption-sm text-primary font-bold underline"
-                                >
-                                  {formatFeedbackTime(reply)}
-                                </button>
-                              )}
+                              <FeedbackTimeLink
+                                feedback={reply}
+                                onSeek={seekTo}
+                                className="text-caption-sm text-primary font-bold underline"
+                              />
                             </div>
                             <span className="text-caption-lg text-neutral-10">{reply.content}</span>
                           </div>
@@ -909,7 +936,7 @@ export function VideoDetailView({
                                 {formatPendingTime(replyPendingStart, replyPendingEnd)}
                                 <button
                                   type="button"
-                                  onClick={resetReplyPending}
+                                  onClick={clearReplyPendingTime}
                                   aria-label="시간 첨부 취소"
                                   className="text-neutral-5 hover:text-neutral-7"
                                 >
