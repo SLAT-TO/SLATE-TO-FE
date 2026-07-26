@@ -26,6 +26,10 @@ export type FeedbackReply = {
   feedbackId: number
   actor: FeedbackActor
   content: string
+  /** FE mock 전용 — BE 답글 API는 시간 코드 미지원(Feedback과 달리). BE 연동 시 실제 지원 여부 재확인 필요 */
+  startTime: number | null
+  /** FE mock 전용 — BE 답글 API 미지원 */
+  endTime: number | null
   createdAt: string
   updatedAt: string
 }
@@ -52,6 +56,10 @@ export type UpdateFeedbackStatusRequest = {
 
 export type CreateReplyRequest = {
   content: string
+  /** FE mock 전용 — BE 답글 API 미지원 */
+  startTime?: number
+  /** FE mock 전용 — BE 답글 API 미지원 */
+  endTime?: number
 }
 
 export type ShareLink = {

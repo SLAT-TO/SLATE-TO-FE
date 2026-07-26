@@ -278,6 +278,8 @@ export const videoHandlers = [
       feedbackId: Number(params.feedbackId),
       actor: { type: 'USER' as const, id: user.id, name: user.nickname },
       content: body.content,
+      startTime: body.startTime ?? null,
+      endTime: body.endTime ?? null,
       createdAt: now,
       updatedAt: now,
     }

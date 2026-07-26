@@ -48,6 +48,7 @@ import downloadIcon from '../../assets/icons/download.svg?raw'
 import paperPlaneIcon from '../../assets/icons/paper-plane.svg?raw'
 import searchIcon from '../../assets/icons/search.svg?raw'
 import starIcon from '../../assets/icons/star.svg?raw'
+import xIcon from '../../assets/icons/x.svg?raw'
 
 type VideoFeedbackTabProps = {
   projectId: number
@@ -107,6 +108,44 @@ function formatFeedbackTime(feedback: Pick<Feedback, 'startTime' | 'endTime'>): 
   if (feedback.startTime === null) return ''
   if (feedback.endTime === null) return formatTimestamp(feedback.startTime)
   return `${formatTimestamp(feedback.startTime)} ~ ${formatTimestamp(feedback.endTime)}`
+}
+
+/** 피드백/답글에 첨부된 시간 표시 — 구간이면 시작/종료 지점을 각각 클릭해 그 지점으로 이동할 수 있게 분리 */
+function FeedbackTimeLink({
+  feedback,
+  onSeek,
+  className,
+}: {
+  feedback: Pick<Feedback, 'startTime' | 'endTime'>
+  onSeek: (seconds: number) => void
+  className: string
+}) {
+  if (feedback.startTime === null) return null
+  if (feedback.endTime === null) {
+    return (
+      <button type="button" onClick={() => onSeek(feedback.startTime!)} className={className}>
+        {formatTimestamp(feedback.startTime)}
+      </button>
+    )
+  }
+  return (
+    <span className={className}>
+      <button type="button" onClick={() => onSeek(feedback.startTime!)}>
+        {formatTimestamp(feedback.startTime)}
+      </button>
+      {' ~ '}
+      <button type="button" onClick={() => onSeek(feedback.endTime!)}>
+        {formatTimestamp(feedback.endTime)}
+      </button>
+    </span>
+  )
+}
+
+/** 작성 중인 피드백/답글에 첨부된(아직 전송 전) 시간 — 없으면 null */
+function formatPendingTime(start: number | null, end: number | null): string | null {
+  if (end !== null) return formatFeedbackTime({ startTime: start, endTime: end })
+  if (start !== null) return formatTimestamp(start)
+  return null
 }
 
 type VideoFeedbackTabWithSelectionProps = VideoFeedbackTabProps & {
@@ -221,6 +260,10 @@ export function VideoDetailView({
   const [expandedFeedbackId, setExpandedFeedbackId] = useState<number | null>(null)
   const [repliesByFeedback, setRepliesByFeedback] = useState<Record<number, FeedbackReply[]>>({})
   const [newReply, setNewReply] = useState('')
+  const [replyPendingStart, setReplyPendingStart] = useState<number | null>(null)
+  const [replyPendingEnd, setReplyPendingEnd] = useState<number | null>(null)
+  /** 답글의 구간 기록 버튼으로 시작점만 찍고 종료점 대기 중인 상태 */
+  const [isCapturingReplyRange, setIsCapturingReplyRange] = useState(false)
   const [fileSearch, setFileSearch] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [projectFiles, setProjectFiles] = useState<ProjectFileListItem[]>([])
@@ -352,13 +395,23 @@ export function VideoDetailView({
     }
   }
 
+  /** 플레이어 탐색 + 진행바/시간 표시 상태를 함께 갱신 — 둘 중 하나만 하면 화면이 실제 재생 위치와 어긋남 */
+  const seekTo = useCallback((seconds: number) => {
+    playerRef.current?.seekTo(seconds, true)
+    setCurrentTime(seconds)
+  }, [])
+
   const handleSeekClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!duration) return
     const rect = e.currentTarget.getBoundingClientRect()
     const fraction = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
-    const target = fraction * duration
-    playerRef.current?.seekTo(target, true)
-    setCurrentTime(target)
+    seekTo(fraction * duration)
+  }
+
+  const clearPendingTime = () => {
+    setPendingStart(null)
+    setPendingEnd(null)
+    setIsCapturingRange(false)
   }
 
   const attachCurrentTime = () => {
@@ -388,9 +441,7 @@ export function VideoDetailView({
     })
     setFeedbacks((prev) => [created, ...prev])
     setNewFeedback('')
-    setPendingStart(null)
-    setPendingEnd(null)
-    setIsCapturingRange(false)
+    clearPendingTime()
   }
 
   const toggleResolved = async (feedback: Feedback) => {
@@ -413,26 +464,62 @@ export function VideoDetailView({
     setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== feedbackId))
   }
 
+  const clearReplyPendingTime = () => {
+    setReplyPendingStart(null)
+    setReplyPendingEnd(null)
+    setIsCapturingReplyRange(false)
+  }
+
+  /** 답글 입력창을 다른 피드백으로 옮기거나 닫을 때 이전에 쓰던 텍스트·시간 첨부 상태가 남지 않도록 초기화 */
+  const resetReplyCompose = () => {
+    setNewReply('')
+    clearReplyPendingTime()
+  }
+
   const toggleReplies = async (feedbackId: number) => {
     if (expandedFeedbackId === feedbackId) {
       setExpandedFeedbackId(null)
+      resetReplyCompose()
       return
     }
     setExpandedFeedbackId(feedbackId)
+    resetReplyCompose()
     if (!repliesByFeedback[feedbackId]) {
       const page = await getReplies(feedbackId)
       setRepliesByFeedback((prev) => ({ ...prev, [feedbackId]: page.items }))
     }
   }
 
+  const attachReplyCurrentTime = () => {
+    setReplyPendingStart(Math.floor(currentTime))
+    setReplyPendingEnd(null)
+    setIsCapturingReplyRange(false)
+  }
+
+  /** 답글 구간 기록 버튼 — 첫 클릭은 시작점, 재생 위치를 옮긴 뒤 두 번째 클릭은 종료점 */
+  const toggleReplyRangeCapture = () => {
+    if (!isCapturingReplyRange) {
+      setReplyPendingStart(Math.floor(currentTime))
+      setReplyPendingEnd(null)
+      setIsCapturingReplyRange(true)
+    } else {
+      setReplyPendingEnd(Math.floor(currentTime))
+      setIsCapturingReplyRange(false)
+    }
+  }
+
   const submitReply = async (feedbackId: number) => {
     if (!newReply.trim()) return
-    const created = await createReply(feedbackId, { content: newReply.trim() })
+    const created = await createReply(feedbackId, {
+      content: newReply.trim(),
+      startTime: replyPendingStart ?? undefined,
+      endTime: replyPendingEnd ?? undefined,
+    })
     setRepliesByFeedback((prev) => ({
       ...prev,
       [feedbackId]: [...(prev[feedbackId] ?? []), created],
     }))
-    setNewReply('')
+    resetReplyCompose()
   }
 
   const openPicker = async () => {
@@ -736,15 +823,11 @@ export function VideoDetailView({
                         size={22}
                         fallback={feedback.actor.name.slice(0, 1)}
                       />
-                      {feedback.startTime !== null && (
-                        <button
-                          type="button"
-                          onClick={() => playerRef.current?.seekTo(feedback.startTime ?? 0, true)}
-                          className="text-caption-sm text-primary font-bold underline"
-                        >
-                          {formatFeedbackTime(feedback)}
-                        </button>
-                      )}
+                      <FeedbackTimeLink
+                        feedback={feedback}
+                        onSeek={seekTo}
+                        className="text-caption-sm text-primary font-bold underline"
+                      />
                       <span className="text-caption-sm text-neutral-9 font-medium">
                         {feedback.actor.name}
                       </span>
@@ -800,28 +883,83 @@ export function VideoDetailView({
                             fallback={reply.actor.name.slice(0, 1)}
                           />
                           <div className="flex flex-col">
-                            <span className="text-caption-sm text-neutral-9 font-semibold">
-                              {reply.actor.name}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-caption-sm text-neutral-9 font-semibold">
+                                {reply.actor.name}
+                              </span>
+                              <FeedbackTimeLink
+                                feedback={reply}
+                                onSeek={seekTo}
+                                className="text-caption-sm text-primary font-bold underline"
+                              />
+                            </div>
                             <span className="text-caption-lg text-neutral-10">{reply.content}</span>
                           </div>
                         </div>
                       ))}
-                      <div className="flex gap-2">
-                        <input
-                          value={newReply}
-                          onChange={(e) => setNewReply(e.target.value)}
-                          placeholder="답글 남기기"
-                          className="border-neutral-3 text-caption-lg flex-1 rounded-md border px-2 py-1 outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => submitReply(feedback.feedbackId)}
-                          disabled={!newReply.trim()}
-                          className="text-primary disabled:text-neutral-4 text-caption-sm font-semibold"
-                        >
-                          등록
-                        </button>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={attachReplyCurrentTime}
+                            aria-label="현재 위치 기록"
+                            className={`border-neutral-5 flex items-center justify-center rounded-lg border p-1 ${
+                              replyPendingStart !== null &&
+                              replyPendingEnd === null &&
+                              !isCapturingReplyRange
+                                ? 'border-primary text-primary'
+                                : 'text-neutral-9'
+                            }`}
+                          >
+                            <InlineIcon svg={clockIcon} className="size-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={toggleReplyRangeCapture}
+                            aria-label="구간 기록"
+                            title={isCapturingReplyRange ? '종료 지점 기록' : '구간 기록'}
+                            className={`border-neutral-5 flex items-center rounded-lg border p-1 ${
+                              isCapturingReplyRange || replyPendingEnd !== null
+                                ? 'border-primary text-primary'
+                                : 'text-neutral-9'
+                            }`}
+                          >
+                            <InlineIcon svg={clockIcon} className="size-4" />
+                            <span aria-hidden className="mx-0.5 h-0.5 w-2 bg-current" />
+                            <InlineIcon svg={clockIcon} className="size-4" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="border-neutral-3 focus-within:border-primary flex flex-1 items-center gap-2 rounded-md border px-2 py-1">
+                            {formatPendingTime(replyPendingStart, replyPendingEnd) && (
+                              <span className="text-caption-sm text-primary flex shrink-0 items-center gap-1 font-bold">
+                                {formatPendingTime(replyPendingStart, replyPendingEnd)}
+                                <button
+                                  type="button"
+                                  onClick={clearReplyPendingTime}
+                                  aria-label="시간 첨부 취소"
+                                  className="text-neutral-5 hover:text-neutral-7"
+                                >
+                                  <InlineIcon svg={xIcon} className="size-3" />
+                                </button>
+                              </span>
+                            )}
+                            <input
+                              value={newReply}
+                              onChange={(e) => setNewReply(e.target.value)}
+                              placeholder="답글 남기기"
+                              className="text-caption-lg min-w-0 flex-1 outline-none"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => submitReply(feedback.feedbackId)}
+                            disabled={!newReply.trim()}
+                            className="text-primary disabled:text-neutral-4 text-caption-sm font-semibold"
+                          >
+                            등록
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -836,11 +974,6 @@ export function VideoDetailView({
                 type="button"
                 onClick={attachCurrentTime}
                 aria-label="현재 위치 기록"
-                title={
-                  pendingStart !== null && pendingEnd === null && !isCapturingRange
-                    ? formatTimestamp(pendingStart)
-                    : '현재 위치 기록'
-                }
                 className={`border-neutral-5 flex items-center justify-center rounded-lg border p-2 ${
                   pendingStart !== null && pendingEnd === null && !isCapturingRange
                     ? 'border-primary text-primary'
@@ -853,13 +986,7 @@ export function VideoDetailView({
                 type="button"
                 onClick={toggleRangeCapture}
                 aria-label="구간 기록"
-                title={
-                  isCapturingRange
-                    ? '종료 지점 기록'
-                    : pendingEnd !== null
-                      ? formatFeedbackTime({ startTime: pendingStart, endTime: pendingEnd })
-                      : '구간 기록'
-                }
+                title={isCapturingRange ? '종료 지점 기록' : '구간 기록'}
                 className={`border-neutral-5 flex items-center rounded-lg border p-2 ${
                   isCapturingRange || pendingEnd !== null
                     ? 'border-primary text-primary'
@@ -871,12 +998,28 @@ export function VideoDetailView({
                 <InlineIcon svg={clockIcon} className="size-5" />
               </button>
             </div>
-            <TextArea
-              value={newFeedback}
-              onChange={setNewFeedback}
-              placeholder="피드백을 입력하세요"
-              rows={3}
-            />
+            <div className="relative">
+              {formatPendingTime(pendingStart, pendingEnd) && (
+                <span className="text-caption-lg text-primary absolute top-2 left-3 z-10 flex items-center gap-1 font-bold">
+                  {formatPendingTime(pendingStart, pendingEnd)}
+                  <button
+                    type="button"
+                    onClick={clearPendingTime}
+                    aria-label="시간 첨부 취소"
+                    className="text-neutral-5 hover:text-neutral-7"
+                  >
+                    <InlineIcon svg={xIcon} className="size-3.5" />
+                  </button>
+                </span>
+              )}
+              <TextArea
+                value={newFeedback}
+                onChange={setNewFeedback}
+                placeholder="피드백을 입력하세요"
+                rows={3}
+                className={formatPendingTime(pendingStart, pendingEnd) ? 'pt-8' : ''}
+              />
+            </div>
             <button
               type="button"
               onClick={submitFeedback}

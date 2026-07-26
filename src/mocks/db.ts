@@ -348,6 +348,8 @@ export const db: MockDb = {
       feedbackId: 1,
       actor: { type: 'USER', id: 2, name: '슬레이투' },
       content: '확인했습니다, 수정하겠습니다',
+      startTime: null,
+      endTime: null,
       createdAt: '2026-05-21T01:00:00Z',
       updatedAt: '2026-05-21T01:00:00Z',
     },
