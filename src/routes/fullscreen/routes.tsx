@@ -1,5 +1,6 @@
 import { LoginPage } from '../../pages/LoginPage'
 import { InviteAcceptPage } from '../../pages/InviteAcceptPage'
+import { SignupPage } from '../../pages/SignupPage'
 import { LandingPage } from '../../pages/LandingPage'
 import { OnboardingPage } from '../../pages/onboarding/OnboardingPage'
 import type { FullscreenRoute } from './types'
@@ -11,6 +12,7 @@ export const fullscreenRoutes: FullscreenRoute[] = [
     match: '/project-invitations/:token',
     render: (params) => <InviteAcceptPage token={params.token!} />,
   },
+  { path: '/signup', render: () => <SignupPage /> },
   { path: '/landing', render: () => <LandingPage /> },
   { path: '/onboarding', render: () => <OnboardingPage /> },
 ]
