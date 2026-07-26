@@ -2,7 +2,6 @@ import Tag from '../../components/Tag'
 import ProgressBar from '../../components/ProgressBar'
 import { Avatar } from '../../components/Avatar'
 import { projectMetaTags } from '../../constants/projectLabels'
-import { projectStatusColor, projectStatusLabel } from '../../constants/projectStatus'
 import type { ProjectSummary } from '../../types/project'
 
 interface HomeProjectCardProps {
@@ -18,20 +17,16 @@ export default function HomeProjectCard({ project }: HomeProjectCardProps) {
   const extraCount = project.memberCount - visibleMembers.length
 
   return (
-    <article className="flex h-42 flex-col items-start gap-2.5 rounded-[10.242px] bg-white p-4 shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]">
-      <h3 className="text-body-sm text-neutral-11 self-stretch font-semibold tracking-[-0.32px]">
+    <article className="flex h-34 flex-col items-start gap-2 rounded-[10.242px] bg-white p-4 shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]">
+      <h3 className="text-caption-lg text-neutral-11 self-stretch font-semibold tracking-[-0.32px]">
         {project.title}
       </h3>
 
-      {project.deadlineProgressPercent != null ? (
-        <ProgressBar value={project.deadlineProgressPercent} variant={variant} />
-      ) : (
-        <span
-          className={`text-caption-sm w-fit rounded-[3px] px-4.75 py-1 font-semibold ${projectStatusColor(project.status)}`}
-        >
-          {projectStatusLabel(project.status)}
-        </span>
-      )}
+      <ProgressBar
+        value={project.deadlineProgressPercent ?? 0}
+        variant={variant}
+        className="mt-6 self-stretch"
+      />
 
       <div className="mt-auto flex w-full items-center justify-between">
         <div className="flex items-center gap-3.5">
