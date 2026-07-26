@@ -3,6 +3,7 @@ import MainLayout from './layouts/MainLayout'
 import CalendarPage from './pages/CalendarPage'
 import HomePage from './pages/HomePage'
 import MyPage from './pages/MyPage'
+import NotificationPage from './pages/NotificationPage'
 import ProfileEditPage from './pages/ProfileEditPage'
 import ProjectDetailPage from './pages/ProjectDetailPage'
 import ProjectFormPage from './pages/ProjectFormPage'
@@ -47,6 +48,10 @@ function AppRoutes({ pathname }: { pathname: string }) {
 
   if (pathname === '/workspace') {
     return <WorkspacePage />
+  }
+
+  if (pathname === '/notifications') {
+    return <NotificationPage />
   }
 
   if (pathname === '/calendar') {

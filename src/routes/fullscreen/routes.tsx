@@ -1,5 +1,9 @@
 import { LoginPage } from '../../pages/LoginPage'
 import { EmailVerifyPage } from '../../pages/EmailVerifyPage'
+import { TermsPage } from '../../pages/TermsPage'
+import { InviteAcceptPage } from '../../pages/InviteAcceptPage'
+import { SignupPage } from '../../pages/SignupPage'
+import { LandingPage } from '../../pages/LandingPage'
 import { OnboardingPage } from '../../pages/onboarding/OnboardingPage'
 import type { FullscreenRoute } from './types'
 
@@ -7,5 +11,12 @@ import type { FullscreenRoute } from './types'
 export const fullscreenRoutes: FullscreenRoute[] = [
   { path: '/login', render: () => <LoginPage /> },
   { path: '/signup/email-verification', render: () => <EmailVerifyPage /> },
+  { path: '/signup/terms', render: () => <TermsPage /> },
+  {
+    match: '/project-invitations/:token',
+    render: (params) => <InviteAcceptPage token={params.token!} />,
+  },
+  { path: '/signup', render: () => <SignupPage /> },
+  { path: '/landing', render: () => <LandingPage /> },
   { path: '/onboarding', render: () => <OnboardingPage /> },
 ]
