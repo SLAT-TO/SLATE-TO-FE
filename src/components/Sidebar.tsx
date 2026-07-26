@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { usePathname } from '../hooks/usePathname'
 import { navigate } from '../utils/navigation'
+import logo from '../assets/icons/logo.svg?raw'
 
 function HomeIcon() {
   return (
@@ -75,15 +76,17 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="border-border bg-bg-primary flex h-screen w-[260px] flex-shrink-0 flex-col border-r">
-      <div className="flex items-center gap-3 px-5 pt-[51px]">
-        <div className="bg-primary flex h-[27px] w-[27px] items-center justify-center rounded-md">
-          <span className="text-[11px] font-bold text-white">S</span>
-        </div>
-        <span className="text-body-sm text-neutral-11 font-bold">SLAT-TO</span>
+    <aside className="border-border bg-bg-primary flex h-screen w-[210px] flex-shrink-0 flex-col border-r">
+      <div className="flex items-center pt-[46px] pl-[34px]">
+        <span
+          role="img"
+          aria-label="SLATE-TO"
+          className="text-primary [&_svg]:h-[20px] [&_svg]:w-[143px]"
+          dangerouslySetInnerHTML={{ __html: logo }}
+        />
       </div>
 
-      <nav className="mt-[38px] flex flex-col gap-[5px] px-5">
+      <nav className="mt-[69px] flex flex-col gap-8 pl-[34px]">
         {navItems.map((item) => {
           const active = item.match?.(pathname) ?? pathname === item.href
           return (
@@ -95,10 +98,10 @@ export default function Sidebar() {
                 navigate(item.href)
               }}
               className={[
-                'text-caption-lg flex h-8 items-center gap-[13px] rounded-lg',
+                'text-body-sm flex h-8 items-center gap-[13px] rounded-lg font-semibold',
                 active
-                  ? 'bg-main-1 text-primary w-[144px] px-[7px] font-medium'
-                  : 'text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 w-[144px] px-[7px]',
+                  ? 'bg-main-1 text-primary w-[144px] px-[7px]'
+                  : 'text-neutral-10 hover:bg-neutral-2 w-[144px] px-[7px]',
               ].join(' ')}
             >
               <span className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center">

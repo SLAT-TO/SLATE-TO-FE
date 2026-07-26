@@ -21,7 +21,7 @@ export default function Header({ userName = '000' }: HeaderProps) {
   const headerRight = slot?.headerRight ?? null
 
   return (
-    <header className="bg-bg-secondary flex h-16 shrink-0 items-center justify-between px-8">
+    <header className="bg-bg-secondary flex min-h-16 shrink-0 items-start justify-between pt-[40px] pr-8 pl-[80px]">
       <div className="flex min-w-0 flex-1 items-center gap-3">{headerLeft}</div>
 
       {/* 우측 액션 영역 */}
