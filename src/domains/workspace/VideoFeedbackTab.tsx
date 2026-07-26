@@ -1,3 +1,5 @@
+import { formatDistanceToNow } from 'date-fns'
+import { ko } from 'date-fns/locale'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   createFeedback,
@@ -29,6 +31,7 @@ import InlineIcon from '../../components/InlineIcon'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import YouTubeIframePlayer from '../../components/YouTubeIframePlayer'
+import VideoCard from './VideoCard'
 import { useHeaderSlot } from '../../hooks/useHeaderSlot'
 import { CARD_BASE } from '../../styles/card'
 import type { VideoDetail, VideoListItem, VideoProgressStatus } from '../../types/video'
@@ -116,6 +119,8 @@ export default function VideoFeedbackTab({
 }: VideoFeedbackTabWithSelectionProps) {
   const [videos, setVideos] = useState<VideoListItem[]>([])
   const [videosLoading, setVideosLoading] = useState(true)
+  const [deleteTarget, setDeleteTarget] = useState<VideoListItem | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -136,31 +141,54 @@ export default function VideoFeedbackTab({
     }
   }, [projectId])
 
+  const confirmDeleteVideo = async () => {
+    if (!deleteTarget) return
+    setDeleteError(null)
+    try {
+      await deleteVideo(projectId, deleteTarget.videoId)
+      setVideos((prev) => prev.filter((v) => v.videoId !== deleteTarget.videoId))
+      setDeleteTarget(null)
+    } catch {
+      setDeleteError('영상을 삭제하지 못했습니다. 다시 시도해주세요.')
+      setDeleteTarget(null)
+    }
+  }
+
   return (
     <section className="flex flex-col gap-3">
+      {deleteError && <p className="text-caption-lg text-warning">{deleteError}</p>}
       {videosLoading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
       {!videosLoading && videos.length === 0 && (
         <p className="text-caption-lg text-neutral-6">등록된 영상이 없습니다.</p>
       )}
       {!videosLoading && videos.length > 0 && (
-        <ul className="border-border divide-border divide-y border-y">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {videos.map((video) => (
-            <li key={video.videoId}>
-              <button
-                type="button"
-                onClick={() => onSelectVideo(video.videoId)}
-                className="hover:bg-neutral-2 flex w-full items-center justify-between gap-3 px-1 py-4 text-left"
-              >
-                <span className="text-body-sm text-neutral-11 font-medium">{video.title}</span>
-                <span className="text-caption-lg text-neutral-6 shrink-0">
-                  {video.progressStatus === 'DONE' ? '완료' : '진행중'}
-                  {video.unreadCommentCount > 0 ? ` · 안읽음 ${video.unreadCommentCount}` : ''}
-                </span>
-              </button>
-            </li>
+            <VideoCard
+              key={video.videoId}
+              title={video.title}
+              thumbnailUrl={video.thumbnailUrl}
+              progressStatus={video.progressStatus}
+              relativeTime={formatDistanceToNow(new Date(video.updatedAt), {
+                addSuffix: true,
+                locale: ko,
+              })}
+              unreadCommentCount={video.unreadCommentCount}
+              onClick={() => onSelectVideo(video.videoId)}
+              onDelete={() => setDeleteTarget(video)}
+            />
           ))}
-        </ul>
+        </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteVideo}
+        title="영상을 삭제할까요?"
+        description={deleteTarget?.title}
+        confirmText="삭제하기"
+      />
     </section>
   )
 }
