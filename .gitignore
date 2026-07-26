@@ -30,4 +30,11 @@ Thumbs.db
 
 # env
 .env
+.env.local
 .env.*.local
+
+# claude
+.claude
+
+# vercel
+.vercel
