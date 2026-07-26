@@ -17,9 +17,8 @@ import { EventFormModal, type EventFormValues } from '../calendar/EventFormModal
 import type { CalendarEvent } from '../../schemas/calendarEvent'
 import type { MemberSummary } from '../../types/project'
 import type { Schedule } from '../../types/schedule'
-import { pickEventColor } from '../../utils/calendarUtils'
-import { scheduleToCalendarEvent } from '../../utils/scheduleAdapter'
-import { toDateKey } from '../../utils/calendarUtils'
+import { pickEventColor, toDateKey } from '../../utils/calendarUtils'
+import { formatTarget, scheduleToCalendarEvent } from '../../utils/scheduleAdapter'
 import paperPlaneIcon from '../../assets/icons/paper-plane.svg?raw'
 
 type ProjectScheduleTabProps = {
@@ -50,12 +49,6 @@ function scheduleToFormValues(schedule: Schedule): EventFormValues {
     place: schedule.location ?? '',
     memo: schedule.publicMemo ?? '',
   }
-}
-
-function formatTarget(names: string[]): string | undefined {
-  if (names.length === 0) return undefined
-  if (names.length === 1) return `${names[0]}님`
-  return `${names[0]}님 외 ${names.length - 1}인`
 }
 
 interface ScheduleDetailCardProps {
@@ -162,19 +155,24 @@ function ScheduleDetailCard({
 // 이 프로젝트의 실제 Schedule API에 연동한다 (독립 캘린더 페이지는 아직 로컬 store만 사용).
 export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabProps) {
   const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [loading, setLoading] = useState(true)
   const [month, setMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [formModal, setFormModal] = useState<FormModalState>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
 
     async function load() {
+      setLoading(true)
       try {
         const result = await getProjectSchedules(projectId)
         if (!cancelled) setSchedules(result.items)
       } catch {
         if (!cancelled) setSchedules([])
+      } finally {
+        if (!cancelled) setLoading(false)
       }
     }
 
@@ -204,41 +202,61 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
   }
 
   const handleCreate = async (values: EventFormValues) => {
-    const { startAt, endAt } = toScheduleDateTimes(values, selectedDate)
-    const created = await createSchedule({
-      scheduleScope: 'PROJECT',
-      projectId,
-      title: values.title.trim() || '새 일정',
-      startAt,
-      endAt,
-      location: values.place.trim() || undefined,
-      publicMemo: values.memo.trim() || undefined,
-      participantIds: values.participantIds.map(Number),
-    })
-    setSchedules((prev) => [created, ...prev])
+    setActionError(null)
+    try {
+      const { startAt, endAt } = toScheduleDateTimes(values, selectedDate)
+      const created = await createSchedule({
+        scheduleScope: 'PROJECT',
+        projectId,
+        title: values.title.trim() || '새 일정',
+        startAt,
+        endAt,
+        location: values.place.trim() || undefined,
+        publicMemo: values.memo.trim() || undefined,
+        participantIds: values.participantIds.map(Number),
+      })
+      setSchedules((prev) => [created, ...prev])
+    } catch {
+      setActionError('일정을 추가하지 못했습니다. 다시 시도해주세요.')
+    }
   }
 
   const handleUpdate = async (scheduleId: number, values: EventFormValues) => {
-    const { startAt, endAt } = toScheduleDateTimes(values, selectedDate)
-    const updated = await updateSchedule(scheduleId, {
-      title: values.title.trim() || '새 일정',
-      startAt,
-      endAt,
-      location: values.place.trim() || undefined,
-      publicMemo: values.memo.trim() || undefined,
-      participantIds: values.participantIds.map(Number),
-    })
-    setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+    setActionError(null)
+    try {
+      const { startAt, endAt } = toScheduleDateTimes(values, selectedDate)
+      const updated = await updateSchedule(scheduleId, {
+        title: values.title.trim() || '새 일정',
+        startAt,
+        endAt,
+        location: values.place.trim() || undefined,
+        publicMemo: values.memo.trim() || undefined,
+        participantIds: values.participantIds.map(Number),
+      })
+      setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+    } catch {
+      setActionError('일정을 수정하지 못했습니다. 다시 시도해주세요.')
+    }
   }
 
   const handleDelete = async (scheduleId: number) => {
-    await deleteSchedule(scheduleId)
-    setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
+    setActionError(null)
+    try {
+      await deleteSchedule(scheduleId)
+      setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
+    } catch {
+      setActionError('일정을 삭제하지 못했습니다. 다시 시도해주세요.')
+    }
   }
 
   const handleSaveNote = async (scheduleId: number, note: string) => {
-    const updated = await updatePrivateMemo(scheduleId, { privateMemo: note })
-    setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+    setActionError(null)
+    try {
+      const updated = await updatePrivateMemo(scheduleId, { privateMemo: note })
+      setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+    } catch {
+      setActionError('메모를 저장하지 못했습니다. 다시 시도해주세요.')
+    }
   }
 
   const editingSchedule = formModal?.mode === 'edit' ? formModal.schedule : null
@@ -273,15 +291,21 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
         </Button>
       </div>
 
-      <div style={{ height: 720 }}>
-        <Calendar
-          month={month}
-          events={events}
-          selectedDate={selectedDate}
-          onDateClick={handleDateClick}
-          onEventClick={handleEventClick}
-        />
-      </div>
+      {actionError && <p className="text-caption-lg text-warning">{actionError}</p>}
+
+      {loading ? (
+        <p className="text-body-sm text-neutral-6">불러오는 중…</p>
+      ) : (
+        <div style={{ height: 720 }}>
+          <Calendar
+            month={month}
+            events={events}
+            selectedDate={selectedDate}
+            onDateClick={handleDateClick}
+            onEventClick={handleEventClick}
+          />
+        </div>
+      )}
 
       {selectedDate && (
         <div className="flex flex-col gap-4">

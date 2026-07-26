@@ -4,8 +4,8 @@ import type { MemberSummary } from '../types/project'
 import type { Schedule } from '../types/schedule'
 import { pickEventColor } from './calendarUtils'
 
-// "김수민님 외 1인" 형태로 "대상" 표시 문구를 만든다 (CalendarPage와 동일한 규칙)
-function formatTarget(names: string[]): string | undefined {
+// "김수민님 외 1인" 형태로 "대상" 표시 문구를 만든다 — CalendarPage/ProjectScheduleTab 공용
+export function formatTarget(names: string[]): string | undefined {
   if (names.length === 0) return undefined
   if (names.length === 1) return `${names[0]}님`
   return `${names[0]}님 외 ${names.length - 1}인`

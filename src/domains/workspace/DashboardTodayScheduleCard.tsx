@@ -17,16 +17,20 @@ function formatTime(iso: string): string {
 
 export default function DashboardTodayScheduleCard({ projectId }: DashboardTodayScheduleCardProps) {
   const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
 
     async function load() {
+      setLoading(true)
       try {
         const result = await getProjectSchedules(projectId)
         if (!cancelled) setSchedules(result.items)
       } catch {
         if (!cancelled) setSchedules([])
+      } finally {
+        if (!cancelled) setLoading(false)
       }
     }
 
@@ -45,7 +49,9 @@ export default function DashboardTodayScheduleCard({ projectId }: DashboardToday
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">오늘 일정</h2>
       <div className={`flex min-h-[183px] flex-col justify-center ${CARD_BASE} p-4`}>
-        {todaySchedules.length === 0 ? (
+        {loading ? (
+          <p className="text-caption-lg text-neutral-6">불러오는 중…</p>
+        ) : todaySchedules.length === 0 ? (
           <p className="text-caption-lg text-neutral-6">오늘 등록된 일정이 없습니다.</p>
         ) : (
           <ul className="flex flex-col gap-5">
