@@ -78,6 +78,17 @@ function toMemberDetail(member: MockMemberRecord) {
   }
 }
 
+/** 시작일~마감일 기준 경과율 (0~100). 날짜 정보가 없으면 null */
+function calcDeadlineProgress(startDate: string | null, endDate: string | null): number | null {
+  if (!startDate || !endDate) return null
+  const start = new Date(startDate).getTime()
+  const end = new Date(endDate).getTime()
+  if (end <= start) return null
+  const now = Date.now()
+  const ratio = (now - start) / (end - start)
+  return Math.round(Math.min(1, Math.max(0, ratio)) * 100)
+}
+
 function toProjectSummary(project: MockProjectRecord) {
   const memberPreviewImageUrls = db.members
     .map((m) => m.profileImageUrl)
@@ -93,7 +104,7 @@ function toProjectSummary(project: MockProjectRecord) {
     kind: project.kind,
     startDate: project.startDate,
     endDate: project.endDate,
-    deadlineProgressPercent: null,
+    deadlineProgressPercent: calcDeadlineProgress(project.startDate, project.endDate),
     lastActivityAt: project.updatedAt,
     isPinned: project.isPinned,
     memberPreviewImageUrls,
@@ -252,7 +263,9 @@ export const projectHandlers = [
     project.pinnedAt = new Date().toISOString()
     return HttpResponse.json(
       ok({ id: project.id, isPinned: project.isPinned, pinnedAt: project.pinnedAt }),
-      { status: 200 },
+      {
+        status: 200,
+      },
     )
   }),
 
@@ -264,7 +277,9 @@ export const projectHandlers = [
     project.pinnedAt = null
     return HttpResponse.json(
       ok({ id: project.id, isPinned: project.isPinned, pinnedAt: project.pinnedAt }),
-      { status: 200 },
+      {
+        status: 200,
+      },
     )
   }),
 
@@ -392,6 +407,7 @@ export const projectHandlers = [
     )
   }),
 
+  // BE 미구현 — activity_log 테이블/엔티티는 있으나 컨트롤러 없음
   http.get(paths.projects.activities(':projectId'), ({ request, params }) => {
     if (!safeUser()) return unauthorized()
     const projectId = Number(params.projectId)
@@ -431,57 +447,41 @@ export const projectHandlers = [
     )
   }),
 
-  http.post(paths.projects.uploadUrl(':projectId'), async ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
-    if (!db.projects.some((p) => p.id === Number(params.projectId))) return notFound()
-    const body = (await request.json()) as {
+  http.post(paths.projects.files(':projectId'), async ({ request, params }) => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+    const projectId = Number(params.projectId)
+    if (!db.projects.some((p) => p.id === projectId)) return notFound()
+
+    const formData = await request.formData()
+    const filePart = formData.get('file')
+    const requestPart = formData.get('request')
+    if (!(filePart instanceof File) || typeof requestPart !== 'string') return badRequest()
+
+    const body = JSON.parse(requestPart) as {
       fileName: string
-      contentType: string
-      fileSize: number
+      description?: string
+      isFinal?: boolean
     }
-    if (!body.fileName || !body.contentType || body.fileSize == null) return badRequest()
-    if (body.fileSize > 100 * 1024 * 1024) {
+    if (!body.fileName) return badRequest()
+    if (filePart.size > 100 * 1024 * 1024) {
       return domainError(
         'PROJECT_FILE_SIZE400',
         '프로젝트 파일은 최대 100MB까지 업로드할 수 있습니다.',
       )
     }
 
-    return HttpResponse.json(
-      created({
-        uploadUrl: 'https://example.com/mock-upload',
-        storageKey: `projects/${params.projectId}/files/${body.fileName}`,
-        expiresAt: '2026-12-31T00:00:00Z',
-        requiredHeaders: { 'Content-Type': body.contentType },
-      }),
-      { status: 201 },
-    )
-  }),
-
-  http.post(paths.projects.files(':projectId'), async ({ request, params }) => {
-    const user = safeUser()
-    if (!user) return unauthorized()
-    const projectId = Number(params.projectId)
-    if (!db.projects.some((p) => p.id === projectId)) return notFound()
-    const body = (await request.json()) as {
-      fileName: string
-      description?: string
-      storageKey: string
-      contentType: string
-      fileSize: number
-      isPinned?: boolean
-    }
     const now = new Date().toISOString()
     const file = {
       id: allocId(),
       projectId,
       fileName: body.fileName,
       description: body.description ?? null,
-      storageKey: body.storageKey,
-      contentType: body.contentType,
-      fileSize: body.fileSize,
-      isPinned: body.isPinned ?? false,
-      isFinal: false,
+      storageKey: `projects/${projectId}/files/${body.fileName}`,
+      contentType: filePart.type || 'application/octet-stream',
+      fileSize: filePart.size,
+      isPinned: false,
+      isFinal: body.isFinal ?? false,
       uploaderId: user.id,
       createdAt: now,
       updatedAt: now,
@@ -507,17 +507,19 @@ export const projectHandlers = [
     return HttpResponse.json(ok({ deletedAt: new Date().toISOString() }), { status: 200 })
   }),
 
-  http.get(paths.projects.downloadUrl(':projectId', ':fileId'), ({ params }) => {
+  http.get(paths.projects.download(':projectId', ':fileId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const file = db.files.find((f) => f.id === Number(params.fileId))
     if (!file) return notFound()
-    return HttpResponse.json(
-      ok({
-        downloadUrl: `https://example.com/mock-download/${file.storageKey}`,
-        expiresAt: '2026-12-31T00:00:00Z',
-      }),
-      { status: 200 },
-    )
+    /** mock 환경엔 실제 업로드 바이트가 없어 파일명을 담은 텍스트로 대체 */
+    const body = `mock file content: ${file.fileName}`
+    return new HttpResponse(body, {
+      status: 200,
+      headers: {
+        'Content-Type': file.contentType,
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(file.fileName)}"`,
+      },
+    })
   }),
 
   http.get(paths.projects.notices(':projectId'), ({ request, params }) => {

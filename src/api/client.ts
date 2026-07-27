@@ -46,6 +46,19 @@ function toApiError(payload: { code?: ApiCode; message?: string; result?: unknow
   )
 }
 
+/** 바이너리(파일 다운로드) 응답 전용 — isSuccess 래핑 없이 그대로 내려오므로 request()와 분리 */
+export async function requestBlob(config: AxiosRequestConfig): Promise<Blob> {
+  try {
+    const response = await apiClient.request<Blob>({ ...config, responseType: 'blob' })
+    return response.data
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new ApiError('COMMON500', error.message || '파일을 다운로드하지 못했습니다.')
+    }
+    throw error
+  }
+}
+
 export async function request<T>(config: AxiosRequestConfig): Promise<T> {
   try {
     const response = await apiClient.request<ApiResponse<T>>(config)

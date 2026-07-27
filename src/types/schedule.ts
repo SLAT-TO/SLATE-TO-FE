@@ -15,6 +15,7 @@ export type Schedule = {
   updatedAt: string
 }
 
+/** GET /api/v1/schedules/summary — BE 미구현, mock 전용 */
 export type ScheduleSummaryItem = {
   date: string
   count: number
@@ -38,6 +39,7 @@ export type PrivateMemoRequest = {
   privateMemo: string
 }
 
+/** GET /api/v1/briefings/today — BE 미구현, 엔티티/컨트롤러 자체가 없음. mock 전용 */
 export type TodayBriefing = {
   date: string
   scheduleCount: number

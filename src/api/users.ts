@@ -41,6 +41,7 @@ export async function updateProfile(body: UpdateProfileRequest): Promise<MeProfi
   return normalizeMe(result)
 }
 
+/** FE mock 전용 — BE에 DELETE /users/me(회원탈퇴) 미구현. BE 연동 시 API 존재 여부 재확인 필요 */
 export async function deleteAccount(body: DeleteAccountRequest): Promise<null> {
   return request<null>({ method: 'DELETE', url: paths.users.me, data: body })
 }

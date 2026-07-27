@@ -18,7 +18,7 @@ import {
 } from '../../api/videos'
 import {
   createInvitation,
-  getDownloadUrl,
+  downloadProjectFile,
   getProjectFiles,
   getProjectMembers,
 } from '../../api/projects'
@@ -41,6 +41,7 @@ import type { ReferenceFile } from '../../types/video'
 import type { ProjectFileListItem } from '../../types/file'
 import type { MemberSummary, ProjectLengthType } from '../../types/project'
 import { PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
+import { downloadBlob } from '../../utils/downloadBlob'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
 import clockIcon from '../../assets/icons/clock.svg?raw'
 import commentCheckIcon from '../../assets/icons/comment-check.svg?raw'
@@ -549,9 +550,9 @@ export function VideoDetailView({
     setReferenceFiles((prev) => prev.filter((f) => f.referenceFileId !== referenceFileId))
   }
 
-  const downloadReferenceFile = async (projectFileId: number) => {
-    const { downloadUrl } = await getDownloadUrl(projectId, projectFileId)
-    window.open(downloadUrl, '_blank', 'noopener')
+  const downloadReferenceFile = async (projectFileId: number, fileName: string) => {
+    const blob = await downloadProjectFile(projectId, projectFileId)
+    downloadBlob(blob, fileName)
   }
 
   const filteredFeedbacks = feedbacks.filter((f) => (filter === 'unresolved' ? !f.status : true))
@@ -771,7 +772,7 @@ export function VideoDetailView({
                   </span>
                   <button
                     type="button"
-                    onClick={() => downloadReferenceFile(file.projectFileId)}
+                    onClick={() => downloadReferenceFile(file.projectFileId, file.fileName)}
                     aria-label="다운로드"
                     className="text-neutral-9 hover:text-primary"
                   >

@@ -1,4 +1,4 @@
-import { request } from './client'
+import { request, requestBlob } from './client'
 import { paths } from './paths'
 import type {
   AcceptInvitationRequest,
@@ -19,13 +19,10 @@ import type {
   UpdateProjectRequest,
 } from '../types/project'
 import type {
-  DownloadUrlResult,
   ProjectFile,
   ProjectFileListItem,
-  RegisterFileRequest,
+  ProjectFileUploadRequest,
   UpdateFileRequest,
-  UploadUrlRequest,
-  UploadUrlResult,
 } from '../types/file'
 import type {
   CreateNoticeRequest,
@@ -138,25 +135,21 @@ export async function getProjectFile(projectId: number, fileId: number): Promise
   return request({ method: 'GET', url: paths.projects.file(projectId, fileId) })
 }
 
-export async function getUploadUrl(
+/** multipart/form-data 직접 업로드 — file(바이너리) + request(JSON 메타데이터) 두 파트로 전송 */
+export async function uploadProjectFile(
   projectId: number,
-  body: UploadUrlRequest,
-): Promise<UploadUrlResult> {
-  return request({ method: 'POST', url: paths.projects.uploadUrl(projectId), data: body })
-}
-
-export async function createUploadUrl(
-  projectId: number,
-  body: UploadUrlRequest,
-): Promise<UploadUrlResult> {
-  return getUploadUrl(projectId, body)
-}
-
-export async function registerFile(
-  projectId: number,
-  body: RegisterFileRequest,
+  file: File,
+  body: ProjectFileUploadRequest,
 ): Promise<ProjectFile> {
-  return request({ method: 'POST', url: paths.projects.files(projectId), data: body })
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('request', new Blob([JSON.stringify(body)], { type: 'application/json' }))
+  return request({
+    method: 'POST',
+    url: paths.projects.files(projectId),
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
 }
 
 export async function updateFile(
@@ -174,11 +167,9 @@ export async function deleteFile(
   return request({ method: 'DELETE', url: paths.projects.file(projectId, fileId) })
 }
 
-export async function getDownloadUrl(
-  projectId: number,
-  fileId: number,
-): Promise<DownloadUrlResult> {
-  return request({ method: 'GET', url: paths.projects.downloadUrl(projectId, fileId) })
+/** BE가 presigned URL 대신 파일 바이너리를 직접 응답 */
+export async function downloadProjectFile(projectId: number, fileId: number): Promise<Blob> {
+  return requestBlob({ method: 'GET', url: paths.projects.download(projectId, fileId) })
 }
 
 export async function getProjectNotices(
