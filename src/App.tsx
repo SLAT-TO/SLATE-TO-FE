@@ -17,6 +17,8 @@ import SettingsPasswordPage from './pages/SettingsPasswordPage'
 import SettingsInquiryPage from './pages/SettingsInquiryPage'
 import WorkspacePage from './pages/WorkspacePage'
 import HeaderTitle from './components/HeaderTitle'
+import MyRecruitPage from './pages/MyRecruitPage'
+import JobFormPage from './pages/JobFormPage'
 import { usePathname } from './hooks/usePathname'
 import { useHeaderSlot } from './hooks/useHeaderSlot'
 import { renderFullscreenRoute } from './routes/fullscreen'
@@ -39,7 +41,9 @@ function getHeaderTitle(pathname: string): string {
 
 function AppRoutes({ pathname }: { pathname: string }) {
   const headerTitle = useMemo(() => getHeaderTitle(pathname), [pathname])
-  useHeaderSlot(useMemo(() => <HeaderTitle>{headerTitle}</HeaderTitle>, [headerTitle]))
+  useHeaderSlot(
+    useMemo(() => (headerTitle ? <HeaderTitle>{headerTitle}</HeaderTitle> : null), [headerTitle]),
+  )
 
   // trailing slash 정규화 (/workspace/ → /workspace)
   const path = pathname.replace(/\/+$/, '') || '/'
@@ -63,6 +67,14 @@ function AppRoutes({ pathname }: { pathname: string }) {
 
   if (path === '/calendar') {
     return <CalendarPage />
+  }
+
+  if (path === '/matching/my') {
+    return <MyRecruitPage />
+  }
+
+  if (path === '/matching/new') {
+    return <JobFormPage />
   }
 
   const applicantsMatch = matchPath('/matching/:jobId/applicants', path)

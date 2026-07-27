@@ -11,7 +11,7 @@ interface TagProps {
 }
 
 const base =
-  'inline-flex h-6 w-[72px] items-center justify-center rounded-[3px] text-caption-sm font-semibold whitespace-nowrap'
+  'inline-flex h-6 min-w-[72px] items-center justify-center rounded-[3px] px-3 text-caption-sm font-semibold whitespace-nowrap'
 
 const variantStyles: Record<TagVariant, string> = {
   primary: 'bg-tag-role-bg text-tag-role-text',

@@ -7,8 +7,7 @@ interface HeaderProfileMenuProps {
 }
 
 const MENU_ITEMS = [
-  // TODO: 나의 구인구직 전용 페이지 생기면 교체 (#140)
-  { label: '나의 구인구직', path: '/matching' },
+  { label: '나의 구인구직', path: '/matching/my' },
   { label: '마이페이지', path: '/mypage' },
   { label: '설정', path: '/settings' },
 ] as const

@@ -37,6 +37,10 @@ export const REGION_LABELS = [
   '제주도',
 ] as const
 
+export const REGION_OPTIONS: ReadonlyArray<{ value: string; label: string }> = REGION_LABELS.map(
+  (label) => ({ value: label, label }),
+)
+
 export const FILTER_CONFIGS: FilterConfig[] = [
   {
     key: 'region',

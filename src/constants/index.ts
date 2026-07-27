@@ -10,11 +10,13 @@ export {
   ONBOARDING_ROLE_OPTIONS,
   type OnboardingRole,
 } from './onboardingRoles'
+
 export {
   ONBOARDING_VIDEO_CATEGORY_LABELS,
   ONBOARDING_VIDEO_CATEGORY_OPTIONS,
   type OnboardingVideoCategory,
 } from './onboardingVideoCategories'
+
 export { ONBOARDING_REGION_LABELS, ONBOARDING_REGION_OPTIONS, type Region } from './regions'
 
 export {
@@ -25,9 +27,11 @@ export {
   type FilmLength,
   type VideoCategory,
 } from './videoCategories'
+
 export {
   FILTER_CONFIGS,
   REGION_LABELS,
+  REGION_OPTIONS,
   SORT_OPTIONS,
   shouldShowFilmLength,
   type SortValue,
