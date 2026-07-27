@@ -407,6 +407,7 @@ export const projectHandlers = [
     )
   }),
 
+  // BE 미구현 — activity_log 테이블/엔티티는 있으나 컨트롤러 없음
   http.get(paths.projects.activities(':projectId'), ({ request, params }) => {
     if (!safeUser()) return unauthorized()
     const projectId = Number(params.projectId)

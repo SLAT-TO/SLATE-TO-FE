@@ -30,6 +30,7 @@ export const notificationHandlers = [
     return HttpResponse.json(ok({ items, nextCursor, hasNext }), { status: 200 })
   }),
 
+  // BE 미구현 — 안읽음 개수 API 없음 (목록 조회로 계산 필요)
   http.get(paths.notifications.unreadCount, () => {
     if (!safeUser()) return unauthorized()
     const count = db.notifications.filter((n) => !n.isRead).length

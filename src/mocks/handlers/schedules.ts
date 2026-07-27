@@ -18,6 +18,7 @@ function safeUser() {
 }
 
 export const scheduleHandlers = [
+  // BE 미구현 — 브리핑 엔티티/컨트롤러 자체가 없음
   http.get(paths.briefings.today, () => {
     if (!safeUser()) return unauthorized()
     const unread = db.notifications.filter((n) => !n.isRead).length
@@ -38,6 +39,7 @@ export const scheduleHandlers = [
     )
   }),
 
+  // BE 미구현 — 일정 요약 API 없음
   http.get(paths.schedules.summary, () => {
     if (!safeUser()) return unauthorized()
     const summary = db.schedules.map((s) => ({
@@ -57,6 +59,7 @@ export const scheduleHandlers = [
     return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
+  // BE 미구현 — 프로젝트별 하위 일정 API 없음 (최상위 /schedules만 존재)
   http.get(paths.projects.schedules(':projectId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const items = db.schedules.filter((s) => s.projectId === Number(params.projectId))

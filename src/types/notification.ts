@@ -18,6 +18,7 @@ export type AppNotification = {
   createdAt: string
 }
 
+/** GET /api/v1/notifications/unread-count — BE 미구현, mock 전용 */
 export type UnreadCountResult = {
   count: number
 }
