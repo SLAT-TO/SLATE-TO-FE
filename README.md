@@ -273,11 +273,11 @@ npm run format:check  # 포맷 위반 여부만 확인 (CI와 동일)
 
 ### 로컬 실행 · API 연동
 
-| 모드       | `VITE_ENABLE_MSW` | `VITE_API_BASE_URL`          | 설명                                                                                                                  |
-| ---------- | ----------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| MSW (기본) | `true`            | 비움                         | `src/mocks`가 `/api/v1` 요청을 가로챕니다.                                                                            |
-| 로컬 BE    | `false`           | 비움                         | Vite proxy가 `/api` → `http://localhost:8080` (CORS 우회, `vite.config.ts`에 설정 완료).                              |
-| 원격 BE    | `false`           | `https://api.example.com` 등 | axios가 해당 origin으로 직결. BE CORS·쿠키(`withCredentials`) 필요.                                                   |
+| 모드       | `VITE_ENABLE_MSW` | `VITE_API_BASE_URL`          | 설명                                                                                     |
+| ---------- | ----------------- | ---------------------------- | ---------------------------------------------------------------------------------------- |
+| MSW (기본) | `true`            | 비움                         | `src/mocks`가 `/api/v1` 요청을 가로챕니다.                                               |
+| 로컬 BE    | `false`           | 비움                         | Vite proxy가 `/api` → `http://localhost:8080` (CORS 우회, `vite.config.ts`에 설정 완료). |
+| 원격 BE    | `false`           | `https://api.example.com` 등 | axios가 해당 origin으로 직결. BE CORS·쿠키(`withCredentials`) 필요.                      |
 
 - MSW는 `VITE_ENABLE_MSW=true`일 때 켜집니다. (로컬·Vercel Preview/Production 공통, `import.meta.env.DEV` 가드 없음)
 - 실 서버 Swagger가 공개됐지만 BE 구조와 아직 완전히 정합되지 않아, 당분간 Vercel Preview·Production 모두 MSW mock을 유지합니다. 정합 완료 후 Production만 `VITE_ENABLE_MSW=false` + `VITE_API_BASE_URL`을 넣습니다.
