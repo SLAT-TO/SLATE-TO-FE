@@ -7,6 +7,8 @@ import type {
   CreateVideoRequest,
   CreateVideoResult,
   ReferenceFile,
+  UpdateVideoRequest,
+  UpdateVideoResult,
   ValidateYoutubeRequest,
   ValidateYoutubeResult,
   VideoDetail,
@@ -54,6 +56,14 @@ export async function deleteVideo(
   videoId: number,
 ): Promise<{ videoId: number; message: string }> {
   return request({ method: 'DELETE', url: paths.projects.video(projectId, videoId) })
+}
+
+export async function updateVideo(
+  projectId: number,
+  videoId: number,
+  body: UpdateVideoRequest,
+): Promise<UpdateVideoResult> {
+  return request({ method: 'PATCH', url: paths.projects.video(projectId, videoId), data: body })
 }
 
 export async function updateVideoBookmark(

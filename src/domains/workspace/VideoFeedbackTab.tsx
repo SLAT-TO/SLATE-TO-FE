@@ -1,28 +1,7 @@
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  createFeedback,
-  createReply,
-  deleteFeedback,
-  deleteVideo,
-  getFeedbacks,
-  getReferenceFiles,
-  getReplies,
-  getVideo,
-  getVideos,
-  linkReferenceFile,
-  unlinkReferenceFile,
-  updateFeedbackStatus,
-  updateVideoBookmark,
-} from '../../api/videos'
-import {
-  createInvitation,
-  downloadProjectFile,
-  getProjectFiles,
-  getProjectMembers,
-} from '../../api/projects'
-import { getMe } from '../../api/users'
+import { useEffect, useMemo, useState } from 'react'
+import { createVideo, deleteVideo, getVideos, updateVideo } from '../../api/videos'
 import ActionMenu from '../../components/ActionMenu'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
@@ -32,16 +11,23 @@ import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import YouTubeIframePlayer from '../../components/YouTubeIframePlayer'
 import VideoCard from './VideoCard'
+import AddVideoModal from './AddVideoModal'
+import EditVideoModal from './EditVideoModal'
 import { useHeaderSlot } from '../../hooks/useHeaderSlot'
+import { useYouTubePlayer } from '../../hooks/useYouTubePlayer'
+import { useVideoDetail } from '../../hooks/useVideoDetail'
+import { useReferenceFiles } from '../../hooks/useReferenceFiles'
+import { useFeedbacks } from '../../hooks/useFeedbacks'
+import { useFeedbackReplies } from '../../hooks/useFeedbackReplies'
+import { useProjectMembersInvite } from '../../hooks/useProjectMembersInvite'
 import { CARD_BASE } from '../../styles/card'
 import { ApiError } from '../../types/api'
-import type { VideoDetail, VideoListItem, VideoProgressStatus } from '../../types/video'
-import type { Feedback, FeedbackReply } from '../../types/feedback'
-import type { ReferenceFile } from '../../types/video'
-import type { ProjectFileListItem } from '../../types/file'
-import type { MemberSummary, ProjectLengthType } from '../../types/project'
+import type { VideoListItem } from '../../types/video'
+import type { CreateVideoValues } from '../../schemas/video'
+import type { Feedback } from '../../types/feedback'
+import type { ProjectLengthType } from '../../types/project'
 import { PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
-import { downloadBlob } from '../../utils/downloadBlob'
+import { roleLabel } from '../../constants/roles'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
 import clockIcon from '../../assets/icons/clock.svg?raw'
 import commentCheckIcon from '../../assets/icons/comment-check.svg?raw'
@@ -55,8 +41,6 @@ import xIcon from '../../assets/icons/x.svg?raw'
 type VideoFeedbackTabProps = {
   projectId: number
 }
-
-type FeedbackFilter = 'all' | 'unresolved'
 
 function formatTimestamp(sec: number): string {
   const m = Math.floor(sec / 60)
@@ -162,6 +146,8 @@ export default function VideoFeedbackTab({
   const [videosLoading, setVideosLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<VideoListItem | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [addVideoOpen, setAddVideoOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<VideoListItem | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -195,31 +181,80 @@ export default function VideoFeedbackTab({
     }
   }
 
+  const handleCreateVideo = async (values: CreateVideoValues) => {
+    const result = await createVideo(projectId, values)
+    setVideos((prev) => [
+      {
+        videoId: result.videoId,
+        title: result.title,
+        thumbnailUrl: result.thumbnailUrl,
+        bookmarked: result.bookmarked,
+        progressStatus: result.progressStatus,
+        unreadCommentCount: 0,
+        createdAt: result.createdAt,
+        updatedAt: result.createdAt,
+      },
+      ...prev,
+    ])
+  }
+
+  const handleUpdateVideo = async (values: { title: string }) => {
+    if (!editTarget) return
+    const result = await updateVideo(projectId, editTarget.videoId, values)
+    setVideos((prev) =>
+      prev.map((v) =>
+        v.videoId === result.videoId
+          ? { ...v, title: result.title, updatedAt: result.updatedAt }
+          : v,
+      ),
+    )
+  }
+
   return (
     <section className="flex flex-col gap-3">
       {deleteError && <p className="text-caption-lg text-warning">{deleteError}</p>}
       {videosLoading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
-      {!videosLoading && videos.length === 0 && (
-        <p className="text-caption-lg text-neutral-6">등록된 영상이 없습니다.</p>
-      )}
-      {!videosLoading && videos.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {videos.map((video) => (
-            <VideoCard
-              key={video.videoId}
-              title={video.title}
-              thumbnailUrl={video.thumbnailUrl}
-              progressStatus={video.progressStatus}
-              relativeTime={formatDistanceToNow(new Date(video.updatedAt), {
-                addSuffix: true,
-                locale: ko,
-              })}
-              unreadCommentCount={video.unreadCommentCount}
-              onClick={() => onSelectVideo(video.videoId)}
-              onDelete={() => setDeleteTarget(video)}
-            />
-          ))}
-        </div>
+      {!videosLoading && (
+        <>
+          <h2 className="text-body-lg text-neutral-11 font-bold">영상 목록</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {videos.map((video) => (
+              <VideoCard
+                key={video.videoId}
+                title={video.title}
+                thumbnailUrl={video.thumbnailUrl}
+                progressStatus={video.progressStatus}
+                relativeTime={formatDistanceToNow(new Date(video.updatedAt), {
+                  addSuffix: true,
+                  locale: ko,
+                })}
+                unreadCommentCount={video.unreadCommentCount}
+                onClick={() => onSelectVideo(video.videoId)}
+                onEdit={() => setEditTarget(video)}
+                onDelete={() => setDeleteTarget(video)}
+              />
+            ))}
+            <button
+              type="button"
+              onClick={() => setAddVideoOpen(true)}
+              className="bg-neutral-3 hover:bg-neutral-9 text-neutral-5 flex w-full flex-col gap-3 rounded-[10px] p-4 transition-colors"
+            >
+              {/* VideoCard와 동일한 3단(제목행 · aspect-video · 하단행) 골격으로 높이만 맞추고, 카드 전체를 하나의 배경색으로 채움 */}
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-body-sm invisible font-semibold">-</span>
+              </div>
+
+              <div className="flex aspect-video w-full flex-col items-center justify-center gap-2">
+                <span className="text-head-sm font-bold">+</span>
+                <span className="text-caption-lg font-semibold">새로운 영상 추가</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <div className="h-6" />
+              </div>
+            </button>
+          </div>
+        </>
       )}
 
       <ConfirmModal
@@ -230,6 +265,21 @@ export default function VideoFeedbackTab({
         description={deleteTarget?.title}
         confirmText="삭제하기"
       />
+
+      <AddVideoModal
+        projectId={projectId}
+        isOpen={addVideoOpen}
+        onClose={() => setAddVideoOpen(false)}
+        onCreated={handleCreateVideo}
+      />
+
+      <EditVideoModal
+        key={editTarget ? `video-${editTarget.videoId}` : 'video-edit-closed'}
+        isOpen={editTarget !== null}
+        initialTitle={editTarget?.title ?? ''}
+        onClose={() => setEditTarget(null)}
+        onSubmit={handleUpdateVideo}
+      />
     </section>
   )
 }
@@ -239,6 +289,8 @@ export type VideoDetailViewProps = {
   videoId: number
   meId: number | null
   lengthType: ProjectLengthType | null
+  /** 이 프로젝트에서 내가 맡은 역할 — 프로젝트 소개글 태그 옆에 함께 표시 */
+  myRoleNames: string[]
   onBack: () => void
 }
 
@@ -247,56 +299,99 @@ export function VideoDetailView({
   videoId,
   meId,
   lengthType,
+  myRoleNames,
   onBack,
 }: VideoDetailViewProps) {
-  const [videoDetail, setVideoDetail] = useState<VideoDetail | null>(null)
-  const [referenceFiles, setReferenceFiles] = useState<ReferenceFile[]>([])
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<FeedbackFilter>('all')
-  const [newFeedback, setNewFeedback] = useState('')
-  const [pendingStart, setPendingStart] = useState<number | null>(null)
-  const [pendingEnd, setPendingEnd] = useState<number | null>(null)
-  /** 구간 기록 버튼으로 시작점만 찍고 종료점 대기 중인 상태 */
-  const [isCapturingRange, setIsCapturingRange] = useState(false)
-  const [expandedFeedbackId, setExpandedFeedbackId] = useState<number | null>(null)
-  const [repliesByFeedback, setRepliesByFeedback] = useState<Record<number, FeedbackReply[]>>({})
-  const [newReply, setNewReply] = useState('')
-  const [replyPendingStart, setReplyPendingStart] = useState<number | null>(null)
-  const [replyPendingEnd, setReplyPendingEnd] = useState<number | null>(null)
-  /** 답글의 구간 기록 버튼으로 시작점만 찍고 종료점 대기 중인 상태 */
-  const [isCapturingReplyRange, setIsCapturingReplyRange] = useState(false)
-  const [fileSearch, setFileSearch] = useState('')
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const [projectFiles, setProjectFiles] = useState<ProjectFileListItem[]>([])
-  const [members, setMembers] = useState<MemberSummary[]>([])
-  const [inviteCopied, setInviteCopied] = useState(false)
-  const [statusMenuOpen, setStatusMenuOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const statusMenuRef = useRef<HTMLDivElement>(null)
+  const [editOpen, setEditOpen] = useState(false)
 
-  const playerRef = useRef<YT.Player | null>(null)
-  const playerWrapperRef = useRef<HTMLDivElement>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isMuted, setIsMuted] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
+  const {
+    playerWrapperRef,
+    isPlaying,
+    isMuted,
+    currentTime,
+    duration,
+    handlePlayerReady,
+    handleStateChange,
+    togglePlay,
+    toggleMute,
+    seekTo,
+    handleSeekClick,
+  } = useYouTubePlayer()
 
-  useEffect(() => {
-    if (!statusMenuOpen) return
-    const handlePointerDown = (e: PointerEvent) => {
-      if (!statusMenuRef.current?.contains(e.target as Node)) setStatusMenuOpen(false)
-    }
-    // 유튜브 iframe 클릭은 별도 document라 pointerdown이 감지되지 않아 window blur로 보조 감지
-    const handleWindowBlur = () => setStatusMenuOpen(false)
-    document.addEventListener('pointerdown', handlePointerDown)
-    window.addEventListener('blur', handleWindowBlur)
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-      window.removeEventListener('blur', handleWindowBlur)
-    }
-  }, [statusMenuOpen])
+  const {
+    videoDetail,
+    load: loadVideoDetail,
+    statusMenuOpen,
+    setStatusMenuOpen,
+    statusMenuRef,
+    toggleBookmark,
+    changeVideoStatus,
+    confirmDeleteVideo,
+    handleUpdateVideo,
+  } = useVideoDetail(projectId, videoId, onBack)
+
+  const {
+    filteredFiles,
+    fileSearch,
+    setFileSearch,
+    pickerOpen,
+    setPickerOpen,
+    projectFiles,
+    load: loadReferenceFiles,
+    openPicker,
+    attachFile,
+    removeReferenceFile,
+    downloadReferenceFile,
+  } = useReferenceFiles(projectId, videoId)
+
+  const {
+    filteredFeedbacks,
+    filter,
+    setFilter,
+    newFeedback,
+    setNewFeedback,
+    pendingStart,
+    pendingEnd,
+    isCapturingRange,
+    editingFeedbackId,
+    editingFeedbackContent,
+    setEditingFeedbackContent,
+    load: loadFeedbacks,
+    clearPendingTime,
+    attachCurrentTime,
+    toggleRangeCapture,
+    submitFeedback,
+    toggleResolved,
+    removeFeedback,
+    startEditFeedback,
+    cancelEditFeedback,
+    saveEditFeedback,
+  } = useFeedbacks(videoId, currentTime)
+
+  const {
+    expandedFeedbackId,
+    repliesByFeedback,
+    newReply,
+    setNewReply,
+    replyPendingStart,
+    replyPendingEnd,
+    isCapturingReplyRange,
+    toggleReplies,
+    clearReplyPendingTime,
+    attachReplyCurrentTime,
+    toggleReplyRangeCapture,
+    submitReply,
+  } = useFeedbackReplies(currentTime)
+
+  const {
+    members,
+    inviteCopied,
+    load: loadMembers,
+    inviteMember,
+  } = useProjectMembersInvite(projectId)
 
   useEffect(() => {
     let cancelled = false
@@ -304,22 +399,8 @@ export function VideoDetailView({
     async function load() {
       setLoading(true)
       setLoadError(null)
-      setVideoDetail(null)
       try {
-        const [detail, refFiles, feedbackPage, memberList] = await Promise.all([
-          getVideo(projectId, videoId),
-          getReferenceFiles(videoId),
-          getFeedbacks(videoId),
-          getProjectMembers(projectId).catch(() => ({
-            items: [] as MemberSummary[],
-            memberCount: 0,
-          })),
-        ])
-        if (cancelled) return
-        setVideoDetail(detail)
-        setReferenceFiles(refFiles.items)
-        setFeedbacks(feedbackPage.items)
-        setMembers(memberList.items)
+        await Promise.all([loadVideoDetail(), loadReferenceFiles(), loadFeedbacks(), loadMembers()])
       } catch (err) {
         if (!cancelled) {
           setLoadError(err instanceof ApiError ? err.message : '영상 정보를 불러오지 못했습니다.')
@@ -333,232 +414,7 @@ export function VideoDetailView({
     return () => {
       cancelled = true
     }
-  }, [projectId, videoId])
-
-  useEffect(() => {
-    if (!isPlaying) return
-    const id = setInterval(() => {
-      const p = playerRef.current
-      if (p) setCurrentTime(p.getCurrentTime())
-    }, 250)
-    return () => clearInterval(id)
-  }, [isPlaying])
-
-  const handlePlayerReady = (player: YT.Player) => {
-    playerRef.current = player
-    setDuration(player.getDuration())
-  }
-
-  const toggleBookmark = useCallback(async () => {
-    if (!videoDetail) return
-    const next = !videoDetail.bookmarked
-    setVideoDetail({ ...videoDetail, bookmarked: next })
-    try {
-      await updateVideoBookmark(projectId, videoId, { bookmarked: next })
-    } catch {
-      setVideoDetail((prev) => (prev ? { ...prev, bookmarked: !next } : prev))
-    }
-  }, [videoDetail, projectId, videoId])
-
-  /** 영상 진행 상태 변경 — 백엔드에 상태 변경 API가 없어 로컬 상태만 갱신 (API 연동 전, 최근 활동 체크박스와 동일한 방식) */
-  const changeVideoStatus = useCallback((status: VideoProgressStatus) => {
-    setStatusMenuOpen(false)
-    setVideoDetail((prev) => (prev ? { ...prev, progressStatus: status } : prev))
-  }, [])
-
-  /** 참여 인원 초대 — BE가 내려준 inviteUrl을 클립보드에 복사 */
-  const inviteMember = useCallback(async () => {
-    const { inviteUrl } = await createInvitation(projectId)
-    await navigator.clipboard.writeText(inviteUrl)
-    setInviteCopied(true)
-    setTimeout(() => setInviteCopied(false), 2000)
-  }, [projectId])
-
-  const confirmDeleteVideo = useCallback(async () => {
-    await deleteVideo(projectId, videoId)
-    onBack()
-  }, [projectId, videoId, onBack])
-
-  const handleStateChange = (event: YT.PlayerStateChangeEvent) => {
-    setIsPlaying(event.data === 1)
-    const d = playerRef.current?.getDuration()
-    if (d) setDuration(d)
-  }
-
-  const togglePlay = () => {
-    const p = playerRef.current
-    if (!p) return
-    if (isPlaying) p.pauseVideo()
-    else p.playVideo()
-  }
-
-  const toggleMute = () => {
-    const p = playerRef.current
-    if (!p) return
-    if (isMuted) {
-      p.unMute()
-      setIsMuted(false)
-    } else {
-      p.mute()
-      setIsMuted(true)
-    }
-  }
-
-  /** 플레이어 탐색 + 진행바/시간 표시 상태를 함께 갱신 — 둘 중 하나만 하면 화면이 실제 재생 위치와 어긋남 */
-  const seekTo = useCallback((seconds: number) => {
-    playerRef.current?.seekTo(seconds, true)
-    setCurrentTime(seconds)
-  }, [])
-
-  const handleSeekClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!duration) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const fraction = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
-    seekTo(fraction * duration)
-  }
-
-  const clearPendingTime = () => {
-    setPendingStart(null)
-    setPendingEnd(null)
-    setIsCapturingRange(false)
-  }
-
-  const attachCurrentTime = () => {
-    setPendingStart(Math.floor(currentTime))
-    setPendingEnd(null)
-    setIsCapturingRange(false)
-  }
-
-  /** 구간 기록 버튼 — 첫 클릭은 시작점, 재생 위치를 옮긴 뒤 두 번째 클릭은 종료점 */
-  const toggleRangeCapture = () => {
-    if (!isCapturingRange) {
-      setPendingStart(Math.floor(currentTime))
-      setPendingEnd(null)
-      setIsCapturingRange(true)
-    } else {
-      setPendingEnd(Math.floor(currentTime))
-      setIsCapturingRange(false)
-    }
-  }
-
-  const submitFeedback = async () => {
-    if (!newFeedback.trim()) return
-    const created = await createFeedback(videoId, {
-      content: newFeedback.trim(),
-      startTime: pendingStart ?? undefined,
-      endTime: pendingEnd ?? undefined,
-    })
-    setFeedbacks((prev) => [created, ...prev])
-    setNewFeedback('')
-    clearPendingTime()
-  }
-
-  const toggleResolved = async (feedback: Feedback) => {
-    const me = await getMe()
-    const updated = await updateFeedbackStatus(feedback.feedbackId, {
-      userId: me.id,
-      status: !feedback.status,
-    })
-    setFeedbacks((prev) =>
-      prev.map((f) =>
-        f.feedbackId === updated.feedbackId
-          ? { ...f, status: updated.status, updatedAt: updated.updatedAt }
-          : f,
-      ),
-    )
-  }
-
-  const removeFeedback = async (feedbackId: number) => {
-    await deleteFeedback(feedbackId)
-    setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== feedbackId))
-  }
-
-  const clearReplyPendingTime = () => {
-    setReplyPendingStart(null)
-    setReplyPendingEnd(null)
-    setIsCapturingReplyRange(false)
-  }
-
-  /** 답글 입력창을 다른 피드백으로 옮기거나 닫을 때 이전에 쓰던 텍스트·시간 첨부 상태가 남지 않도록 초기화 */
-  const resetReplyCompose = () => {
-    setNewReply('')
-    clearReplyPendingTime()
-  }
-
-  const toggleReplies = async (feedbackId: number) => {
-    if (expandedFeedbackId === feedbackId) {
-      setExpandedFeedbackId(null)
-      resetReplyCompose()
-      return
-    }
-    setExpandedFeedbackId(feedbackId)
-    resetReplyCompose()
-    if (!repliesByFeedback[feedbackId]) {
-      const page = await getReplies(feedbackId)
-      setRepliesByFeedback((prev) => ({ ...prev, [feedbackId]: page.items }))
-    }
-  }
-
-  const attachReplyCurrentTime = () => {
-    setReplyPendingStart(Math.floor(currentTime))
-    setReplyPendingEnd(null)
-    setIsCapturingReplyRange(false)
-  }
-
-  /** 답글 구간 기록 버튼 — 첫 클릭은 시작점, 재생 위치를 옮긴 뒤 두 번째 클릭은 종료점 */
-  const toggleReplyRangeCapture = () => {
-    if (!isCapturingReplyRange) {
-      setReplyPendingStart(Math.floor(currentTime))
-      setReplyPendingEnd(null)
-      setIsCapturingReplyRange(true)
-    } else {
-      setReplyPendingEnd(Math.floor(currentTime))
-      setIsCapturingReplyRange(false)
-    }
-  }
-
-  const submitReply = async (feedbackId: number) => {
-    if (!newReply.trim()) return
-    const created = await createReply(feedbackId, {
-      content: newReply.trim(),
-      startTime: replyPendingStart ?? undefined,
-      endTime: replyPendingEnd ?? undefined,
-    })
-    setRepliesByFeedback((prev) => ({
-      ...prev,
-      [feedbackId]: [...(prev[feedbackId] ?? []), created],
-    }))
-    resetReplyCompose()
-  }
-
-  const openPicker = async () => {
-    setPickerOpen(true)
-    if (projectFiles.length === 0) {
-      const page = await getProjectFiles(projectId)
-      setProjectFiles(page.items)
-    }
-  }
-
-  const attachFile = async (projectFileId: number) => {
-    const linked = await linkReferenceFile(videoId, projectFileId)
-    setReferenceFiles((prev) => [...prev, linked])
-    setPickerOpen(false)
-  }
-
-  const removeReferenceFile = async (referenceFileId: number) => {
-    await unlinkReferenceFile(videoId, referenceFileId)
-    setReferenceFiles((prev) => prev.filter((f) => f.referenceFileId !== referenceFileId))
-  }
-
-  const downloadReferenceFile = async (projectFileId: number, fileName: string) => {
-    const blob = await downloadProjectFile(projectId, projectFileId)
-    downloadBlob(blob, fileName)
-  }
-
-  const filteredFeedbacks = feedbacks.filter((f) => (filter === 'unresolved' ? !f.status : true))
-  const filteredFiles = referenceFiles.filter((f) =>
-    f.fileName.toLowerCase().includes(fileSearch.toLowerCase()),
-  )
+  }, [projectId, videoId, loadVideoDetail, loadReferenceFiles, loadFeedbacks, loadMembers])
 
   /** 전역 헤더 한 줄에 제목·북마크·상태·참여 인원(왼쪽, 대시보드와 동일 배치)과 초대 버튼·ActionMenu(오른쪽)를 채운다. */
   const headerLeftContent = useMemo(() => {
@@ -580,7 +436,7 @@ export function VideoDetailView({
             <button
               type="button"
               onClick={() => setStatusMenuOpen((v) => !v)}
-              className="bg-neutral-3 text-neutral-5 text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold"
+              className="bg-success-light text-success-dark text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold"
             >
               {videoDetail.progressStatus === 'DONE' ? '완료' : '진행중'}
               <InlineIcon svg={chevronDownIcon} className="size-3" />
@@ -623,14 +479,25 @@ export function VideoDetailView({
         </div>
       </div>
     )
-  }, [videoDetail, toggleBookmark, statusMenuOpen, changeVideoStatus, members])
+  }, [
+    videoDetail,
+    toggleBookmark,
+    statusMenuOpen,
+    setStatusMenuOpen,
+    statusMenuRef,
+    changeVideoStatus,
+    members,
+  ])
 
   const headerRightContent = useMemo(() => {
     if (!videoDetail) return null
     return (
       <div className="flex items-center gap-4">
         <ActionMenu
-          items={[{ action: 'delete', onClick: () => setDeleteOpen(true) }]}
+          items={[
+            { action: 'edit', onClick: () => setEditOpen(true) },
+            { action: 'delete', onClick: () => setDeleteOpen(true) },
+          ]}
           ariaLabel="영상 메뉴"
         />
         <Button variant="primary" size="sm" onClick={inviteMember}>
@@ -721,7 +588,7 @@ export function VideoDetailView({
 
           <div className="flex flex-col gap-3">
             <h2 className="text-head-sm text-neutral-9 font-semibold">프로젝트 소개글</h2>
-            {(videoDetail.projectTags.length > 0 || lengthType) && (
+            {(videoDetail.projectTags.length > 0 || lengthType || myRoleNames.length > 0) && (
               <div className="flex flex-wrap gap-2">
                 {videoDetail.projectTags.map((tag) => (
                   <span
@@ -736,6 +603,14 @@ export function VideoDetailView({
                     {PROJECT_LENGTH_TYPE_LABEL[lengthType] ?? lengthType}
                   </span>
                 )}
+                {myRoleNames.map((role) => (
+                  <span
+                    key={role}
+                    className="bg-tag-role-bg text-tag-role-text text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
+                  >
+                    {roleLabel(role)}
+                  </span>
+                ))}
               </div>
             )}
             <div className="bg-neutral-2 border-neutral-3 text-body-sm text-neutral-5 rounded-lg border px-4 py-3">
@@ -863,13 +738,42 @@ export function VideoDetailView({
                     {isMine && (
                       <ActionMenu
                         items={[
+                          { action: 'edit', onClick: () => startEditFeedback(feedback) },
                           { action: 'delete', onClick: () => removeFeedback(feedback.feedbackId) },
                         ]}
                       />
                     )}
                   </div>
 
-                  <p className="text-caption-lg text-neutral-10">{feedback.content}</p>
+                  {editingFeedbackId === feedback.feedbackId ? (
+                    <div className="flex flex-col gap-2">
+                      <TextArea
+                        value={editingFeedbackContent}
+                        onChange={setEditingFeedbackContent}
+                        rows={2}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={cancelEditFeedback}
+                          className="w-20"
+                        >
+                          취소
+                        </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => void saveEditFeedback(feedback.feedbackId)}
+                          className="w-20"
+                        >
+                          저장
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-caption-lg text-neutral-10">{feedback.content}</p>
+                  )}
 
                   <div className="flex items-center justify-between">
                     <button
@@ -1089,6 +993,15 @@ export function VideoDetailView({
         onConfirm={confirmDeleteVideo}
         title="영상을 삭제할까요?"
         description="삭제한 영상은 복구할 수 없습니다."
+      />
+
+      <EditVideoModal
+        key={editOpen ? `video-${videoId}-open` : 'video-edit-closed'}
+        isOpen={editOpen}
+        initialTitle={videoDetail?.title ?? ''}
+        initialMemo={videoDetail?.memo ?? ''}
+        onClose={() => setEditOpen(false)}
+        onSubmit={handleUpdateVideo}
       />
     </section>
   )
