@@ -89,11 +89,12 @@ function calcDeadlineProgress(startDate: string | null, endDate: string | null):
   return Math.round(Math.min(1, Math.max(0, ratio)) * 100)
 }
 
-function toProjectSummary(project: MockProjectRecord) {
+function toProjectSummary(project: MockProjectRecord, currentUserId: number) {
   const memberPreviewImageUrls = db.members
     .map((m) => m.profileImageUrl)
     .filter((url): url is string => Boolean(url))
     .slice(0, 4)
+  const me = db.members.find((m) => m.userId === currentUserId)
 
   return {
     id: project.id,
@@ -107,6 +108,7 @@ function toProjectSummary(project: MockProjectRecord) {
     deadlineProgressPercent: calcDeadlineProgress(project.startDate, project.endDate),
     lastActivityAt: project.updatedAt,
     isPinned: project.isPinned,
+    myPermission: me?.permission ?? 'MEMBER',
     memberPreviewImageUrls,
     memberCount: db.members.length,
     createdAt: project.createdAt,
@@ -152,8 +154,9 @@ function isInvitationExpired(expiresAt: string): boolean {
 
 export const projectHandlers = [
   http.get(paths.projects.root, () => {
-    if (!safeUser()) return unauthorized()
-    const items = db.projects.map(toProjectSummary)
+    const user = safeUser()
+    if (!user) return unauthorized()
+    const items = db.projects.map((project) => toProjectSummary(project, user.id))
     return HttpResponse.json(ok({ items, nextCursor: null, hasNext: false }), {
       status: 200,
     })

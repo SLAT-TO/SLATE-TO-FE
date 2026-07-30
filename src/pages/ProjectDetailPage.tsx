@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { deleteProject, pinProject, unpinProject } from '../api/projects'
+import { deleteProject, leaveProject, pinProject, unpinProject } from '../api/projects'
 import { getMe } from '../api/users'
 import ActionMenu from '../components/ActionMenu'
 import { Avatar } from '../components/Avatar'
@@ -11,6 +11,7 @@ import ProjectSettingsView from '../domains/workspace/ProjectSettingsView'
 import DashboardNoticeCard from '../domains/workspace/DashboardNoticeCard'
 import DashboardTodayScheduleCard from '../domains/workspace/DashboardTodayScheduleCard'
 import DashboardActivityCard from '../domains/workspace/DashboardActivityCard'
+import ActivityListView from '../domains/workspace/ActivityListView'
 import NoticeListView from '../domains/workspace/NoticeListView'
 import NoticeDetailView from '../domains/workspace/NoticeDetailView'
 import ProjectFileList from '../domains/workspace/ProjectFileList'
@@ -19,6 +20,7 @@ import { useProjectDetail } from '../hooks/useProjectDetail'
 import { useProjectStatusMenu } from '../hooks/useProjectStatusMenu'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import { projectMetaTags } from '../constants/projectLabels'
+import { roleLabel } from '../constants/roles'
 import {
   PROJECT_STATUS_LABEL,
   projectStatusColor,
@@ -49,10 +51,13 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     new URLSearchParams(window.location.search).get('view') === 'settings' ? 'settings' : 'main',
   )
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [leaveOpen, setLeaveOpen] = useState(false)
   const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null)
   const [meId, setMeId] = useState<number | null>(null)
   /** 대시보드 탭 내부 공지사항 서브뷰 — 'main'=대시보드, 'list'=공지사항 목록, number=공지 상세(noticeId) */
   const [noticeView, setNoticeView] = useState<'main' | 'list' | number>('main')
+  /** 대시보드 탭 내부 최근 활동 서브뷰 — 'main'=대시보드, 'list'=최근 활동 전체 목록 */
+  const [activityView, setActivityView] = useState<'main' | 'list'>('main')
 
   useEffect(() => {
     getMe()
@@ -64,7 +69,10 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   const handleTabChange = (key: string) => {
     setTab(key)
-    if (key !== 'dashboard') setNoticeView('main')
+    if (key !== 'dashboard') {
+      setNoticeView('main')
+      setActivityView('main')
+    }
   }
 
   const handleToggleBookmark = useCallback(async () => {
@@ -121,18 +129,24 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     )
   }, [showProjectHeader, project, members, handleToggleBookmark])
 
+  const isAdmin = project?.myPermission === 'ADMIN'
+
   const headerRightContent = useMemo(() => {
     if (!showProjectHeader) return null
     return (
       <ActionMenu
-        items={[
-          { action: 'edit', onClick: () => setView('settings') },
-          { action: 'delete', onClick: () => setDeleteOpen(true) },
-        ]}
+        items={
+          isAdmin
+            ? [
+                { action: 'settings', onClick: () => setView('settings') },
+                { action: 'delete', onClick: () => setDeleteOpen(true) },
+              ]
+            : [{ action: 'leave', onClick: () => setLeaveOpen(true) }]
+        }
         ariaLabel="프로젝트 메뉴"
       />
     )
-  }, [showProjectHeader])
+  }, [showProjectHeader, isAdmin])
 
   useHeaderSlot(headerLeftContent, headerRightContent)
 
@@ -159,6 +173,11 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   const confirmDeleteProject = async () => {
     await deleteProject(projectId)
+    navigate('/workspace')
+  }
+
+  const confirmLeaveProject = async () => {
+    await leaveProject(projectId)
     navigate('/workspace')
   }
 
@@ -189,6 +208,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         videoId={selectedVideoId}
         meId={meId}
         lengthType={project.lengthType}
+        myRoleNames={project.roleNames}
         onBack={() => setSelectedVideoId(null)}
       />
     )
@@ -204,6 +224,14 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
               className="bg-main-1 text-main-6 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
             >
               {tag}
+            </span>
+          ))}
+          {project.roleNames.map((role) => (
+            <span
+              key={role}
+              className="bg-tag-role-bg text-tag-role-text text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
+            >
+              {roleLabel(role)}
             </span>
           ))}
           <div className="relative" ref={statusMenuRef}>
@@ -242,7 +270,6 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         </div>
 
         <div className="flex flex-col gap-2">
-          <h2 className="text-head-sm text-neutral-11 font-bold">프로젝트 소개</h2>
           <p className="text-body-sm text-neutral-10 tracking-[-0.32px]">
             {project.description ?? '설명 없음'}
           </p>
@@ -253,15 +280,22 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         <Tabs tabs={DETAIL_TABS} activeTab={tab} onChange={handleTabChange} />
       </div>
 
-      {tab === 'dashboard' && noticeView === 'main' && (
+      {tab === 'dashboard' && noticeView === 'main' && activityView === 'main' && (
         <div className="flex flex-col gap-8">
           <div className="grid gap-8 lg:grid-cols-2">
             <DashboardNoticeCard notices={notices} onExpand={() => setNoticeView('list')} />
-            <DashboardTodayScheduleCard projectId={projectId} />
+            <DashboardTodayScheduleCard
+              projectId={projectId}
+              onClick={() => handleTabChange('schedule')}
+            />
           </div>
 
-          <DashboardActivityCard activities={activities} />
+          <DashboardActivityCard activities={activities} onExpand={() => setActivityView('list')} />
         </div>
+      )}
+
+      {tab === 'dashboard' && activityView === 'list' && (
+        <ActivityListView activities={activities} onBack={() => setActivityView('main')} />
       )}
 
       {tab === 'schedule' && <ProjectScheduleTab projectId={projectId} members={members} />}
@@ -323,6 +357,14 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         onConfirm={confirmDeleteProject}
         title="프로젝트를 삭제할까요?"
         description="삭제한 프로젝트는 복구할 수 없습니다."
+      />
+
+      <ConfirmModal
+        isOpen={leaveOpen}
+        onClose={() => setLeaveOpen(false)}
+        onConfirm={confirmLeaveProject}
+        title="워크스페이스에서 나갈까요?"
+        description="다시 참여하려면 초대가 필요합니다."
       />
     </section>
   )

@@ -6,6 +6,7 @@ import { CARD_BASE } from '../../styles/card'
 
 interface DashboardTodayScheduleCardProps {
   projectId: number
+  onClick: () => void
 }
 
 function formatTime(iso: string): string {
@@ -15,7 +16,10 @@ function formatTime(iso: string): string {
   return `${hours}:${minutes}`
 }
 
-export default function DashboardTodayScheduleCard({ projectId }: DashboardTodayScheduleCardProps) {
+export default function DashboardTodayScheduleCard({
+  projectId,
+  onClick,
+}: DashboardTodayScheduleCardProps) {
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -48,7 +52,12 @@ export default function DashboardTodayScheduleCard({ projectId }: DashboardToday
   return (
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">오늘 일정</h2>
-      <div className={`flex min-h-[183px] flex-col justify-center ${CARD_BASE} p-4`}>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label="일정 탭으로 이동"
+        className={`flex min-h-[183px] flex-col justify-center ${CARD_BASE} p-4 text-left`}
+      >
         {loading ? (
           <p className="text-caption-lg text-neutral-6">불러오는 중…</p>
         ) : todaySchedules.length === 0 ? (
@@ -69,7 +78,7 @@ export default function DashboardTodayScheduleCard({ projectId }: DashboardToday
             ))}
           </ul>
         )}
-      </div>
+      </button>
     </section>
   )
 }
