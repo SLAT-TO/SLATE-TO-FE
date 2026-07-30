@@ -290,7 +290,7 @@ export type VideoDetailViewProps = {
   meId: number | null
   lengthType: ProjectLengthType | null
   /** 이 프로젝트에서 내가 맡은 역할 — 프로젝트 소개글 태그 옆에 함께 표시 */
-  myRoleNames: string[]
+  myRoleNames?: string[]
   onBack: () => void
 }
 
@@ -299,7 +299,7 @@ export function VideoDetailView({
   videoId,
   meId,
   lengthType,
-  myRoleNames,
+  myRoleNames = [],
   onBack,
 }: VideoDetailViewProps) {
   const [loading, setLoading] = useState(true)
