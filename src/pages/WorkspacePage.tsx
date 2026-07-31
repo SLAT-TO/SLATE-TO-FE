@@ -3,6 +3,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { deleteProject, getProjects, leaveProject, pinProject, unpinProject } from '../api/projects'
 import ProjectCard from '../domains/project/ProjectCard'
+import WorkspaceListSkeleton from '../domains/workspace/WorkspaceListSkeleton'
 import ConfirmModal from '../components/ConfirmModal'
 import { projectMetaTags } from '../constants/projectLabels'
 import { projectStatusLabel } from '../constants/projectStatus'
@@ -82,22 +83,29 @@ export default function WorkspacePage() {
     }
   }, [leaveTarget])
 
+  if (loading) {
+    return (
+      <section className="flex flex-col gap-6">
+        <WorkspaceListSkeleton />
+      </section>
+    )
+  }
+
   return (
     <section className="flex flex-col gap-6">
       <header>
         <h1 className="text-head-lg text-neutral-11 font-bold">프로젝트 목록</h1>
       </header>
 
-      {loading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
       {error && <p className="text-body-sm text-warning">{error}</p>}
       {deleteError && <p className="text-body-sm text-warning">{deleteError}</p>}
       {leaveError && <p className="text-body-sm text-warning">{leaveError}</p>}
 
-      {!loading && !error && projects.length === 0 && (
+      {!error && projects.length === 0 && (
         <p className="text-body-sm text-neutral-6">아직 등록된 프로젝트가 없어요</p>
       )}
 
-      {!loading && !error && projects.length > 0 && (
+      {!error && projects.length > 0 && (
         <div className="flex flex-col gap-10">
           {projects.map((project) => (
             <ProjectCard
