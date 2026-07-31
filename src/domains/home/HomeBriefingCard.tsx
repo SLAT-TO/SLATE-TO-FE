@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import type { TodayBriefing } from '../../types/schedule'
 import briefingCardBg from '../../assets/images/briefingcard-bg.png'
 
@@ -7,13 +8,15 @@ interface HomeBriefingCardProps {
 }
 
 function BriefingLineIcon() {
+  const clipId = useId()
+
   return (
     <div className="relative flex h-10 w-10 shrink-0 items-center justify-center">
       <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="absolute inset-0">
         <circle cx="20" cy="20" r="20" fill="#EDF4FF" />
       </svg>
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="relative">
-        <g clipPath="url(#briefing-line-icon-clip)">
+        <g clipPath={`url(#${clipId})`}>
           <path
             d="M18.7376 9.1461L10.0001 14.3894L1.26258 9.1461C1.07306 9.03239 0.846133 8.99862 0.631716 9.05223C0.4173 9.10583 0.232959 9.24242 0.119248 9.43194C0.0055361 9.62146 -0.0282319 9.84838 0.0253722 10.0628C0.0789764 10.2772 0.215562 10.4616 0.405081 10.5753L9.57175 16.0753C9.70136 16.1531 9.84971 16.1943 10.0009 16.1943C10.1521 16.1943 10.3005 16.1531 10.4301 16.0753L19.5968 10.5753C19.7863 10.4616 19.9229 10.2772 19.9765 10.0628C20.0301 9.84838 19.9963 9.62146 19.8826 9.43194C19.7689 9.24242 19.5845 9.10583 19.3701 9.05223C19.1557 8.99862 18.9288 9.03239 18.7392 9.1461H18.7376Z"
             fill="#1457FF"
@@ -28,7 +31,7 @@ function BriefingLineIcon() {
           />
         </g>
         <defs>
-          <clipPath id="briefing-line-icon-clip">
+          <clipPath id={clipId}>
             <rect width="20" height="20" fill="white" />
           </clipPath>
         </defs>
