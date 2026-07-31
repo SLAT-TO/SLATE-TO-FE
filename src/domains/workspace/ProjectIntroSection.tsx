@@ -17,7 +17,6 @@ export default function ProjectIntroSection({
 }: ProjectIntroSectionProps) {
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-head-sm text-neutral-9 font-semibold">프로젝트 소개글</h2>
       {(projectTags.length > 0 || lengthType || myRoleNames.length > 0) && (
         <div className="flex flex-wrap gap-2">
           {projectTags.map((tag) => (
