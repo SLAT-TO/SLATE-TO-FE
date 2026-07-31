@@ -55,6 +55,20 @@ export type CreateVideoResult = {
   createdAt: string
 }
 
+/** BE VideoUpdateReqDTO */
+export type UpdateVideoRequest = {
+  title?: string
+  memo?: string
+}
+
+/** BE VideoUpdateResDTO */
+export type UpdateVideoResult = {
+  videoId: number
+  title: string
+  memo: string | null
+  updatedAt: string
+}
+
 /** BE VideoBookmarkUpdateReqDTO / VideoBookmarkUpdateResDTO */
 export type BookmarkVideoRequest = {
   bookmarked: boolean

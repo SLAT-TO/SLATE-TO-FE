@@ -12,6 +12,7 @@ interface VideoCardProps {
   relativeTime?: string
   unreadCommentCount?: number
   onClick?: () => void
+  onEdit?: () => void
   onDelete?: () => void
   className?: string
 }
@@ -23,9 +24,15 @@ export default function VideoCard({
   relativeTime,
   unreadCommentCount = 0,
   onClick,
+  onEdit,
   onDelete,
   className = '',
 }: VideoCardProps) {
+  const menuItems = [
+    ...(onEdit ? [{ action: 'edit' as const, onClick: onEdit }] : []),
+    ...(onDelete ? [{ action: 'delete' as const, onClick: onDelete }] : []),
+  ]
+
   return (
     <div className={`flex w-full flex-col gap-3 ${CARD_BASE} p-4 ${className}`}>
       <div className="flex items-start justify-between gap-2">
@@ -37,9 +44,7 @@ export default function VideoCard({
         >
           {title}
         </button>
-        {onDelete && (
-          <ActionMenu items={[{ action: 'delete', onClick: onDelete }]} ariaLabel="영상 메뉴" />
-        )}
+        {menuItems.length > 0 && <ActionMenu items={menuItems} ariaLabel="영상 메뉴" />}
       </div>
 
       <button
