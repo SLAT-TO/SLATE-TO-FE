@@ -21,3 +21,12 @@ export function projectStatusLabel(status: ProjectStatus): string {
 export function projectStatusColor(status: ProjectStatus): string {
   return PROJECT_STATUS_COLOR[status] ?? PROJECT_STATUS_COLOR.PREPARING
 }
+
+/** 실 BE는 아직 REVIEWING — FE 표기(SHOOTING/촬영중)는 그대로 두고 API 경계에서만 변환 */
+export function toApiProjectStatus(status: ProjectStatus): ProjectStatus {
+  return status === 'SHOOTING' ? 'REVIEWING' : status
+}
+
+export function fromApiProjectStatus(status: ProjectStatus): ProjectStatus {
+  return status === 'REVIEWING' ? 'SHOOTING' : status
+}

@@ -676,4 +676,23 @@ export const projectHandlers = [
     db.notices = db.notices.filter((n) => n.id !== id)
     return HttpResponse.json(ok(null), { status: 200 })
   }),
+
+  http.post(paths.projects.filePin(':projectId', ':fileId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const file = db.files.find((f) => f.id === Number(params.fileId))
+    if (!file || file.projectId !== Number(params.projectId)) return notFound()
+
+    file.isPinned = true
+    const pinnedAt = new Date().toISOString()
+    return HttpResponse.json(ok({ id: file.id, isPinned: true, pinnedAt }), { status: 200 })
+  }),
+
+  http.delete(paths.projects.filePin(':projectId', ':fileId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const file = db.files.find((f) => f.id === Number(params.fileId))
+    if (!file || file.projectId !== Number(params.projectId)) return notFound()
+
+    file.isPinned = false
+    return HttpResponse.json(ok({ id: file.id, isPinned: false, pinnedAt: null }), { status: 200 })
+  }),
 ]
