@@ -6,6 +6,7 @@ import { Button } from '../../components/Button'
 import { validateField } from '../../utils/validateField'
 import { createVideoSchema, type CreateVideoValues } from '../../schemas/video'
 import { validateYoutubeUrl } from '../../api/videos'
+import { ApiError } from '../../types/api'
 
 interface AddVideoModalProps {
   projectId: number
@@ -22,11 +23,13 @@ function AddVideoModal({ projectId, isOpen, onClose, onCreated }: AddVideoModalP
     title: '',
     youtubeUrl: '',
   })
+  const [submitError, setSubmitError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const handleClose = () => {
     setValues(INITIAL_VALUES)
     setErrors({ title: '', youtubeUrl: '' })
+    setSubmitError('')
     setSubmitting(false)
     onClose()
   }
@@ -36,10 +39,12 @@ function AddVideoModal({ projectId, isOpen, onClose, onCreated }: AddVideoModalP
     const urlError = validateField(createVideoSchema.shape.youtubeUrl, values.youtubeUrl)
     if (titleError || urlError) {
       setErrors({ title: titleError, youtubeUrl: urlError })
+      setSubmitError('')
       return
     }
 
     setSubmitting(true)
+    setSubmitError('')
     try {
       const validation = await validateYoutubeUrl({ youtubeUrl: values.youtubeUrl, projectId })
       if (!validation.valid) {
@@ -49,8 +54,14 @@ function AddVideoModal({ projectId, isOpen, onClose, onCreated }: AddVideoModalP
         }))
         return
       }
-      await onCreated(values)
-      handleClose()
+      try {
+        await onCreated(values)
+        handleClose()
+      } catch (err) {
+        setSubmitError(
+          err instanceof ApiError ? err.message : '영상을 추가하지 못했습니다. 다시 시도해주세요.',
+        )
+      }
     } catch {
       setErrors((prev) => ({
         ...prev,
@@ -64,7 +75,7 @@ function AddVideoModal({ projectId, isOpen, onClose, onCreated }: AddVideoModalP
   return (
     <Modal isOpen={isOpen} onClose={handleClose}>
       <div className="flex w-150 flex-col gap-5">
-        <h2 className="text-head-sm text-neutra-11 font-bold">새로운 영상 추가</h2>
+        <h2 className="text-head-sm text-neutral-11 font-bold">새로운 영상 추가</h2>
 
         <Input
           label="제목"
@@ -92,6 +103,8 @@ function AddVideoModal({ projectId, isOpen, onClose, onCreated }: AddVideoModalP
           placeholder="영상 관련 메모를 입력하세요"
           rows={3}
         />
+
+        {submitError ? <p className="text-warning text-caption-lg text-center">{submitError}</p> : null}
 
         <div className="flex justify-center gap-3">
           <Button onClick={() => void handleSubmit()} className="w-40" disabled={submitting}>

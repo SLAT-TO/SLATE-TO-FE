@@ -12,6 +12,8 @@ import { FeedbackTimeLink } from './videoDetailShared'
 type FeedbackListItemProps = {
   feedback: Feedback
   isMine: boolean
+  /** false면 해결 토글 숨김 (게스트 등 getMe 불가 컨텍스트) */
+  canResolve?: boolean
   onSeek: (seconds: number) => void
   onEdit: () => void
   onRemove: () => void
@@ -38,6 +40,7 @@ type FeedbackListItemProps = {
 export default function FeedbackListItem({
   feedback,
   isMine,
+  canResolve = true,
   onSeek,
   onEdit,
   onRemove,
@@ -117,15 +120,19 @@ export default function FeedbackListItem({
             className={`size-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           />
         </button>
-        <button
-          type="button"
-          onClick={onToggleResolved}
-          aria-pressed={isResolved}
-          aria-label="해결 처리"
-          className={isResolved ? 'text-success' : 'text-neutral-5'}
-        >
-          <InlineIcon svg={commentCheckIcon} className="size-4" />
-        </button>
+        {canResolve ? (
+          <button
+            type="button"
+            onClick={onToggleResolved}
+            aria-pressed={isResolved}
+            aria-label="해결 처리"
+            className={isResolved ? 'text-success' : 'text-neutral-5'}
+          >
+            <InlineIcon svg={commentCheckIcon} className="size-4" />
+          </button>
+        ) : (
+          <span aria-hidden className="size-4" />
+        )}
       </div>
 
       {isExpanded && (

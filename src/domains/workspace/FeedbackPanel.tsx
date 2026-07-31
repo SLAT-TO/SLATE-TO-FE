@@ -128,6 +128,7 @@ export default function FeedbackPanel({
               key={feedback.feedbackId}
               feedback={feedback}
               isMine={isMine}
+              canResolve={meId !== null}
               onSeek={onSeek}
               onEdit={() => startEditFeedback(feedback)}
               onRemove={() => removeFeedback(feedback.feedbackId)}
