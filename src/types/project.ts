@@ -18,6 +18,8 @@ export type ProjectSummary = {
   deadlineProgressPercent: number | null
   lastActivityAt: string | null
   isPinned: boolean
+  pinnedAt?: string | null
+  previewImageUrl?: string | null
   memberPreviewImageUrls: string[]
   memberCount: number
   /** FE 확장 — 상세 응답(roleNames/myPermission)과 동일 패턴, 목록 API에 아직 없으면 BE 정합 필요 */
