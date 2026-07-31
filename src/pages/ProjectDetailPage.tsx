@@ -12,6 +12,7 @@ import ProjectSettingsView from '../domains/workspace/ProjectSettingsView'
 import DashboardNoticeCard from '../domains/workspace/DashboardNoticeCard'
 import DashboardTodayScheduleCard from '../domains/workspace/DashboardTodayScheduleCard'
 import DashboardActivityCard from '../domains/workspace/DashboardActivityCard'
+import ActivityListView from '../domains/workspace/ActivityListView'
 import NoticeListView from '../domains/workspace/NoticeListView'
 import NoticeDetailView from '../domains/workspace/NoticeDetailView'
 import ProjectFileList from '../domains/workspace/ProjectFileList'
@@ -55,6 +56,8 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   const [meId, setMeId] = useState<number | null>(null)
   /** 대시보드 탭 내부 공지사항 서브뷰 — 'main'=대시보드, 'list'=공지사항 목록, number=공지 상세(noticeId) */
   const [noticeView, setNoticeView] = useState<'main' | 'list' | number>('main')
+  /** 대시보드 탭 내부 최근 활동 서브뷰 — 'main'=대시보드, 'list'=최근 활동 전체 목록 */
+  const [activityView, setActivityView] = useState<'main' | 'list'>('main')
 
   useEffect(() => {
     getMe()
@@ -66,7 +69,10 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   const handleTabChange = (key: string) => {
     setTab(key)
-    if (key !== 'dashboard') setNoticeView('main')
+    if (key !== 'dashboard') {
+      setNoticeView('main')
+      setActivityView('main')
+    }
   }
 
   const handleToggleBookmark = useCallback(async () => {
@@ -257,7 +263,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         <Tabs tabs={DETAIL_TABS} activeTab={tab} onChange={handleTabChange} />
       </div>
 
-      {tab === 'dashboard' && noticeView === 'main' && (
+      {tab === 'dashboard' && noticeView === 'main' && activityView === 'main' && (
         <div className="flex flex-col gap-8">
           <div className="grid gap-8 lg:grid-cols-2">
             <DashboardNoticeCard notices={notices} onExpand={() => setNoticeView('list')} />
@@ -267,8 +273,12 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
             />
           </div>
 
-          <DashboardActivityCard activities={activities} />
+          <DashboardActivityCard activities={activities} onExpand={() => setActivityView('list')} />
         </div>
+      )}
+
+      {tab === 'dashboard' && activityView === 'list' && (
+        <ActivityListView activities={activities} onBack={() => setActivityView('main')} />
       )}
 
       {tab === 'schedule' && <ProjectScheduleTab projectId={projectId} members={members} />}
