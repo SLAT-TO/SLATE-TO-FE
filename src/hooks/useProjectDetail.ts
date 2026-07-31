@@ -34,7 +34,11 @@ export function useProjectDetail(projectId: number) {
       setError(null)
       try {
         const emptyActivities = { items: [] as ProjectActivity[], nextCursor: null, hasNext: false }
-        const emptyNotices = { items: [] as ProjectNoticeListItem[], nextCursor: null, hasNext: false }
+        const emptyNotices = {
+          items: [] as ProjectNoticeListItem[],
+          nextCursor: null,
+          hasNext: false,
+        }
         // 프로젝트 본문만 필수 — 활동·공지·멤버는 실패해도 상세 진입 유지
         const [projectResult, activityPage, noticePage, memberList] = await Promise.all([
           getProject(projectId),

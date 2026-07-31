@@ -5,6 +5,8 @@ import {
   normalizeVideoList,
   toFeedbackStatus,
   type BeVideoListRaw,
+  type FeedbackReplyStatusRaw,
+  type FeedbackStatusRaw,
 } from './normalize'
 import { paths } from './paths'
 import type {
@@ -111,7 +113,7 @@ export async function unlinkReferenceFile(videoId: number, referenceFileId: numb
 }
 
 export async function getFeedbacks(videoId: number): Promise<{ items: Feedback[] }> {
-  const result = await request<{ items: Feedback[] }>({
+  const result = await request<{ items: FeedbackStatusRaw[] }>({
     method: 'GET',
     url: paths.videos.feedbacks(videoId),
   })
@@ -122,7 +124,7 @@ export async function createFeedback(
   videoId: number,
   body: CreateFeedbackRequest,
 ): Promise<Feedback> {
-  const result = await request<Feedback>({
+  const result = await request<FeedbackStatusRaw>({
     method: 'POST',
     url: paths.videos.feedbacks(videoId),
     data: body,
@@ -134,7 +136,7 @@ export async function updateFeedback(
   feedbackId: number,
   body: UpdateFeedbackRequest,
 ): Promise<Feedback> {
-  const result = await request<Feedback>({
+  const result = await request<FeedbackStatusRaw>({
     method: 'PATCH',
     url: paths.feedbacks.byId(feedbackId),
     data: body,
@@ -159,7 +161,7 @@ export async function updateFeedbackStatus(
 }
 
 export async function getReplies(feedbackId: number): Promise<{ items: FeedbackReply[] }> {
-  const result = await request<{ items: FeedbackReply[] }>({
+  const result = await request<{ items: FeedbackReplyStatusRaw[] }>({
     method: 'GET',
     url: paths.feedbacks.replies(feedbackId),
   })
@@ -170,7 +172,7 @@ export async function createReply(
   feedbackId: number,
   body: CreateReplyRequest,
 ): Promise<FeedbackReply> {
-  const result = await request<FeedbackReply>({
+  const result = await request<FeedbackReplyStatusRaw>({
     method: 'POST',
     url: paths.feedbacks.replies(feedbackId),
     data: body,
@@ -182,7 +184,7 @@ export async function updateReply(
   replyId: number,
   body: { content?: string; deleted?: boolean },
 ): Promise<FeedbackReply | null> {
-  const result = await request<FeedbackReply | null>({
+  const result = await request<FeedbackReplyStatusRaw | null>({
     method: 'PATCH',
     url: paths.replies.byId(replyId),
     data: body,

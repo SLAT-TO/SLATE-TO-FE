@@ -10,11 +10,15 @@ export function toFeedbackStatus(raw: unknown): boolean {
   return false
 }
 
-export function normalizeFeedback(raw: Feedback): Feedback {
+/** wire 응답 — status는 boolean 또는 "Y"/"N" 등일 수 있음 */
+export type FeedbackStatusRaw = Omit<Feedback, 'status'> & { status: unknown }
+export type FeedbackReplyStatusRaw = Omit<FeedbackReply, 'status'> & { status: unknown }
+
+export function normalizeFeedback(raw: FeedbackStatusRaw): Feedback {
   return { ...raw, status: toFeedbackStatus(raw.status) }
 }
 
-export function normalizeFeedbackReply(raw: FeedbackReply): FeedbackReply {
+export function normalizeFeedbackReply(raw: FeedbackReplyStatusRaw): FeedbackReply {
   return { ...raw, status: toFeedbackStatus(raw.status) }
 }
 
