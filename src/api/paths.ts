@@ -58,6 +58,8 @@ export const paths = {
     notices: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/notices`,
     notice: (projectId: number | string, noticeId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/notices/${noticeId}`,
+    noticeRead: (projectId: number | string, noticeId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/notices/${noticeId}/read`,
   },
   projectInvitations: {
     byToken: (token: string) => `${API_PREFIX}/project-invitations/${token}`,

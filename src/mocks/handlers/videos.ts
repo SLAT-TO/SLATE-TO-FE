@@ -382,9 +382,14 @@ export const videoHandlers = [
     const link = db.shareLinks.find((s) => s.token === params.token && s.isActive)
     if (!link) return notFound()
     const body = (await request.json()) as RegisterGuestRequest
-    if (!body.nickname) return badRequest()
+    if (!body.name) return badRequest()
     return HttpResponse.json(
-      created({ guestId: allocId(), nickname: body.nickname, videoId: link.videoId }),
+      created({
+        guestId: allocId(),
+        shareLinkId: link.shareLinkId,
+        name: body.name,
+        createdAt: new Date().toISOString(),
+      }),
       { status: 201 },
     )
   }),
