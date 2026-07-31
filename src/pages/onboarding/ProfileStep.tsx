@@ -4,6 +4,7 @@ import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
 import Input from '../../components/Input'
 import TextArea from '../../components/TextArea'
+import { getMe } from '../../api/users'
 import { profileSchema } from '../../schemas/onboarding'
 import { useOnboardingStore } from '../../stores/onboardingStore'
 import { OnboardingLayout } from './OnboardingLayout'
@@ -34,6 +35,23 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
       }
     }
   }, [])
+
+  // 소셜 로그인 이메일 자동입력 — 최초 1회만 채우고, 그 뒤 사용자가 지워도 다시 덮어쓰지 않음
+  const emailPrefillAttempted = useRef(false)
+  useEffect(() => {
+    if (emailPrefillAttempted.current || profile.email) return
+    emailPrefillAttempted.current = true
+
+    let cancelled = false
+    getMe()
+      .then((me) => {
+        if (!cancelled && me.email) setProfileField('email', me.email)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [profile.email, setProfileField])
 
   // 텍스트 필드 갱신 + 입력 중이면 해당 필드 에러 해제 (제출 시 전체 재검증)
   const updateField = (field: 'name' | 'email' | 'intro', value: string) => {
