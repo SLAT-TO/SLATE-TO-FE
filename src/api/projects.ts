@@ -168,11 +168,15 @@ export async function uploadProjectFile(
   const formData = new FormData()
   formData.append('file', file)
   formData.append('request', new Blob([JSON.stringify(body)], { type: 'application/json' }))
+  // apiClient 기본 Content-Type이 application/json이라, 여기서 명시적으로 undefined로
+  // 지워야 axios가 FormData를 JSON으로 잘못 직렬화하지 않고 브라우저가 boundary를
+  // 포함한 multipart/form-data 값을 자동으로 채운다. 헤더를 아예 생략하면 인스턴스
+  // 기본값(application/json)이 그대로 남아 FormData가 빈 객체로 직렬화된다.
   return request({
     method: 'POST',
     url: paths.projects.files(projectId),
     data: formData,
-    headers: { 'Content-Type': 'multipart/form-data' },
+    headers: { 'Content-Type': undefined },
   })
 }
 

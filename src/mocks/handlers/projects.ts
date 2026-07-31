@@ -544,9 +544,13 @@ export const projectHandlers = [
     const formData = await request.formData()
     const filePart = formData.get('file')
     const requestPart = formData.get('request')
-    if (!(filePart instanceof File) || typeof requestPart !== 'string') return badRequest()
+    if (!(filePart instanceof File) || requestPart == null) return badRequest()
 
-    const body = JSON.parse(requestPart) as {
+    // FE가 'request' 파트를 Content-Type: application/json Blob으로 보내면(실 BE 규격과
+    // 동일한 방식) 파일만 있는 Blob이라 FormData가 File로 감싸 내려줄 수 있어 문자열뿐
+    // 아니라 File로도 올 수 있어 둘 다 처리한다.
+    const requestText = typeof requestPart === 'string' ? requestPart : await requestPart.text()
+    const body = JSON.parse(requestText) as {
       fileName: string
       description?: string
       isFinal?: boolean
