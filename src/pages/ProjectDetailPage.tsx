@@ -243,12 +243,9 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <h2 className="text-head-sm text-neutral-11 font-bold">프로젝트 소개</h2>
-          <p className="text-body-sm text-neutral-10 tracking-[-0.32px]">
-            {project.description ?? '설명 없음'}
-          </p>
-        </div>
+        <p className="text-body-sm text-neutral-10 tracking-[-0.32px]">
+          {project.description ?? '설명 없음'}
+        </p>
       </div>
 
       <div className="[&_[role=tab][aria-selected=true]]:border-primary w-full [&_[role=tab]]:flex-1 [&_[role=tab]]:px-0 [&_[role=tab]]:text-center [&_[role=tab]]:text-[20px] [&_[role=tab][aria-selected=true]]:border-b-[3px] [&_[role=tablist]]:w-full">
@@ -323,8 +320,8 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         isOpen={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={confirmDeleteProject}
-        title="프로젝트를 삭제할까요?"
-        description="삭제한 프로젝트는 복구할 수 없습니다."
+        title="정말 삭제하시겠습니까?"
+        description="삭제된 워크스페이스 데이터는 되돌릴 수 없어요"
       />
     </section>
   )

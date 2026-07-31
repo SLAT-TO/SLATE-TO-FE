@@ -119,8 +119,8 @@ export default function WorkspacePage() {
         isOpen={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
-        title="프로젝트를 삭제할까요?"
-        description="삭제한 프로젝트는 복구할 수 없습니다."
+        title="정말 삭제하시겠습니까?"
+        description="삭제된 워크스페이스 데이터는 되돌릴 수 없어요"
       />
     </section>
   )

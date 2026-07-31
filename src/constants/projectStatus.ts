@@ -1,17 +1,17 @@
 import type { ProjectStatus } from '../types/project'
 
 export const PROJECT_STATUS_LABEL: Record<string, string> = {
-  PREPARING: '준비중',
+  PREPARING: '기획중',
+  SHOOTING: '촬영중',
   EDITING: '편집중',
-  REVIEWING: '검토중',
   COMPLETED: '완료',
 }
 
 export const PROJECT_STATUS_COLOR: Record<string, string> = {
-  PREPARING: 'bg-info-light text-info-dark',
-  EDITING: 'bg-success-light text-success-dark',
-  REVIEWING: 'bg-caution-light text-caution-dark',
-  COMPLETED: 'bg-neutral-3 text-neutral-8',
+  PREPARING: 'bg-tag-active-bg text-tag-active-text',
+  SHOOTING: 'bg-tag-active-bg text-tag-active-text',
+  EDITING: 'bg-tag-active-bg text-tag-active-text',
+  COMPLETED: 'bg-tag-done-bg text-tag-done-text',
 }
 
 export function projectStatusLabel(status: ProjectStatus): string {
