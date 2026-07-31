@@ -6,6 +6,13 @@ interface FilterPanelProps {
   onToggle: (value: string) => void
 }
 
+// Tailwind는 클래스 문자열을 정적으로 스캔하므로 동적 조합(`grid-cols-${n}`) 불가.
+// 실제 클래스를 매핑으로 나열해 스캔되도록 함.
+const GRID_COLS: Record<number, string> = {
+  4: 'grid-cols-4',
+  5: 'grid-cols-5',
+}
+
 function FilterPanel({ config, selected, onToggle }: FilterPanelProps) {
   const visibleGroups = config.groups.filter((group) => group.showWhen?.(selected) ?? true)
 
@@ -20,7 +27,9 @@ function FilterPanel({ config, selected, onToggle }: FilterPanelProps) {
 
           <div
             className={`grid gap-x-6 gap-y-3 ${
-              group.span === 'narrow' ? 'grid-cols-1' : 'grid-cols-4'
+              group.span === 'narrow'
+                ? 'grid-cols-1'
+                : (GRID_COLS[group.columns ?? 5] ?? 'grid-cols-5')
             }`}
           >
             {group.options.map((option) => {

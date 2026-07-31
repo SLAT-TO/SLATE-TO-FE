@@ -35,13 +35,13 @@ export const FILTER_CONFIGS: FilterConfig[] = [
   {
     key: 'region',
     buttonLabel: '지역',
-    groups: [{ label: '지역 선택', options: [...REGION_LABELS] }],
+    groups: [{ label: '지역 선택', columns: 5, options: [...REGION_LABELS] }],
   },
   {
     key: 'videoType',
     buttonLabel: '영상',
     groups: [
-      { label: '영상 유형 선택', span: 'wide', options: [...VIDEO_FILTER_OPTIONS] },
+      { label: '영상 유형 선택', span: 'wide', columns: 4, options: [...VIDEO_FILTER_OPTIONS] },
       {
         label: '영상 길이 선택',
         span: 'narrow',
@@ -52,6 +52,6 @@ export const FILTER_CONFIGS: FilterConfig[] = [
   {
     key: 'role',
     buttonLabel: '역할',
-    groups: [{ label: '역할 선택', options: [...ROLE_FILTER_OPTIONS] }],
+    groups: [{ label: '역할 선택', columns: 5, options: [...ROLE_FILTER_OPTIONS] }],
   },
 ]
