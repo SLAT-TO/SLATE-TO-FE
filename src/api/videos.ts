@@ -20,6 +20,7 @@ import type {
   Feedback,
   FeedbackReply,
   RegisterGuestRequest,
+  RegisterGuestResult,
   ShareLink,
   ShareLinkAccess,
   UpdateFeedbackRequest,
@@ -172,7 +173,7 @@ export async function accessShareLink(token: string): Promise<ShareLinkAccess> {
 export async function registerGuest(
   token: string,
   body: RegisterGuestRequest,
-): Promise<{ guestId: number; nickname: string; videoId: number }> {
+): Promise<RegisterGuestResult> {
   return request({ method: 'POST', url: paths.shareLinks.guests(token), data: body })
 }
 
