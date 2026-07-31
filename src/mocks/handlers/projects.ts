@@ -36,6 +36,7 @@ function toNoticeListItem(notice: (typeof db.notices)[number]) {
     title: notice.title,
     content: notice.content,
     writer: { id: notice.writerId, nickname: notice.writerNickname },
+    isRead: notice.isRead,
     createdAt: notice.createdAt,
     updatedAt: notice.updatedAt,
   }
@@ -636,6 +637,8 @@ export const projectHandlers = [
       content: body.content,
       writerId: user.id,
       writerNickname: user.nickname,
+      /** 작성자 본인은 자기 공지를 이미 읽은 것으로 간주 */
+      isRead: true,
       createdAt: now,
       updatedAt: now,
     }
@@ -664,6 +667,16 @@ export const projectHandlers = [
 
     db.notices = db.notices.filter((n) => n.id !== id)
     return HttpResponse.json(ok(null), { status: 200 })
+  }),
+
+  http.patch(paths.projects.noticeRead(':projectId', ':noticeId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const notice = db.notices.find((n) => n.id === Number(params.noticeId))
+    if (!notice || notice.projectId !== Number(params.projectId)) return notFound()
+
+    notice.isRead = true
+    const readAt = new Date().toISOString()
+    return HttpResponse.json(ok({ id: notice.id, isRead: true, readAt }), { status: 200 })
   }),
 
   http.post(paths.projects.filePin(':projectId', ':fileId'), ({ params }) => {
