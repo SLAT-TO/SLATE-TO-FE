@@ -130,7 +130,14 @@ export function VideoDetailView({
       setLoading(true)
       setLoadError(null)
       try {
-        await Promise.all([loadVideoDetail(), loadReferenceFiles(), loadFeedbacks(), loadMembers()])
+        // 영상 본문만 필수 — 참고파일·피드백·멤버는 실패해도 상세 유지
+        await loadVideoDetail()
+        if (cancelled) return
+        await Promise.all([
+          loadReferenceFiles().catch(() => undefined),
+          loadFeedbacks().catch(() => undefined),
+          loadMembers().catch(() => undefined),
+        ])
       } catch (err) {
         if (!cancelled) {
           setLoadError(err instanceof ApiError ? err.message : '영상 정보를 불러오지 못했습니다.')

@@ -1,5 +1,11 @@
 import { request } from './client'
-import { normalizeVideoList, type BeVideoListRaw } from './normalize'
+import {
+  normalizeFeedback,
+  normalizeFeedbackReply,
+  normalizeVideoList,
+  toFeedbackStatus,
+  type BeVideoListRaw,
+} from './normalize'
 import { paths } from './paths'
 import type {
   BookmarkVideoRequest,
@@ -105,21 +111,35 @@ export async function unlinkReferenceFile(videoId: number, referenceFileId: numb
 }
 
 export async function getFeedbacks(videoId: number): Promise<{ items: Feedback[] }> {
-  return request({ method: 'GET', url: paths.videos.feedbacks(videoId) })
+  const result = await request<{ items: Feedback[] }>({
+    method: 'GET',
+    url: paths.videos.feedbacks(videoId),
+  })
+  return { items: result.items.map(normalizeFeedback) }
 }
 
 export async function createFeedback(
   videoId: number,
   body: CreateFeedbackRequest,
 ): Promise<Feedback> {
-  return request({ method: 'POST', url: paths.videos.feedbacks(videoId), data: body })
+  const result = await request<Feedback>({
+    method: 'POST',
+    url: paths.videos.feedbacks(videoId),
+    data: body,
+  })
+  return normalizeFeedback(result)
 }
 
 export async function updateFeedback(
   feedbackId: number,
   body: UpdateFeedbackRequest,
 ): Promise<Feedback> {
-  return request({ method: 'PATCH', url: paths.feedbacks.byId(feedbackId), data: body })
+  const result = await request<Feedback>({
+    method: 'PATCH',
+    url: paths.feedbacks.byId(feedbackId),
+    data: body,
+  })
+  return normalizeFeedback(result)
 }
 
 export async function deleteFeedback(feedbackId: number): Promise<null> {
@@ -130,32 +150,56 @@ export async function updateFeedbackStatus(
   feedbackId: number,
   body: UpdateFeedbackStatusRequest,
 ): Promise<{ feedbackId: number; status: boolean; updatedAt: string }> {
-  return request({ method: 'PATCH', url: paths.feedbacks.status(feedbackId), data: body })
+  const result = await request<{ feedbackId: number; status: unknown; updatedAt: string }>({
+    method: 'PATCH',
+    url: paths.feedbacks.status(feedbackId),
+    data: body,
+  })
+  return { ...result, status: toFeedbackStatus(result.status) }
 }
 
 export async function getReplies(feedbackId: number): Promise<{ items: FeedbackReply[] }> {
-  return request({ method: 'GET', url: paths.feedbacks.replies(feedbackId) })
+  const result = await request<{ items: FeedbackReply[] }>({
+    method: 'GET',
+    url: paths.feedbacks.replies(feedbackId),
+  })
+  return { items: result.items.map(normalizeFeedbackReply) }
 }
 
 export async function createReply(
   feedbackId: number,
   body: CreateReplyRequest,
 ): Promise<FeedbackReply> {
-  return request({ method: 'POST', url: paths.feedbacks.replies(feedbackId), data: body })
+  const result = await request<FeedbackReply>({
+    method: 'POST',
+    url: paths.feedbacks.replies(feedbackId),
+    data: body,
+  })
+  return normalizeFeedbackReply(result)
 }
 
 export async function updateReply(
   replyId: number,
   body: { content?: string; deleted?: boolean },
 ): Promise<FeedbackReply | null> {
-  return request({ method: 'PATCH', url: paths.replies.byId(replyId), data: body })
+  const result = await request<FeedbackReply | null>({
+    method: 'PATCH',
+    url: paths.replies.byId(replyId),
+    data: body,
+  })
+  return result ? normalizeFeedbackReply(result) : null
 }
 
 export async function updateReplyStatus(
   replyId: number,
   body: UpdateReplyStatusRequest,
 ): Promise<{ replyId: number; status: boolean; updatedAt: string }> {
-  return request({ method: 'PATCH', url: paths.replies.status(replyId), data: body })
+  const result = await request<{ replyId: number; status: unknown; updatedAt: string }>({
+    method: 'PATCH',
+    url: paths.replies.status(replyId),
+    data: body,
+  })
+  return { ...result, status: toFeedbackStatus(result.status) }
 }
 
 export async function createShareLink(videoId: number): Promise<ShareLink> {

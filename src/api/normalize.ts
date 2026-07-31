@@ -1,5 +1,22 @@
+import type { Feedback, FeedbackReply } from '../types/feedback'
 import type { MeProfile } from '../types/user'
 import type { VideoListItem, VideoListResult } from '../types/video'
+
+/** 피드백/답글 status — BE·mock은 boolean, 구명세·일부 응답은 "Y"/"N" 문자열일 수 있음 */
+export function toFeedbackStatus(raw: unknown): boolean {
+  if (typeof raw === 'boolean') return raw
+  if (raw === 'Y' || raw === 'y' || raw === 'true' || raw === 1 || raw === '1') return true
+  if (raw === 'N' || raw === 'n' || raw === 'false' || raw === 0 || raw === '0') return false
+  return false
+}
+
+export function normalizeFeedback(raw: Feedback): Feedback {
+  return { ...raw, status: toFeedbackStatus(raw.status) }
+}
+
+export function normalizeFeedbackReply(raw: FeedbackReply): FeedbackReply {
+  return { ...raw, status: toFeedbackStatus(raw.status) }
+}
 
 /** BE GET /users/me — region 필드, PATCH/공개프로필은 location */
 export type BeMe = Omit<MeProfile, 'location'> & {
