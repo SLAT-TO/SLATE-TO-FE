@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { format } from 'date-fns'
 import ActionMenu from '../../components/ActionMenu'
 import ConfirmModal from '../../components/ConfirmModal'
@@ -18,8 +18,8 @@ interface EventDetailCardProps {
   onSaveNote: (note: string) => void
 }
 
-const LABEL_CLASS = 'text-caption-sm text-neutral-10 font-semibold tracking-[-0.24px] capitalize'
-const VALUE_CLASS = 'text-caption-sm text-neutral-10 font-normal tracking-[-0.24px] capitalize'
+const LABEL_CLASS = 'text-caption-sm text-neutral-10 font-semibold tracking-[-0.24px]'
+const VALUE_CLASS = 'text-caption-sm text-neutral-10 font-normal tracking-[-0.24px]'
 
 // 날짜 클릭으로 뜨는 일정 패널 안에서, 특정 일정 하나를 골랐을 때 보여주는 상세 카드
 export function EventDetailCard({
@@ -32,6 +32,8 @@ export function EventDetailCard({
 }: EventDetailCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [note, setNote] = useState(event.note ?? '')
+  const [noteFocused, setNoteFocused] = useState(false)
+  const noteTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const handleSendNote = () => {
     if (note.trim() === (event.note ?? '')) return
@@ -39,7 +41,7 @@ export function EventDetailCard({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col justify-center gap-2">
       <header className="flex items-center gap-4">
         <button
           type="button"
@@ -49,7 +51,7 @@ export function EventDetailCard({
         >
           <InlineIcon svg={chevronDownIcon} className="text-neutral-10 size-6 rotate-90" />
         </button>
-        <h3 className="text-body-sm text-neutral-10 flex-1 leading-none font-semibold tracking-[-0.32px] capitalize">
+        <h3 className="text-body-sm text-neutral-10 flex-1 leading-none font-semibold tracking-[-0.32px]">
           {format(date, 'M월 d일')} 일정
         </h3>
         <ActionMenu
@@ -108,31 +110,43 @@ export function EventDetailCard({
         </div>
       )}
 
-      <div className="border-neutral-5 flex h-27 w-full max-w-[258px] flex-col gap-2 rounded-[8.675px] border-[0.542px] p-4">
-        <span className="text-caption-sm text-neutral-5 font-semibold tracking-[-0.24px] capitalize">
-          참고 (나에게만 보여요)
-        </span>
-        <div className="flex flex-1 items-end justify-between gap-2">
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            onBlur={handleSendNote}
-            placeholder="클릭하여 메모 추가하기"
-            rows={1}
-            className="text-caption-sm text-neutral-5 placeholder:text-neutral-5 min-w-0 flex-1 resize-none bg-transparent tracking-[-0.24px] capitalize outline-none"
+      <div
+        className="border-neutral-5 relative flex h-27 w-full max-w-[258px] flex-col gap-2 rounded-[8.675px] border-[0.542px] p-4"
+        onClick={() => noteTextareaRef.current?.focus()}
+      >
+        {!note && !noteFocused && (
+          <span className="text-caption-sm text-neutral-5 pointer-events-none font-semibold tracking-[-0.24px]">
+            참고 (나에게만 보여요)
+          </span>
+        )}
+        <textarea
+          ref={noteTextareaRef}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          onFocus={() => setNoteFocused(true)}
+          onBlur={() => {
+            setNoteFocused(false)
+            handleSendNote()
+          }}
+          className="text-caption-sm text-neutral-5 min-h-0 flex-1 resize-none bg-transparent pr-8 tracking-[-0.24px] outline-none"
+        />
+        {!note && !noteFocused && (
+          <span className="text-caption-sm text-neutral-5 pointer-events-none absolute bottom-4 left-4 font-normal tracking-[-0.24px]">
+            클릭하여 메모 추가하기
+          </span>
+        )}
+
+        <button
+          type="button"
+          onClick={handleSendNote}
+          aria-label="메모 저장"
+          className="absolute right-3 bottom-3 flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2378FE]"
+        >
+          <InlineIcon
+            svg={paperPlaneIcon}
+            className="text-neutral-1 translate-x-0.45 size-4 translate-y-0.5"
           />
-          <button
-            type="button"
-            onClick={handleSendNote}
-            aria-label="메모 저장"
-            className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2378FE]"
-          >
-            <InlineIcon
-              svg={paperPlaneIcon}
-              className="text-neutral-1 translate-x-0.45 size-4 translate-y-0.5"
-            />
-          </button>
-        </div>
+        </button>
       </div>
 
       <ConfirmModal

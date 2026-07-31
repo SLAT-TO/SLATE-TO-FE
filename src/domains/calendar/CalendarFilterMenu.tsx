@@ -49,11 +49,11 @@ export function CalendarFilterMenu({ options, value, onChange }: CalendarFilterM
         onClick={() => setOpen((v) => !v)}
         width={200}
       >
-        <span className="flex w-full items-center justify-center gap-2.5">
+        <span className="flex w-full items-center justify-center gap-1">
           일정 필터
           <InlineIcon
             svg={chevronDownIcon}
-            className={`text-primary size-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+            className={`text-primary size-5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
           />
         </span>
       </Button>
