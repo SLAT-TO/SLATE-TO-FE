@@ -1,5 +1,6 @@
 import { request, requestBlob } from './client'
 import { paths } from './paths'
+import { fromApiProjectStatus, toApiProjectStatus } from '../constants/projectStatus'
 import type {
   AcceptInvitationRequest,
   AcceptInvitationResult,
@@ -35,22 +36,45 @@ export async function getProjects(params?: {
   cursor?: number
   size?: number
 }): Promise<ProjectListResponse> {
-  return request({ method: 'GET', url: paths.projects.root, params })
+  const result = await request<ProjectListResponse>({
+    method: 'GET',
+    url: paths.projects.root,
+    params,
+  })
+  return {
+    ...result,
+    items: result.items.map((item) => ({ ...item, status: fromApiProjectStatus(item.status) })),
+  }
 }
 
 export async function createProject(body: CreateProjectRequest): Promise<CreateProjectResult> {
-  return request({ method: 'POST', url: paths.projects.root, data: body })
+  const result = await request<CreateProjectResult>({
+    method: 'POST',
+    url: paths.projects.root,
+    data: body,
+  })
+  return { ...result, status: fromApiProjectStatus(result.status) }
 }
 
 export async function getProject(projectId: number): Promise<ProjectDetailResponse> {
-  return request({ method: 'GET', url: paths.projects.byId(projectId) })
+  const result = await request<ProjectDetailResponse>({
+    method: 'GET',
+    url: paths.projects.byId(projectId),
+  })
+  return { ...result, status: fromApiProjectStatus(result.status) }
 }
 
 export async function updateProject(
   projectId: number,
   body: UpdateProjectRequest,
 ): Promise<ProjectResponse> {
-  return request({ method: 'PATCH', url: paths.projects.byId(projectId), data: body })
+  const apiBody = body.status ? { ...body, status: toApiProjectStatus(body.status) } : body
+  const result = await request<ProjectResponse>({
+    method: 'PATCH',
+    url: paths.projects.byId(projectId),
+    data: apiBody,
+  })
+  return { ...result, status: fromApiProjectStatus(result.status) }
 }
 
 export async function deleteProject(projectId: number): Promise<null> {
@@ -172,6 +196,20 @@ export async function downloadProjectFile(projectId: number, fileId: number): Pr
   return requestBlob({ method: 'GET', url: paths.projects.download(projectId, fileId) })
 }
 
+export async function pinProjectFile(
+  projectId: number,
+  fileId: number,
+): Promise<{ id: number; isPinned: boolean; pinnedAt: string | null }> {
+  return request({ method: 'POST', url: paths.projects.filePin(projectId, fileId) })
+}
+
+export async function unpinProjectFile(
+  projectId: number,
+  fileId: number,
+): Promise<{ id: number; isPinned: boolean; pinnedAt: string | null }> {
+  return request({ method: 'DELETE', url: paths.projects.filePin(projectId, fileId) })
+}
+
 export async function getProjectNotices(
   projectId: number,
 ): Promise<CursorPage<ProjectNoticeListItem>> {
@@ -225,6 +263,13 @@ export async function deleteProjectNotice(projectId: number, noticeId: number): 
 
 export async function deleteNotice(projectId: number, noticeId: number): Promise<null> {
   return deleteProjectNotice(projectId, noticeId)
+}
+
+export async function markNoticeRead(
+  projectId: number,
+  noticeId: number,
+): Promise<{ id: number; isRead: boolean; readAt: string }> {
+  return request({ method: 'PATCH', url: paths.projects.noticeRead(projectId, noticeId) })
 }
 
 export type { MemberSummary }

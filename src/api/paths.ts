@@ -42,6 +42,8 @@ export const paths = {
       `${API_PREFIX}/projects/${projectId}/files/${fileId}`,
     download: (projectId: number | string, fileId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/files/${fileId}/download`,
+    filePin: (projectId: number | string, fileId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/files/${fileId}/pin`,
     invitations: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/invitations`,
     members: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/members`,
     member: (projectId: number | string, memberId: number | string) =>
@@ -56,6 +58,8 @@ export const paths = {
     notices: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/notices`,
     notice: (projectId: number | string, noticeId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/notices/${noticeId}`,
+    noticeRead: (projectId: number | string, noticeId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/notices/${noticeId}/read`,
   },
   projectInvitations: {
     byToken: (token: string) => `${API_PREFIX}/project-invitations/${token}`,

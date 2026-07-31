@@ -3,8 +3,9 @@ import { createReply, getReplies } from '../api/videos'
 import type { FeedbackReply } from '../types/feedback'
 
 /** 피드백 답글 펼침/목록/작성(구간 첨부)을 다루는 훅
- * @param currentTime 영상 플레이어의 현재 재생 시간(초) — "현재 시점 첨부" 버튼에 사용 */
-export function useFeedbackReplies(currentTime: number) {
+ * @param currentTime 영상 플레이어의 현재 재생 시간(초) — "현재 시점 첨부" 버튼에 사용
+ * @param guestId 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
+export function useFeedbackReplies(currentTime: number, guestId?: number) {
   const [expandedFeedbackId, setExpandedFeedbackId] = useState<number | null>(null)
   const [repliesByFeedback, setRepliesByFeedback] = useState<Record<number, FeedbackReply[]>>({})
   const [newReply, setNewReply] = useState('')
@@ -71,6 +72,7 @@ export function useFeedbackReplies(currentTime: number) {
         content: newReply.trim(),
         startTime: replyPendingStart ?? undefined,
         endTime: replyPendingEnd ?? undefined,
+        guestId,
       })
       setRepliesByFeedback((prev) => ({
         ...prev,
@@ -78,7 +80,7 @@ export function useFeedbackReplies(currentTime: number) {
       }))
       resetReplyCompose()
     },
-    [newReply, replyPendingStart, replyPendingEnd, resetReplyCompose],
+    [newReply, replyPendingStart, replyPendingEnd, guestId, resetReplyCompose],
   )
 
   return {

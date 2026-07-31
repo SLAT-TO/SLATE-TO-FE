@@ -40,6 +40,5 @@ export type ProjectFileUploadRequest = {
 export type UpdateFileRequest = {
   fileName?: string
   description?: string
-  isPinned?: boolean
   isFinal?: boolean
 }
