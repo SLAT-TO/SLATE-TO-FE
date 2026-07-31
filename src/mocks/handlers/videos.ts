@@ -3,6 +3,7 @@ import { paths } from '../../api/paths'
 import type {
   BookmarkVideoRequest,
   CreateVideoRequest,
+  UpdateVideoRequest,
   ValidateYoutubeRequest,
 } from '../../types/video'
 import type {
@@ -101,6 +102,25 @@ export const videoHandlers = [
     )
     if (!video) return notFound()
     return HttpResponse.json(ok(video), { status: 200 })
+  }),
+
+  http.patch(paths.projects.video(':projectId', ':videoId'), async ({ request, params }) => {
+    if (!safeUser()) return unauthorized()
+    const video = db.videos.find((v) => v.videoId === Number(params.videoId))
+    if (!video) return notFound()
+    const body = (await request.json()) as UpdateVideoRequest
+    if (body.title !== undefined) video.title = body.title
+    if (body.memo !== undefined) video.memo = body.memo
+    video.updatedAt = new Date().toISOString()
+    return HttpResponse.json(
+      ok({
+        videoId: video.videoId,
+        title: video.title,
+        memo: video.memo,
+        updatedAt: video.updatedAt,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.delete(paths.projects.video(':projectId', ':videoId'), ({ params }) => {
