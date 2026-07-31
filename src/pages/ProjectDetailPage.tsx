@@ -189,6 +189,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         videoId={selectedVideoId}
         meId={meId}
         lengthType={project.lengthType}
+        myRoleNames={project.roleNames}
         onBack={() => setSelectedVideoId(null)}
       />
     )

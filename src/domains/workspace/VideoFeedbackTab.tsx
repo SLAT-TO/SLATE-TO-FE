@@ -792,7 +792,10 @@ export function VideoDetailView({
                     </button>
                     <button
                       type="button"
-                      onClick={() => toggleResolved(feedback)}
+                      onClick={() => {
+                        if (meId == null) return
+                        void toggleResolved(feedback, meId)
+                      }}
                       aria-pressed={isResolved}
                       aria-label="해결 처리"
                       className={isResolved ? 'text-success' : 'text-neutral-5'}

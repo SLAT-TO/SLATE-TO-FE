@@ -6,7 +6,6 @@ import {
   updateFeedback,
   updateFeedbackStatus,
 } from '../api/videos'
-import { getMe } from '../api/users'
 import type { Feedback } from '../types/feedback'
 
 export type FeedbackFilter = 'all' | 'unresolved'
@@ -67,19 +66,33 @@ export function useFeedbacks(videoId: number, currentTime: number) {
     clearPendingTime()
   }, [videoId, newFeedback, pendingStart, pendingEnd, clearPendingTime])
 
-  const toggleResolved = useCallback(async (feedback: Feedback) => {
-    const me = await getMe()
-    const updated = await updateFeedbackStatus(feedback.feedbackId, {
-      userId: me.id,
-      status: !feedback.status,
-    })
+  /** 체크 아이콘 토글 — UI 먼저 반영 후 status API 호출 (실패 시 롤백) */
+  const toggleResolved = useCallback(async (feedback: Feedback, userId: number) => {
+    const nextStatus = !feedback.status
     setFeedbacks((prev) =>
       prev.map((f) =>
-        f.feedbackId === updated.feedbackId
-          ? { ...f, status: updated.status, updatedAt: updated.updatedAt }
-          : f,
+        f.feedbackId === feedback.feedbackId ? { ...f, status: nextStatus } : f,
       ),
     )
+    try {
+      const updated = await updateFeedbackStatus(feedback.feedbackId, {
+        userId,
+        status: nextStatus,
+      })
+      setFeedbacks((prev) =>
+        prev.map((f) =>
+          f.feedbackId === updated.feedbackId
+            ? { ...f, status: updated.status, updatedAt: updated.updatedAt }
+            : f,
+        ),
+      )
+    } catch {
+      setFeedbacks((prev) =>
+        prev.map((f) =>
+          f.feedbackId === feedback.feedbackId ? { ...f, status: feedback.status } : f,
+        ),
+      )
+    }
   }, [])
 
   const removeFeedback = useCallback(async (feedbackId: number) => {
