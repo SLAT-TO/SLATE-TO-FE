@@ -9,7 +9,7 @@ function Bone({ className = '' }: { className?: string }) {
 function ProjectCardSkeleton() {
   return (
     <div className={`${CARD_BASE} flex w-full flex-col gap-6 p-6`}>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-4">
           <Bone className="h-6 w-40" />
           <Bone className="h-6 w-16 rounded-[3px]" />
@@ -40,14 +40,18 @@ function ProjectCardSkeleton() {
   )
 }
 
+/** 카드 스택만 담당 — 페이지 제목(h1)은 WorkspacePage에서 유지 */
 export default function WorkspaceListSkeleton() {
   return (
-    <div className="flex flex-col gap-6" aria-busy="true" aria-label="프로젝트 목록 불러오는 중">
-      <Bone className="h-9 w-40 rounded-[10px]" />
-      <div className="flex flex-col gap-10">
-        <ProjectCardSkeleton />
-        <ProjectCardSkeleton />
-      </div>
+    <div
+      className="flex flex-col gap-10"
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label="프로젝트 목록 불러오는 중"
+    >
+      <ProjectCardSkeleton />
+      <ProjectCardSkeleton />
     </div>
   )
 }

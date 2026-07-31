@@ -83,29 +83,23 @@ export default function WorkspacePage() {
     }
   }, [leaveTarget])
 
-  if (loading) {
-    return (
-      <section className="flex flex-col gap-6">
-        <WorkspaceListSkeleton />
-      </section>
-    )
-  }
-
   return (
     <section className="flex flex-col gap-6">
       <header>
         <h1 className="text-head-lg text-neutral-11 font-bold">프로젝트 목록</h1>
       </header>
 
-      {error && <p className="text-body-sm text-warning">{error}</p>}
+      {loading && <WorkspaceListSkeleton />}
+
+      {!loading && error && <p className="text-body-sm text-warning">{error}</p>}
       {deleteError && <p className="text-body-sm text-warning">{deleteError}</p>}
       {leaveError && <p className="text-body-sm text-warning">{leaveError}</p>}
 
-      {!error && projects.length === 0 && (
+      {!loading && !error && projects.length === 0 && (
         <p className="text-body-sm text-neutral-6">아직 등록된 프로젝트가 없어요</p>
       )}
 
-      {!error && projects.length > 0 && (
+      {!loading && !error && projects.length > 0 && (
         <div className="flex flex-col gap-10">
           {projects.map((project) => (
             <ProjectCard
