@@ -24,7 +24,7 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
   const isOwner = detail.isOwner
 
   return (
-    <div className="flex flex-col gap-6 px-8 py-6">
+    <div className="flex flex-col gap-6">
       <JobDetailHeader detail={detail} isOwner={isOwner} />
 
       <div className="flex flex-col gap-5.25 lg:flex-row">
