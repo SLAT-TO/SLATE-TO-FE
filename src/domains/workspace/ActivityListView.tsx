@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../../components/Button'
 import type { ProjectActivity } from '../../types/project'
+import { CARD_BASE } from '../../styles/card'
 
 interface ActivityListViewProps {
   activities: ProjectActivity[]
@@ -61,7 +62,7 @@ export default function ActivityListView({ activities, onBack }: ActivityListVie
           {items.map((activity) => (
             <li
               key={activity.id}
-              className="border-neutral-3 flex items-center justify-between gap-4 rounded-[10px] border bg-white px-5 py-4"
+              className={`flex items-center justify-between gap-3 ${CARD_BASE} px-4 py-4`}
             >
               <span className="text-body-sm text-neutral-10 min-w-0 tracking-[-0.32px]">
                 {activity.content}
