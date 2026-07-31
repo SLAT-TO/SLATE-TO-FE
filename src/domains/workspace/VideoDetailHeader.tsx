@@ -4,11 +4,11 @@ import ActionMenu from '../../components/ActionMenu'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
 import InlineIcon from '../../components/InlineIcon'
+import BookmarkStarIcon from '../../components/icons/BookmarkStarIcon'
 import { useHeaderSlot } from '../../hooks/useHeaderSlot'
 import type { VideoDetail } from '../../types/video'
 import type { MemberSummary } from '../../types/project'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
-import starIcon from '../../assets/icons/star.svg?raw'
 
 type VideoDetailHeaderProps = {
   videoDetail: VideoDetail | null
@@ -50,14 +50,14 @@ export default function VideoDetailHeader({
             aria-label={videoDetail.bookmarked ? '북마크 해제' : '북마크'}
             className={videoDetail.bookmarked ? 'text-caution' : 'text-neutral-4'}
           >
-            <InlineIcon svg={starIcon} className="size-4" />
+            <BookmarkStarIcon filled={videoDetail.bookmarked} className="size-4" />
           </button>
           {/* 영상 진행 상태 변경 API가 없어 로컬 상태만 갱신 (changeVideoStatus 주석 참고) */}
           <div className="relative" ref={statusMenuRef}>
             <button
               type="button"
               onClick={() => setStatusMenuOpen((v) => !v)}
-              className="bg-success-light text-success-dark text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold"
+              className={`text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold ${videoDetail.progressStatus === 'DONE' ? 'bg-tag-done-bg text-tag-done-text' : 'bg-tag-active-bg text-tag-active-text'}`}
             >
               {videoDetail.progressStatus === 'DONE' ? '완료' : '진행중'}
               <InlineIcon svg={chevronDownIcon} className="size-3" />
