@@ -70,9 +70,7 @@ export function useFeedbacks(videoId: number, currentTime: number) {
   const toggleResolved = useCallback(async (feedback: Feedback, userId: number) => {
     const nextStatus = !feedback.status
     setFeedbacks((prev) =>
-      prev.map((f) =>
-        f.feedbackId === feedback.feedbackId ? { ...f, status: nextStatus } : f,
-      ),
+      prev.map((f) => (f.feedbackId === feedback.feedbackId ? { ...f, status: nextStatus } : f)),
     )
     try {
       const updated = await updateFeedbackStatus(feedback.feedbackId, {
