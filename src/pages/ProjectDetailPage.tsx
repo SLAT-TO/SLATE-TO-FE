@@ -51,6 +51,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     setNotices,
     loading,
     error,
+    partialErrors,
   } = useProjectDetail(projectId)
   const statusMenuRef = useRef<HTMLDivElement>(null)
   const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
@@ -270,6 +271,13 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
       {tab === 'dashboard' && noticeView === 'main' && activityView === 'main' && (
         <div className="flex flex-col gap-8">
+          {partialErrors.length > 0 && (
+            <ul className="text-body-sm text-warning flex flex-col gap-1">
+              {partialErrors.map((message) => (
+                <li key={message}>{message}</li>
+              ))}
+            </ul>
+          )}
           <div className="grid gap-8 lg:grid-cols-2">
             <DashboardNoticeCard notices={notices} onExpand={() => setNoticeView('list')} />
             <DashboardTodayScheduleCard
