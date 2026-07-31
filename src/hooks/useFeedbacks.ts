@@ -12,8 +12,9 @@ import type { Feedback } from '../types/feedback'
 export type FeedbackFilter = 'all' | 'unresolved'
 
 /** 영상 상세의 피드백 목록 · 작성(구간 첨부) · 수정 · 삭제 · 해결 토글을 다루는 훅
- * @param currentTime 영상 플레이어의 현재 재생 시간(초) — "현재 시점 첨부" 버튼에 사용 */
-export function useFeedbacks(videoId: number, currentTime: number) {
+ * @param currentTime 영상 플레이어의 현재 재생 시간(초) — "현재 시점 첨부" 버튼에 사용
+ * @param guestId 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
+export function useFeedbacks(videoId: number, currentTime: number, guestId?: number) {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [filter, setFilter] = useState<FeedbackFilter>('all')
   const [newFeedback, setNewFeedback] = useState('')
@@ -61,11 +62,12 @@ export function useFeedbacks(videoId: number, currentTime: number) {
       content: newFeedback.trim(),
       startTime: pendingStart ?? undefined,
       endTime: pendingEnd ?? undefined,
+      guestId,
     })
     setFeedbacks((prev) => [created, ...prev])
     setNewFeedback('')
     clearPendingTime()
-  }, [videoId, newFeedback, pendingStart, pendingEnd, clearPendingTime])
+  }, [videoId, newFeedback, pendingStart, pendingEnd, guestId, clearPendingTime])
 
   const toggleResolved = useCallback(async (feedback: Feedback) => {
     const me = await getMe()

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { deleteProjectNotice, updateProjectNotice } from '../../api/projects'
+import { useEffect, useState } from 'react'
+import { deleteProjectNotice, markNoticeRead, updateProjectNotice } from '../../api/projects'
 import ActionMenu from '../../components/ActionMenu'
 import { Button } from '../../components/Button'
 import ConfirmModal from '../../components/ConfirmModal'
@@ -42,6 +42,19 @@ export default function NoticeDetailView({
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   const isMine = meId !== null && notice.writer.id === meId
+
+  useEffect(() => {
+    if (notice.isRead) return
+    let cancelled = false
+    markNoticeRead(projectId, notice.id)
+      .then(() => {
+        if (!cancelled) onUpdated({ ...notice, isRead: true })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, notice, onUpdated])
 
   const startEdit = () => {
     setTitle(notice.title)

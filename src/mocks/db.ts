@@ -536,6 +536,7 @@ export const db: MockDb = {
       content: '다음 주 화요일 오전 촬영입니다.',
       writerId: completeUser.id,
       writerNickname: completeUser.nickname,
+      isRead: false,
       createdAt: '2026-06-15T09:00:00Z',
       updatedAt: '2026-06-15T09:00:00Z',
     },

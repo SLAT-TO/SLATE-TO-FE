@@ -265,4 +265,11 @@ export async function deleteNotice(projectId: number, noticeId: number): Promise
   return deleteProjectNotice(projectId, noticeId)
 }
 
+export async function markNoticeRead(
+  projectId: number,
+  noticeId: number,
+): Promise<{ id: number; isRead: boolean; readAt: string }> {
+  return request({ method: 'PATCH', url: paths.projects.noticeRead(projectId, noticeId) })
+}
+
 export type { MemberSummary }
