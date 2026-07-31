@@ -21,6 +21,7 @@ import MyRecruitPage from './pages/MyRecruitPage'
 import JobFormPage from './pages/JobFormPage'
 import { usePathname } from './hooks/usePathname'
 import { useHeaderSlot } from './hooks/useHeaderSlot'
+import { useAuthGuard } from './hooks/useAuthGuard'
 import { renderFullscreenRoute } from './routes/fullscreen'
 import { matchPath } from './utils/navigation'
 
@@ -134,6 +135,8 @@ function AppRoutes({ pathname }: { pathname: string }) {
 
 function App() {
   const pathname = usePathname()
+  useAuthGuard(pathname)
+
   const fullscreen = renderFullscreenRoute(pathname)
   if (fullscreen) return fullscreen
 
