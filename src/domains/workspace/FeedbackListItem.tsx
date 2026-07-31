@@ -123,15 +123,21 @@ export default function FeedbackListItem({
         {canResolve ? (
           <button
             type="button"
-            onClick={onToggleResolved}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onToggleResolved()
+            }}
             aria-pressed={isResolved}
-            aria-label="해결 처리"
-            className={isResolved ? 'text-success' : 'text-neutral-5'}
+            aria-label={isResolved ? '미해결로 변경' : '해결 처리'}
+            className={`-m-1 inline-flex size-8 items-center justify-center rounded-md ${
+              isResolved ? 'text-success' : 'text-neutral-5'
+            }`}
           >
-            <InlineIcon svg={commentCheckIcon} className="size-4" />
+            <InlineIcon svg={commentCheckIcon} className="pointer-events-none size-4" />
           </button>
         ) : (
-          <span aria-hidden className="size-4" />
+          <span aria-hidden className="size-8" />
         )}
       </div>
 
