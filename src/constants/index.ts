@@ -33,6 +33,5 @@ export {
   REGION_LABELS,
   REGION_OPTIONS,
   SORT_OPTIONS,
-  shouldShowFilmLength,
   type SortValue,
 } from './recruitFilters'

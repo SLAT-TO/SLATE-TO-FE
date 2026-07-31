@@ -41,7 +41,7 @@ function RecruitPage() {
   const jobPosts = MOCK_JOB_POSTS
 
   return (
-    <div className="flex flex-col gap-10 px-8 py-6">
+    <div className="flex flex-col gap-10">
       <section className="flex flex-col gap-4">
         <h2 className="text-head-sm text-neutral-11 font-semibold">관심 있는 공고</h2>
         <div className="grid grid-cols-2 gap-6">

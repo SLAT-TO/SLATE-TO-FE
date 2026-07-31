@@ -20,7 +20,7 @@ function FilterPanel({ config, selected, onToggle }: FilterPanelProps) {
 
           <div
             className={`grid gap-x-6 gap-y-3 ${
-              group.span === 'narrow' ? 'grid-cols-1' : 'grid-cols-5'
+              group.span === 'narrow' ? 'grid-cols-1' : 'grid-cols-4'
             }`}
           >
             {group.options.map((option) => {
