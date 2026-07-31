@@ -3,6 +3,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { deleteProject, getProjects, leaveProject, pinProject, unpinProject } from '../api/projects'
 import ProjectCard from '../domains/project/ProjectCard'
+import WorkspaceListSkeleton from '../domains/workspace/WorkspaceListSkeleton'
 import ConfirmModal from '../components/ConfirmModal'
 import { projectMetaTags } from '../constants/projectLabels'
 import { projectStatusLabel } from '../constants/projectStatus'
@@ -88,8 +89,9 @@ export default function WorkspacePage() {
         <h1 className="text-head-lg text-neutral-11 font-bold">프로젝트 목록</h1>
       </header>
 
-      {loading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
-      {error && <p className="text-body-sm text-warning">{error}</p>}
+      {loading && <WorkspaceListSkeleton />}
+
+      {!loading && error && <p className="text-body-sm text-warning">{error}</p>}
       {deleteError && <p className="text-body-sm text-warning">{deleteError}</p>}
       {leaveError && <p className="text-body-sm text-warning">{leaveError}</p>}
 
