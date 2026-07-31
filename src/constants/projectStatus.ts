@@ -1,9 +1,9 @@
 import type { ProjectStatus } from '../types/project'
 
 export const PROJECT_STATUS_LABEL: Record<string, string> = {
-  PREPARING: '기획중',
-  SHOOTING: '촬영중',
-  EDITING: '편집중',
+  PREPARING: '기획 중',
+  SHOOTING: '촬영 중',
+  EDITING: '편집 중',
   COMPLETED: '완료',
 }
 
