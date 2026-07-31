@@ -3,7 +3,8 @@ import {
   deleteFile,
   downloadProjectFile,
   getProjectFiles,
-  updateFile,
+  pinProjectFile,
+  unpinProjectFile,
   uploadProjectFile,
 } from '../../api/projects'
 import ActionMenu from '../../components/ActionMenu'
@@ -108,7 +109,8 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
     const next = !file.isPinned
     setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, isPinned: next } : f)))
     try {
-      await updateFile(projectId, file.id, { isPinned: next })
+      if (next) await pinProjectFile(projectId, file.id)
+      else await unpinProjectFile(projectId, file.id)
     } catch {
       setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, isPinned: !next } : f)))
     }

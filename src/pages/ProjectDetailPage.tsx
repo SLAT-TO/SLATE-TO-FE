@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { deleteProject, pinProject, unpinProject } from '../api/projects'
+import { deleteProject, leaveProject, pinProject, unpinProject } from '../api/projects'
 import { getMe } from '../api/users'
 import ActionMenu from '../components/ActionMenu'
-import { Avatar } from '../components/Avatar'
 import ConfirmModal from '../components/ConfirmModal'
 import BookmarkStarIcon from '../components/icons/BookmarkStarIcon'
 import Tabs from '../components/Tabs'
-import VideoFeedbackTab, { VideoDetailView } from '../domains/workspace/VideoFeedbackTab'
+import VideoFeedbackTab from '../domains/workspace/VideoFeedbackTab'
+import { VideoDetailView } from '../domains/workspace/VideoDetailView'
 import ProjectSettingsView from '../domains/workspace/ProjectSettingsView'
 import DashboardNoticeCard from '../domains/workspace/DashboardNoticeCard'
 import DashboardTodayScheduleCard from '../domains/workspace/DashboardTodayScheduleCard'
 import DashboardActivityCard from '../domains/workspace/DashboardActivityCard'
+import ActivityListView from '../domains/workspace/ActivityListView'
+import MemberListPanel from '../domains/workspace/MemberListPanel'
 import NoticeListView from '../domains/workspace/NoticeListView'
 import NoticeDetailView from '../domains/workspace/NoticeDetailView'
 import ProjectFileList from '../domains/workspace/ProjectFileList'
@@ -39,8 +41,17 @@ type ProjectDetailPageProps = {
 }
 
 export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
-  const { project, setProject, members, activities, notices, setNotices, loading, error } =
-    useProjectDetail(projectId)
+  const {
+    project,
+    setProject,
+    members,
+    setMembers,
+    activities,
+    notices,
+    setNotices,
+    loading,
+    error,
+  } = useProjectDetail(projectId)
   const statusMenuRef = useRef<HTMLDivElement>(null)
   const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
   const [tab, setTab] = useState('dashboard')
@@ -49,10 +60,13 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     new URLSearchParams(window.location.search).get('view') === 'settings' ? 'settings' : 'main',
   )
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [leaveOpen, setLeaveOpen] = useState(false)
   const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null)
   const [meId, setMeId] = useState<number | null>(null)
   /** 대시보드 탭 내부 공지사항 서브뷰 — 'main'=대시보드, 'list'=공지사항 목록, number=공지 상세(noticeId) */
   const [noticeView, setNoticeView] = useState<'main' | 'list' | number>('main')
+  /** 대시보드 탭 내부 최근 활동 서브뷰 — 'main'=대시보드, 'list'=최근 활동 전체 목록 */
+  const [activityView, setActivityView] = useState<'main' | 'list'>('main')
 
   useEffect(() => {
     getMe()
@@ -64,7 +78,10 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   const handleTabChange = (key: string) => {
     setTab(key)
-    if (key !== 'dashboard') setNoticeView('main')
+    if (key !== 'dashboard') {
+      setNoticeView('main')
+      setActivityView('main')
+    }
   }
 
   const handleToggleBookmark = useCallback(async () => {
@@ -102,37 +119,29 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
           </button>
         </div>
 
-        {members.length > 0 && (
-          <div className="flex shrink-0 -space-x-2">
-            {members.slice(0, 4).map((member) => (
-              <Avatar
-                key={member.memberId}
-                src={member.profileImageUrl ?? undefined}
-                alt={member.nickname}
-                size={33}
-                fallback={member.nickname.slice(0, 1)}
-                border="gray"
-                className="bg-neutral-2"
-              />
-            ))}
-          </div>
-        )}
+        <MemberListPanel
+          projectId={projectId}
+          members={members}
+          isAdmin={project.myPermission === 'ADMIN'}
+          meId={meId}
+          avatarSize={33}
+          onMembersChange={setMembers}
+        />
       </div>
     )
-  }, [showProjectHeader, project, members, handleToggleBookmark])
+  }, [showProjectHeader, project, members, handleToggleBookmark, projectId, meId, setMembers])
 
   const headerRightContent = useMemo(() => {
-    if (!showProjectHeader) return null
-    return (
-      <ActionMenu
-        items={[
-          { action: 'edit', onClick: () => setView('settings') },
-          { action: 'delete', onClick: () => setDeleteOpen(true) },
-        ]}
-        ariaLabel="프로젝트 메뉴"
-      />
-    )
-  }, [showProjectHeader])
+    if (!showProjectHeader || !project) return null
+    const items =
+      project.myPermission === 'ADMIN'
+        ? [
+            { action: 'edit' as const, label: '설정', onClick: () => setView('settings') },
+            { action: 'delete' as const, onClick: () => setDeleteOpen(true) },
+          ]
+        : [{ action: 'leave' as const, onClick: () => setLeaveOpen(true) }]
+    return <ActionMenu items={items} ariaLabel="프로젝트 메뉴" />
+  }, [showProjectHeader, project])
 
   useHeaderSlot(headerLeftContent, headerRightContent)
 
@@ -162,6 +171,11 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     navigate('/workspace')
   }
 
+  const confirmLeaveProject = async () => {
+    await leaveProject(projectId)
+    navigate('/workspace')
+  }
+
   if (view === 'settings') {
     // ?view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
     const leaveSettings = () => {
@@ -188,6 +202,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         projectId={projectId}
         videoId={selectedVideoId}
         meId={meId}
+        isAdmin={project.myPermission === 'ADMIN'}
         lengthType={project.lengthType}
         myRoleNames={project.roleNames}
         onBack={() => setSelectedVideoId(null)}
@@ -242,27 +257,31 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <h2 className="text-head-sm text-neutral-11 font-bold">프로젝트 소개</h2>
-          <p className="text-body-sm text-neutral-10 tracking-[-0.32px]">
-            {project.description ?? '설명 없음'}
-          </p>
-        </div>
+        <p className="text-body-sm text-neutral-10 tracking-[-0.32px]">
+          {project.description ?? '설명 없음'}
+        </p>
       </div>
 
       <div className="[&_[role=tab][aria-selected=true]]:border-primary w-full [&_[role=tab]]:flex-1 [&_[role=tab]]:px-0 [&_[role=tab]]:text-center [&_[role=tab]]:text-[20px] [&_[role=tab][aria-selected=true]]:border-b-[3px] [&_[role=tablist]]:w-full">
         <Tabs tabs={DETAIL_TABS} activeTab={tab} onChange={handleTabChange} />
       </div>
 
-      {tab === 'dashboard' && noticeView === 'main' && (
+      {tab === 'dashboard' && noticeView === 'main' && activityView === 'main' && (
         <div className="flex flex-col gap-8">
           <div className="grid gap-8 lg:grid-cols-2">
             <DashboardNoticeCard notices={notices} onExpand={() => setNoticeView('list')} />
-            <DashboardTodayScheduleCard projectId={projectId} />
+            <DashboardTodayScheduleCard
+              projectId={projectId}
+              onExpand={() => handleTabChange('schedule')}
+            />
           </div>
 
-          <DashboardActivityCard activities={activities} />
+          <DashboardActivityCard activities={activities} onExpand={() => setActivityView('list')} />
         </div>
+      )}
+
+      {tab === 'dashboard' && activityView === 'list' && (
+        <ActivityListView activities={activities} onBack={() => setActivityView('main')} />
       )}
 
       {tab === 'schedule' && <ProjectScheduleTab projectId={projectId} members={members} />}
@@ -322,8 +341,16 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         isOpen={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={confirmDeleteProject}
-        title="프로젝트를 삭제할까요?"
-        description="삭제한 프로젝트는 복구할 수 없습니다."
+        title="정말 삭제하시겠습니까?"
+        description="삭제된 워크스페이스 데이터는 되돌릴 수 없어요"
+      />
+
+      <ConfirmModal
+        isOpen={leaveOpen}
+        onClose={() => setLeaveOpen(false)}
+        onConfirm={confirmLeaveProject}
+        title={`${project.title}에서 나가시겠습니까?`}
+        confirmText="나가기"
       />
     </section>
   )

@@ -3,7 +3,6 @@ import type { Feedback, FeedbackReply, ShareLink } from '../types/feedback'
 import type { ProjectFile } from '../types/file'
 import type { AppNotification } from '../types/notification'
 import type { Portfolio } from '../types/portfolio'
-import type { ProjectActivity } from '../types/project'
 import type { Application, Recruitment } from '../types/recruitment'
 import type { Schedule } from '../types/schedule'
 import type { ProjectNotice } from '../types/notice'
@@ -142,7 +141,6 @@ export type MockDb = {
   recruitmentBookmarks: Array<{ userId: number; recruitmentId: number }>
   schedules: Schedule[]
   notifications: AppNotification[]
-  activities: ProjectActivity[]
   notices: ProjectNotice[]
   invitations: Array<{
     token: string
@@ -530,18 +528,6 @@ export const db: MockDb = {
       createdAt: '2026-06-16T01:00:00Z',
     },
   ],
-  activities: [
-    {
-      id: 1,
-      projectId: 1,
-      type: 'FILE_UPLOADED',
-      content: 'reference.pdf 파일이 업로드되었습니다',
-      actor: { type: 'USER', id: completeUser.id, name: completeUser.nickname },
-      groupCount: 1,
-      metadata: { fileName: 'reference.pdf' },
-      createdAt: '2026-06-10T09:00:00Z',
-    },
-  ],
   notices: [
     {
       id: 1,
@@ -550,6 +536,7 @@ export const db: MockDb = {
       content: '다음 주 화요일 오전 촬영입니다.',
       writerId: completeUser.id,
       writerNickname: completeUser.nickname,
+      isRead: false,
       createdAt: '2026-06-15T09:00:00Z',
       updatedAt: '2026-06-15T09:00:00Z',
     },
