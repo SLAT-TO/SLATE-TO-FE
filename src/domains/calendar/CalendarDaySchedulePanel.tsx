@@ -28,7 +28,7 @@ export function CalendarDaySchedulePanel({
   if (events.length === 0) {
     return (
       <div
-        className={`flex w-80 shrink-0 flex-col items-center justify-center self-start rounded-[10.242px] bg-white py-10 ${PANEL_SHADOW}`}
+        className={`flex w-80 shrink-0 flex-col items-center justify-center rounded-[10.242px] bg-white py-10 ${PANEL_SHADOW}`}
       >
         <p className="text-caption-sm text-neutral-5 font-normal tracking-[-0.24px] capitalize">
           등록된 일정이 없습니다
@@ -39,7 +39,7 @@ export function CalendarDaySchedulePanel({
 
   return (
     <div
-      className={`flex max-h-full w-80 shrink-0 flex-col gap-5 self-start overflow-auto rounded-[10.242px] bg-white p-6 ${PANEL_SHADOW}`}
+      className={`flex max-h-full w-80 shrink-0 flex-col gap-5 overflow-auto rounded-[10.242px] bg-white p-6 ${PANEL_SHADOW}`}
     >
       {events.map((event, index) => (
         <div
