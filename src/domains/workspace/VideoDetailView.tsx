@@ -39,6 +39,8 @@ export function VideoDetailView({
 }: VideoDetailViewProps) {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  /** soft-fail된 부가 영역 안내 (영상 본문은 유지) */
+  const [partialErrors, setPartialErrors] = useState<string[]>([])
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
 
@@ -129,8 +131,24 @@ export function VideoDetailView({
     async function load() {
       setLoading(true)
       setLoadError(null)
+      setPartialErrors([])
       try {
-        await Promise.all([loadVideoDetail(), loadReferenceFiles(), loadFeedbacks(), loadMembers()])
+        // 영상 본문만 필수 — 참고파일·피드백·멤버는 실패해도 상세 유지
+        await loadVideoDetail()
+        if (cancelled) return
+        const softErrors: string[] = []
+        await Promise.all([
+          loadReferenceFiles().catch(() => {
+            softErrors.push('참고 파일을 불러오지 못했습니다.')
+          }),
+          loadFeedbacks().catch(() => {
+            softErrors.push('피드백을 불러오지 못했습니다.')
+          }),
+          loadMembers().catch(() => {
+            softErrors.push('참여 인원을 불러오지 못했습니다.')
+          }),
+        ])
+        if (!cancelled) setPartialErrors(softErrors)
       } catch (err) {
         if (!cancelled) {
           setLoadError(err instanceof ApiError ? err.message : '영상 정보를 불러오지 못했습니다.')
@@ -200,6 +218,14 @@ export function VideoDetailView({
           수정일 {formatDate(videoDetail.updatedAt)}
         </span>
       </div>
+
+      {partialErrors.length > 0 && (
+        <ul className="text-body-sm text-warning flex flex-col gap-1">
+          {partialErrors.map((message) => (
+            <li key={message}>{message}</li>
+          ))}
+        </ul>
+      )}
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="flex min-w-0 flex-1 flex-col gap-6">
