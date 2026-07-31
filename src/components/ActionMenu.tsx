@@ -91,7 +91,7 @@ const ActionMenu = memo(function ActionMenu({
                 onClick={() => handleSelect(item)}
                 className={ITEM_CLASS}
               >
-                {ACTION_MENU_LABELS[item.action]}
+                {item.label ?? ACTION_MENU_LABELS[item.action]}
               </button>
             </li>
           ))}

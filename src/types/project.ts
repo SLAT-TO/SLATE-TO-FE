@@ -1,6 +1,6 @@
 import type { UserCategory } from './user'
 
-export type ProjectStatus = 'PREPARING' | 'EDITING' | 'REVIEWING' | 'COMPLETED' | string
+export type ProjectStatus = 'PREPARING' | 'SHOOTING' | 'EDITING' | 'COMPLETED' | string
 export type ProjectLengthType = 'LONG_FORM' | 'SHORT_FORM' | string
 export type ProjectPermission = 'ADMIN' | 'MEMBER' | string
 export type ProjectKind = 'PERSONAL' | 'EXTERNAL' | string
@@ -20,6 +20,11 @@ export type ProjectSummary = {
   isPinned: boolean
   memberPreviewImageUrls: string[]
   memberCount: number
+  /** FE 확장 — 상세 응답(roleNames/myPermission)과 동일 패턴, 목록 API에 아직 없으면 BE 정합 필요 */
+  roleNames: string[]
+  myPermission: ProjectPermission
+  canEdit: boolean
+  canDelete: boolean
   createdAt: string
   updatedAt: string
 }
