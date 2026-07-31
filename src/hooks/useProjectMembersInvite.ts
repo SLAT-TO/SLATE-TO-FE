@@ -24,5 +24,10 @@ export function useProjectMembersInvite(projectId: number) {
     setTimeout(() => setInviteCopied(false), 2000)
   }, [projectId])
 
-  return { members, inviteCopied, load, inviteMember }
+  /** 초대 링크 생성만 수행 — Modal에서 URL 표시 후 복사할 때 사용 */
+  const createInvite = useCallback(async () => {
+    return createInvitation(projectId)
+  }, [projectId])
+
+  return { members, setMembers, inviteCopied, load, inviteMember, createInvite }
 }

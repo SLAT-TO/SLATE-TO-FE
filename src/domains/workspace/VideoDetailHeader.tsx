@@ -1,7 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { RefObject } from 'react'
 import ActionMenu from '../../components/ActionMenu'
-import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
 import InlineIcon from '../../components/InlineIcon'
 import BookmarkStarIcon from '../../components/icons/BookmarkStarIcon'
@@ -9,8 +8,10 @@ import { useHeaderSlot } from '../../hooks/useHeaderSlot'
 import type { VideoDetail } from '../../types/video'
 import type { MemberSummary } from '../../types/project'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
+import MemberListPanel from './MemberListPanel'
 
 type VideoDetailHeaderProps = {
+  projectId: number
   videoDetail: VideoDetail | null
   toggleBookmark: () => void
   statusMenuOpen: boolean
@@ -18,14 +19,16 @@ type VideoDetailHeaderProps = {
   statusMenuRef: RefObject<HTMLDivElement | null>
   changeVideoStatus: (status: 'IN_PROGRESS' | 'DONE') => void
   members: MemberSummary[]
+  isAdmin: boolean
+  meId: number | null
+  onMembersChange: (members: MemberSummary[]) => void
   onEdit: () => void
   onDelete: () => void
-  inviteMember: () => void
-  inviteCopied: boolean
 }
 
 /** 전역 헤더 한 줄에 제목·북마크·상태·참여 인원(왼쪽, 대시보드와 동일 배치)과 초대 버튼·ActionMenu(오른쪽)를 채운다. */
 export default function VideoDetailHeader({
+  projectId,
   videoDetail,
   toggleBookmark,
   statusMenuOpen,
@@ -33,11 +36,14 @@ export default function VideoDetailHeader({
   statusMenuRef,
   changeVideoStatus,
   members,
+  isAdmin,
+  meId,
+  onMembersChange,
   onEdit,
   onDelete,
-  inviteMember,
-  inviteCopied,
 }: VideoDetailHeaderProps) {
+  const [inviteOpen, setInviteOpen] = useState(false)
+
   const headerLeftContent = useMemo(() => {
     if (!videoDetail) return null
     return (
@@ -80,24 +86,17 @@ export default function VideoDetailHeader({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-4">
-          <span className="text-caption-lg text-neutral-11 font-semibold">참여 인원</span>
-          {members.length > 0 && (
-            <div className="flex -space-x-2">
-              {members.slice(0, 4).map((member) => (
-                <Avatar
-                  key={member.memberId}
-                  src={member.profileImageUrl ?? undefined}
-                  alt={member.nickname}
-                  size={28}
-                  fallback={member.nickname.slice(0, 1)}
-                  border="gray"
-                  className="bg-neutral-2"
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        <MemberListPanel
+          projectId={projectId}
+          members={members}
+          isAdmin={isAdmin}
+          meId={meId}
+          avatarSize={28}
+          label="참여 인원"
+          onMembersChange={onMembersChange}
+          inviteOpen={inviteOpen}
+          onInviteOpenChange={setInviteOpen}
+        />
       </div>
     )
   }, [
@@ -108,6 +107,11 @@ export default function VideoDetailHeader({
     statusMenuRef,
     changeVideoStatus,
     members,
+    projectId,
+    isAdmin,
+    meId,
+    onMembersChange,
+    inviteOpen,
   ])
 
   const headerRightContent = useMemo(() => {
@@ -121,12 +125,12 @@ export default function VideoDetailHeader({
           ]}
           ariaLabel="영상 메뉴"
         />
-        <Button variant="primary" size="sm" onClick={inviteMember}>
-          {inviteCopied ? '링크 복사됨' : '+ 초대'}
+        <Button variant="primary" size="sm" onClick={() => setInviteOpen(true)}>
+          + 초대
         </Button>
       </div>
     )
-  }, [videoDetail, onEdit, onDelete, inviteMember, inviteCopied])
+  }, [videoDetail, onEdit, onDelete])
 
   useHeaderSlot(headerLeftContent, headerRightContent)
 
