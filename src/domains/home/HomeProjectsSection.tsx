@@ -9,7 +9,7 @@ interface HomeProjectsSectionProps {
 
 export default function HomeProjectsSection({ projects, loading }: HomeProjectsSectionProps) {
   return (
-    <section className="flex flex-col gap-2.5">
+    <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">진행 중인 프로젝트</h2>
 
       {loading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}

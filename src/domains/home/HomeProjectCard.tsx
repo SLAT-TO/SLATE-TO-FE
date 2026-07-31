@@ -17,8 +17,8 @@ export default function HomeProjectCard({ project }: HomeProjectCardProps) {
   const extraCount = project.memberCount - visibleMembers.length
 
   return (
-    <article className="flex h-34 flex-col items-start gap-2 rounded-[10.242px] bg-white p-4 shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]">
-      <h3 className="text-caption-lg text-neutral-11 self-stretch font-semibold tracking-[-0.32px]">
+    <article className="flex h-34 flex-col items-start gap-2 overflow-hidden rounded-[10.242px] bg-white p-4 shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]">
+      <h3 className="text-body-sm text-neutral-11 self-stretch font-semibold tracking-[-0.32px]">
         {project.title}
       </h3>
 
@@ -29,14 +29,14 @@ export default function HomeProjectCard({ project }: HomeProjectCardProps) {
       />
 
       <div className="mt-auto flex w-full items-center justify-between">
-        <div className="flex items-center gap-3.5">
+        <div className="flex min-w-0 flex-1 items-center gap-3.5 overflow-hidden">
           {tags.map((tag) => (
             <Tag key={tag}>{tag}</Tag>
           ))}
         </div>
 
         {project.memberCount > 0 && (
-          <div className="flex items-center -space-x-2">
+          <div className="flex shrink-0 items-center -space-x-2">
             {visibleMembers.map((imageUrl, index) => (
               <Avatar key={index} src={imageUrl} size={28} border="gray" />
             ))}
