@@ -7,6 +7,7 @@ import Choice from '../../components/Choice'
 import ConfirmModal from '../../components/ConfirmModal'
 import { ROLE_OPTIONS, roleLabel } from '../../constants/roles'
 import { CARD_BASE } from '../../styles/card'
+import { ApiError } from '../../types/api'
 import type { MemberSummary } from '../../types/project'
 import InviteLinkModal from './InviteLinkModal'
 
@@ -43,6 +44,7 @@ export default function MemberListPanel({
   const [savingRoles, setSavingRoles] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<MemberSummary | null>(null)
   const [internalInviteOpen, setInternalInviteOpen] = useState(false)
+  const [actionError, setActionError] = useState('')
 
   const inviteOpen = inviteOpenProp ?? internalInviteOpen
   const setInviteOpen = (next: boolean) => {
@@ -60,6 +62,7 @@ export default function MemberListPanel({
         setOpen(false)
         setManageMode(false)
         setEditingMemberId(null)
+        setActionError('')
       }
     }
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -67,6 +70,7 @@ export default function MemberListPanel({
         setOpen(false)
         setManageMode(false)
         setEditingMemberId(null)
+        setActionError('')
       }
     }
 
@@ -82,6 +86,7 @@ export default function MemberListPanel({
     setManageMode(false)
     setEditingMemberId(member.memberId)
     setSelectedRoles([...member.roleNames])
+    setActionError('')
   }
 
   const toggleRole = (role: string, checked: boolean) => {
@@ -93,12 +98,17 @@ export default function MemberListPanel({
   const saveRoles = async (memberId: number) => {
     if (selectedRoles.length === 0) return
     setSavingRoles(true)
+    setActionError('')
     try {
       const updated = await updateMemberRole(projectId, memberId, selectedRoles)
       onMembersChange(
         members.map((m) => (m.memberId === memberId ? { ...m, roleNames: updated.roleNames } : m)),
       )
       setEditingMemberId(null)
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError ? err.message : '역할을 저장하지 못했습니다. 다시 시도해주세요.',
+      )
     } finally {
       setSavingRoles(false)
     }
@@ -107,9 +117,17 @@ export default function MemberListPanel({
   const confirmRemove = async () => {
     if (!removeTarget) return
     const targetId = removeTarget.memberId
-    await removeMember(projectId, targetId)
-    onMembersChange(members.filter((m) => m.memberId !== targetId))
-    setRemoveTarget(null)
+    setActionError('')
+    try {
+      await removeMember(projectId, targetId)
+      onMembersChange(members.filter((m) => m.memberId !== targetId))
+      setRemoveTarget(null)
+    } catch (err) {
+      setRemoveTarget(null)
+      setActionError(
+        err instanceof ApiError ? err.message : '팀원을 제거하지 못했습니다. 다시 시도해주세요.',
+      )
+    }
   }
 
   const canRemove = (member: MemberSummary) =>
@@ -159,13 +177,20 @@ export default function MemberListPanel({
                 onClick={() => {
                   setManageMode((v) => !v)
                   setEditingMemberId(null)
+                  setActionError('')
                 }}
                 className="text-caption-lg text-neutral-6 font-semibold"
               >
-                {manageMode ? '저장' : '관리'}
+                {manageMode ? '완료' : '관리'}
               </button>
             )}
           </div>
+
+          {actionError ? (
+            <p className="text-warning text-caption-lg" role="alert">
+              {actionError}
+            </p>
+          ) : null}
 
           <ul className="flex max-h-72 flex-col gap-3 overflow-y-auto">
             {members.map((member) => {
@@ -204,15 +229,15 @@ export default function MemberListPanel({
                           제거
                         </button>
                       ) : null
-                    ) : (
+                    ) : isAdmin ? (
                       <ActionMenu
                         items={[{ action: 'edit', onClick: () => startEdit(member) }]}
                         ariaLabel={`${member.nickname} 메뉴`}
                       />
-                    )}
+                    ) : null}
                   </div>
 
-                  {isEditing && (
+                  {isEditing && isAdmin && (
                     <div className="border-neutral-3 ml-12 flex flex-col gap-2 rounded-lg border p-3">
                       <p className="text-caption-lg text-neutral-6">역할을 선택해주세요</p>
                       <p className="text-caption-sm text-neutral-5">*복수선택 가능</p>
