@@ -73,78 +73,74 @@ function userActor(userId: number): ActivityActor {
 function buildProjectActivities(projectId: number): ProjectActivity[] {
   const files = db.files
     .filter((f) => f.projectId === projectId)
-    .map(
-      (f): Omit<ProjectActivity, 'id' | 'isRead'> & { sourceKey: string } => ({
-        sourceKey: `file-${f.id}`,
-        projectId,
-        type: 'FILE_UPLOADED',
-        content: `${f.fileName} 파일이 업로드되었습니다`,
-        actor: userActor(f.uploaderId),
-        groupCount: 1,
-        metadata: { fileName: f.fileName },
-        createdAt: f.createdAt,
-      }),
-    )
+    .map((f): Omit<ProjectActivity, 'id' | 'isRead'> & { sourceKey: string } => ({
+      sourceKey: `file-${f.id}`,
+      projectId,
+      type: 'FILE_UPLOADED',
+      content: `${f.fileName} 파일이 업로드되었습니다`,
+      actor: userActor(f.uploaderId),
+      groupCount: 1,
+      metadata: { fileName: f.fileName },
+      createdAt: f.createdAt,
+    }))
 
   const videos = db.videos
     .filter((v) => v.projectId === projectId)
-    .map(
-      (v): Omit<ProjectActivity, 'id' | 'isRead'> & { sourceKey: string } => ({
-        sourceKey: `video-${v.videoId}`,
-        projectId,
-        type: 'VIDEO_ADDED',
-        content: `${v.title} 영상이 추가되었습니다`,
-        actor: { type: 'SYSTEM' },
-        groupCount: 1,
-        metadata: { videoId: v.videoId, title: v.title },
-        createdAt: v.createdAt,
-      }),
-    )
+    .map((v): Omit<ProjectActivity, 'id' | 'isRead'> & { sourceKey: string } => ({
+      sourceKey: `video-${v.videoId}`,
+      projectId,
+      type: 'VIDEO_ADDED',
+      content: `${v.title} 영상이 추가되었습니다`,
+      actor: { type: 'SYSTEM' },
+      groupCount: 1,
+      metadata: { videoId: v.videoId, title: v.title },
+      createdAt: v.createdAt,
+    }))
 
   const notices = db.notices
     .filter((n) => n.projectId === projectId)
-    .map(
-      (n): Omit<ProjectActivity, 'id' | 'isRead'> & { sourceKey: string } => ({
-        sourceKey: `notice-${n.id}`,
-        projectId,
-        type: 'NOTICE_CREATED',
-        content: `${n.title} 공지가 등록되었습니다`,
-        actor: { type: 'USER', id: n.writerId, name: n.writerNickname },
-        groupCount: 1,
-        metadata: { noticeId: n.id, title: n.title },
-        createdAt: n.createdAt,
-      }),
-    )
+    .map((n): Omit<ProjectActivity, 'id' | 'isRead'> & { sourceKey: string } => ({
+      sourceKey: `notice-${n.id}`,
+      projectId,
+      type: 'NOTICE_CREATED',
+      content: `${n.title} 공지가 등록되었습니다`,
+      actor: { type: 'USER', id: n.writerId, name: n.writerNickname },
+      groupCount: 1,
+      metadata: { noticeId: n.id, title: n.title },
+      createdAt: n.createdAt,
+    }))
 
   const feedbacks = db.feedbacks
     .filter((f) => db.videos.find((v) => v.videoId === f.videoId)?.projectId === projectId)
-    .map(
-      (f): Omit<ProjectActivity, 'id' | 'isRead'> & { sourceKey: string } => ({
-        sourceKey: `feedback-${f.feedbackId}`,
-        projectId,
-        type: 'FEEDBACK_CREATED',
-        content: `${f.actor.name ?? '누군가'}님이 피드백을 남겼습니다`,
-        actor: {
-          type: f.actor.type === 'GUEST' ? 'CLIENT_REVIEWER' : 'USER',
-          id: f.actor.id,
-          name: f.actor.name,
-        },
-        groupCount: 1,
-        metadata: { feedbackId: f.feedbackId, videoId: f.videoId },
-        createdAt: f.createdAt,
-      }),
-    )
+    .map((f): Omit<ProjectActivity, 'id' | 'isRead'> & { sourceKey: string } => ({
+      sourceKey: `feedback-${f.feedbackId}`,
+      projectId,
+      type: 'FEEDBACK_CREATED',
+      content: `${f.actor.name ?? '누군가'}님이 피드백을 남겼습니다`,
+      actor: {
+        type: f.actor.type === 'GUEST' ? 'CLIENT_REVIEWER' : 'USER',
+        id: f.actor.id,
+        name: f.actor.name,
+      },
+      groupCount: 1,
+      metadata: { feedbackId: f.feedbackId, videoId: f.videoId },
+      createdAt: f.createdAt,
+    }))
 
   // createdAt 최신순 → cursor 페이지네이션(id 내림차순)과 맞추려고 정렬 후 합성 id 부여
   const merged = [...files, ...videos, ...notices, ...feedbacks].sort((a, b) =>
     b.createdAt.localeCompare(a.createdAt),
   )
-  return merged.map(({ sourceKey: _, ...rest }, index) => ({
-    ...rest,
-    id: merged.length - index,
-    // FE mock 전용 — 최신 2건을 안 읽음으로 표시 (피그마 목록 UI 확인용)
-    isRead: index >= 2,
-  }))
+  return merged.map((item, index) => {
+    const { sourceKey: _sourceKey, ...rest } = item
+    void _sourceKey
+    return {
+      ...rest,
+      id: merged.length - index,
+      // FE mock 전용 — 최신 2건을 안 읽음으로 표시 (피그마 목록 UI 확인용)
+      isRead: index >= 2,
+    }
+  })
 }
 
 function toMemberSummary(member: MockMemberRecord) {
