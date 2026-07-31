@@ -96,9 +96,7 @@ export default function MemberListPanel({
     try {
       const updated = await updateMemberRole(projectId, memberId, selectedRoles)
       onMembersChange(
-        members.map((m) =>
-          m.memberId === memberId ? { ...m, roleNames: updated.roleNames } : m,
-        ),
+        members.map((m) => (m.memberId === memberId ? { ...m, roleNames: updated.roleNames } : m)),
       )
       setEditingMemberId(null)
     } finally {
@@ -271,9 +269,7 @@ export default function MemberListPanel({
         onConfirm={() => void confirmRemove()}
         title="팀원을 제거할까요?"
         description={
-          removeTarget
-            ? `${removeTarget.nickname}님을 프로젝트에서 제거합니다.`
-            : undefined
+          removeTarget ? `${removeTarget.nickname}님을 프로젝트에서 제거합니다.` : undefined
         }
         confirmText="제거"
       />
