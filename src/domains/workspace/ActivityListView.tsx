@@ -1,6 +1,6 @@
+import { useEffect, useState } from 'react'
 import { Button } from '../../components/Button'
 import type { ProjectActivity } from '../../types/project'
-import { CARD_BASE } from '../../styles/card'
 
 interface ActivityListViewProps {
   activities: ProjectActivity[]
@@ -18,6 +18,19 @@ function formatActivityDate(iso: string): string {
 }
 
 export default function ActivityListView({ activities, onBack }: ActivityListViewProps) {
+  /** BE에 활동 읽음 API가 없어 목록 UI용 로컬 상태 */
+  const [items, setItems] = useState(activities)
+
+  useEffect(() => {
+    setItems(activities)
+  }, [activities])
+
+  const hasUnread = items.some((item) => !item.isRead)
+
+  const markAllAsRead = () => {
+    setItems((prev) => prev.map((item) => (item.isRead ? item : { ...item, isRead: true })))
+  }
+
   return (
     <section className="flex flex-col gap-4">
       <button
@@ -30,27 +43,37 @@ export default function ActivityListView({ activities, onBack }: ActivityListVie
 
       <div className="flex items-center justify-between">
         <h2 className="text-head-sm text-neutral-11 font-bold">최근 활동</h2>
-        {/* BE에 활동 읽음 상태 API가 없어 mock 전용 — 현재는 목록 확인 UI만 제공 */}
-        <Button variant="secondary" size="sm">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={markAllAsRead}
+          disabled={!hasUnread}
+          className="w-23"
+        >
           전체 읽음
         </Button>
       </div>
 
-      {activities.length === 0 ? (
+      {items.length === 0 ? (
         <p className="text-caption-lg text-neutral-6">최근 활동이 없습니다.</p>
       ) : (
-        <ul className={`flex flex-col ${CARD_BASE}`}>
-          {activities.map((activity, index) => (
+        <ul className="flex flex-col gap-3">
+          {items.map((activity) => (
             <li
               key={activity.id}
-              className={`flex items-center justify-between gap-4 px-4 py-3 ${
-                index > 0 ? 'border-neutral-3 border-t' : ''
-              }`}
+              className="border-neutral-3 flex items-center justify-between gap-4 rounded-[10px] border bg-white px-4 py-3"
             >
-              <span className="text-body-sm text-neutral-10">{activity.content}</span>
-              <span className="text-caption-sm text-neutral-6 shrink-0">
-                {formatActivityDate(activity.createdAt)}
+              <span className="text-body-sm text-neutral-10 min-w-0 tracking-[-0.32px]">
+                {activity.content}
               </span>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-caption-sm text-neutral-6">
+                  {formatActivityDate(activity.createdAt)}
+                </span>
+                {!activity.isRead && (
+                  <span className="bg-warning size-2.75 shrink-0 rounded-full" aria-label="안 읽음" />
+                )}
+              </div>
             </li>
           ))}
         </ul>

@@ -155,6 +155,8 @@ export type ProjectActivity = {
   groupCount: number
   metadata: Record<string, unknown>
   createdAt: string
+  /** FE mock 전용 — BE 활동 읽음 API 없음 */
+  isRead: boolean
 }
 
 export type CursorPage<T> = {
