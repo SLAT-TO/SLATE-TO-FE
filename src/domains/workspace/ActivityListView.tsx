@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '../../components/Button'
 import type { ProjectActivity } from '../../types/project'
 import { CARD_BASE } from '../../styles/card'
@@ -19,24 +19,26 @@ function formatActivityDate(iso: string): string {
 }
 
 export default function ActivityListView({ activities, onBack }: ActivityListViewProps) {
-  /** BE에 활동 읽음 API가 없어 목록 UI용 로컬 상태 */
-  const [items, setItems] = useState(activities)
+  /** BE에 활동 읽음 API가 없어 로컬에서만 읽음 처리한 id */
+  const [locallyReadIds, setLocallyReadIds] = useState<Set<number>>(() => new Set())
 
-  useEffect(() => {
-    setItems(activities)
-  }, [activities])
-
+  const items = activities.map((activity) =>
+    locallyReadIds.has(activity.id) ? { ...activity, isRead: true } : activity,
+  )
   const hasUnread = items.some((item) => !item.isRead)
 
   const markAllAsRead = () => {
-    setItems((prev) => prev.map((item) => (item.isRead ? item : { ...item, isRead: true })))
+    setLocallyReadIds(new Set(activities.map((activity) => activity.id)))
   }
 
   /** BE 활동 읽음 API 없음 — 호버 시 로컬에서 읽음 처리해 UI 확인을 쉽게 함 */
   const markAsRead = (activityId: number) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === activityId && !item.isRead ? { ...item, isRead: true } : item)),
-    )
+    setLocallyReadIds((prev) => {
+      if (prev.has(activityId)) return prev
+      const next = new Set(prev)
+      next.add(activityId)
+      return next
+    })
   }
 
   return (
@@ -82,7 +84,10 @@ export default function ActivityListView({ activities, onBack }: ActivityListVie
                   {formatActivityDate(activity.createdAt)}
                 </span>
                 {!activity.isRead && (
-                  <span className="bg-warning size-2.75 shrink-0 rounded-full" aria-label="안 읽음" />
+                  <span
+                    className="bg-warning size-2.75 shrink-0 rounded-full"
+                    aria-label="안 읽음"
+                  />
                 )}
               </div>
             </li>

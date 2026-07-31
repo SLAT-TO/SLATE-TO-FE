@@ -41,8 +41,17 @@ type ProjectDetailPageProps = {
 }
 
 export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
-  const { project, setProject, members, setMembers, activities, notices, setNotices, loading, error } =
-    useProjectDetail(projectId)
+  const {
+    project,
+    setProject,
+    members,
+    setMembers,
+    activities,
+    notices,
+    setNotices,
+    loading,
+    error,
+  } = useProjectDetail(projectId)
   const statusMenuRef = useRef<HTMLDivElement>(null)
   const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
   const [tab, setTab] = useState('dashboard')

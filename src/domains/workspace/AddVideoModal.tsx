@@ -104,7 +104,9 @@ function AddVideoModal({ projectId, isOpen, onClose, onCreated }: AddVideoModalP
           rows={3}
         />
 
-        {submitError ? <p className="text-warning text-caption-lg text-center">{submitError}</p> : null}
+        {submitError ? (
+          <p className="text-warning text-caption-lg text-center">{submitError}</p>
+        ) : null}
 
         <div className="flex justify-center gap-3">
           <Button onClick={() => void handleSubmit()} className="w-40" disabled={submitting}>
