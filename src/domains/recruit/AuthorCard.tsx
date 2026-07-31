@@ -23,7 +23,6 @@ function AuthorCard({ author, onViewProfile }: AuthorCardProps) {
           <span className="text-caption-sm text-neutral-6">{author.email}</span>
         </div>
       </div>
-      햐{' '}
       <div className="px-4">
         <Button
           variant="secondary"
