@@ -30,7 +30,7 @@ const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
 function getHeaderTitle(pathname: string): string {
   if (pathname === '/' || pathname === '') return `안녕하세요 ${USER_NAME} 님`
   if (pathname === '/calendar') return '통합 캘린더'
-  if (pathname === '/matching') return '추천공고'
+  if (pathname === '/matching') return ''
   if (pathname === '/mypage') return '마이페이지'
   if (pathname === '/mypage/edit') return '프로필 수정'
   if (pathname === '/mypage/project/new') return '프로젝트 추가'

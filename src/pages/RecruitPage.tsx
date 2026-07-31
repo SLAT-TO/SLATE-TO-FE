@@ -43,7 +43,7 @@ function RecruitPage() {
   return (
     <div className="flex flex-col gap-10">
       <section className="flex flex-col gap-4">
-        <h2 className="text-head-sm text-neutral-11 font-semibold">관심 있는 공고</h2>
+        <h2 className="text-head-lg text-neutral-11 font-bold">추천공고</h2>
         <div className="grid grid-cols-2 gap-6">
           {MOCK_RECOMMENDED_POSTS.map((post) => (
             <JobCard
@@ -58,7 +58,7 @@ function RecruitPage() {
       </section>
 
       <section className="flex flex-col gap-6">
-        <h2 className="text-head-sm text-neutral-11 font-bold">전체 공고</h2>
+        <h2 className="text-head-lg text-neutral-11 font-bold">전체 공고</h2>
 
         <JobFilterBar
           sort={sort}
