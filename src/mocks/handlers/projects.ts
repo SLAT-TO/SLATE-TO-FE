@@ -72,8 +72,8 @@ function userActor(userId: number): ActivityActor {
 function buildProjectActivities(projectId: number): ProjectActivity[] {
   const files = db.files
     .filter((f) => f.projectId === projectId)
-    .map((f): ProjectActivity => ({
-      id: f.id,
+    .map((f): Omit<ProjectActivity, 'id'> & { sourceKey: string } => ({
+      sourceKey: `file-${f.id}`,
       projectId,
       type: 'FILE_UPLOADED',
       content: `${f.fileName} 파일이 업로드되었습니다`,
@@ -85,8 +85,8 @@ function buildProjectActivities(projectId: number): ProjectActivity[] {
 
   const videos = db.videos
     .filter((v) => v.projectId === projectId)
-    .map((v): ProjectActivity => ({
-      id: v.videoId,
+    .map((v): Omit<ProjectActivity, 'id'> & { sourceKey: string } => ({
+      sourceKey: `video-${v.videoId}`,
       projectId,
       type: 'VIDEO_ADDED',
       content: `${v.title} 영상이 추가되었습니다`,
@@ -98,8 +98,8 @@ function buildProjectActivities(projectId: number): ProjectActivity[] {
 
   const notices = db.notices
     .filter((n) => n.projectId === projectId)
-    .map((n): ProjectActivity => ({
-      id: n.id,
+    .map((n): Omit<ProjectActivity, 'id'> & { sourceKey: string } => ({
+      sourceKey: `notice-${n.id}`,
       projectId,
       type: 'NOTICE_CREATED',
       content: `${n.title} 공지가 등록되었습니다`,
@@ -111,8 +111,8 @@ function buildProjectActivities(projectId: number): ProjectActivity[] {
 
   const feedbacks = db.feedbacks
     .filter((f) => db.videos.find((v) => v.videoId === f.videoId)?.projectId === projectId)
-    .map((f): ProjectActivity => ({
-      id: f.feedbackId,
+    .map((f): Omit<ProjectActivity, 'id'> & { sourceKey: string } => ({
+      sourceKey: `feedback-${f.feedbackId}`,
       projectId,
       type: 'FEEDBACK_CREATED',
       content: `${f.actor.name ?? '누군가'}님이 피드백을 남겼습니다`,
@@ -126,7 +126,18 @@ function buildProjectActivities(projectId: number): ProjectActivity[] {
       createdAt: f.createdAt,
     }))
 
-  return [...files, ...videos, ...notices, ...feedbacks]
+  // createdAt 최신순 → cursor 페이지네이션(id 내림차순)과 맞추려고 정렬 후 합성 id 부여
+  const merged = [...files, ...videos, ...notices, ...feedbacks].sort((a, b) =>
+    b.createdAt.localeCompare(a.createdAt),
+  )
+  return merged.map((item, index) => {
+    const { sourceKey: _sourceKey, ...rest } = item
+    void _sourceKey
+    return {
+      ...rest,
+      id: merged.length - index,
+    }
+  })
 }
 
 function toMemberSummary(member: MockMemberRecord) {
