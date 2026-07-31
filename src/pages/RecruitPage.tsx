@@ -68,19 +68,8 @@ function RecruitPage() {
           openCategory={openCategory}
           onOpenCategoryChange={setOpenCategory}
           chips={chips}
+          onCreatePost={() => navigate('/matching/new')}
         />
-
-        <div className="flex justify-end">
-          {/* TODO: 공고 작성 페이지(후속 이슈) 연결 */}
-          <button
-            type="button"
-            onClick={() => navigate('/matching/new')}
-            className="border-primary text-primary text-caption-lg hover:bg-main-1 bg-bg-primary flex items-center gap-2 rounded-lg border px-5 py-2.5"
-          >
-            <span aria-hidden>+</span>
-            공고 올리기
-          </button>
-        </div>
 
         <div className="grid grid-cols-2 gap-6">
           {jobPosts.map((post) => (
