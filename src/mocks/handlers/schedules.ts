@@ -18,6 +18,7 @@ function safeUser() {
 }
 
 export const scheduleHandlers = [
+  // BE 미구현 — 브리핑 엔티티/컨트롤러 자체가 없음
   http.get(paths.briefings.today, () => {
     if (!safeUser()) return unauthorized()
     const unread = db.notifications.filter((n) => !n.isRead).length
@@ -38,6 +39,7 @@ export const scheduleHandlers = [
     )
   }),
 
+  // BE 미구현 — 일정 요약 API 없음
   http.get(paths.schedules.summary, () => {
     if (!safeUser()) return unauthorized()
     const summary = db.schedules.map((s) => ({
@@ -57,6 +59,7 @@ export const scheduleHandlers = [
     return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
+  // BE 미구현 — 프로젝트별 하위 일정 API 없음 (최상위 /schedules만 존재)
   http.get(paths.projects.schedules(':projectId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const items = db.schedules.filter((s) => s.projectId === Number(params.projectId))
@@ -132,32 +135,5 @@ export const scheduleHandlers = [
     schedule.privateMemo = body.privateMemo
     schedule.updatedAt = new Date().toISOString()
     return HttpResponse.json(ok(schedule), { status: 200 })
-  }),
-
-  http.get(paths.notifications.unreadCount, () => {
-    if (!safeUser()) return unauthorized()
-    const count = db.notifications.filter((n) => !n.isRead).length
-    return HttpResponse.json(ok({ count }), { status: 200 })
-  }),
-
-  http.get(paths.notifications.root, () => {
-    if (!safeUser()) return unauthorized()
-    return HttpResponse.json(ok({ items: db.notifications }), { status: 200 })
-  }),
-
-  http.patch(paths.notifications.read(':notificationId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
-    const notification = db.notifications.find((n) => n.id === Number(params.notificationId))
-    if (!notification) return notFound()
-    notification.isRead = true
-    return HttpResponse.json(ok(notification), { status: 200 })
-  }),
-
-  http.patch(paths.notifications.readAll, () => {
-    if (!safeUser()) return unauthorized()
-    db.notifications.forEach((n) => {
-      n.isRead = true
-    })
-    return HttpResponse.json(ok({ count: db.notifications.length }), { status: 200 })
   }),
 ]

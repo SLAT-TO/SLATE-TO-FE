@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { deleteProject, getProjects, pinProject, unpinProject } from '../api/projects'
+import { deleteProject, getProjects, leaveProject, pinProject, unpinProject } from '../api/projects'
 import ProjectCard from '../domains/project/ProjectCard'
+import WorkspaceListSkeleton from '../domains/workspace/WorkspaceListSkeleton'
 import ConfirmModal from '../components/ConfirmModal'
 import { projectMetaTags } from '../constants/projectLabels'
 import { projectStatusLabel } from '../constants/projectStatus'
@@ -16,6 +17,8 @@ export default function WorkspacePage() {
   const [loading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [leaveTarget, setLeaveTarget] = useState<ProjectSummary | null>(null)
+  const [leaveError, setLeaveError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -67,15 +70,30 @@ export default function WorkspacePage() {
     }
   }, [deleteTarget])
 
+  const confirmLeave = useCallback(async () => {
+    if (!leaveTarget) return
+    try {
+      await leaveProject(leaveTarget.id)
+      setProjects((prev) => prev.filter((p) => p.id !== leaveTarget.id))
+      setLeaveTarget(null)
+      setLeaveError(null)
+    } catch (err) {
+      setLeaveTarget(null)
+      setLeaveError(err instanceof ApiError ? err.message : '프로젝트에서 나가지 못했습니다.')
+    }
+  }, [leaveTarget])
+
   return (
     <section className="flex flex-col gap-6">
       <header>
         <h1 className="text-head-lg text-neutral-11 font-bold">프로젝트 목록</h1>
       </header>
 
-      {loading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
-      {error && <p className="text-body-sm text-warning">{error}</p>}
+      {loading && <WorkspaceListSkeleton />}
+
+      {!loading && error && <p className="text-body-sm text-warning">{error}</p>}
       {deleteError && <p className="text-body-sm text-warning">{deleteError}</p>}
+      {leaveError && <p className="text-body-sm text-warning">{leaveError}</p>}
 
       {!loading && !error && projects.length === 0 && (
         <p className="text-body-sm text-neutral-6">아직 등록된 프로젝트가 없어요</p>
@@ -102,13 +120,18 @@ export default function WorkspacePage() {
                     })
                   : undefined
               }
-              menuItems={[
-                {
-                  action: 'edit',
-                  onClick: () => navigate(`/workspace/projects/${project.id}?view=settings`),
-                },
-                { action: 'delete', onClick: () => setDeleteTarget(project) },
-              ]}
+              menuItems={
+                project.myPermission === 'ADMIN'
+                  ? [
+                      {
+                        action: 'edit',
+                        label: '설정',
+                        onClick: () => navigate(`/workspace/projects/${project.id}?view=settings`),
+                      },
+                      { action: 'delete', onClick: () => setDeleteTarget(project) },
+                    ]
+                  : [{ action: 'leave', onClick: () => setLeaveTarget(project) }]
+              }
               onClick={() => navigate(`/workspace/projects/${project.id}`)}
             />
           ))}
@@ -119,8 +142,16 @@ export default function WorkspacePage() {
         isOpen={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
-        title="프로젝트를 삭제할까요?"
-        description="삭제한 프로젝트는 복구할 수 없습니다."
+        title="정말 삭제하시겠습니까?"
+        description="삭제된 워크스페이스 데이터는 되돌릴 수 없어요"
+      />
+
+      <ConfirmModal
+        isOpen={leaveTarget !== null}
+        onClose={() => setLeaveTarget(null)}
+        onConfirm={confirmLeave}
+        title={leaveTarget ? `${leaveTarget.title}에서 나가시겠습니까?` : ''}
+        confirmText="나가기"
       />
     </section>
   )

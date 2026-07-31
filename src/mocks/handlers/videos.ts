@@ -3,6 +3,7 @@ import { paths } from '../../api/paths'
 import type {
   BookmarkVideoRequest,
   CreateVideoRequest,
+  UpdateVideoRequest,
   ValidateYoutubeRequest,
 } from '../../types/video'
 import type {
@@ -21,6 +22,9 @@ function safeUser() {
     return null
   }
 }
+
+/** mock 전용 — registerGuest로 발급한 guestId → 이름 매핑 (실 BE 게스트 세션 대체) */
+const mockGuests = new Map<number, { name: string; shareLinkId: number }>()
 
 export const videoHandlers = [
   http.get(paths.projects.videos(':projectId'), ({ request, params }) => {
@@ -103,6 +107,25 @@ export const videoHandlers = [
     return HttpResponse.json(ok(video), { status: 200 })
   }),
 
+  http.patch(paths.projects.video(':projectId', ':videoId'), async ({ request, params }) => {
+    if (!safeUser()) return unauthorized()
+    const video = db.videos.find((v) => v.videoId === Number(params.videoId))
+    if (!video) return notFound()
+    const body = (await request.json()) as UpdateVideoRequest
+    if (body.title !== undefined) video.title = body.title
+    if (body.memo !== undefined) video.memo = body.memo
+    video.updatedAt = new Date().toISOString()
+    return HttpResponse.json(
+      ok({
+        videoId: video.videoId,
+        title: video.title,
+        memo: video.memo,
+        updatedAt: video.updatedAt,
+      }),
+      { status: 200 },
+    )
+  }),
+
   http.delete(paths.projects.video(':projectId', ':videoId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const videoId = Number(params.videoId)
@@ -181,7 +204,7 @@ export const videoHandlers = [
   }),
 
   http.get(paths.videos.feedbacks(':videoId'), ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
+    // 공유링크 게스트도 목록 조회 가능 (로컬 mock AC — 실 BE는 게스트 인증 보완 필요)
     const url = new URL(request.url)
     const statusParam = url.searchParams.get('status')
 
@@ -202,16 +225,22 @@ export const videoHandlers = [
   }),
 
   http.post(paths.videos.feedbacks(':videoId'), async ({ request, params }) => {
-    const user = safeUser()
-    if (!user) return unauthorized()
     const body = (await request.json()) as CreateFeedbackRequest
     if (!body.content) return badRequest()
     if (body.endTime !== undefined && body.startTime === undefined) return badRequest()
+
+    const user = safeUser()
+    const guest = body.guestId != null ? mockGuests.get(body.guestId) : undefined
+    if (!user && !guest) return unauthorized()
+
     const now = new Date().toISOString()
+    const actor = guest
+      ? { type: 'GUEST' as const, id: body.guestId!, name: guest.name }
+      : { type: 'USER' as const, id: user!.id, name: user!.nickname }
     const feedback = {
       feedbackId: allocId(),
       videoId: Number(params.videoId),
-      actor: { type: 'USER' as const, id: user.id, name: user.nickname },
+      actor,
       content: body.content,
       startTime: body.startTime ?? null,
       endTime: body.endTime ?? null,
@@ -262,24 +291,31 @@ export const videoHandlers = [
   }),
 
   http.get(paths.feedbacks.replies(':feedbackId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
+    // 공유링크 게스트도 답글 조회 가능
     const items = db.replies.filter((r) => r.feedbackId === Number(params.feedbackId))
     return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
   http.post(paths.feedbacks.replies(':feedbackId'), async ({ request, params }) => {
-    const user = safeUser()
-    if (!user) return unauthorized()
     const body = (await request.json()) as CreateReplyRequest
     if (!body.content) return badRequest()
+
+    const user = safeUser()
+    const guest = body.guestId != null ? mockGuests.get(body.guestId) : undefined
+    if (!user && !guest) return unauthorized()
+
     const now = new Date().toISOString()
+    const actor = guest
+      ? { type: 'GUEST' as const, id: body.guestId!, name: guest.name }
+      : { type: 'USER' as const, id: user!.id, name: user!.nickname }
     const reply = {
       replyId: allocId(),
       feedbackId: Number(params.feedbackId),
-      actor: { type: 'USER' as const, id: user.id, name: user.nickname },
+      actor,
       content: body.content,
       startTime: body.startTime ?? null,
       endTime: body.endTime ?? null,
+      status: false,
       createdAt: now,
       updatedAt: now,
     }
@@ -301,6 +337,24 @@ export const videoHandlers = [
       reply.updatedAt = new Date().toISOString()
     }
     return HttpResponse.json(ok(reply), { status: 200 })
+  }),
+
+  http.patch(paths.replies.status(':replyId'), async ({ request, params }) => {
+    if (!safeUser()) return unauthorized()
+    const reply = db.replies.find((r) => r.replyId === Number(params.replyId))
+    if (!reply) return notFound()
+    const body = (await request.json()) as { userId?: number; status: boolean }
+    if (body.userId == null || body.status === undefined) return badRequest()
+    reply.status = body.status
+    reply.updatedAt = new Date().toISOString()
+    return HttpResponse.json(
+      ok({
+        replyId: reply.replyId,
+        status: reply.status,
+        updatedAt: reply.updatedAt,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.post(paths.videos.shareLinks(':videoId'), ({ params }) => {
@@ -343,9 +397,16 @@ export const videoHandlers = [
     const link = db.shareLinks.find((s) => s.token === params.token && s.isActive)
     if (!link) return notFound()
     const body = (await request.json()) as RegisterGuestRequest
-    if (!body.nickname) return badRequest()
+    if (!body.name) return badRequest()
+    const guestId = allocId()
+    mockGuests.set(guestId, { name: body.name, shareLinkId: link.shareLinkId })
     return HttpResponse.json(
-      created({ guestId: allocId(), nickname: body.nickname, videoId: link.videoId }),
+      created({
+        guestId,
+        shareLinkId: link.shareLinkId,
+        name: body.name,
+        createdAt: new Date().toISOString(),
+      }),
       { status: 201 },
     )
   }),

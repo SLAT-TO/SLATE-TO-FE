@@ -60,7 +60,7 @@ export default function HomeMiniCalendar({ className = '' }: HomeMiniCalendarPro
         >
           <PrevIcon />
         </button>
-        <span className="text-caption-lg text-neutral-10 text-center font-semibold tracking-[-0.32px]">
+        <span className="text-body-sm text-neutral-10 text-center font-semibold tracking-[-0.32px] capitalize">
           {format(month, 'yyyy.M')}
         </span>
         <button
@@ -73,25 +73,25 @@ export default function HomeMiniCalendar({ className = '' }: HomeMiniCalendarPro
         </button>
       </div>
 
-      <div className="grid grid-cols-[repeat(7,30px)] gap-0">
+      <div className="grid grid-cols-[repeat(7,30px)] gap-x-1.5 gap-y-0">
         {WEEKDAYS.map((day) => (
           <span
             key={day}
-            className="text-neutral-11 text-caption-lg flex h-6 w-6 items-center justify-center text-center leading-6 tracking-[-0.36px]"
+            className="flex h-7.5 w-7.5 items-center justify-center text-center text-[18px] leading-7.5 font-normal tracking-[-0.36px] text-black capitalize"
           >
             {day}
           </span>
         ))}
       </div>
 
-      <div className="grid grid-cols-[repeat(7,30px)] gap-0">
+      <div className="grid grid-cols-[repeat(7,30px)] gap-x-1.5 gap-y-0">
         {days.map((day) => {
           const inMonth = isSameMonth(day, month)
           const today = isToday(day)
           return (
             <span
               key={day.toISOString()}
-              className={`text-caption-lg flex h-6 w-6 items-center justify-center text-center leading-6 tracking-[-0.36px] ${
+              className={`flex h-7.5 w-7.5 items-center justify-center text-center text-[18px] leading-7.5 font-normal tracking-[-0.36px] capitalize ${
                 inMonth ? 'text-neutral-10' : 'text-neutral-4'
               } ${today ? 'text-primary font-bold' : ''}`}
             >

@@ -1,8 +1,8 @@
 import { navigate } from '../utils/navigation'
-
 import { useContext } from 'react'
 import { HeaderSlotContext } from '../layouts/headerSlotContext'
 import HeaderProfileMenu from './HeaderProfileMenu'
+import { CONTENT_PX } from '../constants/layout'
 type HeaderProps = {
   userName?: string
 }
@@ -22,7 +22,9 @@ export default function Header({ userName = '000' }: HeaderProps) {
   const headerRight = slot?.headerRight ?? null
 
   return (
-    <header className="bg-bg-secondary flex min-h-16 shrink-0 items-start justify-between pt-[40px] pr-8 pl-[80px]">
+    <header
+      className={`bg-bg-secondary flex min-h-16 shrink-0 items-start justify-between pt-[40px] ${CONTENT_PX}`}
+    >
       <div className="flex min-w-0 flex-1 items-center gap-3">{headerLeft}</div>
 
       {/* 우측 액션 영역 */}

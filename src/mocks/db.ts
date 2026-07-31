@@ -3,7 +3,6 @@ import type { Feedback, FeedbackReply, ShareLink } from '../types/feedback'
 import type { ProjectFile } from '../types/file'
 import type { AppNotification } from '../types/notification'
 import type { Portfolio } from '../types/portfolio'
-import type { ProjectActivity } from '../types/project'
 import type { Application, Recruitment } from '../types/recruitment'
 import type { Schedule } from '../types/schedule'
 import type { ProjectNotice } from '../types/notice'
@@ -142,7 +141,6 @@ export type MockDb = {
   recruitmentBookmarks: Array<{ userId: number; recruitmentId: number }>
   schedules: Schedule[]
   notifications: AppNotification[]
-  activities: ProjectActivity[]
   notices: ProjectNotice[]
   invitations: Array<{
     token: string
@@ -364,6 +362,7 @@ export const db: MockDb = {
       content: '확인했습니다, 수정하겠습니다',
       startTime: null,
       endTime: null,
+      status: false,
       createdAt: '2026-05-21T01:00:00Z',
       updatedAt: '2026-05-21T01:00:00Z',
     },
@@ -507,34 +506,26 @@ export const db: MockDb = {
   ],
   notifications: [
     {
-      id: 1,
-      type: 'SCHEDULE',
-      title: '오늘 일정이 있습니다',
-      body: '레퍼런스 회의 14:00',
-      isRead: false,
-      createdAt: '2026-07-10T08:00:00Z',
-      link: '/calendar',
-    },
-    {
-      id: 2,
-      type: 'APPLICATION',
-      title: '새 지원자가 있습니다',
-      body: '웹드라마 편집자 모집',
-      isRead: true,
-      createdAt: '2026-06-16T01:00:00Z',
-      link: '/jobs/1',
-    },
-  ],
-  activities: [
-    {
-      id: 1,
+      notificationId: 1,
       projectId: 1,
-      type: 'FILE_UPLOADED',
-      content: 'reference.pdf 파일이 업로드되었습니다',
-      actor: { type: 'USER', id: completeUser.id, name: completeUser.nickname },
-      groupCount: 1,
-      metadata: { fileName: 'reference.pdf' },
-      createdAt: '2026-06-10T09:00:00Z',
+      type: 'SCHEDULE_ASSIGNED',
+      content: '오늘 레퍼런스 회의 일정이 있습니다 (14:00)',
+      targetType: 'SCHEDULE',
+      targetId: 1,
+      isRead: false,
+      readAt: null,
+      createdAt: '2026-07-10T08:00:00Z',
+    },
+    {
+      notificationId: 2,
+      projectId: null,
+      type: 'RECRUITMENT_APPLIED',
+      content: '웹드라마 편집자 모집에 새 지원자가 있습니다',
+      targetType: 'RECRUITMENT',
+      targetId: 1,
+      isRead: true,
+      readAt: '2026-06-16T02:00:00Z',
+      createdAt: '2026-06-16T01:00:00Z',
     },
   ],
   notices: [
@@ -545,6 +536,7 @@ export const db: MockDb = {
       content: '다음 주 화요일 오전 촬영입니다.',
       writerId: completeUser.id,
       writerNickname: completeUser.nickname,
+      isRead: false,
       createdAt: '2026-06-15T09:00:00Z',
       updatedAt: '2026-06-15T09:00:00Z',
     },

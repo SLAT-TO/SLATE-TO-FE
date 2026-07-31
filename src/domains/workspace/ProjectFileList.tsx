@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import {
   deleteFile,
-  getDownloadUrl,
+  downloadProjectFile,
   getProjectFiles,
-  getUploadUrl,
-  registerFile,
-  updateFile,
+  pinProjectFile,
+  unpinProjectFile,
+  uploadProjectFile,
 } from '../../api/projects'
 import ActionMenu from '../../components/ActionMenu'
 import { Button } from '../../components/Button'
@@ -15,6 +15,7 @@ import InlineIcon from '../../components/InlineIcon'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import type { ProjectFileListItem } from '../../types/file'
+import { downloadBlob } from '../../utils/downloadBlob'
 import documentIcon from '../../assets/icons/document.svg?raw'
 import downloadIcon from '../../assets/icons/download.svg?raw'
 import searchIcon from '../../assets/icons/search.svg?raw'
@@ -80,18 +81,9 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
     if (!uploadFile) return
     setUploading(true)
     try {
-      const { uploadUrl, storageKey } = await getUploadUrl(projectId, {
-        fileName: uploadFile.name,
-        contentType: uploadFile.type || 'application/octet-stream',
-        fileSize: uploadFile.size,
-      })
-      await fetch(uploadUrl, { method: 'PUT', body: uploadFile }).catch(() => null)
-      await registerFile(projectId, {
+      await uploadProjectFile(projectId, uploadFile, {
         fileName: uploadFile.name,
         description: description.trim() || undefined,
-        storageKey,
-        contentType: uploadFile.type || 'application/octet-stream',
-        fileSize: uploadFile.size,
       })
       const page = await getProjectFiles(projectId, keyword.trim() || undefined)
       setFiles(page.items)
@@ -101,9 +93,9 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
     }
   }
 
-  const downloadFile = async (fileId: number) => {
-    const { downloadUrl } = await getDownloadUrl(projectId, fileId)
-    window.open(downloadUrl, '_blank', 'noopener')
+  const downloadFile = async (fileId: number, fileName: string) => {
+    const blob = await downloadProjectFile(projectId, fileId)
+    downloadBlob(blob, fileName)
   }
 
   const confirmDelete = async () => {
@@ -117,7 +109,8 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
     const next = !file.isPinned
     setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, isPinned: next } : f)))
     try {
-      await updateFile(projectId, file.id, { isPinned: next })
+      if (next) await pinProjectFile(projectId, file.id)
+      else await unpinProjectFile(projectId, file.id)
     } catch {
       setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, isPinned: !next } : f)))
     }
@@ -178,7 +171,7 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
               </button>
               <button
                 type="button"
-                onClick={() => downloadFile(file.id)}
+                onClick={() => downloadFile(file.id, file.fileName)}
                 aria-label="다운로드"
                 className="text-neutral-9 hover:text-primary"
               >

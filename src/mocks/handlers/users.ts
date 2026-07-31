@@ -26,6 +26,7 @@ export const userHandlers = [
     return HttpResponse.json(ok(toMeProfile(user)), { status: 200 })
   }),
 
+  // BE 미구현 — 활동 통계 API 없음
   http.get(paths.users.activityStats, () => {
     const user = safeUser()
     if (!user) return unauthorized()

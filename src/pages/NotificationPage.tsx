@@ -22,15 +22,18 @@ function ChevronLeftIcon() {
 function NotificationCard({
   notification,
   onClick,
+  onHover,
 }: {
   notification: AppNotification
   onClick: () => void
+  onHover: () => void
 }) {
   return (
     <li>
       <button
         type="button"
         onClick={onClick}
+        onMouseEnter={onHover}
         className={`relative flex w-full flex-col items-start justify-between gap-3 rounded-[10.242px] px-6 py-4 text-left ${CARD_SHADOW} ${
           notification.isRead ? 'bg-neutral-3' : 'bg-neutral-1'
         }`}
@@ -41,15 +44,28 @@ function NotificationCard({
             aria-hidden
           />
         )}
-        <span className="text-head-sm text-neutral-11 pr-4 font-semibold">
-          {notification.title}
-        </span>
-        <span className="text-body-sm text-neutral-11 font-normal tracking-[-0.32px]">
-          {notification.body}
+        <span className="text-body-sm text-neutral-11 pr-4 font-normal tracking-[-0.32px]">
+          {notification.content}
         </span>
       </button>
     </li>
   )
+}
+
+/** 알림 type 기준 이동 경로 산출 — BE targetType은 enum 미정의(자유 문자열)라 type으로 분기 */
+function notificationLink(notification: AppNotification): string | null {
+  switch (notification.type) {
+    case 'SCHEDULE_ASSIGNED':
+      return '/calendar'
+    case 'PROJECT_INVITED':
+    case 'VIDEO_FEEDBACK_COMMENTED':
+    case 'DEADLINE_REMINDER':
+      return notification.projectId ? `/workspace/projects/${notification.projectId}` : null
+    case 'RECRUITMENT_APPLIED':
+      return `/matching/${notification.targetId}`
+    default:
+      return null
+  }
 }
 
 export default function NotificationPage() {
@@ -57,8 +73,9 @@ export default function NotificationPage() {
   const hasUnread = notifications.some((item) => !item.isRead)
 
   function handleClick(notification: AppNotification) {
-    if (!notification.isRead) void markAsRead(notification.id)
-    if (notification.link) navigate(notification.link)
+    if (!notification.isRead) void markAsRead(notification.notificationId)
+    const link = notificationLink(notification)
+    if (link) navigate(link)
   }
 
   return (
@@ -97,9 +114,12 @@ export default function NotificationPage() {
         <ul className="flex flex-col gap-4">
           {notifications.map((notification) => (
             <NotificationCard
-              key={notification.id}
+              key={notification.notificationId}
               notification={notification}
               onClick={() => handleClick(notification)}
+              onHover={() => {
+                if (!notification.isRead) void markAsRead(notification.notificationId)
+              }}
             />
           ))}
         </ul>

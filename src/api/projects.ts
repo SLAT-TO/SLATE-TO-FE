@@ -1,5 +1,6 @@
-import { request } from './client'
+import { request, requestBlob } from './client'
 import { paths } from './paths'
+import { fromApiProjectStatus, toApiProjectStatus } from '../constants/projectStatus'
 import type {
   AcceptInvitationRequest,
   AcceptInvitationResult,
@@ -19,13 +20,10 @@ import type {
   UpdateProjectRequest,
 } from '../types/project'
 import type {
-  DownloadUrlResult,
   ProjectFile,
   ProjectFileListItem,
-  RegisterFileRequest,
+  ProjectFileUploadRequest,
   UpdateFileRequest,
-  UploadUrlRequest,
-  UploadUrlResult,
 } from '../types/file'
 import type {
   CreateNoticeRequest,
@@ -38,22 +36,45 @@ export async function getProjects(params?: {
   cursor?: number
   size?: number
 }): Promise<ProjectListResponse> {
-  return request({ method: 'GET', url: paths.projects.root, params })
+  const result = await request<ProjectListResponse>({
+    method: 'GET',
+    url: paths.projects.root,
+    params,
+  })
+  return {
+    ...result,
+    items: result.items.map((item) => ({ ...item, status: fromApiProjectStatus(item.status) })),
+  }
 }
 
 export async function createProject(body: CreateProjectRequest): Promise<CreateProjectResult> {
-  return request({ method: 'POST', url: paths.projects.root, data: body })
+  const result = await request<CreateProjectResult>({
+    method: 'POST',
+    url: paths.projects.root,
+    data: body,
+  })
+  return { ...result, status: fromApiProjectStatus(result.status) }
 }
 
 export async function getProject(projectId: number): Promise<ProjectDetailResponse> {
-  return request({ method: 'GET', url: paths.projects.byId(projectId) })
+  const result = await request<ProjectDetailResponse>({
+    method: 'GET',
+    url: paths.projects.byId(projectId),
+  })
+  return { ...result, status: fromApiProjectStatus(result.status) }
 }
 
 export async function updateProject(
   projectId: number,
   body: UpdateProjectRequest,
 ): Promise<ProjectResponse> {
-  return request({ method: 'PATCH', url: paths.projects.byId(projectId), data: body })
+  const apiBody = body.status ? { ...body, status: toApiProjectStatus(body.status) } : body
+  const result = await request<ProjectResponse>({
+    method: 'PATCH',
+    url: paths.projects.byId(projectId),
+    data: apiBody,
+  })
+  return { ...result, status: fromApiProjectStatus(result.status) }
 }
 
 export async function deleteProject(projectId: number): Promise<null> {
@@ -138,25 +159,25 @@ export async function getProjectFile(projectId: number, fileId: number): Promise
   return request({ method: 'GET', url: paths.projects.file(projectId, fileId) })
 }
 
-export async function getUploadUrl(
+/** multipart/form-data 직접 업로드 — file(바이너리) + request(JSON 메타데이터) 두 파트로 전송 */
+export async function uploadProjectFile(
   projectId: number,
-  body: UploadUrlRequest,
-): Promise<UploadUrlResult> {
-  return request({ method: 'POST', url: paths.projects.uploadUrl(projectId), data: body })
-}
-
-export async function createUploadUrl(
-  projectId: number,
-  body: UploadUrlRequest,
-): Promise<UploadUrlResult> {
-  return getUploadUrl(projectId, body)
-}
-
-export async function registerFile(
-  projectId: number,
-  body: RegisterFileRequest,
+  file: File,
+  body: ProjectFileUploadRequest,
 ): Promise<ProjectFile> {
-  return request({ method: 'POST', url: paths.projects.files(projectId), data: body })
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('request', new Blob([JSON.stringify(body)], { type: 'application/json' }))
+  // apiClient 기본 Content-Type이 application/json이라, 여기서 명시적으로 undefined로
+  // 지워야 axios가 FormData를 JSON으로 오인해 직렬화하지 않고 브라우저가 boundary를
+  // 포함한 multipart/form-data 값을 자동으로 채우게 둔다. 헤더를 아예 생략하면 인스턴스
+  // 기본값(application/json)이 그대로 남아 FormData가 빈 객체로 직렬화된다.
+  return request({
+    method: 'POST',
+    url: paths.projects.files(projectId),
+    data: formData,
+    headers: { 'Content-Type': undefined },
+  })
 }
 
 export async function updateFile(
@@ -174,11 +195,23 @@ export async function deleteFile(
   return request({ method: 'DELETE', url: paths.projects.file(projectId, fileId) })
 }
 
-export async function getDownloadUrl(
+/** BE가 presigned URL 대신 파일 바이너리를 직접 응답 */
+export async function downloadProjectFile(projectId: number, fileId: number): Promise<Blob> {
+  return requestBlob({ method: 'GET', url: paths.projects.download(projectId, fileId) })
+}
+
+export async function pinProjectFile(
   projectId: number,
   fileId: number,
-): Promise<DownloadUrlResult> {
-  return request({ method: 'GET', url: paths.projects.downloadUrl(projectId, fileId) })
+): Promise<{ id: number; isPinned: boolean; pinnedAt: string | null }> {
+  return request({ method: 'POST', url: paths.projects.filePin(projectId, fileId) })
+}
+
+export async function unpinProjectFile(
+  projectId: number,
+  fileId: number,
+): Promise<{ id: number; isPinned: boolean; pinnedAt: string | null }> {
+  return request({ method: 'DELETE', url: paths.projects.filePin(projectId, fileId) })
 }
 
 export async function getProjectNotices(
@@ -234,6 +267,13 @@ export async function deleteProjectNotice(projectId: number, noticeId: number): 
 
 export async function deleteNotice(projectId: number, noticeId: number): Promise<null> {
   return deleteProjectNotice(projectId, noticeId)
+}
+
+export async function markNoticeRead(
+  projectId: number,
+  noticeId: number,
+): Promise<{ id: number; isRead: boolean; readAt: string }> {
+  return request({ method: 'PATCH', url: paths.projects.noticeRead(projectId, noticeId) })
 }
 
 export type { MemberSummary }

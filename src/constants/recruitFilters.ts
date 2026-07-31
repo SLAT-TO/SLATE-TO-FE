@@ -10,16 +10,6 @@ export const SORT_OPTIONS = [
 
 export type SortValue = (typeof SORT_OPTIONS)[number]['value']
 
-/** 장편·단편 그룹을 노출시키는 트리거 카테고리 */
-export const FILM_LENGTH_TRIGGER = '영화 / 드라마'
-
-/**
- * 장편·단편 그룹 노출 조건.
- * TODO: 디자이너 확인 — 항상 노출이면 `() => true`로 교체
- */
-export const shouldShowFilmLength = (selectedVideoTypes: string[]) =>
-  selectedVideoTypes.includes(FILM_LENGTH_TRIGGER)
-
 // 필터에서는 '기타' 제외 (피그마 패널에 없음)
 const VIDEO_FILTER_OPTIONS = VIDEO_CATEGORY_LABELS.filter((label) => label !== '기타')
 const ROLE_FILTER_OPTIONS = ROLE_LABELS.filter((label) => label !== '기타')
@@ -45,24 +35,23 @@ export const FILTER_CONFIGS: FilterConfig[] = [
   {
     key: 'region',
     buttonLabel: '지역',
-    groups: [{ label: '지역 선택', options: [...REGION_LABELS] }],
+    groups: [{ label: '지역 선택', columns: 5, options: [...REGION_LABELS] }],
   },
   {
     key: 'videoType',
     buttonLabel: '영상',
     groups: [
-      { label: '영상 유형 선택', span: 'wide', options: [...VIDEO_FILTER_OPTIONS] },
+      { label: '영상 유형 선택', span: 'wide', columns: 4, options: [...VIDEO_FILTER_OPTIONS] },
       {
-        label: '영상 유형 선택',
+        label: '영상 길이 선택',
         span: 'narrow',
         options: [...FILM_LENGTH_LABELS],
-        showWhen: shouldShowFilmLength,
       },
     ],
   },
   {
     key: 'role',
     buttonLabel: '역할',
-    groups: [{ label: '역할 선택', options: [...ROLE_FILTER_OPTIONS] }],
+    groups: [{ label: '역할 선택', columns: 5, options: [...ROLE_FILTER_OPTIONS] }],
   },
 ]

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   getProject,
   getProjectActivities,
@@ -16,6 +16,17 @@ export function useProjectDetail(projectId: number) {
   const [notices, setNotices] = useState<ProjectNoticeListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  /** soft-fail된 부가 영역 안내 (본문 진입은 유지) */
+  const [partialErrors, setPartialErrors] = useState<string[]>([])
+
+  const reloadMembers = useCallback(async () => {
+    const list = await getProjectMembers(projectId).catch(() => ({
+      items: [] as MemberSummary[],
+      memberCount: 0,
+    }))
+    setMembers(list.items)
+    return list.items
+  }, [projectId])
 
   useEffect(() => {
     let cancelled = false
@@ -23,22 +34,37 @@ export function useProjectDetail(projectId: number) {
     async function load() {
       setLoading(true)
       setError(null)
+      setPartialErrors([])
       try {
         const emptyActivities = { items: [] as ProjectActivity[], nextCursor: null, hasNext: false }
+        const emptyNotices = {
+          items: [] as ProjectNoticeListItem[],
+          nextCursor: null,
+          hasNext: false,
+        }
+        const softErrors: string[] = []
+        // 프로젝트 본문만 필수 — 활동·공지·멤버는 실패해도 상세 진입 유지
         const [projectResult, activityPage, noticePage, memberList] = await Promise.all([
           getProject(projectId),
-          getProjectActivities(projectId).catch(() => emptyActivities),
-          getProjectNotices(projectId),
-          getProjectMembers(projectId).catch(() => ({
-            items: [] as MemberSummary[],
-            memberCount: 0,
-          })),
+          getProjectActivities(projectId).catch(() => {
+            softErrors.push('최근 활동을 불러오지 못했습니다.')
+            return emptyActivities
+          }),
+          getProjectNotices(projectId).catch(() => {
+            softErrors.push('공지를 불러오지 못했습니다.')
+            return emptyNotices
+          }),
+          getProjectMembers(projectId).catch(() => {
+            softErrors.push('참여 인원을 불러오지 못했습니다.')
+            return { items: [] as MemberSummary[], memberCount: 0 }
+          }),
         ])
         if (cancelled) return
         setProject(projectResult)
         setActivities(activityPage.items)
         setNotices(noticePage.items)
         setMembers(memberList.items)
+        setPartialErrors(softErrors)
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof ApiError ? err.message : '프로젝트 정보를 불러오지 못했습니다.')
@@ -54,5 +80,17 @@ export function useProjectDetail(projectId: number) {
     }
   }, [projectId])
 
-  return { project, setProject, members, activities, notices, setNotices, loading, error }
+  return {
+    project,
+    setProject,
+    members,
+    setMembers,
+    reloadMembers,
+    activities,
+    notices,
+    setNotices,
+    loading,
+    error,
+    partialErrors,
+  }
 }

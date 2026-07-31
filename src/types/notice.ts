@@ -5,6 +5,7 @@ export type ProjectNotice = {
   content: string
   writerId: number
   writerNickname: string
+  isRead: boolean
   createdAt: string
   updatedAt: string
 }
@@ -14,6 +15,7 @@ export type ProjectNoticeListItem = {
   title: string
   content: string
   writer: { id: number; nickname: string }
+  isRead: boolean
   createdAt: string
   updatedAt: string
 }

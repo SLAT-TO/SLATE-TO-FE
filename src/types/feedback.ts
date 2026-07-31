@@ -15,7 +15,7 @@ export type Feedback = {
   startTime: number | null
   /** 타임코드 종료 시간(초). 단일 시점이면 null, startTime 없이는 값 가질 수 없음 */
   endTime: number | null
-  /** 해결 여부. "피드백 해결 상태 변경" API 스펙(boolean) 기준 — 목록 조회 API는 문자열(Y/N)로 명세돼 있어 실제 연동 시 재확인 필요 */
+  /** 해결 여부. BE·PATCH는 boolean. 목록 등에서 "Y"/"N"이 오면 api/normalize.toFeedbackStatus로 boolean화 */
   status: boolean
   createdAt: string
   updatedAt: string
@@ -30,6 +30,8 @@ export type FeedbackReply = {
   startTime: number | null
   /** FE mock 전용 — BE 답글 API 미지원 */
   endTime: number | null
+  /** 해결 여부. PATCH /replies/{replyId}/status 로 변경 */
+  status: boolean
   createdAt: string
   updatedAt: string
 }
@@ -40,6 +42,8 @@ export type CreateFeedbackRequest = {
   startTime?: number
   /** 타임코드 종료 시간(초). 단일 시점이면 생략 */
   endTime?: number
+  /** 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
+  guestId?: number
 }
 
 export type UpdateFeedbackRequest = {
@@ -60,6 +64,14 @@ export type CreateReplyRequest = {
   startTime?: number
   /** FE mock 전용 — BE 답글 API 미지원 */
   endTime?: number
+  /** 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
+  guestId?: number
+}
+
+export type UpdateReplyStatusRequest = {
+  /** BE ReplyStatusReqDTO — 필수 */
+  userId: number
+  status: boolean
 }
 
 export type ShareLink = {
@@ -78,5 +90,12 @@ export type ShareLinkAccess = {
 }
 
 export type RegisterGuestRequest = {
-  nickname: string
+  name: string
+}
+
+export type RegisterGuestResult = {
+  guestId: number
+  shareLinkId: number
+  name: string
+  createdAt: string
 }

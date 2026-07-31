@@ -30,36 +30,15 @@ export type ProjectFileListItem = {
   createdAt: string
 }
 
-export type UploadUrlRequest = {
-  fileName: string
-  contentType: string
-  fileSize: number
-}
-
-export type UploadUrlResult = {
-  uploadUrl: string
-  storageKey: string
-  expiresAt: string
-  requiredHeaders: Record<string, string>
-}
-
-export type RegisterFileRequest = {
+/** multipart/form-data의 "request" part로 전송되는 메타데이터. 파일 바이트는 "file" part로 별도 전송 */
+export type ProjectFileUploadRequest = {
   fileName: string
   description?: string
-  storageKey: string
-  contentType: string
-  fileSize: number
-  isPinned?: boolean
+  isFinal?: boolean
 }
 
 export type UpdateFileRequest = {
   fileName?: string
   description?: string
-  isPinned?: boolean
   isFinal?: boolean
-}
-
-export type DownloadUrlResult = {
-  downloadUrl: string
-  expiresAt: string
 }

@@ -28,7 +28,7 @@ export default function HomeRecommendedJobsSection({
   loading,
 }: HomeRecommendedJobsSectionProps) {
   return (
-    <section className="flex flex-col gap-2.5">
+    <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">추천 공고</h2>
 
       {loading && <p className="text-caption-sm text-neutral-6">불러오는 중…</p>}

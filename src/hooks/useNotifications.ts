@@ -34,7 +34,9 @@ export function useNotifications() {
 
   async function markAsRead(notificationId: number) {
     setNotifications((prev) =>
-      prev.map((item) => (item.id === notificationId ? { ...item, isRead: true } : item)),
+      prev.map((item) =>
+        item.notificationId === notificationId ? { ...item, isRead: true } : item,
+      ),
     )
     try {
       await readNotification(notificationId)

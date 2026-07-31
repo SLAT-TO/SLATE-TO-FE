@@ -1,3 +1,6 @@
+/** BE 미구현 — Recruitment 컨트롤러 자체가 없음 (엔티티만 존재, Swagger에 미노출).
+ * BE 엔티티 필드(recruitPart/shootingPeriod/pay/contact/location/deadline)가 아래 FE 모델과
+ * 구조가 많이 달라서, 컨트롤러가 실제로 나오기 전까지는 이 파일을 엔티티에 맞춰 미리 바꾸지 않음. */
 import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
 import type {
