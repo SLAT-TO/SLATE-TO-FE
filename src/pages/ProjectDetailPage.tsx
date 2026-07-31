@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { deleteProject, pinProject, unpinProject } from '../api/projects'
+import { deleteProject, leaveProject, pinProject, unpinProject } from '../api/projects'
 import { getMe } from '../api/users'
 import ActionMenu from '../components/ActionMenu'
 import { Avatar } from '../components/Avatar'
@@ -50,6 +50,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     new URLSearchParams(window.location.search).get('view') === 'settings' ? 'settings' : 'main',
   )
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [leaveOpen, setLeaveOpen] = useState(false)
   const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null)
   const [meId, setMeId] = useState<number | null>(null)
   /** 대시보드 탭 내부 공지사항 서브뷰 — 'main'=대시보드, 'list'=공지사항 목록, number=공지 상세(noticeId) */
@@ -123,17 +124,16 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   }, [showProjectHeader, project, members, handleToggleBookmark])
 
   const headerRightContent = useMemo(() => {
-    if (!showProjectHeader) return null
-    return (
-      <ActionMenu
-        items={[
-          { action: 'edit', onClick: () => setView('settings') },
-          { action: 'delete', onClick: () => setDeleteOpen(true) },
-        ]}
-        ariaLabel="프로젝트 메뉴"
-      />
-    )
-  }, [showProjectHeader])
+    if (!showProjectHeader || !project) return null
+    const items =
+      project.myPermission === 'ADMIN'
+        ? [
+            { action: 'edit' as const, label: '설정', onClick: () => setView('settings') },
+            { action: 'delete' as const, onClick: () => setDeleteOpen(true) },
+          ]
+        : [{ action: 'leave' as const, onClick: () => setLeaveOpen(true) }]
+    return <ActionMenu items={items} ariaLabel="프로젝트 메뉴" />
+  }, [showProjectHeader, project])
 
   useHeaderSlot(headerLeftContent, headerRightContent)
 
@@ -160,6 +160,11 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   const confirmDeleteProject = async () => {
     await deleteProject(projectId)
+    navigate('/workspace')
+  }
+
+  const confirmLeaveProject = async () => {
+    await leaveProject(projectId)
     navigate('/workspace')
   }
 
@@ -256,7 +261,10 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         <div className="flex flex-col gap-8">
           <div className="grid gap-8 lg:grid-cols-2">
             <DashboardNoticeCard notices={notices} onExpand={() => setNoticeView('list')} />
-            <DashboardTodayScheduleCard projectId={projectId} />
+            <DashboardTodayScheduleCard
+              projectId={projectId}
+              onExpand={() => handleTabChange('schedule')}
+            />
           </div>
 
           <DashboardActivityCard activities={activities} />
@@ -322,6 +330,14 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         onConfirm={confirmDeleteProject}
         title="정말 삭제하시겠습니까?"
         description="삭제된 워크스페이스 데이터는 되돌릴 수 없어요"
+      />
+
+      <ConfirmModal
+        isOpen={leaveOpen}
+        onClose={() => setLeaveOpen(false)}
+        onConfirm={confirmLeaveProject}
+        title={`${project.title}에서 나가시겠습니까?`}
+        confirmText="나가기"
       />
     </section>
   )
