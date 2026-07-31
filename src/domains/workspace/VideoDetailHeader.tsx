@@ -26,7 +26,7 @@ type VideoDetailHeaderProps = {
   onDelete: () => void
 }
 
-/** 전역 헤더 한 줄에 제목·북마크·상태·참여 인원(왼쪽, 대시보드와 동일 배치)과 초대 버튼·ActionMenu(오른쪽)를 채운다. */
+/** 전역 헤더: 제목·북마크·상태 + 참여인원(왼쪽 끝) → 알림·프로필·ActionMenu·초대. */
 export default function VideoDetailHeader({
   projectId,
   videoDetail,
@@ -86,17 +86,18 @@ export default function VideoDetailHeader({
           </div>
         </div>
 
-        <MemberListPanel
-          projectId={projectId}
-          members={members}
-          isAdmin={isAdmin}
-          meId={meId}
-          avatarSize={28}
-          label="참여 인원"
-          onMembersChange={onMembersChange}
-          inviteOpen={inviteOpen}
-          onInviteOpenChange={setInviteOpen}
-        />
+        <div className="mr-4">
+          <MemberListPanel
+            projectId={projectId}
+            members={members}
+            isAdmin={isAdmin}
+            meId={meId}
+            avatarSize={40}
+            onMembersChange={onMembersChange}
+            inviteOpen={inviteOpen}
+            onInviteOpenChange={setInviteOpen}
+          />
+        </div>
       </div>
     )
   }, [

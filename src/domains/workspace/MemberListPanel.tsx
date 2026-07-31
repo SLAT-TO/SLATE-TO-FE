@@ -136,7 +136,10 @@ export default function MemberListPanel({
   const previewMembers = members.slice(0, 4)
 
   return (
-    <div ref={containerRef} className="relative flex shrink-0 items-center gap-4">
+    <div
+      ref={containerRef}
+      className={`relative flex shrink-0 items-center ${label ? 'gap-4' : ''}`}
+    >
       {label && <span className="text-caption-lg text-neutral-11 font-semibold">{label}</span>}
 
       <button

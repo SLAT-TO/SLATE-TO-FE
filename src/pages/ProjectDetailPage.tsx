@@ -98,7 +98,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     }
   }, [project, projectId, setProject])
 
-  /** 전역 헤더 한 줄에 제목·즐겨찾기·멤버 아바타(왼쪽)와 ActionMenu(오른쪽)를 채운다. 설정/영상 상세 서브뷰에서는 비운다.
+  /** 전역 헤더: 제목·즐겨찾기 + 참여인원(왼쪽 끝) → 알림·프로필·ActionMenu. 설정·영상 상세에서는 비움.
    * useMemo로 감싸지 않으면 매 렌더 새 JSX가 만들어져 useHeaderSlot의 effect가 무한 반복된다. */
   const showProjectHeader = Boolean(project) && view === 'main' && selectedVideoId === null
 
@@ -119,14 +119,16 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
           </button>
         </div>
 
-        <MemberListPanel
-          projectId={projectId}
-          members={members}
-          isAdmin={project.myPermission === 'ADMIN'}
-          meId={meId}
-          avatarSize={33}
-          onMembersChange={setMembers}
-        />
+        <div className="mr-4">
+          <MemberListPanel
+            projectId={projectId}
+            members={members}
+            isAdmin={project.myPermission === 'ADMIN'}
+            meId={meId}
+            avatarSize={40}
+            onMembersChange={setMembers}
+          />
+        </div>
       </div>
     )
   }, [showProjectHeader, project, members, handleToggleBookmark, projectId, meId, setMembers])
