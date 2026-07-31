@@ -5,7 +5,7 @@ interface JobCardProps {
   type: string
   category: string
   title: string
-  description: string
+  description?: string
   role: string
   price?: string
   dDay: string
@@ -65,7 +65,7 @@ function JobCard({
 
         <div className="flex flex-col gap-2">
           <h3 className="text-body-sm text-neutral-11 font-semibold">{title}</h3>
-          <p className="text-caption-lg text-neutral-11">{description}</p>
+          {description && <p className="text-caption-lg text-neutral-11">{description}</p>}
         </div>
       </div>
 
