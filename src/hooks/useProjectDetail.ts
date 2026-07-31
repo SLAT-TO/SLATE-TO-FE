@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   getProject,
   getProjectActivities,
@@ -16,6 +16,15 @@ export function useProjectDetail(projectId: number) {
   const [notices, setNotices] = useState<ProjectNoticeListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const reloadMembers = useCallback(async () => {
+    const list = await getProjectMembers(projectId).catch(() => ({
+      items: [] as MemberSummary[],
+      memberCount: 0,
+    }))
+    setMembers(list.items)
+    return list.items
+  }, [projectId])
 
   useEffect(() => {
     let cancelled = false
@@ -54,5 +63,16 @@ export function useProjectDetail(projectId: number) {
     }
   }, [projectId])
 
-  return { project, setProject, members, activities, notices, setNotices, loading, error }
+  return {
+    project,
+    setProject,
+    members,
+    setMembers,
+    reloadMembers,
+    activities,
+    notices,
+    setNotices,
+    loading,
+    error,
+  }
 }

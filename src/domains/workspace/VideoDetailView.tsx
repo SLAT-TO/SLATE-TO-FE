@@ -21,6 +21,7 @@ export type VideoDetailViewProps = {
   projectId: number
   videoId: number
   meId: number | null
+  isAdmin?: boolean
   lengthType: ProjectLengthType | null
   /** 이 프로젝트에서 내가 맡은 역할 — 프로젝트 소개글 태그 옆에 함께 표시 */
   myRoleNames?: string[]
@@ -31,6 +32,7 @@ export function VideoDetailView({
   projectId,
   videoId,
   meId,
+  isAdmin = false,
   lengthType,
   myRoleNames = [],
   onBack,
@@ -119,12 +121,7 @@ export function VideoDetailView({
     submitReply,
   } = useFeedbackReplies(currentTime)
 
-  const {
-    members,
-    inviteCopied,
-    load: loadMembers,
-    inviteMember,
-  } = useProjectMembersInvite(projectId)
+  const { members, setMembers, load: loadMembers } = useProjectMembersInvite(projectId)
 
   useEffect(() => {
     let cancelled = false
@@ -151,6 +148,7 @@ export function VideoDetailView({
 
   const headerSlot = (
     <VideoDetailHeader
+      projectId={projectId}
       videoDetail={videoDetail}
       toggleBookmark={toggleBookmark}
       statusMenuOpen={statusMenuOpen}
@@ -158,10 +156,11 @@ export function VideoDetailView({
       statusMenuRef={statusMenuRef}
       changeVideoStatus={changeVideoStatus}
       members={members}
+      isAdmin={isAdmin}
+      meId={meId}
+      onMembersChange={setMembers}
       onEdit={() => setEditOpen(true)}
       onDelete={() => setDeleteOpen(true)}
-      inviteMember={inviteMember}
-      inviteCopied={inviteCopied}
     />
   )
 

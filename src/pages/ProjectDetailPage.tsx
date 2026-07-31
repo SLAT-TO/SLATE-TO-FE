@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { deleteProject, leaveProject, pinProject, unpinProject } from '../api/projects'
 import { getMe } from '../api/users'
 import ActionMenu from '../components/ActionMenu'
-import { Avatar } from '../components/Avatar'
 import ConfirmModal from '../components/ConfirmModal'
 import BookmarkStarIcon from '../components/icons/BookmarkStarIcon'
 import Tabs from '../components/Tabs'
@@ -13,6 +12,7 @@ import DashboardNoticeCard from '../domains/workspace/DashboardNoticeCard'
 import DashboardTodayScheduleCard from '../domains/workspace/DashboardTodayScheduleCard'
 import DashboardActivityCard from '../domains/workspace/DashboardActivityCard'
 import ActivityListView from '../domains/workspace/ActivityListView'
+import MemberListPanel from '../domains/workspace/MemberListPanel'
 import NoticeListView from '../domains/workspace/NoticeListView'
 import NoticeDetailView from '../domains/workspace/NoticeDetailView'
 import ProjectFileList from '../domains/workspace/ProjectFileList'
@@ -41,7 +41,7 @@ type ProjectDetailPageProps = {
 }
 
 export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
-  const { project, setProject, members, activities, notices, setNotices, loading, error } =
+  const { project, setProject, members, setMembers, activities, notices, setNotices, loading, error } =
     useProjectDetail(projectId)
   const statusMenuRef = useRef<HTMLDivElement>(null)
   const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
@@ -110,24 +110,17 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
           </button>
         </div>
 
-        {members.length > 0 && (
-          <div className="flex shrink-0 -space-x-2">
-            {members.slice(0, 4).map((member) => (
-              <Avatar
-                key={member.memberId}
-                src={member.profileImageUrl ?? undefined}
-                alt={member.nickname}
-                size={33}
-                fallback={member.nickname.slice(0, 1)}
-                border="gray"
-                className="bg-neutral-2"
-              />
-            ))}
-          </div>
-        )}
+        <MemberListPanel
+          projectId={projectId}
+          members={members}
+          isAdmin={project.myPermission === 'ADMIN'}
+          meId={meId}
+          avatarSize={33}
+          onMembersChange={setMembers}
+        />
       </div>
     )
-  }, [showProjectHeader, project, members, handleToggleBookmark])
+  }, [showProjectHeader, project, members, handleToggleBookmark, projectId, meId, setMembers])
 
   const headerRightContent = useMemo(() => {
     if (!showProjectHeader || !project) return null
@@ -200,6 +193,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         projectId={projectId}
         videoId={selectedVideoId}
         meId={meId}
+        isAdmin={project.myPermission === 'ADMIN'}
         lengthType={project.lengthType}
         myRoleNames={project.roleNames}
         onBack={() => setSelectedVideoId(null)}
