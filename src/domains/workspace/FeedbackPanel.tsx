@@ -164,60 +164,63 @@ export default function FeedbackPanel({
             type="button"
             onClick={attachCurrentTime}
             aria-label="현재 위치 기록"
-            className={`border-neutral-5 flex items-center justify-center rounded-lg border p-2 ${
+            className={`border-neutral-5 flex size-10 items-center justify-center rounded-lg border ${
               pendingStart !== null && pendingEnd === null && !isCapturingRange
                 ? 'border-primary text-primary'
                 : 'text-neutral-9'
             }`}
           >
-            <InlineIcon svg={clockIcon} className="size-5" />
+            <InlineIcon svg={clockIcon} className="pointer-events-none size-5" />
           </button>
           <button
             type="button"
             onClick={toggleRangeCapture}
             aria-label="구간 기록"
             title={isCapturingRange ? '종료 지점 기록' : '구간 기록'}
-            className={`border-neutral-5 flex items-center rounded-lg border p-2 ${
+            className={`border-neutral-5 flex h-10 items-center rounded-lg border px-3 ${
               isCapturingRange || pendingEnd !== null
                 ? 'border-primary text-primary'
                 : 'text-neutral-9'
             }`}
           >
-            <InlineIcon svg={clockIcon} className="size-5" />
+            <InlineIcon svg={clockIcon} className="pointer-events-none size-5" />
             <span aria-hidden className="mx-0.5 h-0.5 w-3 bg-current" />
-            <InlineIcon svg={clockIcon} className="size-5" />
+            <InlineIcon svg={clockIcon} className="pointer-events-none size-5" />
           </button>
         </div>
-        <div className="relative">
+        <div className="flex flex-col gap-2">
           {formatPendingTime(pendingStart, pendingEnd) && (
-            <span className="text-caption-lg text-primary absolute top-2 left-3 z-10 flex items-center gap-1 font-bold">
-              {formatPendingTime(pendingStart, pendingEnd)}
+            <div className="text-caption-lg text-primary flex items-center gap-1 font-bold">
+              <span>{formatPendingTime(pendingStart, pendingEnd)}</span>
               <button
                 type="button"
-                onClick={clearPendingTime}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  clearPendingTime()
+                }}
                 aria-label="시간 첨부 취소"
-                className="text-neutral-5 hover:text-neutral-7"
+                className="text-neutral-5 hover:text-neutral-7 inline-flex size-8 items-center justify-center rounded-md"
               >
-                <InlineIcon svg={xIcon} className="size-3.5" />
+                <InlineIcon svg={xIcon} className="pointer-events-none size-3.5" />
               </button>
-            </span>
+            </div>
           )}
           <TextArea
             value={newFeedback}
             onChange={setNewFeedback}
             placeholder="피드백을 입력하세요"
             rows={3}
-            className={formatPendingTime(pendingStart, pendingEnd) ? 'pt-8' : ''}
           />
         </div>
         <button
           type="button"
           onClick={submitFeedback}
           disabled={!newFeedback.trim()}
-          className="bg-primary disabled:bg-neutral-3 flex size-7 items-center justify-center self-end rounded-full text-white"
+          className="bg-primary disabled:bg-neutral-3 flex size-9 items-center justify-center self-end rounded-full text-white"
           aria-label="전송"
         >
-          <InlineIcon svg={paperPlaneIcon} className="size-4" />
+          <InlineIcon svg={paperPlaneIcon} className="pointer-events-none size-4" />
         </button>
       </div>
     </div>

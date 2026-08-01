@@ -50,6 +50,7 @@ export function VideoDetailView({
     isMuted,
     currentTime,
     duration,
+    getCurrentTime,
     handlePlayerReady,
     handleStateChange,
     togglePlay,
@@ -106,7 +107,7 @@ export function VideoDetailView({
     startEditFeedback,
     cancelEditFeedback,
     saveEditFeedback,
-  } = useFeedbacks(videoId, currentTime)
+  } = useFeedbacks(videoId, getCurrentTime)
 
   const {
     expandedFeedbackId,
@@ -121,7 +122,7 @@ export function VideoDetailView({
     attachReplyCurrentTime,
     toggleReplyRangeCapture,
     submitReply,
-  } = useFeedbackReplies(currentTime)
+  } = useFeedbackReplies(getCurrentTime)
 
   const { members, setMembers, load: loadMembers } = useProjectMembersInvite(projectId)
 
