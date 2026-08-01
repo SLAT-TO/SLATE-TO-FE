@@ -59,42 +59,46 @@ export default function FeedbackReplies({
             type="button"
             onClick={attachReplyCurrentTime}
             aria-label="현재 위치 기록"
-            className={`border-neutral-5 flex items-center justify-center rounded-lg border p-1 ${
+            className={`border-neutral-5 flex size-9 items-center justify-center rounded-lg border ${
               replyPendingStart !== null && replyPendingEnd === null && !isCapturingReplyRange
                 ? 'border-primary text-primary'
                 : 'text-neutral-9'
             }`}
           >
-            <InlineIcon svg={clockIcon} className="size-4" />
+            <InlineIcon svg={clockIcon} className="pointer-events-none size-4" />
           </button>
           <button
             type="button"
             onClick={toggleReplyRangeCapture}
             aria-label="구간 기록"
             title={isCapturingReplyRange ? '종료 지점 기록' : '구간 기록'}
-            className={`border-neutral-5 flex items-center rounded-lg border p-1 ${
+            className={`border-neutral-5 flex h-9 items-center rounded-lg border px-2.5 ${
               isCapturingReplyRange || replyPendingEnd !== null
                 ? 'border-primary text-primary'
                 : 'text-neutral-9'
             }`}
           >
-            <InlineIcon svg={clockIcon} className="size-4" />
+            <InlineIcon svg={clockIcon} className="pointer-events-none size-4" />
             <span aria-hidden className="mx-0.5 h-0.5 w-2 bg-current" />
-            <InlineIcon svg={clockIcon} className="size-4" />
+            <InlineIcon svg={clockIcon} className="pointer-events-none size-4" />
           </button>
         </div>
         <div className="flex items-center gap-2">
           <div className="border-neutral-3 focus-within:border-primary flex flex-1 items-center gap-2 rounded-md border px-2 py-1">
             {formatPendingTime(replyPendingStart, replyPendingEnd) && (
-              <span className="text-caption-sm text-primary flex shrink-0 items-center gap-1 font-bold">
+              <span className="text-caption-sm text-primary flex shrink-0 items-center gap-0.5 font-bold">
                 {formatPendingTime(replyPendingStart, replyPendingEnd)}
                 <button
                   type="button"
-                  onClick={clearReplyPendingTime}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    clearReplyPendingTime()
+                  }}
                   aria-label="시간 첨부 취소"
-                  className="text-neutral-5 hover:text-neutral-7"
+                  className="text-neutral-5 hover:text-neutral-7 inline-flex size-7 items-center justify-center rounded"
                 >
-                  <InlineIcon svg={xIcon} className="size-3" />
+                  <InlineIcon svg={xIcon} className="pointer-events-none size-3" />
                 </button>
               </span>
             )}
@@ -109,7 +113,7 @@ export default function FeedbackReplies({
             type="button"
             onClick={onSubmitReply}
             disabled={!newReply.trim()}
-            className="text-primary disabled:text-neutral-4 text-caption-sm font-semibold"
+            className="text-primary disabled:text-neutral-4 text-caption-sm inline-flex h-9 items-center px-2 font-semibold"
           >
             등록
           </button>

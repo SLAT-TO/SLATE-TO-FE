@@ -130,14 +130,14 @@ export default function FeedbackListItem({
             }}
             aria-pressed={isResolved}
             aria-label={isResolved ? '미해결로 변경' : '해결 처리'}
-            className={`-m-1 inline-flex size-8 items-center justify-center rounded-md ${
+            className={`-m-1 inline-flex size-9 items-center justify-center rounded-md ${
               isResolved ? 'text-success' : 'text-neutral-5'
             }`}
           >
             <InlineIcon svg={commentCheckIcon} className="pointer-events-none size-4" />
           </button>
         ) : (
-          <span aria-hidden className="size-8" />
+          <span aria-hidden className="size-9" />
         )}
       </div>
 
