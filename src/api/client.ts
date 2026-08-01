@@ -37,51 +37,6 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
-// 동시에 여러 요청이 401을 맞아도 리프레시는 한 번만 나가도록 진행 중인 요청을 공유
-let refreshPromise: Promise<string> | null = null
-
-/** POST /api/v1/auth/refresh — refreshToken은 HttpOnly 쿠키로 자동 전송, 본문 없음 */
-async function refreshAccessToken(): Promise<string> {
-  const response = await apiClient.post<ApiResponse<{ accessToken: string }>>(
-    paths.auth.refresh,
-    undefined,
-    { withCredentials: true },
-  )
-  const accessToken = response.data.result.accessToken
-  setAccessToken(accessToken)
-  return accessToken
-}
-
-// 액세스 토큰 만료(401) 시 자동으로 재발급받아 원래 요청을 한 번 재시도.
-// 리프레시 자체가 실패하면(리프레시 토큰도 만료) 로그인 페이지로 보낸다.
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error: unknown) => {
-    if (!isAxiosError(error) || error.response?.status !== 401) {
-      return Promise.reject(error)
-    }
-
-    const originalRequest = error.config as RetryableRequestConfig | undefined
-    if (!originalRequest || originalRequest.url === paths.auth.refresh || originalRequest._retry) {
-      return Promise.reject(error)
-    }
-    originalRequest._retry = true
-
-    try {
-      refreshPromise ??= refreshAccessToken().finally(() => {
-        refreshPromise = null
-      })
-      const accessToken = await refreshPromise
-      originalRequest.headers.Authorization = `Bearer ${accessToken}`
-      return apiClient.request(originalRequest)
-    } catch {
-      setAccessToken(null)
-      navigate('/login')
-      return Promise.reject(error)
-    }
-  },
-)
-
 function toApiError(payload: { code?: ApiCode; message?: string; result?: unknown }): ApiError {
   const result = payload.result
   const errors =
@@ -140,3 +95,58 @@ export async function request<T>(config: AxiosRequestConfig): Promise<T> {
     throw error
   }
 }
+
+// 동시에 여러 요청이 401을 맞아도 리프레시는 한 번만 나가도록 진행 중인 요청을 공유.
+// request()를 그대로 재사용해 isSuccess 검사·에러 변환 경로를 다른 API 호출과 동일하게 맞춘다.
+let refreshPromise: Promise<string> | null = null
+
+/** POST /api/v1/auth/refresh — refreshToken은 HttpOnly 쿠키로 자동 전송, 본문 없음 */
+export async function refreshAccessToken(): Promise<string> {
+  refreshPromise ??= request<{ accessToken: string }>({
+    method: 'POST',
+    url: paths.auth.refresh,
+    withCredentials: true,
+  })
+    .then((result) => {
+      setAccessToken(result.accessToken)
+      return result.accessToken
+    })
+    .finally(() => {
+      refreshPromise = null
+    })
+  return refreshPromise
+}
+
+// 액세스 토큰 만료(401 COMMON401) 시 자동으로 재발급받아 원래 요청을 한 번 재시도.
+// 권한 문제 등 다른 401 코드는 재시도 없이 그대로 던진다.
+// 리프레시 자체가 실패하면(리프레시 토큰도 만료) 로그인 페이지로 보낸다.
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: unknown) => {
+    if (!isAxiosError(error) || error.response?.status !== 401) {
+      return Promise.reject(error)
+    }
+
+    const code = (error.response?.data as ApiResponse<unknown> | undefined)?.code
+    if (code !== 'COMMON401') {
+      return Promise.reject(error)
+    }
+
+    const originalRequest = error.config as RetryableRequestConfig | undefined
+    if (!originalRequest || originalRequest.url === paths.auth.refresh || originalRequest._retry) {
+      return Promise.reject(error)
+    }
+    originalRequest._retry = true
+
+    try {
+      const accessToken = await refreshAccessToken()
+      originalRequest.headers.Authorization = `Bearer ${accessToken}`
+      return apiClient.request(originalRequest)
+    } catch {
+      setAccessToken(null)
+      const redirectTo = encodeURIComponent(window.location.pathname)
+      navigate(`/login?redirectTo=${redirectTo}`)
+      return Promise.reject(error)
+    }
+  },
+)

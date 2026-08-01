@@ -16,7 +16,7 @@ export function useAuthGuard(pathname: string): void {
 
     let cancelled = false
     refreshToken().catch(() => {
-      if (!cancelled) navigate('/login')
+      if (!cancelled) navigate(`/login?redirectTo=${encodeURIComponent(pathname)}`)
     })
     return () => {
       cancelled = true
