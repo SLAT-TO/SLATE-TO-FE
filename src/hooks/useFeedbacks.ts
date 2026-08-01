@@ -11,9 +11,9 @@ import type { Feedback } from '../types/feedback'
 export type FeedbackFilter = 'all' | 'unresolved'
 
 /** 영상 상세의 피드백 목록 · 작성(구간 첨부) · 수정 · 삭제 · 해결 토글을 다루는 훅
- * @param currentTime 영상 플레이어의 현재 재생 시간(초) — "현재 시점 첨부" 버튼에 사용
+ * @param getCurrentTime 플레이어 실제 재생 시각(초) — 클릭 시점에 읽어 단일/구간 첨부
  * @param guestId 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
-export function useFeedbacks(videoId: number, currentTime: number, guestId?: number) {
+export function useFeedbacks(videoId: number, getCurrentTime: () => number, guestId?: number) {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [filter, setFilter] = useState<FeedbackFilter>('all')
   const [newFeedback, setNewFeedback] = useState('')
@@ -37,23 +37,24 @@ export function useFeedbacks(videoId: number, currentTime: number, guestId?: num
   }, [])
 
   const attachCurrentTime = useCallback(() => {
-    setPendingStart(Math.floor(currentTime))
+    setPendingStart(Math.floor(getCurrentTime()))
     setPendingEnd(null)
     setIsCapturingRange(false)
-  }, [currentTime])
+  }, [getCurrentTime])
 
   /** 구간 기록 버튼 — 첫 클릭은 시작점, 재생 위치를 옮긴 뒤 두 번째 클릭은 종료점 */
   const toggleRangeCapture = useCallback(() => {
+    const t = Math.floor(getCurrentTime())
     setIsCapturingRange((capturing) => {
       if (!capturing) {
-        setPendingStart(Math.floor(currentTime))
+        setPendingStart(t)
         setPendingEnd(null)
         return true
       }
-      setPendingEnd(Math.floor(currentTime))
+      setPendingEnd(t)
       return false
     })
-  }, [currentTime])
+  }, [getCurrentTime])
 
   const submitFeedback = useCallback(async () => {
     if (!newFeedback.trim()) return

@@ -66,7 +66,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     startEditFeedback,
     cancelEditFeedback,
     saveEditFeedback,
-  } = useFeedbacks(videoId, 0, guestId ?? undefined)
+  } = useFeedbacks(videoId, () => 0, guestId ?? undefined)
 
   const {
     expandedFeedbackId,
@@ -81,7 +81,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     attachReplyCurrentTime,
     toggleReplyRangeCapture,
     submitReply,
-  } = useFeedbackReplies(0, guestId ?? undefined)
+  } = useFeedbackReplies(() => 0, guestId ?? undefined)
 
   useEffect(() => {
     if (guestId === null || !access) return
