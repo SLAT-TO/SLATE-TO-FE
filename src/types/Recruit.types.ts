@@ -26,13 +26,16 @@ export interface FilterConfig {
 
 export interface JobPost {
   id: number
-  type: string
   category: string
+  length?: string
   title: string
-  description: string
+  description?: string
   role: string
-  price?: string
   dDay: string
+  /** @deprecated 하위호환용 — 카드에서 미사용 */
+  type?: string
+  /** @deprecated 하위호환용 — 카드에서 미사용 */
+  price?: string
 }
 
 export interface RecruitmentDetail {
