@@ -1,4 +1,12 @@
-/** react-router 도입 전 임시 pathname 라우팅 */
+/** react-router 전환 중 — navigate는 NavigateBridge가 연결한 구현을 쓰고, 없으면 history fallback */
+
+type NavigateImpl = (to: string) => void
+
+let navigateImpl: NavigateImpl | null = null
+
+export function setNavigateImpl(impl: NavigateImpl | null): void {
+  navigateImpl = impl
+}
 
 export function getPathname(): string {
   return window.location.pathname
@@ -6,6 +14,10 @@ export function getPathname(): string {
 
 export function navigate(to: string): void {
   if (to === getPathname()) return
+  if (navigateImpl) {
+    navigateImpl(to)
+    return
+  }
   window.history.pushState({}, '', to)
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
