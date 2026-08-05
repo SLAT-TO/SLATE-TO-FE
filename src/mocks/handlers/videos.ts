@@ -114,12 +114,18 @@ export const videoHandlers = [
     const body = (await request.json()) as UpdateVideoRequest
     if (body.title !== undefined) video.title = body.title
     if (body.memo !== undefined) video.memo = body.memo
+    if (body.youtubeUrl !== undefined) {
+      video.youtubeUrl = body.youtubeUrl
+      video.youtubeVideoId = 'mockVideo'
+      video.thumbnailUrl = 'https://img.youtube.com/vi/mockVideo/maxresdefault.jpg'
+    }
     video.updatedAt = new Date().toISOString()
     return HttpResponse.json(
       ok({
         videoId: video.videoId,
         title: video.title,
         memo: video.memo,
+        youtubeUrl: video.youtubeUrl,
         updatedAt: video.updatedAt,
       }),
       { status: 200 },

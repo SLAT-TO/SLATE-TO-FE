@@ -49,17 +49,28 @@ export function normalizeMe(raw: BeMe): MeProfile {
   }
 }
 
+/** BE가 `videoId` 대신 `id`를 주는 경우도 흡수 */
+function normalizeVideoListItem(raw: VideoListItem & { id?: number }): VideoListItem | null {
+  const videoId = raw.videoId ?? raw.id
+  if (videoId == null || !Number.isFinite(Number(videoId))) return null
+  return { ...raw, videoId: Number(videoId) }
+}
+
 export function normalizeVideoList(result: BeVideoListRaw): VideoListResult {
   if ('videos' in result && Array.isArray(result.videos)) {
     return {
-      items: result.videos,
+      items: result.videos
+        .map((item) => normalizeVideoListItem(item as VideoListItem & { id?: number }))
+        .filter((item): item is VideoListItem => item != null),
       nextCursor: result.nextCursor,
       hasNext: result.hasNext,
     }
   }
-  const page = result as CursorPageResult<VideoListItem>
+  const page = result as CursorPageResult<VideoListItem & { id?: number }>
   return {
-    items: page.items,
+    items: (page.items ?? [])
+      .map((item) => normalizeVideoListItem(item))
+      .filter((item): item is VideoListItem => item != null),
     nextCursor: typeof page.nextCursor === 'string' ? Number(page.nextCursor) : page.nextCursor,
     hasNext: page.hasNext,
   }

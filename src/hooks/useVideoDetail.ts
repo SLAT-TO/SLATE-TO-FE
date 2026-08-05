@@ -53,11 +53,17 @@ export function useVideoDetail(projectId: number, videoId: number, onDeleted: ()
   }, [projectId, videoId, onDeleted])
 
   const handleUpdateVideo = useCallback(
-    async (values: { title: string; memo?: string }) => {
+    async (values: { title: string; memo?: string; youtubeUrl?: string }) => {
       const result = await updateVideo(projectId, videoId, values)
       setVideoDetail((prev) =>
         prev
-          ? { ...prev, title: result.title, memo: result.memo, updatedAt: result.updatedAt }
+          ? {
+              ...prev,
+              title: result.title,
+              memo: result.memo,
+              updatedAt: result.updatedAt,
+              youtubeUrl: result.youtubeUrl ?? values.youtubeUrl ?? prev.youtubeUrl,
+            }
           : prev,
       )
     },
