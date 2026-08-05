@@ -3,6 +3,7 @@ import ProgressBar from '../../components/ProgressBar'
 import { Avatar } from '../../components/Avatar'
 import { projectMetaTags } from '../../constants/projectLabels'
 import type { ProjectSummary } from '../../types/project'
+import { navigate } from '../../utils/navigation'
 
 interface HomeProjectCardProps {
   project: ProjectSummary
@@ -17,7 +18,10 @@ export default function HomeProjectCard({ project }: HomeProjectCardProps) {
   const extraCount = project.memberCount - visibleMembers.length
 
   return (
-    <article className="flex h-34 flex-col items-start gap-2 overflow-hidden rounded-[10.242px] bg-white p-4 shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]">
+    <article
+      onClick={() => navigate(`/workspace/projects/${project.id}`)}
+      className="flex h-34 cursor-pointer flex-col items-start gap-2 overflow-hidden rounded-[10.242px] bg-white p-4 shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]"
+    >
       <h3 className="text-body-sm text-neutral-11 self-stretch font-semibold tracking-[-0.32px]">
         {project.title}
       </h3>
@@ -38,7 +42,12 @@ export default function HomeProjectCard({ project }: HomeProjectCardProps) {
         {project.memberCount > 0 && (
           <div className="flex shrink-0 items-center -space-x-2">
             {visibleMembers.map((imageUrl, index) => (
-              <Avatar key={index} src={imageUrl} size={28} border="gray" />
+              <Avatar
+                key={index}
+                src={imageUrl}
+                size={28}
+                border={index === visibleMembers.length - 1 ? 'black' : 'gray'}
+              />
             ))}
             {extraCount > 0 && (
               <div

@@ -5,6 +5,7 @@ import type {
   CreateApplicationRequest,
   CreateRecruitmentRequest,
   Recruitment,
+  RecruitmentBookmarkResult,
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
 } from '../types/recruitment'
@@ -48,13 +49,15 @@ export async function getMyRecruitmentBookmarks(): Promise<{ content: Recruitmen
   return request({ method: 'GET', url: paths.users.myRecruitmentBookmarks })
 }
 
-export async function bookmarkRecruitment(recruitmentId: number): Promise<{ bookmarked: boolean }> {
+export async function bookmarkRecruitment(
+  recruitmentId: number,
+): Promise<RecruitmentBookmarkResult> {
   return request({ method: 'POST', url: paths.recruitments.bookmark(recruitmentId) })
 }
 
 export async function unbookmarkRecruitment(
   recruitmentId: number,
-): Promise<{ bookmarked: boolean }> {
+): Promise<RecruitmentBookmarkResult> {
   return request({ method: 'DELETE', url: paths.recruitments.bookmark(recruitmentId) })
 }
 
