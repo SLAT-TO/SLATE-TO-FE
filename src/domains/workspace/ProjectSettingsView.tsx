@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createProject, deleteProject, updateProject } from '../../api/projects'
+import { updateProject } from '../../api/projects'
 import { Button } from '../../components/Button'
 import Choice from '../../components/Choice'
 import ConfirmModal from '../../components/ConfirmModal'
@@ -8,6 +8,7 @@ import Select from '../../components/Select'
 import TextArea from '../../components/TextArea'
 import { ROLE_OPTIONS } from '../../constants/roles'
 import { PROJECT_LENGTH_TYPE_LABEL, PROJECT_TYPE_LABEL } from '../../constants/projectLabels'
+import { useCreateProjectMutation, useDeleteProjectMutation } from '../../queries/projects'
 import { CARD_BASE } from '../../styles/card'
 import { ApiError } from '../../types/api'
 import { navigate } from '../../utils/navigation'
@@ -36,6 +37,8 @@ export default function ProjectSettingsView(props: ProjectSettingsViewProps) {
   const isCreate = props.mode === 'create'
   const project = isCreate ? null : props.project
   const { onCancel } = props
+  const createMutation = useCreateProjectMutation()
+  const deleteMutation = useDeleteProjectMutation()
 
   const [title, setTitle] = useState(project?.title ?? '')
   const [endDate, setEndDate] = useState(project?.endDate ?? '')
@@ -65,7 +68,7 @@ export default function ProjectSettingsView(props: ProjectSettingsViewProps) {
     let navigatedAway = false
     try {
       if (isCreate) {
-        const created = await createProject({
+        const created = await createMutation.mutateAsync({
           title: title.trim(),
           description: description.trim(),
           type,
@@ -109,10 +112,11 @@ export default function ProjectSettingsView(props: ProjectSettingsViewProps) {
     }
   }
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (isCreate) return
-    await deleteProject(props.project.id)
-    navigate('/workspace')
+    deleteMutation.mutate(props.project.id, {
+      onSuccess: () => navigate('/workspace'),
+    })
   }
 
   return (
