@@ -46,10 +46,7 @@ type ProjectDetailPageProps = {
   videoId?: number | null
 }
 
-export default function ProjectDetailPage({
-  projectId,
-  videoId = null,
-}: ProjectDetailPageProps) {
+export default function ProjectDetailPage({ projectId, videoId = null }: ProjectDetailPageProps) {
   const {
     project,
     setProject,
