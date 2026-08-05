@@ -1,6 +1,7 @@
 /** react-router 전환 중 — navigate는 NavigateBridge가 연결한 구현을 쓰고, 없으면 history fallback */
 
-type NavigateImpl = (to: string) => void
+type NavigateOptions = { replace?: boolean }
+type NavigateImpl = (to: string, options?: NavigateOptions) => void
 
 let navigateImpl: NavigateImpl | null = null
 
@@ -12,13 +13,17 @@ export function getPathname(): string {
   return window.location.pathname
 }
 
-export function navigate(to: string): void {
-  if (to === getPathname()) return
+export function navigate(to: string, options?: NavigateOptions): void {
   if (navigateImpl) {
-    navigateImpl(to)
+    navigateImpl(to, options)
     return
   }
-  window.history.pushState({}, '', to)
+  // Bridge 준비 전 fallback — pushState만 하면 React Router location과 어긋날 수 있음
+  if (options?.replace) {
+    window.history.replaceState({}, '', to)
+  } else if (to !== getPathname()) {
+    window.history.pushState({}, '', to)
+  }
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
 

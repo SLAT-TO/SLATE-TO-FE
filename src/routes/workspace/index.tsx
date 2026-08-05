@@ -7,6 +7,10 @@ export function workspaceRoutes() {
   return (
     <>
       <Route path="/workspace" element={<WorkspacePage />} />
+      <Route
+        path="/workspace/projects/:projectId/videos/:videoId"
+        element={<WorkspaceProjectRoute />}
+      />
       <Route path="/workspace/projects/:projectId" element={<WorkspaceProjectRoute />} />
     </>
   )

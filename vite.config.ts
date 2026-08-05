@@ -12,6 +12,13 @@ export default defineConfig({
         target: 'https://api.slatto.cloud',
         changeOrigin: true,
         secure: true,
+        // 브라우저 Origin(localhost:5173)이 그대로면 BE CORS가 403을 냄
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'https://www.slatto.cloud')
+            proxyReq.setHeader('Referer', 'https://www.slatto.cloud/')
+          })
+        },
       },
     },
   },
