@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { getMe } from '../api/users'
 import {
   useDeleteProjectMutation,
@@ -33,7 +34,6 @@ import {
   projectStatusLabel,
 } from '../constants/projectStatus'
 import type { ProjectStatus, ProjectSummary } from '../types/project'
-import { navigate } from '../utils/navigation'
 
 /** Strict Mode remount에서도 같은 키 alert가 두 번 뜨지 않도록 모듈 단위로 기록 */
 const alertedPartialErrorKeys = new Set<string>()
@@ -53,6 +53,7 @@ type ProjectDetailPageProps = {
 
 export default function ProjectDetailPage({ projectId, videoId = null }: ProjectDetailPageProps) {
   const queryClient = useQueryClient()
+  const routerNavigate = useNavigate()
   const {
     project,
     setProject,
@@ -101,6 +102,10 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   }, [partialErrorKey, projectId])
 
   // 서브상태 리셋은 App의 <ProjectDetailPage key={projectId} /> 리마운트에 위임
+
+  const closeVideo = useCallback(() => {
+    routerNavigate(`/workspace/projects/${projectId}`, { replace: true })
+  }, [projectId, routerNavigate])
 
   const handleTabChange = (key: string) => {
     setTab(key)
@@ -174,7 +179,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         <p className="text-body-sm text-warning">{error ?? '프로젝트를 찾을 수 없습니다.'}</p>
         <button
           type="button"
-          onClick={() => navigate('/workspace')}
+          onClick={() => routerNavigate('/workspace')}
           className="text-body-sm text-primary w-fit underline"
         >
           워크스페이스로 돌아가기
@@ -187,20 +192,20 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
 
   const confirmDeleteProject = () => {
     deleteMutation.mutate(projectId, {
-      onSuccess: () => navigate('/workspace'),
+      onSuccess: () => routerNavigate('/workspace'),
     })
   }
 
   const confirmLeaveProject = () => {
     leaveMutation.mutate(projectId, {
-      onSuccess: () => navigate('/workspace'),
+      onSuccess: () => routerNavigate('/workspace'),
     })
   }
 
   if (view === 'settings') {
     // ?view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
     const leaveSettings = () => {
-      navigate(`/workspace/projects/${projectId}`, { replace: true })
+      routerNavigate(`/workspace/projects/${projectId}`, { replace: true })
       setView('main')
     }
     return (
@@ -239,7 +244,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         isAdmin={project.myPermission === 'ADMIN'}
         lengthType={project.lengthType}
         myRoleNames={project.roleNames}
-        onBack={() => navigate(`/workspace/projects/${projectId}`, { replace: true })}
+        onBack={closeVideo}
       />
     )
   }
