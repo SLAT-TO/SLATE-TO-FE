@@ -210,7 +210,7 @@ export default function ProjectDetailPage({
         isAdmin={project.myPermission === 'ADMIN'}
         lengthType={project.lengthType}
         myRoleNames={project.roleNames}
-        onBack={() => navigate(`/workspace/projects/${projectId}`)}
+        onBack={() => navigate(`/workspace/projects/${projectId}`, { replace: true })}
       />
     )
   }

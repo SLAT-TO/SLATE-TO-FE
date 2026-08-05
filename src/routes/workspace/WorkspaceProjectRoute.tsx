@@ -9,12 +9,13 @@ export default function WorkspaceProjectRoute() {
   }>()
   const projectId = Number(projectIdParam)
   const videoId = videoIdParam != null ? Number(videoIdParam) : null
+  const isValidId = (id: number) => Number.isSafeInteger(id) && id > 0
 
-  if (!Number.isFinite(projectId)) {
+  if (!isValidId(projectId)) {
     return <p className="text-body-sm text-warning">잘못된 프로젝트 경로입니다.</p>
   }
 
-  if (videoIdParam != null && !Number.isFinite(videoId)) {
+  if (videoIdParam != null && !isValidId(videoId!)) {
     return <p className="text-body-sm text-warning">잘못된 영상 경로입니다.</p>
   }
 
@@ -22,7 +23,7 @@ export default function WorkspaceProjectRoute() {
     <ProjectDetailPage
       key={projectId}
       projectId={projectId}
-      videoId={Number.isFinite(videoId) ? videoId : null}
+      videoId={videoIdParam != null ? videoId : null}
     />
   )
 }
