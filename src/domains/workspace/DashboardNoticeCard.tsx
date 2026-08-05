@@ -37,9 +37,9 @@ export default function DashboardNoticeCard({ notices, onExpand }: DashboardNoti
         type="button"
         onClick={onExpand}
         aria-label="공지 전체 보기"
-        className="text-head-sm text-neutral-11 w-fit font-bold"
+        className="w-fit text-left"
       >
-        공지 사항 {'>'}
+        <h2 className="text-head-sm text-neutral-11 font-bold">공지 사항 {'>'}</h2>
       </button>
       <button
         type="button"

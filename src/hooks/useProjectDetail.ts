@@ -60,7 +60,7 @@ export function useProjectDetail(projectId: number) {
     })
   }, [projectId, queryClient])
 
-  // 최근 활동 API는 BE 미구현/404가 흔해 빈 목록으로 취급 (빨간 문구·alert 없음)
+  // 최근 활동 실패는 빈 목록으로 취급 (빨간 문구·alert 없음). 공지/멤버만 soft alert.
   const partialErrors: string[] = []
   if (noticesQuery.isError) partialErrors.push('공지를 불러오지 못했습니다.')
   if (membersQuery.isError) partialErrors.push('참여 인원을 불러오지 못했습니다.')

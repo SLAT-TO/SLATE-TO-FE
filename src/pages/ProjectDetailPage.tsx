@@ -35,6 +35,9 @@ import {
 import type { ProjectStatus, ProjectSummary } from '../types/project'
 import { navigate } from '../utils/navigation'
 
+/** Strict Mode remount에서도 같은 키 alert가 두 번 뜨지 않도록 모듈 단위로 기록 */
+const alertedPartialErrorKeys = new Set<string>()
+
 const DETAIL_TABS = [
   { key: 'dashboard', label: '대시보드' },
   { key: 'schedule', label: '일정' },
@@ -89,10 +92,13 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   const partialErrorKey = partialErrors.join('|')
   useEffect(() => {
     if (!partialErrorKey) return
+    const alertKey = `${projectId}:${partialErrorKey}`
+    if (alertedPartialErrorKeys.has(alertKey)) return
+    alertedPartialErrorKeys.add(alertKey)
     for (const message of partialErrorKey.split('|')) {
       if (message) window.alert(message)
     }
-  }, [partialErrorKey])
+  }, [partialErrorKey, projectId])
 
   // 서브상태 리셋은 App의 <ProjectDetailPage key={projectId} /> 리마운트에 위임
 
