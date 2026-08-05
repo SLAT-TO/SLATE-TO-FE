@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { deleteProject, leaveProject, pinProject, unpinProject } from '../api/projects'
 import { getMe } from '../api/users'
+import {
+  useDeleteProjectMutation,
+  useLeaveProjectMutation,
+  useToggleProjectPinMutation,
+} from '../queries/projects'
 import ActionMenu from '../components/ActionMenu'
 import ConfirmModal from '../components/ConfirmModal'
 import BookmarkStarIcon from '../components/icons/BookmarkStarIcon'
@@ -55,6 +59,9 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     error,
     partialErrors,
   } = useProjectDetail(projectId)
+  const pinMutation = useToggleProjectPinMutation()
+  const deleteMutation = useDeleteProjectMutation()
+  const leaveMutation = useLeaveProjectMutation()
   const statusMenuRef = useRef<HTMLDivElement>(null)
   const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
   const [tab, setTab] = useState('dashboard')
@@ -86,19 +93,10 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     }
   }
 
-  const handleToggleBookmark = useCallback(async () => {
+  const handleToggleBookmark = useCallback(() => {
     if (!project) return
-    const next = !project.isPinned
-    setProject((prev) => (prev ? { ...prev, isPinned: next } : prev))
-    try {
-      const result = next ? await pinProject(projectId) : await unpinProject(projectId)
-      setProject((prev) =>
-        prev ? { ...prev, isPinned: result.isPinned, pinnedAt: result.pinnedAt } : prev,
-      )
-    } catch {
-      setProject((prev) => (prev ? { ...prev, isPinned: !next } : prev))
-    }
-  }, [project, projectId, setProject])
+    pinMutation.mutate({ projectId, next: !project.isPinned })
+  }, [project, projectId, pinMutation])
 
   /** 전역 헤더: 제목·즐겨찾기 + 참여인원(왼쪽 끝) → 알림·프로필·ActionMenu. 설정·영상 상세에서는 비움.
    * useMemo로 감싸지 않으면 매 렌더 새 JSX가 만들어져 useHeaderSlot의 effect가 무한 반복된다. */
@@ -170,14 +168,16 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
 
   const metaTags = projectMetaTags(project)
 
-  const confirmDeleteProject = async () => {
-    await deleteProject(projectId)
-    navigate('/workspace')
+  const confirmDeleteProject = () => {
+    deleteMutation.mutate(projectId, {
+      onSuccess: () => navigate('/workspace'),
+    })
   }
 
-  const confirmLeaveProject = async () => {
-    await leaveProject(projectId)
-    navigate('/workspace')
+  const confirmLeaveProject = () => {
+    leaveMutation.mutate(projectId, {
+      onSuccess: () => navigate('/workspace'),
+    })
   }
 
   if (view === 'settings') {
