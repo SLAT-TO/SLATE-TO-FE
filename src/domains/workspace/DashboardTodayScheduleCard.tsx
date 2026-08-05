@@ -51,7 +51,14 @@ export default function DashboardTodayScheduleCard({
 
   return (
     <section className="flex flex-col gap-5">
-      <h2 className="text-head-sm text-neutral-11 font-bold">오늘 일정</h2>
+      <button
+        type="button"
+        onClick={onExpand}
+        aria-label="프로젝트 일정으로 이동"
+        className="w-fit text-left"
+      >
+        <h2 className="text-head-sm text-neutral-11 font-bold">오늘 일정 {'>'}</h2>
+      </button>
       <button
         type="button"
         onClick={onExpand}
