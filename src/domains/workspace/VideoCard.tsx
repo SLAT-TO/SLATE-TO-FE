@@ -13,7 +13,7 @@ interface VideoCardProps {
   /** 상태 태그 옆에 보여줄 상대 시간 문구 (예: "2시간 전") — 계산은 호출부에서 */
   relativeTime?: string
   unreadCommentCount?: number
-  /** React Router 경로 — 있으면 useNavigate로 이동 (전역 navigate 헬퍼보다 확실) */
+  /** React Router 경로 — 있으면 `<Link to>`로 이동 */
   to?: string
   onClick?: () => void
   onEdit?: () => void

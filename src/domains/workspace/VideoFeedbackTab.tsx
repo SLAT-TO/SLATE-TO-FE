@@ -25,6 +25,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
   const [videosLoading, setVideosLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<VideoListItem | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [editError, setEditError] = useState<string | null>(null)
   const [addVideoOpen, setAddVideoOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
 
@@ -78,6 +79,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
   }
 
   const openEdit = async (video: VideoListItem) => {
+    setEditError(null)
     try {
       const detail = await getVideo(projectId, video.videoId)
       setEditTarget({
@@ -87,7 +89,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
         memo: detail.memo,
       })
     } catch {
-      setDeleteError('영상 정보를 불러오지 못했습니다. 다시 시도해주세요.')
+      setEditError('영상 정보를 불러오지 못했습니다. 다시 시도해주세요.')
     }
   }
 
@@ -106,6 +108,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
   return (
     <section className="flex flex-col gap-3">
       {deleteError && <p className="text-caption-lg text-warning">{deleteError}</p>}
+      {editError && <p className="text-caption-lg text-warning">{editError}</p>}
       {videosLoading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
       {!videosLoading && (
         <>
