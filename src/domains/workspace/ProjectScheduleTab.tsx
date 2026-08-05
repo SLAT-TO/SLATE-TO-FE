@@ -196,13 +196,15 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
           projectId,
           scope: 'PROJECT',
         })
-        if (!cancelled) setDaySchedules(result.items)
-      } catch {
         if (!cancelled) {
-          const key = toDateKey(date)
-          setDaySchedules(
-            schedules.filter((s) => s.startAt.slice(0, 10) <= key && s.endAt.slice(0, 10) >= key),
-          )
+          setDaySchedules(result.items)
+          setActionError(null)
+        }
+      } catch {
+        // 월간 캘린더 항목은 참여자/메모가 없어 편집 fallback으로 쓰면 유실됨 → 에러만 표시
+        if (!cancelled) {
+          setDaySchedules([])
+          setActionError('하루 일정을 불러오지 못했습니다. 다시 시도해주세요.')
         }
       }
     }
@@ -211,7 +213,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     return () => {
       cancelled = true
     }
-  }, [projectId, selectedDate, schedules])
+  }, [projectId, selectedDate])
 
   const events = useMemo(
     () => schedules.map((schedule) => scheduleToCalendarEvent(schedule, members)),
@@ -252,15 +254,22 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     setActionError(null)
     try {
       const { startAt, endAt } = toScheduleDateTimes(values, selectedDate)
-      const updated = await updateSchedule(scheduleId, {
-        title: values.title.trim() || '새 일정',
-        startAt,
-        endAt,
-        location: values.place.trim() || undefined,
-        publicMemo: values.memo.trim() || undefined,
-        participantIds: values.participantIds.map(Number),
-      })
+      const current =
+        daySchedules.find((s) => s.id === scheduleId) ?? schedules.find((s) => s.id === scheduleId)
+      const updated = await updateSchedule(
+        scheduleId,
+        {
+          title: values.title.trim() || '새 일정',
+          startAt,
+          endAt,
+          location: values.place.trim() || undefined,
+          publicMemo: values.memo.trim() || undefined,
+          participantIds: values.participantIds.map(Number),
+        },
+        current,
+      )
       setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+      setDaySchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
     } catch {
       setActionError('일정을 수정하지 못했습니다. 다시 시도해주세요.')
     }

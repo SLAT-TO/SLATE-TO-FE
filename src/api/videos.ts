@@ -1,4 +1,5 @@
 import { request } from './client'
+import { ApiError } from '../types/api'
 import {
   normalizeFeedback,
   normalizeFeedbackReply,
@@ -239,8 +240,9 @@ export async function getShareLinks(videoId: number): Promise<{ items: ShareLink
   try {
     const link = await getShareLink(videoId)
     return { items: [link] }
-  } catch {
-    return { items: [] }
+  } catch (err) {
+    if (err instanceof ApiError && err.code === 'COMMON404') return { items: [] }
+    throw err
   }
 }
 

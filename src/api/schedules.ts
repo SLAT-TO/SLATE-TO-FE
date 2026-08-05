@@ -100,6 +100,7 @@ export async function createSchedule(body: CreateScheduleRequest): Promise<Sched
 export async function updateSchedule(
   scheduleId: number,
   body: UpdateScheduleRequest,
+  current?: Schedule,
 ): Promise<Schedule> {
   const result = await request<BeScheduleLike>({
     method: 'PATCH',
@@ -107,9 +108,11 @@ export async function updateSchedule(
     data: body,
   })
   return normalizeSchedule(result, {
-    location: body.location ?? null,
-    publicMemo: body.publicMemo ?? null,
-    participantIds: body.participantIds,
+    location: body.location ?? current?.location ?? null,
+    publicMemo: body.publicMemo ?? current?.publicMemo ?? null,
+    privateMemo: current?.privateMemo ?? null,
+    participantIds: body.participantIds ?? current?.participantIds ?? [],
+    createdAt: current?.createdAt,
   })
 }
 
