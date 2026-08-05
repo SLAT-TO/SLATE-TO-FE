@@ -3,6 +3,7 @@ import { addMonths, format, parse, subMonths } from 'date-fns'
 import {
   createSchedule,
   deleteSchedule,
+  getDailySchedules,
   getProjectSchedules,
   updatePrivateMemo,
   updateSchedule,
@@ -71,7 +72,7 @@ function ScheduleDetailCard({
   const [note, setNote] = useState(schedule.privateMemo ?? '')
 
   const participantNames = schedule.participantIds
-    .map((id) => members.find((m) => m.memberId === id)?.nickname)
+    .map((id) => members.find((m) => m.userId === id)?.nickname)
     .filter((name): name is string => !!name)
 
   const handleSendNote = () => {
@@ -155,6 +156,7 @@ function ScheduleDetailCard({
 // 이 프로젝트의 실제 Schedule API에 연동한다 (독립 캘린더 페이지는 아직 로컬 store만 사용).
 export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabProps) {
   const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [daySchedules, setDaySchedules] = useState<Schedule[]>([])
   const [loading, setLoading] = useState(true)
   const [month, setMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -167,7 +169,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     async function load() {
       setLoading(true)
       try {
-        const result = await getProjectSchedules(projectId)
+        const result = await getProjectSchedules(projectId, month)
         if (!cancelled) setSchedules(result.items)
       } catch {
         if (!cancelled) setSchedules([])
@@ -180,18 +182,45 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     return () => {
       cancelled = true
     }
-  }, [projectId])
+  }, [projectId, month])
+
+  useEffect(() => {
+    if (!selectedDate) return
+
+    let cancelled = false
+    const date = selectedDate
+
+    async function loadDay() {
+      try {
+        const result = await getDailySchedules(toDateKey(date), {
+          projectId,
+          scope: 'PROJECT',
+        })
+        if (!cancelled) {
+          setDaySchedules(result.items)
+          setActionError(null)
+        }
+      } catch {
+        // 월간 캘린더 항목은 참여자/메모가 없어 편집 fallback으로 쓰면 유실됨 → 에러만 표시
+        if (!cancelled) {
+          setDaySchedules([])
+          setActionError('하루 일정을 불러오지 못했습니다. 다시 시도해주세요.')
+        }
+      }
+    }
+
+    void loadDay()
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, selectedDate])
 
   const events = useMemo(
     () => schedules.map((schedule) => scheduleToCalendarEvent(schedule, members)),
     [schedules, members],
   )
 
-  const selectedDateSchedules = useMemo(() => {
-    if (!selectedDate) return []
-    const key = toDateKey(selectedDate)
-    return schedules.filter((s) => s.startAt.slice(0, 10) <= key && s.endAt.slice(0, 10) >= key)
-  }, [schedules, selectedDate])
+  const selectedDateSchedules = selectedDate ? daySchedules : []
 
   const handleDateClick = (date: Date) => {
     setSelectedDate((prev) => (prev && toDateKey(prev) === toDateKey(date) ? null : date))
@@ -225,15 +254,22 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     setActionError(null)
     try {
       const { startAt, endAt } = toScheduleDateTimes(values, selectedDate)
-      const updated = await updateSchedule(scheduleId, {
-        title: values.title.trim() || '새 일정',
-        startAt,
-        endAt,
-        location: values.place.trim() || undefined,
-        publicMemo: values.memo.trim() || undefined,
-        participantIds: values.participantIds.map(Number),
-      })
+      const current =
+        daySchedules.find((s) => s.id === scheduleId) ?? schedules.find((s) => s.id === scheduleId)
+      const updated = await updateSchedule(
+        scheduleId,
+        {
+          title: values.title.trim() || '새 일정',
+          startAt,
+          endAt,
+          location: values.place.trim() || undefined,
+          publicMemo: values.memo.trim() || undefined,
+          participantIds: values.participantIds.map(Number),
+        },
+        current,
+      )
       setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+      setDaySchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
     } catch {
       setActionError('일정을 수정하지 못했습니다. 다시 시도해주세요.')
     }
@@ -251,9 +287,12 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
 
   const handleSaveNote = async (scheduleId: number, note: string) => {
     setActionError(null)
+    const current =
+      daySchedules.find((s) => s.id === scheduleId) ?? schedules.find((s) => s.id === scheduleId)
     try {
-      const updated = await updatePrivateMemo(scheduleId, { privateMemo: note })
-      setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+      const updated = await updatePrivateMemo(scheduleId, { content: note }, current)
+      setDaySchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+      setSchedules((prev) => prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s)))
     } catch {
       setActionError('메모를 저장하지 못했습니다. 다시 시도해주세요.')
     }

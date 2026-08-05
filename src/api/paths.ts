@@ -51,10 +51,6 @@ export const paths = {
     leave: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/members/me`,
     /** FE mock 전용 — BE 활동 피드 API 미구현. BE에 activity_log 테이블/엔티티는 있으나 컨트롤러 없음 */
     activities: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/activities`,
-    /** FE mock 전용 — BE에 프로젝트별 하위 일정 API 없음 (최상위 /schedules만 존재) */
-    schedules: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/schedules`,
-    scheduleCandidates: (projectId: number | string) =>
-      `${API_PREFIX}/projects/${projectId}/schedule-participants/candidates`,
     notices: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/notices`,
     notice: (projectId: number | string, noticeId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/notices/${noticeId}`,
@@ -110,7 +106,6 @@ export const paths = {
     privateMemo: (scheduleId: number | string) =>
       `${API_PREFIX}/schedules/${scheduleId}/private-memo`,
   },
-  /** FE mock 전용 — BE에 브리핑 관련 엔티티/컨트롤러가 전혀 없음 (계획 자체가 안 보임) */
   briefings: {
     today: `${API_PREFIX}/briefings/today`,
   },

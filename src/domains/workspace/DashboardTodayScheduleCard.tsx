@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getProjectSchedules } from '../../api/schedules'
+import { getDailySchedules } from '../../api/schedules'
 import type { Schedule } from '../../types/schedule'
 import { toDateKey } from '../../utils/calendarUtils'
 import { CARD_BASE } from '../../styles/card'
@@ -29,7 +29,10 @@ export default function DashboardTodayScheduleCard({
     async function load() {
       setLoading(true)
       try {
-        const result = await getProjectSchedules(projectId)
+        const result = await getDailySchedules(toDateKey(new Date()), {
+          projectId,
+          scope: 'PROJECT',
+        })
         if (!cancelled) setSchedules(result.items)
       } catch {
         if (!cancelled) setSchedules([])
@@ -44,10 +47,7 @@ export default function DashboardTodayScheduleCard({
     }
   }, [projectId])
 
-  const today = toDateKey(new Date())
-  const todaySchedules = schedules.filter(
-    (s) => s.startAt.slice(0, 10) <= today && s.endAt.slice(0, 10) >= today,
-  )
+  const todaySchedules = schedules
 
   return (
     <section className="flex flex-col gap-5">

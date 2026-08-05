@@ -95,7 +95,7 @@ export function EventFormModal({
 
   const handleSubmit = () => {
     const participantNames = members
-      .filter((m) => values.participantIds.includes(String(m.memberId)))
+      .filter((m) => values.participantIds.includes(String(m.userId)))
       .map((m) => m.nickname)
     onSubmit({ ...values, participantNames })
     onClose()

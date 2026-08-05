@@ -134,7 +134,7 @@ export default function FeedbackPanel({
               onRemove={() => removeFeedback(feedback.feedbackId)}
               onToggleResolved={() => {
                 if (meId == null) return
-                void toggleResolved(feedback, meId)
+                void toggleResolved(feedback)
               }}
               isEditing={editingFeedbackId === feedback.feedbackId}
               editingContent={editingFeedbackContent}
