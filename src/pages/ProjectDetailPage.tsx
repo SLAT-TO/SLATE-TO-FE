@@ -86,6 +86,14 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
       .catch(() => setMeId(null))
   }, [])
 
+  const partialErrorKey = partialErrors.join('|')
+  useEffect(() => {
+    if (!partialErrorKey) return
+    for (const message of partialErrorKey.split('|')) {
+      if (message) window.alert(message)
+    }
+  }, [partialErrorKey])
+
   // 서브상태 리셋은 App의 <ProjectDetailPage key={projectId} /> 리마운트에 위임
 
   const handleTabChange = (key: string) => {
@@ -288,13 +296,6 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
 
       {tab === 'dashboard' && noticeView === 'main' && activityView === 'main' && (
         <div className="flex flex-col gap-8">
-          {partialErrors.length > 0 && (
-            <ul className="text-body-sm text-warning flex flex-col gap-1">
-              {partialErrors.map((message) => (
-                <li key={message}>{message}</li>
-              ))}
-            </ul>
-          )}
           <div className="grid gap-8 lg:grid-cols-2">
             <DashboardNoticeCard notices={notices} onExpand={() => setNoticeView('list')} />
             <DashboardTodayScheduleCard

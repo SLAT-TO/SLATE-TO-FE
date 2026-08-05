@@ -127,7 +127,7 @@ export default function VideoDetailHeader({
           ariaLabel="영상 메뉴"
         />
         <Button variant="primary" size="sm" onClick={() => setInviteOpen(true)}>
-          + 초대
+          게스트 초대하기
         </Button>
       </div>
     )

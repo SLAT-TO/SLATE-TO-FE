@@ -43,22 +43,20 @@ export default function ActivityListView({ activities, onBack }: ActivityListVie
 
   return (
     <section className="flex flex-col gap-4">
-      <button
-        type="button"
-        onClick={onBack}
-        className="text-body-sm text-neutral-11 w-fit font-semibold"
-      >
-        {'< 대시보드'}
-      </button>
-
       <div className="flex items-center justify-between">
-        <h2 className="text-head-sm text-neutral-11 font-bold">최근 활동</h2>
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-head-sm text-neutral-11 w-fit font-bold"
+        >
+          {'< 최근 활동'}
+        </button>
         <Button
           variant="secondary"
-          size="sm"
+          size="md"
+          width={112}
           onClick={markAllAsRead}
           disabled={!hasUnread}
-          className="w-23"
         >
           전체 읽음
         </Button>
@@ -67,7 +65,7 @@ export default function ActivityListView({ activities, onBack }: ActivityListVie
       {items.length === 0 ? (
         <p className="text-caption-lg text-neutral-6">최근 활동이 없습니다.</p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-4">
           {items.map((activity) => (
             <li
               key={activity.id}

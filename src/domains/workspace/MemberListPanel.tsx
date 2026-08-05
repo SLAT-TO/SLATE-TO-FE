@@ -280,7 +280,7 @@ export default function MemberListPanel({
               setInviteOpen(true)
             }}
           >
-            + 초대하기
+            게스트 초대하기
           </Button>
         </div>
       )}

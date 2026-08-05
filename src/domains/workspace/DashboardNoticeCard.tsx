@@ -33,7 +33,14 @@ export default function DashboardNoticeCard({ notices, onExpand }: DashboardNoti
 
   return (
     <section className="flex flex-col gap-5">
-      <h2 className="text-head-sm text-neutral-11 font-bold">공지 사항</h2>
+      <button
+        type="button"
+        onClick={onExpand}
+        aria-label="공지 전체 보기"
+        className="text-head-sm text-neutral-11 w-fit font-bold"
+      >
+        공지 사항 {'>'}
+      </button>
       <button
         type="button"
         onClick={onExpand}
