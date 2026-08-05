@@ -42,9 +42,11 @@ function getHeaderTitle(pathname: string): string {
 
 function AppRoutes({ pathname }: { pathname: string }) {
   const headerTitle = useMemo(() => getHeaderTitle(pathname), [pathname])
-  useHeaderSlot(
-    useMemo(() => (headerTitle ? <HeaderTitle>{headerTitle}</HeaderTitle> : null), [headerTitle]),
+  const headerContent = useMemo(
+    () => (headerTitle ? <HeaderTitle>{headerTitle}</HeaderTitle> : undefined),
+    [headerTitle],
   )
+  useHeaderSlot(headerContent)
 
   // trailing slash 정규화 (/workspace/ → /workspace)
   const path = pathname.replace(/\/+$/, '') || '/'
