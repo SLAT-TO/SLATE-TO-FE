@@ -1,8 +1,10 @@
-﻿import { useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { setNavigateImpl } from '../utils/navigation'
 
-/** 기존 navigate() 헬퍼를 React Router navigate에 연결 */
+/** 기존 navigate() 헬퍼를 React Router navigate에 연결.
+ * Strict Mode remount 때 null cleanup을 하면 pushState fallback이 끼어 URL만 바뀌므로,
+ * 연결은 mount 시 1회만 하고 unmount cleanup은 하지 않는다(앱 단일 루트 전제). */
 export default function NavigateBridge() {
   const navigate = useNavigate()
   const navigateRef = useRef(navigate)
