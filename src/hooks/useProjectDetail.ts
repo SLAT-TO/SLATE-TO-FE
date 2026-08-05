@@ -65,11 +65,16 @@ export function useProjectDetail(projectId: number) {
   if (noticesQuery.isError) partialErrors.push('공지를 불러오지 못했습니다.')
   if (membersQuery.isError) partialErrors.push('참여 인원을 불러오지 못했습니다.')
 
-  const error = projectQuery.isError
-    ? projectQuery.error instanceof ApiError
-      ? projectQuery.error.message
-      : '프로젝트 정보를 불러오지 못했습니다.'
-    : null
+  // 캐시가 있으면 재조회 실패로 화면 전체를 내리지 않음
+  const error =
+    projectQuery.isError && !projectQuery.data
+      ? projectQuery.error instanceof ApiError
+        ? projectQuery.error.message
+        : '프로젝트 정보를 불러오지 못했습니다.'
+      : null
+  if (projectQuery.isError && projectQuery.data) {
+    partialErrors.push('프로젝트 정보를 새로고침하지 못했습니다.')
+  }
 
   return {
     project: projectQuery.data ?? null,
@@ -80,7 +85,7 @@ export function useProjectDetail(projectId: number) {
     activities: activitiesQuery.data ?? [],
     notices: noticesQuery.data ?? [],
     setNotices,
-    loading: projectQuery.isPending,
+    loading: projectQuery.isPending && !projectQuery.data,
     error,
     partialErrors,
   }
