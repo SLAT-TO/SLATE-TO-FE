@@ -3,8 +3,11 @@ import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { deleteProject, getProjects, leaveProject, pinProject, unpinProject } from '../api/projects'
 import ProjectCard from '../domains/project/ProjectCard'
+import ProjectSettingsView from '../domains/workspace/ProjectSettingsView'
 import WorkspaceListSkeleton from '../domains/workspace/WorkspaceListSkeleton'
+import { Button } from '../components/Button'
 import ConfirmModal from '../components/ConfirmModal'
+import Modal from '../components/Modal'
 import { projectMetaTags } from '../constants/projectLabels'
 import { projectStatusLabel } from '../constants/projectStatus'
 import type { ProjectSummary } from '../types/project'
@@ -19,6 +22,7 @@ export default function WorkspacePage() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [leaveTarget, setLeaveTarget] = useState<ProjectSummary | null>(null)
   const [leaveError, setLeaveError] = useState<string | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -85,8 +89,17 @@ export default function WorkspacePage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <header>
+      <header className="flex items-center justify-between">
         <h1 className="text-head-lg text-neutral-11 font-bold">프로젝트 목록</h1>
+        <Button
+          variant="secondary"
+          size="sm"
+          width="auto"
+          onClick={() => setCreateOpen(true)}
+          className="border-primary text-primary hover:border-primary hover:text-primary hover:bg-main-1 px-3"
+        >
+          + 추가하기
+        </Button>
       </header>
 
       {loading && <WorkspaceListSkeleton />}
@@ -153,6 +166,18 @@ export default function WorkspacePage() {
         title={leaveTarget ? `${leaveTarget.title}에서 나가시겠습니까?` : ''}
         confirmText="나가기"
       />
+
+      <Modal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        className="max-h-[85vh] w-140 overflow-y-auto"
+      >
+        <ProjectSettingsView
+          mode="create"
+          onCancel={() => setCreateOpen(false)}
+          onCreated={(created) => navigate(`/workspace/projects/${created.id}`)}
+        />
+      </Modal>
     </section>
   )
 }
