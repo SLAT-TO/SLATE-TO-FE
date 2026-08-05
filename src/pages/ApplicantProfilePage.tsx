@@ -61,7 +61,7 @@ const MOCK_PROJECT_HISTORY: ProjectHistoryItem[] = [
   },
 ]
 
-const HEADER = <HeaderTitle>프로필</HeaderTitle>
+const HEADER = <HeaderTitle>지원자 프로필</HeaderTitle>
 
 function ApplicantProfilePage({ jobId, applicantId }: ApplicantProfilePageProps) {
   useHeaderSlot(HEADER)
