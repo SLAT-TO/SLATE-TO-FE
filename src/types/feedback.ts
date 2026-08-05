@@ -53,24 +53,18 @@ export type UpdateFeedbackRequest = {
 }
 
 export type UpdateFeedbackStatusRequest = {
-  /** BE FeedbackStatusReqDTO — 필수 */
-  userId: number
+  /** BE FeedbackStatusReqDTO */
   status: boolean
 }
 
 export type CreateReplyRequest = {
   content: string
-  /** FE mock 전용 — BE 답글 API 미지원 */
-  startTime?: number
-  /** FE mock 전용 — BE 답글 API 미지원 */
-  endTime?: number
   /** 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
   guestId?: number
 }
 
 export type UpdateReplyStatusRequest = {
-  /** BE ReplyStatusReqDTO — 필수 */
-  userId: number
+  /** BE ReplyStatusReqDTO */
   status: boolean
 }
 

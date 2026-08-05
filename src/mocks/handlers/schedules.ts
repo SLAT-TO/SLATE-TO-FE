@@ -19,9 +19,31 @@ function safeUser() {
 
 /** 홈 화면에 노출할 오늘의 브리핑 개수 */
 const BRIEFING_LIMIT = 3
+function toBeSchedule(s: (typeof db.schedules)[number]) {
+  return {
+    scheduleId: s.id,
+    scheduleScope: s.scheduleScope,
+    projectId: s.projectId,
+    title: s.title,
+    startAt: s.startAt,
+    endAt: s.endAt,
+    location: s.location,
+    publicMemo: s.publicMemo,
+    privateMemo: s.privateMemo,
+    participants: s.participantIds.map((userId) => {
+      const member = db.members.find((m) => m.userId === userId)
+      return {
+        userId,
+        nickname: member?.nickname ?? `user-${userId}`,
+        profileImageUrl: member?.profileImageUrl ?? null,
+      }
+    }),
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+  }
+}
 
 export const scheduleHandlers = [
-  // 일정(오늘) + 최근 안 읽은 알림을 조합해 최대 3건 반환
   http.get(paths.briefings.today, () => {
     if (!safeUser()) return unauthorized()
 
@@ -72,24 +94,29 @@ export const scheduleHandlers = [
     if (!safeUser()) return unauthorized()
     const url = new URL(request.url)
     const projectId = url.searchParams.get('projectId')
-    const items = projectId
-      ? db.schedules.filter((s) => s.projectId === Number(projectId))
-      : db.schedules
-    return HttpResponse.json(ok({ items }), { status: 200 })
-  }),
-
-  // BE 미구현 — 프로젝트별 하위 일정 API 없음 (최상위 /schedules만 존재)
-  http.get(paths.projects.schedules(':projectId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
-    const items = db.schedules.filter((s) => s.projectId === Number(params.projectId))
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const scope = url.searchParams.get('scope')
+    let items = db.schedules
+    if (projectId) items = items.filter((s) => s.projectId === Number(projectId))
+    if (scope === 'PROJECT') items = items.filter((s) => s.scheduleScope === 'PROJECT')
+    if (scope === 'PERSONAL') items = items.filter((s) => s.scheduleScope === 'PERSONAL')
+    return HttpResponse.json(ok({ items: items.map((s) => toBeSchedule(s)) }), { status: 200 })
   }),
 
   http.get(paths.schedules.daily, ({ request }) => {
     if (!safeUser()) return unauthorized()
-    const date = new URL(request.url).searchParams.get('date')
-    const items = date ? db.schedules.filter((s) => s.startAt.startsWith(date)) : db.schedules
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const url = new URL(request.url)
+    const date = url.searchParams.get('date')
+    const projectId = url.searchParams.get('projectId')
+    const scope = url.searchParams.get('scope')
+    if (!date) return badRequest()
+    let items = db.schedules.filter(
+      (s) => s.startAt.slice(0, 10) <= date && s.endAt.slice(0, 10) >= date,
+    )
+    if (projectId) items = items.filter((s) => s.projectId === Number(projectId))
+    if (scope === 'PROJECT') items = items.filter((s) => s.scheduleScope === 'PROJECT')
+    return HttpResponse.json(ok({ date, items: items.map((s) => toBeSchedule(s)) }), {
+      status: 200,
+    })
   }),
 
   http.post(paths.schedules.root, async ({ request }) => {
@@ -113,7 +140,19 @@ export const scheduleHandlers = [
       updatedAt: now,
     }
     db.schedules.unshift(schedule)
-    return HttpResponse.json(created(schedule), { status: 201 })
+    return HttpResponse.json(
+      created({
+        scheduleId: schedule.id,
+        scheduleScope: schedule.scheduleScope,
+        projectId: schedule.projectId,
+        title: schedule.title,
+        startAt: schedule.startAt,
+        endAt: schedule.endAt,
+        createdAt: schedule.createdAt,
+        updatedAt: schedule.updatedAt,
+      }),
+      { status: 201 },
+    )
   }),
 
   http.patch(paths.schedules.byId(':scheduleId'), async ({ request, params }) => {
@@ -122,7 +161,19 @@ export const scheduleHandlers = [
     if (!schedule) return notFound()
     const body = (await request.json()) as UpdateScheduleRequest
     Object.assign(schedule, body, { updatedAt: new Date().toISOString() })
-    return HttpResponse.json(ok(schedule), { status: 200 })
+    return HttpResponse.json(
+      ok({
+        scheduleId: schedule.id,
+        scheduleScope: schedule.scheduleScope,
+        projectId: schedule.projectId,
+        title: schedule.title,
+        startAt: schedule.startAt,
+        endAt: schedule.endAt,
+        createdAt: schedule.createdAt,
+        updatedAt: schedule.updatedAt,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.delete(paths.schedules.byId(':scheduleId'), ({ params }) => {
@@ -130,20 +181,7 @@ export const scheduleHandlers = [
     const id = Number(params.scheduleId)
     if (!db.schedules.some((s) => s.id === id)) return notFound()
     db.schedules = db.schedules.filter((s) => s.id !== id)
-    return HttpResponse.json(ok({ deletedAt: new Date().toISOString() }), { status: 200 })
-  }),
-
-  http.get(paths.projects.scheduleCandidates(':projectId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
-    if (!db.projects.some((p) => p.id === Number(params.projectId))) return notFound()
-    const items = db.members.map((m) => ({
-      memberId: m.memberId,
-      userId: m.userId,
-      nickname: m.nickname,
-      profileImageUrl: m.profileImageUrl,
-      roleNames: m.roleNames,
-    }))
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    return HttpResponse.json(ok(null), { status: 200 })
   }),
 
   http.patch(paths.schedules.privateMemo(':scheduleId'), async ({ request, params }) => {
@@ -151,8 +189,17 @@ export const scheduleHandlers = [
     const schedule = db.schedules.find((s) => s.id === Number(params.scheduleId))
     if (!schedule) return notFound()
     const body = (await request.json()) as PrivateMemoRequest
-    schedule.privateMemo = body.privateMemo
+    if (!body.content?.trim()) return badRequest()
+    schedule.privateMemo = body.content
     schedule.updatedAt = new Date().toISOString()
-    return HttpResponse.json(ok(schedule), { status: 200 })
+    return HttpResponse.json(
+      ok({
+        privateMemoId: schedule.id,
+        scheduleId: schedule.id,
+        content: body.content,
+        updatedAt: schedule.updatedAt,
+      }),
+      { status: 200 },
+    )
   }),
 ]

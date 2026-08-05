@@ -55,18 +55,20 @@ export type CreateVideoResult = {
   createdAt: string
 }
 
-/** BE VideoUpdateReqDTO */
+/** BE VideoUpdateReqDTO — youtubeUrl은 FE 선반영, BE 필드 추가 필요 */
 export type UpdateVideoRequest = {
   title?: string
   memo?: string
+  youtubeUrl?: string
 }
 
-/** BE VideoUpdateResDTO */
+/** BE VideoUpdateResDTO — youtubeUrl은 BE 반영 전 optional */
 export type UpdateVideoResult = {
   videoId: number
   title: string
   memo: string | null
   updatedAt: string
+  youtubeUrl?: string
 }
 
 /** BE VideoBookmarkUpdateReqDTO / VideoBookmarkUpdateResDTO */

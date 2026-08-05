@@ -1,14 +1,6 @@
-import { useEffect, useState } from 'react'
-import { getPathname } from '../utils/navigation'
+import { useLocation } from 'react-router-dom'
 
+/** BrowserRouter 하위에서는 React Router location을 사용한다 */
 export function usePathname(): string {
-  const [pathname, setPathname] = useState(getPathname)
-
-  useEffect(() => {
-    const onPopState = () => setPathname(getPathname())
-    window.addEventListener('popstate', onPopState)
-    return () => window.removeEventListener('popstate', onPopState)
-  }, [])
-
-  return pathname
+  return useLocation().pathname
 }
