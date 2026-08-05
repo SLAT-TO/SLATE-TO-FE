@@ -23,11 +23,11 @@ export function useRecommendedJobs() {
       try {
         const [recommended, bookmarks] = await Promise.all([
           getRecommendedRecruitments(),
-          getMyRecruitmentBookmarks().catch(() => ({ content: [] as Recruitment[] })),
+          getMyRecruitmentBookmarks().catch(() => ({ items: [] as Recruitment[] })),
         ])
         if (cancelled) return
-        setJobs(recommended.content)
-        setBookmarkedIds(new Set(bookmarks.content.map((r) => r.id)))
+        setJobs(recommended.items)
+        setBookmarkedIds(new Set(bookmarks.items.map((r) => r.id)))
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof ApiError ? err.message : '추천 공고를 불러오지 못했습니다.')
