@@ -5,6 +5,7 @@ import { deleteProject, getProjects, leaveProject, pinProject, unpinProject } fr
 import ProjectCard from '../domains/project/ProjectCard'
 import ProjectSettingsView from '../domains/workspace/ProjectSettingsView'
 import WorkspaceListSkeleton from '../domains/workspace/WorkspaceListSkeleton'
+import { Button } from '../components/Button'
 import ConfirmModal from '../components/ConfirmModal'
 import Modal from '../components/Modal'
 import { projectMetaTags } from '../constants/projectLabels'
@@ -90,13 +91,15 @@ export default function WorkspacePage() {
     <section className="flex flex-col gap-6">
       <header className="flex items-center justify-between">
         <h1 className="text-head-lg text-neutral-11 font-bold">프로젝트 목록</h1>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
+          width="auto"
           onClick={() => setCreateOpen(true)}
-          className="border-primary text-primary hover:bg-main-1 rounded-md border px-3 py-1.5 text-sm"
+          className="border-primary text-primary hover:border-primary hover:text-primary hover:bg-main-1 px-3"
         >
           + 추가하기
-        </button>
+        </Button>
       </header>
 
       {loading && <WorkspaceListSkeleton />}
