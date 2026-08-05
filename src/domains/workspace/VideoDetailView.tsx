@@ -322,8 +322,10 @@ export function VideoDetailView({
 
       <EditVideoModal
         key={editOpen ? `video-${videoId}-open` : 'video-edit-closed'}
+        projectId={projectId}
         isOpen={editOpen}
         initialTitle={videoDetail?.title ?? ''}
+        initialYoutubeUrl={videoDetail?.youtubeUrl ?? ''}
         initialMemo={videoDetail?.memo ?? ''}
         onClose={() => setEditOpen(false)}
         onSubmit={handleUpdateVideo}

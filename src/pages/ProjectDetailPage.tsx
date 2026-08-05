@@ -367,12 +367,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
 
       {tab === 'files' && <ProjectFileList projectId={projectId} />}
 
-      {tab === 'feedback' && (
-        <VideoFeedbackTab
-          projectId={projectId}
-          onSelectVideo={(id) => navigate(`/workspace/projects/${projectId}/videos/${id}`)}
-        />
-      )}
+      {tab === 'feedback' && <VideoFeedbackTab projectId={projectId} />}
 
       <ConfirmModal
         isOpen={deleteOpen}

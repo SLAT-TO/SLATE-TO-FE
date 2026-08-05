@@ -1,32 +1,32 @@
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { useEffect, useState } from 'react'
-import { createVideo, deleteVideo, getVideos, updateVideo } from '../../api/videos'
+import { createVideo, deleteVideo, getVideo, getVideos, updateVideo } from '../../api/videos'
 import ConfirmModal from '../../components/ConfirmModal'
 import VideoCard from './VideoCard'
 import AddVideoModal from './AddVideoModal'
 import EditVideoModal from './EditVideoModal'
 import type { VideoListItem } from '../../types/video'
-import type { CreateVideoValues } from '../../schemas/video'
+import type { CreateVideoValues, UpdateVideoValues } from '../../schemas/video'
+
+type EditTarget = {
+  videoId: number
+  title: string
+  youtubeUrl: string
+  memo: string | null
+}
 
 type VideoFeedbackTabProps = {
   projectId: number
 }
 
-type VideoFeedbackTabWithSelectionProps = VideoFeedbackTabProps & {
-  onSelectVideo: (videoId: number) => void
-}
-
-export default function VideoFeedbackTab({
-  projectId,
-  onSelectVideo,
-}: VideoFeedbackTabWithSelectionProps) {
+export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
   const [videos, setVideos] = useState<VideoListItem[]>([])
   const [videosLoading, setVideosLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<VideoListItem | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [addVideoOpen, setAddVideoOpen] = useState(false)
-  const [editTarget, setEditTarget] = useState<VideoListItem | null>(null)
+  const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -77,7 +77,21 @@ export default function VideoFeedbackTab({
     ])
   }
 
-  const handleUpdateVideo = async (values: { title: string }) => {
+  const openEdit = async (video: VideoListItem) => {
+    try {
+      const detail = await getVideo(projectId, video.videoId)
+      setEditTarget({
+        videoId: detail.videoId,
+        title: detail.title,
+        youtubeUrl: detail.youtubeUrl,
+        memo: detail.memo,
+      })
+    } catch {
+      setDeleteError('영상 정보를 불러오지 못했습니다. 다시 시도해주세요.')
+    }
+  }
+
+  const handleUpdateVideo = async (values: UpdateVideoValues) => {
     if (!editTarget) return
     const result = await updateVideo(projectId, editTarget.videoId, values)
     setVideos((prev) =>
@@ -108,8 +122,8 @@ export default function VideoFeedbackTab({
                   locale: ko,
                 })}
                 unreadCommentCount={video.unreadCommentCount}
-                onClick={() => onSelectVideo(video.videoId)}
-                onEdit={() => setEditTarget(video)}
+                to={`/workspace/projects/${projectId}/videos/${video.videoId}`}
+                onEdit={() => void openEdit(video)}
                 onDelete={() => setDeleteTarget(video)}
               />
             ))}
@@ -154,8 +168,11 @@ export default function VideoFeedbackTab({
 
       <EditVideoModal
         key={editTarget ? `video-${editTarget.videoId}` : 'video-edit-closed'}
+        projectId={projectId}
         isOpen={editTarget !== null}
         initialTitle={editTarget?.title ?? ''}
+        initialYoutubeUrl={editTarget?.youtubeUrl ?? ''}
+        initialMemo={editTarget?.memo ?? ''}
         onClose={() => setEditTarget(null)}
         onSubmit={handleUpdateVideo}
       />
