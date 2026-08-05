@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { getMe } from '../api/users'
 import {
   useDeleteProjectMutation,
   useLeaveProjectMutation,
   useToggleProjectPinMutation,
 } from '../queries/projects'
+import { projectKeys } from '../queries/keys'
 import ActionMenu from '../components/ActionMenu'
 import ConfirmModal from '../components/ConfirmModal'
 import BookmarkStarIcon from '../components/icons/BookmarkStarIcon'
@@ -30,7 +32,7 @@ import {
   projectStatusColor,
   projectStatusLabel,
 } from '../constants/projectStatus'
-import type { ProjectStatus } from '../types/project'
+import type { ProjectStatus, ProjectSummary } from '../types/project'
 import { navigate } from '../utils/navigation'
 
 const DETAIL_TABS = [
@@ -47,6 +49,7 @@ type ProjectDetailPageProps = {
 }
 
 export default function ProjectDetailPage({ projectId, videoId = null }: ProjectDetailPageProps) {
+  const queryClient = useQueryClient()
   const {
     project,
     setProject,
@@ -192,6 +195,21 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         onCancel={leaveSettings}
         onSaved={(updated) => {
           setProject(updated)
+          queryClient.setQueryData<ProjectSummary[]>(projectKeys.list(), (prev) =>
+            prev?.map((item) =>
+              item.id === updated.id
+                ? {
+                    ...item,
+                    title: updated.title,
+                    endDate: updated.endDate,
+                    clientName: updated.clientName,
+                    type: updated.type,
+                    lengthType: updated.lengthType,
+                    status: updated.status,
+                  }
+                : item,
+            ),
+          )
           leaveSettings()
         }}
       />
