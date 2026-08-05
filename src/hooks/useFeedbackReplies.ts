@@ -71,8 +71,6 @@ export function useFeedbackReplies(getCurrentTime: () => number, guestId?: numbe
       if (!newReply.trim()) return
       const created = await createReply(feedbackId, {
         content: newReply.trim(),
-        startTime: replyPendingStart ?? undefined,
-        endTime: replyPendingEnd ?? undefined,
         guestId,
       })
       setRepliesByFeedback((prev) => ({
@@ -81,7 +79,7 @@ export function useFeedbackReplies(getCurrentTime: () => number, guestId?: numbe
       }))
       resetReplyCompose()
     },
-    [newReply, replyPendingStart, replyPendingEnd, guestId, resetReplyCompose],
+    [newReply, guestId, resetReplyCompose],
   )
 
   return {

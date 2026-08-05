@@ -1,4 +1,5 @@
 import { request } from './client'
+import { ApiError } from '../types/api'
 import {
   normalizeFeedback,
   normalizeFeedbackReply,
@@ -112,10 +113,14 @@ export async function unlinkReferenceFile(videoId: number, referenceFileId: numb
   return request({ method: 'DELETE', url: paths.videos.referenceFile(videoId, referenceFileId) })
 }
 
-export async function getFeedbacks(videoId: number): Promise<{ items: Feedback[] }> {
+export async function getFeedbacks(
+  videoId: number,
+  options?: { guestId?: number },
+): Promise<{ items: Feedback[] }> {
   const result = await request<{ items: FeedbackStatusRaw[] }>({
     method: 'GET',
     url: paths.videos.feedbacks(videoId),
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
   })
   return { items: result.items.map(normalizeFeedback) }
 }
@@ -144,8 +149,15 @@ export async function updateFeedback(
   return normalizeFeedback(result)
 }
 
-export async function deleteFeedback(feedbackId: number): Promise<null> {
-  return request({ method: 'DELETE', url: paths.feedbacks.byId(feedbackId) })
+export async function deleteFeedback(
+  feedbackId: number,
+  options?: { guestId?: number },
+): Promise<null> {
+  return request({
+    method: 'DELETE',
+    url: paths.feedbacks.byId(feedbackId),
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+  })
 }
 
 export async function updateFeedbackStatus(
@@ -175,7 +187,10 @@ export async function createReply(
   const result = await request<FeedbackReplyStatusRaw>({
     method: 'POST',
     url: paths.feedbacks.replies(feedbackId),
-    data: body,
+    data: {
+      content: body.content,
+      ...(body.guestId != null ? { guestId: body.guestId } : {}),
+    },
   })
   return normalizeFeedbackReply(result)
 }
@@ -204,12 +219,31 @@ export async function updateReplyStatus(
   return { ...result, status: toFeedbackStatus(result.status) }
 }
 
-export async function createShareLink(videoId: number): Promise<ShareLink> {
-  return request({ method: 'POST', url: paths.videos.shareLinks(videoId) })
+export async function createShareLink(
+  videoId: number,
+  body?: { expiredAt?: string },
+): Promise<ShareLink> {
+  return request({
+    method: 'POST',
+    url: paths.videos.shareLinks(videoId),
+    data: body ?? {},
+  })
 }
 
-export async function getShareLinks(videoId: number): Promise<{ items: ShareLink[] }> {
+/** BE는 영상당 단건 ShareLinkInfoResDTO. 없으면 404 — 호출부에서 처리 */
+export async function getShareLink(videoId: number): Promise<ShareLink> {
   return request({ method: 'GET', url: paths.videos.shareLinks(videoId) })
+}
+
+/** @deprecated BE 단건 응답 — getShareLink 사용. 하위호환용으로 items 래핑 */
+export async function getShareLinks(videoId: number): Promise<{ items: ShareLink[] }> {
+  try {
+    const link = await getShareLink(videoId)
+    return { items: [link] }
+  } catch (err) {
+    if (err instanceof ApiError && err.code === 'COMMON404') return { items: [] }
+    throw err
+  }
 }
 
 export async function accessShareLink(token: string): Promise<ShareLinkAccess> {
@@ -223,6 +257,9 @@ export async function registerGuest(
   return request({ method: 'POST', url: paths.shareLinks.guests(token), data: body })
 }
 
-export async function deactivateShareLink(shareLinkId: number): Promise<ShareLink> {
+/** BE 토글 — isActive만 갱신된 응답 */
+export async function deactivateShareLink(
+  shareLinkId: number,
+): Promise<{ shareLinkId: number; isActive: boolean }> {
   return request({ method: 'PATCH', url: paths.shareLinks.byId(shareLinkId) })
 }

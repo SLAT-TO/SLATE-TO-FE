@@ -1,6 +1,7 @@
 export type ScheduleScope = 'PERSONAL' | 'PROJECT'
 
 export type Schedule = {
+  /** BE scheduleId */
   id: number
   scheduleScope: ScheduleScope
   projectId: number | null
@@ -10,6 +11,7 @@ export type Schedule = {
   location: string | null
   publicMemo: string | null
   privateMemo: string | null
+  /** BE participant userId 목록 (memberId 아님) */
   participantIds: number[]
   createdAt: string
   updatedAt: string
@@ -35,8 +37,9 @@ export type CreateScheduleRequest = {
 
 export type UpdateScheduleRequest = Partial<Omit<CreateScheduleRequest, 'projectId'>>
 
+/** BE SchedulePrivateMemoRequest */
 export type PrivateMemoRequest = {
-  privateMemo: string
+  content: string
 }
 
 /** GET /api/v1/briefings/today — BE 미구현, 엔티티/컨트롤러 자체가 없음. mock 전용 */

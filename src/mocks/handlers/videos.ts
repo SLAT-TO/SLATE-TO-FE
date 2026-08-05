@@ -114,12 +114,18 @@ export const videoHandlers = [
     const body = (await request.json()) as UpdateVideoRequest
     if (body.title !== undefined) video.title = body.title
     if (body.memo !== undefined) video.memo = body.memo
+    if (body.youtubeUrl !== undefined) {
+      video.youtubeUrl = body.youtubeUrl
+      video.youtubeVideoId = 'mockVideo'
+      video.thumbnailUrl = 'https://img.youtube.com/vi/mockVideo/maxresdefault.jpg'
+    }
     video.updatedAt = new Date().toISOString()
     return HttpResponse.json(
       ok({
         videoId: video.videoId,
         title: video.title,
         memo: video.memo,
+        youtubeUrl: video.youtubeUrl,
         updatedAt: video.updatedAt,
       }),
       { status: 200 },
@@ -276,8 +282,8 @@ export const videoHandlers = [
     if (!safeUser()) return unauthorized()
     const feedback = db.feedbacks.find((f) => f.feedbackId === Number(params.feedbackId))
     if (!feedback) return notFound()
-    const body = (await request.json()) as { userId?: number; status: boolean }
-    if (body.userId == null || body.status === undefined) return badRequest()
+    const body = (await request.json()) as { status: boolean }
+    if (body.status === undefined) return badRequest()
     feedback.status = body.status
     feedback.updatedAt = new Date().toISOString()
     return HttpResponse.json(
@@ -313,8 +319,8 @@ export const videoHandlers = [
       feedbackId: Number(params.feedbackId),
       actor,
       content: body.content,
-      startTime: body.startTime ?? null,
-      endTime: body.endTime ?? null,
+      startTime: null,
+      endTime: null,
       status: false,
       createdAt: now,
       updatedAt: now,
@@ -343,8 +349,8 @@ export const videoHandlers = [
     if (!safeUser()) return unauthorized()
     const reply = db.replies.find((r) => r.replyId === Number(params.replyId))
     if (!reply) return notFound()
-    const body = (await request.json()) as { userId?: number; status: boolean }
-    if (body.userId == null || body.status === undefined) return badRequest()
+    const body = (await request.json()) as { status: boolean }
+    if (body.status === undefined) return badRequest()
     reply.status = body.status
     reply.updatedAt = new Date().toISOString()
     return HttpResponse.json(
@@ -361,6 +367,18 @@ export const videoHandlers = [
     if (!safeUser()) return unauthorized()
     const videoId = Number(params.videoId)
     if (!db.videos.some((v) => v.videoId === videoId)) return notFound()
+    const existing = db.shareLinks.find((s) => s.videoId === videoId)
+    if (existing) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'SHARELINK409',
+          message: '이미 공유 링크가 있습니다.',
+          result: null,
+        },
+        { status: 409 },
+      )
+    }
     const link = {
       shareLinkId: allocId(),
       videoId,
@@ -375,8 +393,9 @@ export const videoHandlers = [
 
   http.get(paths.videos.shareLinks(':videoId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
-    const items = db.shareLinks.filter((s) => s.videoId === Number(params.videoId))
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const link = db.shareLinks.find((s) => s.videoId === Number(params.videoId))
+    if (!link) return notFound()
+    return HttpResponse.json(ok(link), { status: 200 })
   }),
 
   http.get(paths.shareLinks.byToken(':token'), ({ params }) => {
@@ -415,7 +434,9 @@ export const videoHandlers = [
     if (!safeUser()) return unauthorized()
     const link = db.shareLinks.find((s) => s.shareLinkId === Number(params.shareLinkId))
     if (!link) return notFound()
-    link.isActive = false
-    return HttpResponse.json(ok(link), { status: 200 })
+    link.isActive = !link.isActive
+    return HttpResponse.json(ok({ shareLinkId: link.shareLinkId, isActive: link.isActive }), {
+      status: 200,
+    })
   }),
 ]

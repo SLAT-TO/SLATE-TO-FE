@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { deleteProject, leaveProject, pinProject, unpinProject } from '../api/projects'
+import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { getMe } from '../api/users'
+import {
+  useDeleteProjectMutation,
+  useLeaveProjectMutation,
+  useToggleProjectPinMutation,
+} from '../queries/projects'
+import { projectKeys } from '../queries/keys'
 import ActionMenu from '../components/ActionMenu'
 import ConfirmModal from '../components/ConfirmModal'
 import BookmarkStarIcon from '../components/icons/BookmarkStarIcon'
@@ -26,8 +33,10 @@ import {
   projectStatusColor,
   projectStatusLabel,
 } from '../constants/projectStatus'
-import type { ProjectStatus } from '../types/project'
-import { navigate } from '../utils/navigation'
+import type { ProjectStatus, ProjectSummary } from '../types/project'
+
+/** Strict Mode remount에서도 같은 키 alert가 두 번 뜨지 않도록 모듈 단위로 기록 */
+const alertedPartialErrorKeys = new Set<string>()
 
 const DETAIL_TABS = [
   { key: 'dashboard', label: '대시보드' },
@@ -38,9 +47,13 @@ const DETAIL_TABS = [
 
 type ProjectDetailPageProps = {
   projectId: number
+  /** URL `/workspace/projects/:id/videos/:videoId` 에서 전달 — 있으면 영상 상세 */
+  videoId?: number | null
 }
 
-export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
+export default function ProjectDetailPage({ projectId, videoId = null }: ProjectDetailPageProps) {
+  const queryClient = useQueryClient()
+  const routerNavigate = useNavigate()
   const {
     project,
     setProject,
@@ -53,6 +66,9 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     error,
     partialErrors,
   } = useProjectDetail(projectId)
+  const pinMutation = useToggleProjectPinMutation()
+  const deleteMutation = useDeleteProjectMutation()
+  const leaveMutation = useLeaveProjectMutation()
   const statusMenuRef = useRef<HTMLDivElement>(null)
   const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
   const [tab, setTab] = useState('dashboard')
@@ -62,7 +78,6 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   )
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
-  const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null)
   const [meId, setMeId] = useState<number | null>(null)
   /** 대시보드 탭 내부 공지사항 서브뷰 — 'main'=대시보드, 'list'=공지사항 목록, number=공지 상세(noticeId) */
   const [noticeView, setNoticeView] = useState<'main' | 'list' | number>('main')
@@ -75,7 +90,22 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
       .catch(() => setMeId(null))
   }, [])
 
+  const partialErrorKey = partialErrors.join('|')
+  useEffect(() => {
+    if (!partialErrorKey) return
+    const alertKey = `${projectId}:${partialErrorKey}`
+    if (alertedPartialErrorKeys.has(alertKey)) return
+    alertedPartialErrorKeys.add(alertKey)
+    for (const message of partialErrorKey.split('|')) {
+      if (message) window.alert(message)
+    }
+  }, [partialErrorKey, projectId])
+
   // 서브상태 리셋은 App의 <ProjectDetailPage key={projectId} /> 리마운트에 위임
+
+  const closeVideo = useCallback(() => {
+    routerNavigate(`/workspace/projects/${projectId}`, { replace: true })
+  }, [projectId, routerNavigate])
 
   const handleTabChange = (key: string) => {
     setTab(key)
@@ -85,23 +115,14 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     }
   }
 
-  const handleToggleBookmark = useCallback(async () => {
+  const handleToggleBookmark = useCallback(() => {
     if (!project) return
-    const next = !project.isPinned
-    setProject((prev) => (prev ? { ...prev, isPinned: next } : prev))
-    try {
-      const result = next ? await pinProject(projectId) : await unpinProject(projectId)
-      setProject((prev) =>
-        prev ? { ...prev, isPinned: result.isPinned, pinnedAt: result.pinnedAt } : prev,
-      )
-    } catch {
-      setProject((prev) => (prev ? { ...prev, isPinned: !next } : prev))
-    }
-  }, [project, projectId, setProject])
+    pinMutation.mutate({ projectId, next: !project.isPinned })
+  }, [project, projectId, pinMutation])
 
   /** 전역 헤더: 제목·즐겨찾기 + 참여인원(왼쪽 끝) → 알림·프로필·ActionMenu. 설정·영상 상세에서는 비움.
    * useMemo로 감싸지 않으면 매 렌더 새 JSX가 만들어져 useHeaderSlot의 effect가 무한 반복된다. */
-  const showProjectHeader = Boolean(project) && view === 'main' && selectedVideoId === null
+  const showProjectHeader = Boolean(project) && view === 'main' && videoId == null
 
   const headerLeftContent = useMemo(() => {
     if (!showProjectHeader || !project) return null
@@ -158,7 +179,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         <p className="text-body-sm text-warning">{error ?? '프로젝트를 찾을 수 없습니다.'}</p>
         <button
           type="button"
-          onClick={() => navigate('/workspace')}
+          onClick={() => routerNavigate('/workspace')}
           className="text-body-sm text-primary w-fit underline"
         >
           워크스페이스로 돌아가기
@@ -169,22 +190,22 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   const metaTags = projectMetaTags(project)
 
-  const confirmDeleteProject = async () => {
-    await deleteProject(projectId)
-    navigate('/workspace')
+  const confirmDeleteProject = () => {
+    deleteMutation.mutate(projectId, {
+      onSuccess: () => routerNavigate('/workspace'),
+    })
   }
 
-  const confirmLeaveProject = async () => {
-    await leaveProject(projectId)
-    navigate('/workspace')
+  const confirmLeaveProject = () => {
+    leaveMutation.mutate(projectId, {
+      onSuccess: () => routerNavigate('/workspace'),
+    })
   }
 
   if (view === 'settings') {
     // ?view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
     const leaveSettings = () => {
-      if (window.location.search) {
-        window.history.replaceState({}, '', window.location.pathname)
-      }
+      routerNavigate(`/workspace/projects/${projectId}`, { replace: true })
       setView('main')
     }
     return (
@@ -193,22 +214,37 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         onCancel={leaveSettings}
         onSaved={(updated) => {
           setProject(updated)
+          queryClient.setQueryData<ProjectSummary[]>(projectKeys.list(), (prev) =>
+            prev?.map((item) =>
+              item.id === updated.id
+                ? {
+                    ...item,
+                    title: updated.title,
+                    endDate: updated.endDate,
+                    clientName: updated.clientName,
+                    type: updated.type,
+                    lengthType: updated.lengthType,
+                    status: updated.status,
+                  }
+                : item,
+            ),
+          )
           leaveSettings()
         }}
       />
     )
   }
 
-  if (selectedVideoId !== null) {
+  if (videoId != null) {
     return (
       <VideoDetailView
         projectId={projectId}
-        videoId={selectedVideoId}
+        videoId={videoId}
         meId={meId}
         isAdmin={project.myPermission === 'ADMIN'}
         lengthType={project.lengthType}
         myRoleNames={project.roleNames}
-        onBack={() => setSelectedVideoId(null)}
+        onBack={closeVideo}
       />
     )
   }
@@ -271,13 +307,6 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
       {tab === 'dashboard' && noticeView === 'main' && activityView === 'main' && (
         <div className="flex flex-col gap-8">
-          {partialErrors.length > 0 && (
-            <ul className="text-body-sm text-warning flex flex-col gap-1">
-              {partialErrors.map((message) => (
-                <li key={message}>{message}</li>
-              ))}
-            </ul>
-          )}
           <div className="grid gap-8 lg:grid-cols-2">
             <DashboardNoticeCard notices={notices} onExpand={() => setNoticeView('list')} />
             <DashboardTodayScheduleCard
@@ -343,9 +372,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
       {tab === 'files' && <ProjectFileList projectId={projectId} />}
 
-      {tab === 'feedback' && (
-        <VideoFeedbackTab projectId={projectId} onSelectVideo={setSelectedVideoId} />
-      )}
+      {tab === 'feedback' && <VideoFeedbackTab projectId={projectId} />}
 
       <ConfirmModal
         isOpen={deleteOpen}

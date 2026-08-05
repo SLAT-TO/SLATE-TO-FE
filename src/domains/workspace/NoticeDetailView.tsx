@@ -87,9 +87,9 @@ export default function NoticeDetailView({
       <button
         type="button"
         onClick={onBack}
-        className="text-body-sm text-neutral-11 w-fit font-semibold"
+        className="text-head-sm text-neutral-11 w-fit font-bold"
       >
-        {'< 공지사항 목록'}
+        {'< 공지사항'}
       </button>
 
       <div className={`flex flex-col gap-3 ${CARD_BASE} p-5`}>
@@ -109,9 +109,9 @@ export default function NoticeDetailView({
         ) : (
           <>
             <div className="flex items-start justify-between gap-3">
-              <div className="flex min-w-0 items-baseline gap-2">
-                <h2 className="text-body-sm text-neutral-11 font-bold">{notice.title}</h2>
-                <span className="text-caption-lg text-neutral-6 shrink-0">
+              <div className="flex min-w-0 items-baseline gap-4">
+                <h2 className="text-body-sm text-neutral-11 font-semibold">{notice.title}</h2>
+                <span className="text-caption-sm text-neutral-6 shrink-0">
                   {formatNoticeMeta(notice)}
                 </span>
               </div>

@@ -18,7 +18,7 @@ export function scheduleToCalendarEvent(
   members: MemberSummary[],
 ): CalendarEvent {
   const participantNames = schedule.participantIds
-    .map((id) => members.find((m) => m.memberId === id)?.nickname)
+    .map((id) => members.find((m) => m.userId === id)?.nickname)
     .filter((name): name is string => !!name)
 
   return {

@@ -60,16 +60,14 @@ export default function NoticeListView({
 
   return (
     <section className="flex flex-col gap-4">
-      <button
-        type="button"
-        onClick={onBack}
-        className="text-body-sm text-neutral-11 w-fit font-semibold"
-      >
-        {'< 대시보드'}
-      </button>
-
       <div className="flex items-center justify-between">
-        <h2 className="text-head-sm text-neutral-11 font-bold">공지사항</h2>
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-head-sm text-neutral-11 w-fit font-bold"
+        >
+          {'< 공지사항'}
+        </button>
         <Button variant="secondary" onClick={openCreateModal}>
           추가하기
         </Button>

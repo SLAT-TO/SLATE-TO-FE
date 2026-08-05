@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
-import { HeaderSlotContext } from './headerSlotContext'
+import { HeaderSlotActionsContext, HeaderSlotContentContext } from './headerSlotContext'
 
 export function HeaderSlotProvider({ children }: { children: ReactNode }) {
   const [headerLeft, setHeaderLeft] = useState<ReactNode>(null)
@@ -8,17 +8,27 @@ export function HeaderSlotProvider({ children }: { children: ReactNode }) {
   const clearHeaderLeft = useCallback(() => setHeaderLeft(null), [])
   const clearHeaderRight = useCallback(() => setHeaderRight(null), [])
 
-  const value = useMemo(
+  const actions = useMemo(
     () => ({
-      headerLeft,
       setHeaderLeft,
       clearHeaderLeft,
-      headerRight,
       setHeaderRight,
       clearHeaderRight,
     }),
-    [headerLeft, clearHeaderLeft, headerRight, clearHeaderRight],
+    [clearHeaderLeft, clearHeaderRight],
   )
 
-  return <HeaderSlotContext.Provider value={value}>{children}</HeaderSlotContext.Provider>
+  const content = useMemo(
+    () => ({
+      headerLeft,
+      headerRight,
+    }),
+    [headerLeft, headerRight],
+  )
+
+  return (
+    <HeaderSlotActionsContext.Provider value={actions}>
+      <HeaderSlotContentContext.Provider value={content}>{children}</HeaderSlotContentContext.Provider>
+    </HeaderSlotActionsContext.Provider>
+  )
 }

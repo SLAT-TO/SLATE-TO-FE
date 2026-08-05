@@ -22,18 +22,15 @@ function ChevronLeftIcon() {
 function NotificationCard({
   notification,
   onClick,
-  onHover,
 }: {
   notification: AppNotification
   onClick: () => void
-  onHover: () => void
 }) {
   return (
     <li>
       <button
         type="button"
         onClick={onClick}
-        onMouseEnter={onHover}
         className={`relative flex w-full flex-col items-start justify-between gap-3 rounded-[10.242px] px-6 py-4 text-left ${CARD_SHADOW} ${
           notification.isRead ? 'bg-neutral-3' : 'bg-neutral-1'
         }`}
@@ -44,6 +41,10 @@ function NotificationCard({
             aria-hidden
           />
         )}
+        <span className="text-body-sm text-neutral-11 pr-4 font-semibold tracking-[-0.32px]">
+          {notification.title}
+          {notification.groupCount > 1 && ` 외 ${notification.groupCount - 1}건`}
+        </span>
         <span className="text-body-sm text-neutral-11 pr-4 font-normal tracking-[-0.32px]">
           {notification.content}
         </span>
@@ -117,9 +118,6 @@ export default function NotificationPage() {
               key={notification.notificationId}
               notification={notification}
               onClick={() => handleClick(notification)}
-              onHover={() => {
-                if (!notification.isRead) void markAsRead(notification.notificationId)
-              }}
             />
           ))}
         </ul>
