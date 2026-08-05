@@ -120,6 +120,10 @@ export function useToggleProjectPinMutation() {
         (prev) => (prev ? { ...prev, isPinned: result.isPinned, pinnedAt: result.pinnedAt } : prev),
       )
     },
+    onSettled: (_data, _err, vars) => {
+      void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
+      void queryClient.invalidateQueries({ queryKey: projectKeys.detail(vars.projectId) })
+    },
   })
 }
 

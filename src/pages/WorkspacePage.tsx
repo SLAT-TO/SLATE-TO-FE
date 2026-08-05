@@ -28,12 +28,19 @@ export default function WorkspacePage() {
   const [actionError, setActionError] = useState<string | null>(null)
 
   const projects = projectsQuery.data ?? []
-  const loading = projectsQuery.isPending
-  const error = projectsQuery.isError
-    ? projectsQuery.error instanceof ApiError
-      ? projectsQuery.error.message
-      : '프로젝트 목록을 불러오지 못했습니다.'
-    : null
+  const loading = projectsQuery.isPending && !projectsQuery.data
+  const fatalError =
+    projectsQuery.isError && !projectsQuery.data
+      ? projectsQuery.error instanceof ApiError
+        ? projectsQuery.error.message
+        : '프로젝트 목록을 불러오지 못했습니다.'
+      : null
+  const refreshError =
+    projectsQuery.isError && projectsQuery.data
+      ? projectsQuery.error instanceof ApiError
+        ? projectsQuery.error.message
+        : '프로젝트 목록을 새로고침하지 못했습니다.'
+      : null
 
   const handleTogglePin = (project: ProjectSummary) => {
     pinMutation.mutate({ projectId: project.id, next: !project.isPinned })
@@ -86,14 +93,15 @@ export default function WorkspacePage() {
 
       {loading && <WorkspaceListSkeleton />}
 
-      {!loading && error && <p className="text-body-sm text-warning">{error}</p>}
+      {!loading && fatalError && <p className="text-body-sm text-warning">{fatalError}</p>}
+      {refreshError && <p className="text-body-sm text-warning">{refreshError}</p>}
       {actionError && <p className="text-body-sm text-warning">{actionError}</p>}
 
-      {!loading && !error && projects.length === 0 && (
+      {!loading && !fatalError && projects.length === 0 && (
         <p className="text-body-sm text-neutral-6">아직 등록된 프로젝트가 없어요</p>
       )}
 
-      {!loading && !error && projects.length > 0 && (
+      {!loading && !fatalError && projects.length > 0 && (
         <div className="flex flex-col gap-10">
           {projects.map((project) => (
             <ProjectCard
