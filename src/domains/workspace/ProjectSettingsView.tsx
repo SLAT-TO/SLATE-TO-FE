@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { updateProject } from '../../api/projects'
 import { Button } from '../../components/Button'
-import Choice from '../../components/Choice'
 import ConfirmModal from '../../components/ConfirmModal'
 import Input from '../../components/Input'
 import Select from '../../components/Select'
@@ -46,19 +45,13 @@ export default function ProjectSettingsView(props: ProjectSettingsViewProps) {
   const [type, setType] = useState(project?.type ?? '')
   const [lengthType, setLengthType] = useState(project?.lengthType ?? '')
   const [description, setDescription] = useState(project?.description ?? '')
-  const [roleNames, setRoleNames] = useState<string[]>(project?.roleNames ?? [])
+  const [roleName, setRoleName] = useState(project?.roleNames?.[0] ?? '')
   const [saving, setSaving] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
-  const toggleRole = (role: string, checked: boolean) => {
-    setRoleNames((prev) => (checked ? [...prev, role] : prev.filter((r) => r !== role)))
-  }
-
   const canSubmit = isCreate
-    ? Boolean(
-        title.trim() && description.trim() && type && lengthType && endDate && roleNames.length > 0,
-      )
+    ? Boolean(title.trim() && description.trim() && type && lengthType && endDate && roleName)
     : Boolean(title.trim())
 
   const submit = async () => {
@@ -75,7 +68,7 @@ export default function ProjectSettingsView(props: ProjectSettingsViewProps) {
           lengthType,
           endDate,
           clientName: clientName.trim() || undefined,
-          roleNames,
+          roleNames: [roleName],
         })
         navigatedAway = true
         props.onCreated(created)
@@ -122,7 +115,7 @@ export default function ProjectSettingsView(props: ProjectSettingsViewProps) {
   return (
     <section className="flex flex-col gap-6">
       <h1 className="text-head-md text-neutral-11 font-bold">
-        {isCreate ? '프로젝트 추가' : '프로젝트 설정'}
+        {isCreate ? '새 프로젝트' : '프로젝트 설정'}
       </h1>
 
       <div className={`flex flex-col gap-8 ${CARD_BASE} p-8`}>
@@ -186,25 +179,15 @@ export default function ProjectSettingsView(props: ProjectSettingsViewProps) {
         />
 
         {isCreate && (
-          <div className="flex flex-col gap-2">
-            <label className="text-caption-lg text-neutral-9 font-semibold">
-              모집 역할
-              <span className="text-warning ml-0.5">*</span>
-            </label>
-            <p className="text-caption-sm text-neutral-5">복수선택 가능</p>
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
-              {ROLE_OPTIONS.map((option) => (
-                <Choice
-                  key={option.value}
-                  type="checkbox"
-                  checked={roleNames.includes(option.value)}
-                  onChange={(checked) => toggleRole(option.value, checked)}
-                  label={option.label}
-                  value={option.value}
-                />
-              ))}
-            </div>
-          </div>
+          <Select
+            options={ROLE_OPTIONS}
+            value={roleName}
+            onChange={setRoleName}
+            label="나의 역할"
+            hint="프로젝트 생성자의 역할을 선택해 주세요"
+            placeholder="역할을 선택해주세요."
+            required
+          />
         )}
 
         {!isCreate && (
