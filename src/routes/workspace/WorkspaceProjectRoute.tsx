@@ -19,11 +19,7 @@ export default function WorkspaceProjectRoute() {
     return <p className="text-body-sm text-warning">잘못된 영상 경로입니다.</p>
   }
 
-  return (
-    <ProjectDetailPage
-      key={projectId}
-      projectId={projectId}
-      videoId={videoIdParam != null ? videoId : null}
-    />
-  )
+  const resolvedVideoId = videoIdParam != null ? videoId : null
+
+  return <ProjectDetailPage key={projectId} projectId={projectId} videoId={resolvedVideoId} />
 }
