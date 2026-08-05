@@ -81,10 +81,7 @@ export const scheduleHandlers = [
     if (projectId) items = items.filter((s) => s.projectId === Number(projectId))
     if (scope === 'PROJECT') items = items.filter((s) => s.scheduleScope === 'PROJECT')
     if (scope === 'PERSONAL') items = items.filter((s) => s.scheduleScope === 'PERSONAL')
-    return HttpResponse.json(
-      ok({ items: items.map((s) => toBeSchedule(s)) }),
-      { status: 200 },
-    )
+    return HttpResponse.json(ok({ items: items.map((s) => toBeSchedule(s)) }), { status: 200 })
   }),
 
   http.get(paths.schedules.daily, ({ request }) => {
@@ -99,10 +96,9 @@ export const scheduleHandlers = [
     )
     if (projectId) items = items.filter((s) => s.projectId === Number(projectId))
     if (scope === 'PROJECT') items = items.filter((s) => s.scheduleScope === 'PROJECT')
-    return HttpResponse.json(
-      ok({ date, items: items.map((s) => toBeSchedule(s)) }),
-      { status: 200 },
-    )
+    return HttpResponse.json(ok({ date, items: items.map((s) => toBeSchedule(s)) }), {
+      status: 200,
+    })
   }),
 
   http.post(paths.schedules.root, async ({ request }) => {

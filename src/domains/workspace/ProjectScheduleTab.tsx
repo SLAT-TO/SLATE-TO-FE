@@ -185,22 +185,21 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
   }, [projectId, month])
 
   useEffect(() => {
+    if (!selectedDate) return
+
     let cancelled = false
-    if (!selectedDate) {
-      setDaySchedules([])
-      return
-    }
+    const date = selectedDate
 
     async function loadDay() {
       try {
-        const result = await getDailySchedules(toDateKey(selectedDate!), {
+        const result = await getDailySchedules(toDateKey(date), {
           projectId,
           scope: 'PROJECT',
         })
         if (!cancelled) setDaySchedules(result.items)
       } catch {
         if (!cancelled) {
-          const key = toDateKey(selectedDate!)
+          const key = toDateKey(date)
           setDaySchedules(
             schedules.filter((s) => s.startAt.slice(0, 10) <= key && s.endAt.slice(0, 10) >= key),
           )
@@ -219,7 +218,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     [schedules, members],
   )
 
-  const selectedDateSchedules = daySchedules
+  const selectedDateSchedules = selectedDate ? daySchedules : []
 
   const handleDateClick = (date: Date) => {
     setSelectedDate((prev) => (prev && toDateKey(prev) === toDateKey(date) ? null : date))

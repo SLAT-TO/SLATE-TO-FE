@@ -364,7 +364,12 @@ export const videoHandlers = [
     const existing = db.shareLinks.find((s) => s.videoId === videoId)
     if (existing) {
       return HttpResponse.json(
-        { isSuccess: false, code: 'SHARELINK409', message: '이미 공유 링크가 있습니다.', result: null },
+        {
+          isSuccess: false,
+          code: 'SHARELINK409',
+          message: '이미 공유 링크가 있습니다.',
+          result: null,
+        },
         { status: 409 },
       )
     }
@@ -424,9 +429,8 @@ export const videoHandlers = [
     const link = db.shareLinks.find((s) => s.shareLinkId === Number(params.shareLinkId))
     if (!link) return notFound()
     link.isActive = !link.isActive
-    return HttpResponse.json(
-      ok({ shareLinkId: link.shareLinkId, isActive: link.isActive }),
-      { status: 200 },
-    )
+    return HttpResponse.json(ok({ shareLinkId: link.shareLinkId, isActive: link.isActive }), {
+      status: 200,
+    })
   }),
 ]

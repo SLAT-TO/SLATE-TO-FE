@@ -23,10 +23,7 @@ export function normalizeSchedule(raw: BeScheduleLike, fallback?: Partial<Schedu
   if (id == null) throw new Error('schedule id missing')
 
   const participantIds =
-    raw.participantIds ??
-    raw.participants?.map((p) => p.userId) ??
-    fallback?.participantIds ??
-    []
+    raw.participantIds ?? raw.participants?.map((p) => p.userId) ?? fallback?.participantIds ?? []
 
   return {
     id,
