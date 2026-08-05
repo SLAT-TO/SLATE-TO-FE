@@ -38,9 +38,11 @@ const DETAIL_TABS = [
 
 type ProjectDetailPageProps = {
   projectId: number
+  /** URL `/workspace/projects/:id/videos/:videoId` 에서 전달 — 있으면 영상 상세 */
+  videoId?: number | null
 }
 
-export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
+export default function ProjectDetailPage({ projectId, videoId = null }: ProjectDetailPageProps) {
   const {
     project,
     setProject,
@@ -62,7 +64,6 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   )
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
-  const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null)
   const [meId, setMeId] = useState<number | null>(null)
   /** 대시보드 탭 내부 공지사항 서브뷰 — 'main'=대시보드, 'list'=공지사항 목록, number=공지 상세(noticeId) */
   const [noticeView, setNoticeView] = useState<'main' | 'list' | number>('main')
@@ -101,7 +102,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   /** 전역 헤더: 제목·즐겨찾기 + 참여인원(왼쪽 끝) → 알림·프로필·ActionMenu. 설정·영상 상세에서는 비움.
    * useMemo로 감싸지 않으면 매 렌더 새 JSX가 만들어져 useHeaderSlot의 effect가 무한 반복된다. */
-  const showProjectHeader = Boolean(project) && view === 'main' && selectedVideoId === null
+  const showProjectHeader = Boolean(project) && view === 'main' && videoId == null
 
   const headerLeftContent = useMemo(() => {
     if (!showProjectHeader || !project) return null
@@ -182,9 +183,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
   if (view === 'settings') {
     // ?view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
     const leaveSettings = () => {
-      if (window.location.search) {
-        window.history.replaceState({}, '', window.location.pathname)
-      }
+      navigate(`/workspace/projects/${projectId}`, { replace: true })
       setView('main')
     }
     return (
@@ -199,16 +198,16 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     )
   }
 
-  if (selectedVideoId !== null) {
+  if (videoId != null) {
     return (
       <VideoDetailView
         projectId={projectId}
-        videoId={selectedVideoId}
+        videoId={videoId}
         meId={meId}
         isAdmin={project.myPermission === 'ADMIN'}
         lengthType={project.lengthType}
         myRoleNames={project.roleNames}
-        onBack={() => setSelectedVideoId(null)}
+        onBack={() => navigate(`/workspace/projects/${projectId}`, { replace: true })}
       />
     )
   }
@@ -344,7 +343,10 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
       {tab === 'files' && <ProjectFileList projectId={projectId} />}
 
       {tab === 'feedback' && (
-        <VideoFeedbackTab projectId={projectId} onSelectVideo={setSelectedVideoId} />
+        <VideoFeedbackTab
+          projectId={projectId}
+          onSelectVideo={(id) => navigate(`/workspace/projects/${projectId}/videos/${id}`)}
+        />
       )}
 
       <ConfirmModal
