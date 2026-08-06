@@ -1,6 +1,6 @@
 import JobCard from '../../components/JobCard'
-import { PROJECT_TYPE_LABEL } from '../../constants/projectLabels'
 import type { Recruitment } from '../../types/recruitment'
+import { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
 
 interface HomeRecommendedJobsSectionProps {
   jobs: Recruitment[]
@@ -40,6 +40,11 @@ export default function HomeRecommendedJobsSection({
             <JobCard
               key={job.id}
               category={PROJECT_TYPE_LABEL[job.categories[0]] ?? job.categories[0] ?? '기타'}
+              length={
+                job.lengthType
+                  ? (PROJECT_LENGTH_TYPE_LABEL[job.lengthType] ?? job.lengthType)
+                  : undefined
+              }
               title={job.title}
               description={job.description}
               role={ROLE_LABEL_MAP[job.roles[0]] ?? job.roles[0] ?? '전체'}
