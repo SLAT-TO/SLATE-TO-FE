@@ -28,7 +28,9 @@ export function HeaderSlotProvider({ children }: { children: ReactNode }) {
 
   return (
     <HeaderSlotActionsContext.Provider value={actions}>
-      <HeaderSlotContentContext.Provider value={content}>{children}</HeaderSlotContentContext.Provider>
+      <HeaderSlotContentContext.Provider value={content}>
+        {children}
+      </HeaderSlotContentContext.Provider>
     </HeaderSlotActionsContext.Provider>
   )
 }
