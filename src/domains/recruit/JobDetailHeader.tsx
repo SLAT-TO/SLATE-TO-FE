@@ -22,7 +22,7 @@ function JobDetailHeader({ detail, isOwner }: JobDetailHeaderProps) {
     <header className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <h2 className="text-head-sm text-neutral-11 font-bold">{detail.title}</h2>
+          <h2 className="text-head-md text-neutral-11 font-bold">{detail.title}</h2>
 
           {isOwner ? (
             <>
@@ -38,12 +38,11 @@ function JobDetailHeader({ detail, isOwner }: JobDetailHeaderProps) {
               className={isBookmarked ? 'text-primary' : 'text-neutral-11'}
             >
               <svg
-                width="18"
-                height="18"
                 viewBox="0 0 24 24"
                 fill={isBookmarked ? 'currentColor' : 'none'}
                 stroke="currentColor"
                 strokeWidth="2"
+                className="h-7 w-7"
               >
                 <path d="M6 2C4.89543 2 4 2.89543 4 4V22L12 17L20 22V4C20 2.89543 19.1046 2 18 2H6Z" />
               </svg>

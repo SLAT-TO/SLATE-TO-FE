@@ -43,9 +43,11 @@ function getHeaderTitle(pathname: string): string {
 function LegacyAppRoutes() {
   const pathname = useLocation().pathname
   const headerTitle = useMemo(() => getHeaderTitle(pathname), [pathname])
-  useHeaderSlot(
-    useMemo(() => (headerTitle ? <HeaderTitle>{headerTitle}</HeaderTitle> : null), [headerTitle]),
+  const headerContent = useMemo(
+    () => (headerTitle ? <HeaderTitle>{headerTitle}</HeaderTitle> : undefined),
+    [headerTitle],
   )
+  useHeaderSlot(headerContent)
 
   const path = pathname.replace(/\/+$/, '') || '/'
 
