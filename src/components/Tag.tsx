@@ -17,7 +17,7 @@ const variantStyles: Record<TagVariant, string> = {
   primary: 'bg-tag-role-bg text-tag-role-text',
   secondary: 'bg-tag-active-bg text-tag-active-text',
   ghost: 'bg-tag-done-bg text-tag-done-text',
-  meta: 'bg-neutral-2 text-neutral-5',
+  meta: 'bg-neutral-2 text-neutral-7',
 }
 
 export default memo(function Tag({ children, variant = 'primary', className = '' }: TagProps) {
