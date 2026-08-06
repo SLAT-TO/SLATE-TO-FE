@@ -79,13 +79,21 @@ function ApplicantProfilePage({ jobId, applicantId }: ApplicantProfilePageProps)
     <div className="flex flex-col gap-6 p-6">
       {/* 프로필 — 편집 콜백 미전달로 '수정하기' 버튼 비노출 */}
       <ProfileOverviewCard
-        profile={{ ...MOCK_PROFILE, nickname: applicant.applicantName }}
+        profile={{
+          ...MOCK_PROFILE,
+          nickname: applicant.applicantName,
+          profileImageUrl: applicant.applicantProfileImageUrl,
+          introduction: applicant.introduction,
+        }}
         projectTypeStats={MOCK_PROJECT_TYPE_STATS}
         roleStats={MOCK_ROLE_STATS}
       />
 
       {/* 지원 정보 — 마이페이지에 없는 공개 프로필 전용 영역 */}
-      <ApplicationInfoCard application={applicant} />
+      <section>
+        <h3 className="text-neutral-11 mb-4 text-base font-semibold">지원 정보</h3>
+        <ApplicationInfoCard application={applicant} />
+      </section>
 
       <section>
         <h3 className="text-neutral-11 mb-4 text-base font-semibold">프로젝트 이력</h3>

@@ -11,7 +11,11 @@ function ApplicationInfoCard({ application }: ApplicationInfoCardProps) {
     <section className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-xs">
       <div className="grid grid-cols-[100px_1fr] items-start gap-4">
         <span className="text-caption-lg text-neutral-11 font-semibold">코멘트</span>
-        <p className="text-caption-lg text-neutral-6 whitespace-pre-line">{comment}</p>
+        {comment ? (
+          <p className="text-caption-lg text-neutral-6 whitespace-pre-line">{comment}</p>
+        ) : (
+          <span className="text-caption-lg text-neutral-6">-</span>
+        )}
       </div>
 
       <div className="grid grid-cols-[100px_1fr] items-start gap-4">
@@ -32,7 +36,7 @@ function ApplicationInfoCard({ application }: ApplicationInfoCardProps) {
 
       <div className="grid grid-cols-[100px_1fr] items-start gap-4">
         <span className="text-caption-lg text-neutral-11 font-semibold">첨부 파일</span>
-        {fileName ? (
+        {fileName && fileUrl ? (
           <a
             href={fileUrl}
             target="_blank"
@@ -41,6 +45,8 @@ function ApplicationInfoCard({ application }: ApplicationInfoCardProps) {
           >
             {fileName}
           </a>
+        ) : fileName ? (
+          <span className="text-caption-lg text-neutral-6 break-all">{fileName}</span>
         ) : (
           <span className="text-caption-lg text-neutral-6">-</span>
         )}

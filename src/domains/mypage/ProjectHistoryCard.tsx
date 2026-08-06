@@ -44,7 +44,10 @@ function ProjectHistoryCard({ project, onEdit, onDelete, onClick }: ProjectHisto
   return (
     <article
       onClick={() => onClick?.(id)}
-      className="cursor-pointer overflow-hidden rounded-xl bg-white shadow-xs"
+      className={[
+        'overflow-hidden rounded-xl bg-white shadow-xs',
+        onClick ? 'cursor-pointer' : '',
+      ].join(' ')}
     >
       <div className="relative flex items-center justify-between p-3 pb-2">
         <h4 className="text-neutral-11 text-sm font-semibold">{title}</h4>
@@ -82,22 +85,26 @@ function ProjectHistoryCard({ project, onEdit, onDelete, onClick }: ProjectHisto
                 role="menu"
                 className="border-border absolute top-10 right-3 z-10 w-32 overflow-hidden rounded-lg border bg-white shadow-md"
               >
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={handleEditClick}
-                  className="text-neutral-11 hover:bg-neutral-1 block w-full px-4 py-2 text-left text-sm"
-                >
-                  수정하기
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={handleDeleteClick}
-                  className="text-neutral-11 hover:bg-neutral-1 block w-full px-4 py-2 text-left text-sm"
-                >
-                  삭제하기
-                </button>
+                {onEdit && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleEditClick}
+                    className="text-neutral-11 hover:bg-neutral-1 block w-full px-4 py-2 text-left text-sm"
+                  >
+                    수정하기
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleDeleteClick}
+                    className="text-neutral-11 hover:bg-neutral-1 block w-full px-4 py-2 text-left text-sm"
+                  >
+                    삭제하기
+                  </button>
+                )}
               </div>
             )}
           </>
