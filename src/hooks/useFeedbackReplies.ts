@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import { createReply, getReplies } from '../api/videos'
 import type { FeedbackReply } from '../types/feedback'
 
@@ -69,9 +70,10 @@ export function useFeedbackReplies(getCurrentTime: () => number, guestId?: numbe
   const submitReply = useCallback(
     async (feedbackId: number) => {
       if (!newReply.trim()) return
+      const actor = await resolveFeedbackActor(guestId)
       const created = await createReply(feedbackId, {
         content: newReply.trim(),
-        guestId,
+        ...actor,
       })
       setRepliesByFeedback((prev) => ({
         ...prev,

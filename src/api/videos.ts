@@ -151,12 +151,17 @@ export async function updateFeedback(
 
 export async function deleteFeedback(
   feedbackId: number,
-  options?: { guestId?: number },
+  options?: { userId?: number; guestId?: number },
 ): Promise<null> {
   return request({
     method: 'DELETE',
     url: paths.feedbacks.byId(feedbackId),
-    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+    params:
+      options?.guestId != null
+        ? { guestId: options.guestId }
+        : options?.userId != null
+          ? { userId: options.userId }
+          : undefined,
   })
 }
 
@@ -190,6 +195,7 @@ export async function createReply(
     data: {
       content: body.content,
       ...(body.guestId != null ? { guestId: body.guestId } : {}),
+      ...(body.userId != null ? { userId: body.userId } : {}),
     },
   })
   return normalizeFeedbackReply(result)

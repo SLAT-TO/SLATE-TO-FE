@@ -24,10 +24,24 @@ export function useProjectStatusMenu(
   const changeStatus = async (status: ProjectStatus) => {
     setOpen(false)
     if (!project || status === project.status) return
+    // BE ProjectUpdateRequest: title/type/lengthType/description/endDate 필수 (status만 PATCH 불가)
+    if (!project.lengthType || !project.endDate || project.description == null) {
+      window.alert('프로젝트 필수 정보가 없어 상태를 변경할 수 없습니다.')
+      return
+    }
     const previous = project.status
     setProject({ ...project, status })
     try {
-      await updateProject(projectId, { status })
+      await updateProject(projectId, {
+        title: project.title,
+        type: project.type,
+        lengthType: project.lengthType,
+        description: project.description,
+        endDate: project.endDate,
+        clientName: project.clientName ?? undefined,
+        kind: project.kind ?? undefined,
+        status,
+      })
     } catch {
       setProject((prev) => (prev ? { ...prev, status: previous } : prev))
     }

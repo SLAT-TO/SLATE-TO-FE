@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { addMonths, format, parse, subMonths } from 'date-fns'
 import {
-  createSchedule,
-  deleteSchedule,
-  getDailySchedules,
-  getProjectSchedules,
-  updatePrivateMemo,
-  updateSchedule,
-} from '../../api/schedules'
+  createWorkspaceSchedule,
+  deleteWorkspaceSchedule,
+  getWorkspaceDailySchedules,
+  getWorkspaceProjectSchedules,
+  updateWorkspacePrivateMemo,
+  updateWorkspaceSchedule,
+} from './workspaceSchedules'
 import ActionMenu from '../../components/ActionMenu'
 import { Button } from '../../components/Button'
 import { Calendar } from '../../components/Calendar'
@@ -29,7 +29,7 @@ type ProjectScheduleTabProps = {
 
 type FormModalState = { mode: 'create' } | { mode: 'edit'; schedule: Schedule } | null
 
-// 일정 폼 값을 실제 Schedule API의 시작/종료 일시로 변환 (폼엔 시간 입력이 없어 하루 종일로 취급)
+// ?? ? ?? ?? Schedule API? ??/?? ??? ?? (?? ?? ??? ?? ?? ??? ??)
 function toScheduleDateTimes(values: EventFormValues, fallbackDate: Date | null) {
   const startDate = values.startDate ?? fallbackDate ?? new Date()
   const endDate = values.endDate ?? startDate
@@ -60,7 +60,7 @@ interface ScheduleDetailCardProps {
   onSaveNote: (note: string) => void
 }
 
-// "일정 상세" 아래 카드 한 쌍(정보 + 나에게만 보이는 메모) — 워크스페이스 일정 탭 전용 레이아웃
+// "?? ??" ?? ?? ? ?(?? + ???? ??? ??) ? ?????? ?? ? ?? ????
 function ScheduleDetailCard({
   schedule,
   members,
@@ -105,7 +105,7 @@ function ScheduleDetailCard({
           )}
         </div>
         <ActionMenu
-          ariaLabel="일정 관리"
+          ariaLabel="?? ??"
           items={[
             { action: 'edit', onClick: onEdit },
             { action: 'delete', onClick: () => setConfirmOpen(true) },
@@ -115,21 +115,21 @@ function ScheduleDetailCard({
 
       <div className="border-border-input flex h-full flex-col justify-between gap-2 rounded-[10.242px] border bg-white p-4 shadow-[0_3.414px_12.461px_rgba(169,204,244,0.15)]">
         <span className="text-caption-sm text-neutral-5 font-semibold tracking-[-0.24px]">
-          참고 (나에게만 보여요)
+          ?? (???? ???)
         </span>
         <div className="flex items-end justify-between gap-2">
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             onBlur={handleSendNote}
-            placeholder="클릭하여 메모 추가하기"
+            placeholder="???? ?? ????"
             rows={2}
             className="text-caption-sm text-neutral-5 placeholder:text-neutral-5 min-w-0 flex-1 resize-none bg-transparent tracking-[-0.24px] outline-none"
           />
           <button
             type="button"
             onClick={handleSendNote}
-            aria-label="메모 저장"
+            aria-label="?? ??"
             className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2378FE]"
           >
             <InlineIcon svg={paperPlaneIcon} className="text-neutral-1 size-4" />
@@ -144,16 +144,16 @@ function ScheduleDetailCard({
           setConfirmOpen(false)
           onDelete()
         }}
-        title="일정을 삭제할까요?"
+        title="??? ??????"
         description={schedule.title}
-        confirmText="삭제하기"
+        confirmText="????"
       />
     </>
   )
 }
 
-// 워크스페이스 프로젝트 상세의 "일정" 탭. 캘린더 공용 컴포넌트를 그대로 쓰되,
-// 이 프로젝트의 실제 Schedule API에 연동한다 (독립 캘린더 페이지는 아직 로컬 store만 사용).
+// ?????? ???? ??? "??" ?. ??? ?? ????? ??? ??,
+// ? ????? ?? Schedule API? ???? (?? ??? ???? ?? ?? store? ??).
 export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabProps) {
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [daySchedules, setDaySchedules] = useState<Schedule[]>([])
@@ -169,7 +169,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     async function load() {
       setLoading(true)
       try {
-        const result = await getProjectSchedules(projectId, month)
+        const result = await getWorkspaceProjectSchedules(projectId, month)
         if (!cancelled) setSchedules(result.items)
       } catch {
         if (!cancelled) setSchedules([])
@@ -192,7 +192,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
 
     async function loadDay() {
       try {
-        const result = await getDailySchedules(toDateKey(date), {
+        const result = await getWorkspaceDailySchedules(toDateKey(date), {
           projectId,
           scope: 'PROJECT',
         })
@@ -201,10 +201,10 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
           setActionError(null)
         }
       } catch {
-        // 월간 캘린더 항목은 참여자/메모가 없어 편집 fallback으로 쓰면 유실됨 → 에러만 표시
+        // ?? ??? ??? ???/??? ?? ?? fallback?? ?? ??? ? ??? ??
         if (!cancelled) {
           setDaySchedules([])
-          setActionError('하루 일정을 불러오지 못했습니다. 다시 시도해주세요.')
+          setActionError('?? ??? ???? ?????. ?? ??????.')
         }
       }
     }
@@ -234,10 +234,10 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     setActionError(null)
     try {
       const { startAt, endAt } = toScheduleDateTimes(values, selectedDate)
-      const created = await createSchedule({
+      const created = await createWorkspaceSchedule({
         scheduleScope: 'PROJECT',
         projectId,
-        title: values.title.trim() || '새 일정',
+        title: values.title.trim() || '? ??',
         startAt,
         endAt,
         location: values.place.trim() || undefined,
@@ -246,7 +246,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
       })
       setSchedules((prev) => [created, ...prev])
     } catch {
-      setActionError('일정을 추가하지 못했습니다. 다시 시도해주세요.')
+      setActionError('??? ???? ?????. ?? ??????.')
     }
   }
 
@@ -256,10 +256,10 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
       const { startAt, endAt } = toScheduleDateTimes(values, selectedDate)
       const current =
         daySchedules.find((s) => s.id === scheduleId) ?? schedules.find((s) => s.id === scheduleId)
-      const updated = await updateSchedule(
+      const updated = await updateWorkspaceSchedule(
         scheduleId,
         {
-          title: values.title.trim() || '새 일정',
+          title: values.title.trim() || '? ??',
           startAt,
           endAt,
           location: values.place.trim() || undefined,
@@ -271,17 +271,17 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
       setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
       setDaySchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
     } catch {
-      setActionError('일정을 수정하지 못했습니다. 다시 시도해주세요.')
+      setActionError('??? ???? ?????. ?? ??????.')
     }
   }
 
   const handleDelete = async (scheduleId: number) => {
     setActionError(null)
     try {
-      await deleteSchedule(scheduleId)
+      await deleteWorkspaceSchedule(scheduleId)
       setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
     } catch {
-      setActionError('일정을 삭제하지 못했습니다. 다시 시도해주세요.')
+      setActionError('??? ???? ?????. ?? ??????.')
     }
   }
 
@@ -290,11 +290,11 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     const current =
       daySchedules.find((s) => s.id === scheduleId) ?? schedules.find((s) => s.id === scheduleId)
     try {
-      const updated = await updatePrivateMemo(scheduleId, { content: note }, current)
+      const updated = await updateWorkspacePrivateMemo(scheduleId, { content: note }, current)
       setDaySchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
       setSchedules((prev) => prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s)))
     } catch {
-      setActionError('메모를 저장하지 못했습니다. 다시 시도해주세요.')
+      setActionError('??? ???? ?????. ?? ??????.')
     }
   }
 
@@ -307,18 +307,18 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
           <button
             type="button"
             onClick={() => setMonth(subMonths(month, 1))}
-            aria-label="이전 달"
+            aria-label="?? ?"
             className="bg-main-2 text-main-5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
           >
             <ChevronLeftIcon className="size-5" />
           </button>
           <h2 className="text-head-sm text-neutral-11 font-semibold">
-            {format(month, 'yyyy년 M월')}
+            {format(month, 'yyyy? M?')}
           </h2>
           <button
             type="button"
             onClick={() => setMonth(addMonths(month, 1))}
-            aria-label="다음 달"
+            aria-label="?? ?"
             className="bg-main-2 text-main-5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
           >
             <ChevronRightIcon className="size-5" />
@@ -326,14 +326,14 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
         </div>
 
         <Button variant="secondary" size="sm" onClick={() => setFormModal({ mode: 'create' })}>
-          일정 추가
+          ?? ??
         </Button>
       </div>
 
       {actionError && <p className="text-caption-lg text-warning">{actionError}</p>}
 
       {loading ? (
-        <p className="text-body-sm text-neutral-6">불러오는 중…</p>
+        <p className="text-body-sm text-neutral-6">???? ??</p>
       ) : (
         <div style={{ height: 720 }}>
           <Calendar
@@ -348,9 +348,9 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
 
       {selectedDate && (
         <div className="flex flex-col gap-4">
-          <h2 className="text-head-sm text-neutral-11 font-semibold">일정 상세</h2>
+          <h2 className="text-head-sm text-neutral-11 font-semibold">?? ??</h2>
           {selectedDateSchedules.length === 0 ? (
-            <p className="text-caption-lg text-neutral-6">등록된 일정이 없습니다</p>
+            <p className="text-caption-lg text-neutral-6">??? ??? ????</p>
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {selectedDateSchedules.map((schedule) => (
