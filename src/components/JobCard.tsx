@@ -38,8 +38,8 @@ function JobCard({
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3.5">
-            <Tag>{category}</Tag>
-            {length && <Tag>{length}</Tag>}
+            <Tag variant="meta">{category}</Tag>
+            {length && <Tag variant="meta">{length}</Tag>}
           </div>
 
           <button
