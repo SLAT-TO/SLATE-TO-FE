@@ -80,6 +80,10 @@ export interface RecruitApplicant {
   applicantProfileImageUrl: string
   appliedAt: string
   introduction: string
+  comment: string
+  referenceLink?: string
+  fileName?: string
+  fileUrl?: string
 }
 
 export interface JobPostFormValues {
@@ -91,4 +95,11 @@ export interface JobPostFormValues {
   participationPeriod?: { from?: Date; to?: Date }
   pay: string
   description: string
+}
+
+export interface ApplicationInfo {
+  comment: string
+  referenceLink?: string
+  fileName?: string
+  fileUrl?: string
 }

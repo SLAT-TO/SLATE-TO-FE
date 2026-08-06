@@ -24,6 +24,7 @@ import { renderFullscreenRoute } from './routes/fullscreen'
 import NavigateBridge from './routes/NavigateBridge'
 import { workspaceRoutes } from './routes/workspace'
 import { matchPath } from './utils/navigation'
+import ApplicantProfilePage from './pages/ApplicantProfilePage'
 
 const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
 
@@ -65,6 +66,16 @@ function LegacyAppRoutes() {
 
   if (path === '/matching/new') {
     return <JobFormPage />
+  }
+
+  const applicantProfileMatch = matchPath('/matching/:jobId/applicants/:applicantId', path)
+  if (applicantProfileMatch) {
+    const jobId = Number(applicantProfileMatch.jobId)
+    const applicantId = Number(applicantProfileMatch.applicantId)
+    if (!Number.isFinite(jobId) || !Number.isFinite(applicantId)) {
+      return <p className="text-body-sm text-warning">잘못된 지원자 경로입니다.</p>
+    }
+    return <ApplicantProfilePage key={applicantId} jobId={jobId} applicantId={applicantId} />
   }
 
   const applicantsMatch = matchPath('/matching/:jobId/applicants', path)
