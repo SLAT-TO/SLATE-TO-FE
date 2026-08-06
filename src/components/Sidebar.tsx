@@ -93,7 +93,7 @@ const navItems: NavItem[] = [
   { label: '홈', href: '/', icon: <HomeIcon /> },
   { label: '캘린더', href: '/calendar', icon: <CalendarIcon /> },
   { label: '워크스페이스', href: '/workspace', icon: <WorkspaceIcon /> },
-  { label: '매칭', href: '/matching', icon: <MatchingIcon /> },
+  { label: '구인구직', href: '/matching', icon: <MatchingIcon /> },
 ]
 
 export default function Sidebar() {
