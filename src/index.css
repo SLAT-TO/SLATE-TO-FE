@@ -126,6 +126,10 @@
 
   /* Calendar */
   --color-calendar-header-bg: #e9f2fe;
+
+  /* Sidebar gradient (Figma) */
+  --color-sidebar-from: #7eb5ff;
+  --color-sidebar-to: #509aff;
 }
 
 /* Primitive - Event (캘린더 이벤트 바 색상). `static`으로 선언 —
