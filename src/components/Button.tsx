@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 
 // 피그마 Hierarchy에 대응
-type ButtonVariant = 'primary' | 'secondary'
+type ButtonVariant = 'primary' | 'secondary' | 'negative' | 'negativeOutline'
 type ButtonSize = 'md' | 'sm' | 'lg'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -42,6 +42,10 @@ const variantStyles: Record<ButtonVariant, string> = {
     'bg-primary text-white hover:bg-primary-hover disabled:bg-neutral-4 disabled:text-neutral-6 disabled:hover:bg-neutral-4',
   secondary:
     'border border-secondary bg-white text-secondary hover:border-secondary-hover hover:text-secondary-hover disabled:border-neutral-5 disabled:text-neutral-5 disabled:hover:border-neutral-5 disabled:hover:text-neutral-5',
+  // 취소/부정 액션용 — disabled 회색 팔레트를 그대로 재사용하되 실제로는 클릭 가능
+  negative: 'bg-neutral-4 text-neutral-6 hover:bg-neutral-5',
+  negativeOutline:
+    'border border-neutral-5 bg-white text-neutral-5 hover:border-neutral-6 hover:text-neutral-6',
 }
 
 export function Button({
