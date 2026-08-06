@@ -9,9 +9,6 @@ interface HomeRecommendedJobsSectionProps {
   loading: boolean
 }
 
-/** 채용 공고 게시판이라 모든 공고가 사실상 외주 형태 */
-const JOB_TYPE_LABEL = '외주'
-
 const ROLE_LABEL_MAP: Record<string, string> = {
   DIRECTOR: '연출',
   EDITOR: '편집',
@@ -42,7 +39,6 @@ export default function HomeRecommendedJobsSection({
           {jobs.map((job) => (
             <JobCard
               key={job.id}
-              type={JOB_TYPE_LABEL}
               category={PROJECT_TYPE_LABEL[job.categories[0]] ?? job.categories[0] ?? '기타'}
               title={job.title}
               description={job.description}
