@@ -18,9 +18,13 @@ export default function HomeProjectCard({ project }: HomeProjectCardProps) {
   const extraCount = project.memberCount - visibleMembers.length
 
   return (
-    <article
-      onClick={() => navigate(`/workspace/projects/${project.id}`)}
-      className="flex h-34 cursor-pointer flex-col items-start gap-2 overflow-hidden rounded-[10.242px] bg-white p-4 shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]"
+    <a
+      href={`/workspace/projects/${project.id}`}
+      onClick={(e) => {
+        e.preventDefault()
+        navigate(`/workspace/projects/${project.id}`)
+      }}
+      className="focus-visible:ring-primary flex h-34 cursor-pointer flex-col items-start gap-2 overflow-hidden rounded-[10.242px] bg-white p-4 shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)] focus-visible:ring-2 focus-visible:outline-none"
     >
       <h3 className="text-body-sm text-neutral-11 self-stretch font-semibold tracking-[-0.32px]">
         {project.title}
@@ -60,6 +64,6 @@ export default function HomeProjectCard({ project }: HomeProjectCardProps) {
           </div>
         )}
       </div>
-    </article>
+    </a>
   )
 }
