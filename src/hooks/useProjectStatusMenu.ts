@@ -25,12 +25,13 @@ export function useProjectStatusMenu(
     setOpen(false)
     if (!project || status === project.status) return
     // BE ProjectUpdateRequest: title/type/lengthType/description/endDate 필수 (status만 PATCH 불가)
+    const { lengthType, description, endDate } = project
     const missing = [
-      !project.lengthType ? '길이 유형' : null,
-      project.description == null ? '설명' : null,
-      !project.endDate ? '마감일' : null,
+      !lengthType ? '길이 유형' : null,
+      description == null ? '설명' : null,
+      !endDate ? '마감일' : null,
     ].filter(Boolean)
-    if (missing.length > 0) {
+    if (!lengthType || description == null || !endDate) {
       window.alert(
         `프로젝트 필수 정보(${missing.join(', ')})가 없어 상태를 변경할 수 없습니다. 프로젝트 정보를 먼저 수정해 주세요.`,
       )
@@ -42,9 +43,9 @@ export function useProjectStatusMenu(
       await updateProject(projectId, {
         title: project.title,
         type: project.type,
-        lengthType: project.lengthType,
-        description: project.description,
-        endDate: project.endDate,
+        lengthType,
+        description,
+        endDate,
         clientName: project.clientName ?? undefined,
         kind: project.kind ?? undefined,
         status,
