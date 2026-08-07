@@ -101,13 +101,26 @@ export default function ActivityListView({
         <ul className="flex flex-col gap-4">
           {activities.map((activity) => {
             const navigable = canNavigate(activity)
+            const navigate = () => {
+              if (!navigable) return
+              if (activity.isNew) void markAsRead(activity.activityId)
+              onNavigate(activity)
+            }
             return (
               <li
                 key={activity.activityId}
-                onClick={() => {
-                  if (!navigable) return
-                  if (activity.isNew) void markAsRead(activity.activityId)
-                  onNavigate(activity)
+                role={navigable ? 'button' : undefined}
+                tabIndex={navigable ? 0 : undefined}
+                onClick={navigate}
+                onKeyDown={(event) => {
+                  if (
+                    navigable &&
+                    (event.key === 'Enter' || event.key === ' ') &&
+                    !event.nativeEvent.isComposing
+                  ) {
+                    event.preventDefault()
+                    navigate()
+                  }
                 }}
                 onMouseEnter={() => {
                   if (activity.isNew) void markAsRead(activity.activityId)

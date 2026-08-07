@@ -103,7 +103,13 @@ export default function ProjectFileList({
         fileName: uploadFileName.trim(),
         description: description.trim() || undefined,
       })
-      if (uploadPinned) await pinProjectFile(projectId, uploaded.id)
+      if (uploadPinned) {
+        try {
+          await pinProjectFile(projectId, uploaded.id)
+        } catch {
+          window.alert('파일은 업로드됐지만 즐겨찾기를 적용하지 못했습니다.')
+        }
+      }
       const page = await getProjectFiles(projectId, keyword.trim() || undefined)
       setFiles(page.items)
       setUploadOpen(false)
