@@ -43,7 +43,8 @@ export const videoHandlers = [
         thumbnailUrl: v.thumbnailUrl,
         bookmarked: v.bookmarked,
         progressStatus: v.progressStatus,
-        unreadCommentCount: v.unreadCommentCount,
+        hasUnreadFeedback: v.hasUnreadFeedback,
+        createdAt: v.createdAt,
         updatedAt: v.updatedAt,
       }))
 
@@ -75,7 +76,7 @@ export const videoHandlers = [
       thumbnailUrl: 'https://img.youtube.com/vi/mockVideo/maxresdefault.jpg',
       progressStatus: 'IN_PROGRESS' as const,
       bookmarked: false,
-      unreadCommentCount: 0,
+      hasUnreadFeedback: false,
       description: null,
       memo: body.memo ?? null,
       projectTags: [],

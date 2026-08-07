@@ -7,7 +7,7 @@ export type VideoListItem = {
   thumbnailUrl: string | null
   bookmarked: boolean
   progressStatus: VideoProgressStatus
-  unreadCommentCount: number
+  hasUnreadFeedback: boolean
   createdAt: string
   updatedAt: string
 }
@@ -22,7 +22,6 @@ export type VideoDetail = {
   thumbnailUrl: string | null
   progressStatus: VideoProgressStatus
   bookmarked: boolean
-  unreadCommentCount: number
   description: string | null
   memo: string | null
   projectTags: string[]

@@ -70,7 +70,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
         thumbnailUrl: result.thumbnailUrl,
         bookmarked: result.bookmarked,
         progressStatus: result.progressStatus,
-        unreadCommentCount: 0,
+        hasUnreadFeedback: false,
         createdAt: result.createdAt,
         updatedAt: result.createdAt,
       },
@@ -124,7 +124,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
                   addSuffix: true,
                   locale: ko,
                 })}
-                unreadCommentCount={video.unreadCommentCount}
+                hasUnreadFeedback={video.hasUnreadFeedback}
                 to={`/workspace/projects/${projectId}/videos/${video.videoId}`}
                 onEdit={() => void openEdit(video)}
                 onDelete={() => setDeleteTarget(video)}

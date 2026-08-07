@@ -12,7 +12,8 @@ interface VideoCardProps {
   progressStatus: VideoCardProgressStatus
   /** 상태 태그 옆에 보여줄 상대 시간 문구 (예: "2시간 전") — 계산은 호출부에서 */
   relativeTime?: string
-  unreadCommentCount?: number
+  /** BE VideoItemResDTO.hasUnreadFeedback */
+  hasUnreadFeedback?: boolean
   /** React Router 경로 — 있으면 `<Link to>`로 이동 */
   to?: string
   onClick?: () => void
@@ -26,7 +27,7 @@ export default function VideoCard({
   thumbnailUrl,
   progressStatus,
   relativeTime,
-  unreadCommentCount = 0,
+  hasUnreadFeedback = false,
   to,
   onClick,
   onEdit,
@@ -82,10 +83,11 @@ export default function VideoCard({
           </Tag>
           {relativeTime && <span className="text-caption-sm text-neutral-6">{relativeTime}</span>}
         </div>
-        {unreadCommentCount > 0 && (
-          <span className="bg-warning flex size-5 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold text-white">
-            {unreadCommentCount}
-          </span>
+        {hasUnreadFeedback && (
+          <span
+            className="bg-warning size-2.75 shrink-0 rounded-full"
+            aria-label="읽지 않은 피드백"
+          />
         )}
       </div>
     </>

@@ -244,13 +244,6 @@ export async function getProjectNotices(
   return request({ method: 'GET', url: paths.projects.notices(projectId) })
 }
 
-export async function getProjectNotice(
-  projectId: number,
-  noticeId: number,
-): Promise<ProjectNoticeListItem> {
-  return request({ method: 'GET', url: paths.projects.notice(projectId, noticeId) })
-}
-
 export async function createProjectNotice(
   projectId: number,
   body: CreateNoticeRequest,
