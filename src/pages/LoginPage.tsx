@@ -37,6 +37,10 @@ export function LoginPage() {
         alt=""
         className="pointer-events-none absolute inset-0 size-full object-cover"
       />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 size-full bg-[#a3dfff] mix-blend-multiply"
+      />
 
       <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">
         SLATE - TO
@@ -99,12 +103,6 @@ export function LoginPage() {
               className="bg-neutral-1 border-neutral-5 text-body-sm text-neutral-10 h-12 w-full max-w-[400px] rounded-lg border"
             >
               구글 로그인 / 회원가입
-            </button>
-            <button
-              type="button"
-              className="border-neutral-5 text-body-sm text-neutral-10 h-12 w-full max-w-[400px] rounded-lg border bg-[#fee500]"
-            >
-              카카오 로그인 / 회원가입
             </button>
           </div>
         </div>
