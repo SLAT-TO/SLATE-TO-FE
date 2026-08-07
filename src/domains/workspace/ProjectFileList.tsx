@@ -229,17 +229,19 @@ export default function ProjectFileList({
         {files.map((file) => (
           <div
             key={file.id}
-            className={`flex items-center justify-between gap-3 ${CARD_BASE} px-4 py-3`}
+            className={`focus-within:ring-primary relative flex items-center justify-between gap-3 focus-within:ring-2 ${CARD_BASE} px-4 py-3`}
           >
             <button
               type="button"
               onClick={() => setSelectedFile(file)}
-              className="flex min-w-0 items-center gap-3 text-left"
-            >
+              aria-label={`${file.fileName} 상세 보기`}
+              className="absolute inset-0 z-0 rounded-[inherit]"
+            />
+            <div className="pointer-events-none relative z-10 flex min-w-0 items-center gap-3">
               <InlineIcon svg={documentIcon} className="text-neutral-5 size-6 shrink-0" />
               <span className="text-body-sm text-neutral-11 min-w-0 truncate">{file.fileName}</span>
-            </button>
-            <div className="flex shrink-0 items-center gap-4">
+            </div>
+            <div className="pointer-events-auto relative z-10 flex shrink-0 items-center gap-4">
               <span className="text-caption-lg text-neutral-6">
                 {formatDateTime(file.createdAt)}
               </span>
