@@ -150,10 +150,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
       return
     }
 
-    if (
-      activity.type === 'PROJECT_UPDATED' ||
-      activity.type === 'PROJECT_STATUS_CHANGED'
-    ) {
+    if (activity.type === 'PROJECT_UPDATED' || activity.type === 'PROJECT_STATUS_CHANGED') {
       setView('settings')
     }
   }

@@ -297,12 +297,7 @@ export default function ProjectFileList({
             error={uploadError || undefined}
           />
           <div className="mt-1 flex justify-center gap-3">
-            <Button
-              variant="primary"
-              className="w-40"
-              disabled={uploading}
-              onClick={submitUpload}
-            >
+            <Button variant="primary" className="w-40" disabled={uploading} onClick={submitUpload}>
               {uploading ? '업로드 중…' : '업로드'}
             </Button>
             <Button variant="secondary" className="w-40" onClick={() => setUploadOpen(false)}>

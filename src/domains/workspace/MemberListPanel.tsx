@@ -53,10 +53,13 @@ export default function MemberListPanel({
 
   const inviteOpen = inviteOpenProp ?? internalInviteOpen
   const panelOpen = panelOpenProp ?? internalPanelOpen
-  const setPanelOpen = useCallback((next: boolean) => {
-    if (onPanelOpenChange) onPanelOpenChange(next)
-    else setInternalPanelOpen(next)
-  }, [onPanelOpenChange])
+  const setPanelOpen = useCallback(
+    (next: boolean) => {
+      if (onPanelOpenChange) onPanelOpenChange(next)
+      else setInternalPanelOpen(next)
+    },
+    [onPanelOpenChange],
+  )
   const setInviteOpen = (next: boolean) => {
     if (onInviteOpenChange) onInviteOpenChange(next)
     else setInternalInviteOpen(next)
