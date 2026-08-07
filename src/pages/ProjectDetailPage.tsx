@@ -33,7 +33,7 @@ import {
   projectStatusColor,
   projectStatusLabel,
 } from '../constants/projectStatus'
-import type { ProjectStatus, ProjectSummary } from '../types/project'
+import type { ProjectActivity, ProjectStatus, ProjectSummary } from '../types/project'
 
 /** Strict Mode remount에서도 같은 키 alert가 두 번 뜨지 않도록 모듈 단위로 기록 */
 const alertedPartialErrorKeys = new Set<string>()
@@ -137,7 +137,6 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
   const [meId, setMeId] = useState<number | null>(null)
-
   /** 탭·공지/활동 패널·설정 — URL searchParams에서 파생 (뒤로가기·공유용) */
   const { view, tab, noticeView, activityView } = parseProjectSearch(location.search)
 
@@ -148,6 +147,8 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     },
     [projectId, routerNavigate],
   )
+  const [initialFileId, setInitialFileId] = useState<number | null>(null)
+  const [membersPanelOpen, setMembersPanelOpen] = useState(false)
 
   useEffect(() => {
     getMe()
@@ -174,6 +175,41 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
 
   const handleTabChange = (key: string) => {
     setProjectSearch(key === 'dashboard' ? {} : { tab: key })
+  }
+
+  const handleActivityNavigate = (activity: ProjectActivity) => {
+    if (activity.targetType === 'NOTICE' && activity.targetId != null) {
+      setProjectSearch({ panel: 'notices', noticeId: activity.targetId })
+      return
+    }
+
+    if (activity.targetType === 'FILE' && activity.targetId != null) {
+      setInitialFileId(activity.targetId)
+      setProjectSearch({ tab: 'files' })
+      return
+    }
+
+    if (
+      activity.targetType === 'SCHEDULE' ||
+      activity.type === 'SCHEDULE_CREATED' ||
+      activity.type === 'SCHEDULE_UPDATED'
+    ) {
+      setProjectSearch({ tab: 'schedule' })
+      return
+    }
+
+    if (activity.type === 'PROJECT_MEMBER_JOINED') {
+      setMembersPanelOpen(true)
+      setProjectSearch({})
+      return
+    }
+
+    if (
+      activity.type === 'PROJECT_UPDATED' ||
+      activity.type === 'PROJECT_STATUS_CHANGED'
+    ) {
+      setProjectSearch({ view: 'settings' })
+    }
   }
 
   const handleToggleBookmark = useCallback(() => {
@@ -210,11 +246,22 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
             meId={meId}
             avatarSize={40}
             onMembersChange={setMembers}
+            panelOpen={membersPanelOpen}
+            onPanelOpenChange={setMembersPanelOpen}
           />
         </div>
       </div>
     )
-  }, [showProjectHeader, project, members, handleToggleBookmark, projectId, meId, setMembers])
+  }, [
+    showProjectHeader,
+    project,
+    members,
+    handleToggleBookmark,
+    projectId,
+    meId,
+    setMembers,
+    membersPanelOpen,
+  ])
 
   const openSettings = useCallback(() => {
     setProjectSearch({ view: 'settings' })
@@ -394,6 +441,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
           projectId={projectId}
           activities={activities}
           onBack={() => setProjectSearch({})}
+          onNavigate={handleActivityNavigate}
         />
       )}
 
@@ -444,7 +492,13 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
           )
         })()}
 
-      {tab === 'files' && <ProjectFileList projectId={projectId} />}
+      {tab === 'files' && (
+        <ProjectFileList
+          projectId={projectId}
+          initialFileId={initialFileId}
+          onInitialFileConsumed={() => setInitialFileId(null)}
+        />
+      )}
 
       {tab === 'feedback' && <VideoFeedbackTab projectId={projectId} />}
 
