@@ -24,10 +24,32 @@ export function useProjectStatusMenu(
   const changeStatus = async (status: ProjectStatus) => {
     setOpen(false)
     if (!project || status === project.status) return
+    // BE ProjectUpdateRequest: title/type/lengthType/description/endDate 필수 (status만 PATCH 불가)
+    const { lengthType, description, endDate } = project
+    const missing = [
+      !lengthType ? '길이 유형' : null,
+      description == null ? '설명' : null,
+      !endDate ? '마감일' : null,
+    ].filter(Boolean)
+    if (!lengthType || description == null || !endDate) {
+      window.alert(
+        `프로젝트 필수 정보(${missing.join(', ')})가 없어 상태를 변경할 수 없습니다. 프로젝트 정보를 먼저 수정해 주세요.`,
+      )
+      return
+    }
     const previous = project.status
     setProject({ ...project, status })
     try {
-      await updateProject(projectId, { status })
+      await updateProject(projectId, {
+        title: project.title,
+        type: project.type,
+        lengthType,
+        description,
+        endDate,
+        clientName: project.clientName ?? undefined,
+        kind: project.kind ?? undefined,
+        status,
+      })
     } catch {
       setProject((prev) => (prev ? { ...prev, status: previous } : prev))
     }

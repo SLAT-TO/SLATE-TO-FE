@@ -125,6 +125,16 @@ export async function getFeedbacks(
   return { items: result.items.map(normalizeFeedback) }
 }
 
+/** BE: userId XOR guestId — 둘 다 오면 guest 우선 */
+function feedbackActorXor(body: { userId?: number; guestId?: number }): {
+  userId?: number
+  guestId?: number
+} {
+  if (body.guestId != null) return { guestId: body.guestId }
+  if (body.userId != null) return { userId: body.userId }
+  return {}
+}
+
 export async function createFeedback(
   videoId: number,
   body: CreateFeedbackRequest,
@@ -132,7 +142,12 @@ export async function createFeedback(
   const result = await request<FeedbackStatusRaw>({
     method: 'POST',
     url: paths.videos.feedbacks(videoId),
-    data: body,
+    data: {
+      content: body.content,
+      ...(body.startTime != null ? { startTime: body.startTime } : {}),
+      ...(body.endTime != null ? { endTime: body.endTime } : {}),
+      ...feedbackActorXor(body),
+    },
   })
   return normalizeFeedback(result)
 }
@@ -144,19 +159,29 @@ export async function updateFeedback(
   const result = await request<FeedbackStatusRaw>({
     method: 'PATCH',
     url: paths.feedbacks.byId(feedbackId),
-    data: body,
+    data: {
+      ...(body.content != null ? { content: body.content } : {}),
+      ...(body.startTime != null ? { startTime: body.startTime } : {}),
+      ...(body.endTime != null ? { endTime: body.endTime } : {}),
+      ...feedbackActorXor(body),
+    },
   })
   return normalizeFeedback(result)
 }
 
 export async function deleteFeedback(
   feedbackId: number,
-  options?: { guestId?: number },
+  options?: { userId?: number; guestId?: number },
 ): Promise<null> {
   return request({
     method: 'DELETE',
     url: paths.feedbacks.byId(feedbackId),
-    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+    params:
+      options?.guestId != null
+        ? { guestId: options.guestId }
+        : options?.userId != null
+          ? { userId: options.userId }
+          : undefined,
   })
 }
 
@@ -189,7 +214,7 @@ export async function createReply(
     url: paths.feedbacks.replies(feedbackId),
     data: {
       content: body.content,
-      ...(body.guestId != null ? { guestId: body.guestId } : {}),
+      ...feedbackActorXor(body),
     },
   })
   return normalizeFeedbackReply(result)
