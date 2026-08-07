@@ -112,15 +112,9 @@ export function VideoDetailView({
     repliesByFeedback,
     newReply,
     setNewReply,
-    replyPendingStart,
-    replyPendingEnd,
-    isCapturingReplyRange,
     toggleReplies,
-    clearReplyPendingTime,
-    attachReplyCurrentTime,
-    toggleReplyRangeCapture,
     submitReply,
-  } = useFeedbackReplies(getCurrentTime)
+  } = useFeedbackReplies()
 
   const { members, setMembers, load: loadMembers } = useProjectMembersInvite(projectId)
 
@@ -273,13 +267,7 @@ export function VideoDetailView({
           repliesByFeedback={repliesByFeedback}
           newReply={newReply}
           setNewReply={setNewReply}
-          replyPendingStart={replyPendingStart}
-          replyPendingEnd={replyPendingEnd}
-          isCapturingReplyRange={isCapturingReplyRange}
           toggleReplies={toggleReplies}
-          clearReplyPendingTime={clearReplyPendingTime}
-          attachReplyCurrentTime={attachReplyCurrentTime}
-          toggleReplyRangeCapture={toggleReplyRangeCapture}
           submitReply={submitReply}
           meId={meId}
           onSeek={seekTo}

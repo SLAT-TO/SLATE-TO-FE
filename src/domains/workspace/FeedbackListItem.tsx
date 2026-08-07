@@ -28,12 +28,6 @@ type FeedbackListItemProps = {
   replies: FeedbackReply[]
   newReply: string
   setNewReply: (value: string) => void
-  replyPendingStart: number | null
-  replyPendingEnd: number | null
-  isCapturingReplyRange: boolean
-  clearReplyPendingTime: () => void
-  attachReplyCurrentTime: () => void
-  toggleReplyRangeCapture: () => void
   onSubmitReply: () => void
 }
 
@@ -55,29 +49,23 @@ export default function FeedbackListItem({
   replies,
   newReply,
   setNewReply,
-  replyPendingStart,
-  replyPendingEnd,
-  isCapturingReplyRange,
-  clearReplyPendingTime,
-  attachReplyCurrentTime,
-  toggleReplyRangeCapture,
   onSubmitReply,
 }: FeedbackListItemProps) {
   const isResolved = feedback.status
 
   return (
-    <li className="border-neutral-3 flex flex-col gap-2 border-b pb-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Avatar alt={feedback.actor.name} size={22} fallback={feedback.actor.name.slice(0, 1)} />
+    <li className="border-neutral-3 flex min-w-0 flex-col gap-3 border-b pb-4">
+      <div className="flex min-w-0 items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Avatar alt={feedback.actor.name} size={24} fallback={feedback.actor.name.slice(0, 1)} />
           <FeedbackTimeLink
             feedback={feedback}
             onSeek={onSeek}
-            className="text-caption-sm text-primary font-bold underline"
+            className="text-caption-lg text-primary font-bold underline"
           />
-          <span className="text-caption-sm text-neutral-9 font-medium">{feedback.actor.name}</span>
+          <span className="text-caption-lg text-neutral-9 font-medium">{feedback.actor.name}</span>
           <span
-            className={`size-[9px] rounded-full ${isResolved ? 'bg-success' : 'bg-warning'}`}
+            className={`size-2.5 shrink-0 rounded-full ${isResolved ? 'bg-success' : 'bg-warning'}`}
             aria-hidden
           />
         </div>
@@ -104,20 +92,20 @@ export default function FeedbackListItem({
           </div>
         </div>
       ) : (
-        <p className="text-caption-lg text-neutral-10">{feedback.content}</p>
+        <p className="text-body-sm text-neutral-10 break-words">{feedback.content}</p>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={onToggleReplies}
-          className="text-caption-sm text-neutral-9 flex items-center gap-1 font-semibold"
+          className="text-caption-lg text-neutral-9 flex items-center gap-1 font-semibold"
         >
           답글
           {replies.length ? ` ${replies.length}` : ''}
           <InlineIcon
             svg={chevronDownIcon}
-            className={`size-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            className={`size-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           />
         </button>
         {canResolve ? (
@@ -130,14 +118,14 @@ export default function FeedbackListItem({
             }}
             aria-pressed={isResolved}
             aria-label={isResolved ? '미해결로 변경' : '해결 처리'}
-            className={`-m-1 inline-flex size-9 items-center justify-center rounded-md ${
+            className={`inline-flex size-10 shrink-0 items-center justify-center rounded-md ${
               isResolved ? 'text-success' : 'text-neutral-5'
             }`}
           >
-            <InlineIcon svg={commentCheckIcon} className="pointer-events-none size-4" />
+            <InlineIcon svg={commentCheckIcon} className="pointer-events-none size-5" />
           </button>
         ) : (
-          <span aria-hidden className="size-9" />
+          <span aria-hidden className="size-10 shrink-0" />
         )}
       </div>
 
@@ -147,12 +135,6 @@ export default function FeedbackListItem({
           onSeek={onSeek}
           newReply={newReply}
           setNewReply={setNewReply}
-          replyPendingStart={replyPendingStart}
-          replyPendingEnd={replyPendingEnd}
-          isCapturingReplyRange={isCapturingReplyRange}
-          clearReplyPendingTime={clearReplyPendingTime}
-          attachReplyCurrentTime={attachReplyCurrentTime}
-          toggleReplyRangeCapture={toggleReplyRangeCapture}
           onSubmitReply={onSubmitReply}
         />
       )}
