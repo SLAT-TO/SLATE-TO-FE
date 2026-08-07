@@ -49,8 +49,12 @@ export const paths = {
     member: (projectId: number | string, memberId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/members/${memberId}`,
     leave: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/members/me`,
-    /** FE mock 전용 — BE 활동 피드 API 미구현. BE에 activity_log 테이블/엔티티는 있으나 컨트롤러 없음 */
+    /** BE Recent Activity */
     activities: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/activities`,
+    activityRead: (projectId: number | string, activityId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/activities/${activityId}/read`,
+    activitiesReadAll: (projectId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/activities/read-all`,
     notices: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/notices`,
     notice: (projectId: number | string, noticeId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/notices/${noticeId}`,

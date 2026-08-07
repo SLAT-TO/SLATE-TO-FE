@@ -320,7 +320,11 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
       )}
 
       {tab === 'dashboard' && activityView === 'list' && (
-        <ActivityListView activities={activities} onBack={() => setActivityView('main')} />
+        <ActivityListView
+          projectId={projectId}
+          activities={activities}
+          onBack={() => setActivityView('main')}
+        />
       )}
 
       {tab === 'schedule' && <ProjectScheduleTab projectId={projectId} members={members} />}

@@ -7,10 +7,10 @@ import type {
   CreateInvitationResult,
   CreateProjectRequest,
   CreateProjectResult,
+  ActivityLogListResult,
   CursorPage,
   MemberSummary,
   PinProjectResult,
-  ProjectActivity,
   ProjectDetailResponse,
   ProjectInvitationDetailResponse,
   ProjectListResponse,
@@ -140,8 +140,32 @@ export async function acceptInvitation(
 
 export async function getProjectActivities(
   projectId: number,
-): Promise<CursorPage<ProjectActivity>> {
-  return request({ method: 'GET', url: paths.projects.activities(projectId) })
+  options?: { cursor?: string; size?: number },
+): Promise<ActivityLogListResult> {
+  return request({
+    method: 'GET',
+    url: paths.projects.activities(projectId),
+    params: {
+      ...(options?.cursor != null ? { cursor: options.cursor } : {}),
+      ...(options?.size != null ? { size: options.size } : {}),
+    },
+  })
+}
+
+/** BE PATCH …/activities/{activityId}/read */
+export async function markActivityRead(projectId: number, activityId: number): Promise<null> {
+  return request({
+    method: 'PATCH',
+    url: paths.projects.activityRead(projectId, activityId),
+  })
+}
+
+/** BE PATCH …/activities/read-all */
+export async function markAllActivitiesRead(projectId: number): Promise<null> {
+  return request({
+    method: 'PATCH',
+    url: paths.projects.activitiesReadAll(projectId),
+  })
 }
 
 export async function getProjectFiles(
