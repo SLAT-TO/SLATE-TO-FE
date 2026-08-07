@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getDailySchedules } from '../../api/schedules'
+import { getWorkspaceDailySchedules } from './workspaceSchedules'
 import type { Schedule } from '../../types/schedule'
 import { toDateKey } from '../../utils/calendarUtils'
 import { CARD_BASE } from '../../styles/card'
@@ -29,7 +29,7 @@ export default function DashboardTodayScheduleCard({
     async function load() {
       setLoading(true)
       try {
-        const result = await getDailySchedules(toDateKey(new Date()), {
+        const result = await getWorkspaceDailySchedules(toDateKey(new Date()), {
           projectId,
           scope: 'PROJECT',
         })

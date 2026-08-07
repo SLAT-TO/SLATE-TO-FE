@@ -37,6 +37,14 @@ export const paths = {
       `${API_PREFIX}/projects/${projectId}/videos/${videoId}`,
     videoBookmark: (projectId: number | string, videoId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/videos/${videoId}/bookmark`,
+    /** BE: /projects/{projectId}/videos/{videoId}/reference-files */
+    referenceFiles: (projectId: number | string, videoId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/videos/${videoId}/reference-files`,
+    referenceFile: (
+      projectId: number | string,
+      videoId: number | string,
+      referenceFileId: number | string,
+    ) => `${API_PREFIX}/projects/${projectId}/videos/${videoId}/reference-files/${referenceFileId}`,
     files: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/files`,
     file: (projectId: number | string, fileId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/files/${fileId}`,
@@ -49,8 +57,12 @@ export const paths = {
     member: (projectId: number | string, memberId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/members/${memberId}`,
     leave: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/members/me`,
-    /** FE mock 전용 — BE 활동 피드 API 미구현. BE에 activity_log 테이블/엔티티는 있으나 컨트롤러 없음 */
+    /** BE Recent Activity */
     activities: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/activities`,
+    activityRead: (projectId: number | string, activityId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/activities/${activityId}/read`,
+    activitiesReadAll: (projectId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/activities/read-all`,
     notices: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/notices`,
     notice: (projectId: number | string, noticeId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/notices/${noticeId}`,
@@ -63,9 +75,6 @@ export const paths = {
   },
   videos: {
     validateYoutube: `${API_PREFIX}/videos/youtube/validate`,
-    referenceFiles: (videoId: number | string) => `${API_PREFIX}/videos/${videoId}/reference-files`,
-    referenceFile: (videoId: number | string, referenceFileId: number | string) =>
-      `${API_PREFIX}/videos/${videoId}/reference-files/${referenceFileId}`,
     feedbacks: (videoId: number | string) => `${API_PREFIX}/videos/${videoId}/feedbacks`,
     shareLinks: (videoId: number | string) => `${API_PREFIX}/videos/${videoId}/share-links`,
   },

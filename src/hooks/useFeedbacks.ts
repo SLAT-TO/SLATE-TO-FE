@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import {
   createFeedback,
   deleteFeedback,
@@ -58,11 +59,12 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
 
   const submitFeedback = useCallback(async () => {
     if (!newFeedback.trim()) return
+    const actor = await resolveFeedbackActor(guestId)
     const created = await createFeedback(videoId, {
       content: newFeedback.trim(),
       startTime: pendingStart ?? undefined,
       endTime: pendingEnd ?? undefined,
-      guestId,
+      ...actor,
     })
     setFeedbacks((prev) => [created, ...prev])
     setNewFeedback('')
@@ -97,22 +99,27 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
 
   const removeFeedback = useCallback(
     async (feedbackId: number) => {
-      await deleteFeedback(feedbackId, guestId != null ? { guestId } : undefined)
+      const actor = await resolveFeedbackActor(guestId)
+      await deleteFeedback(feedbackId, actor)
       setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== feedbackId))
     },
     [guestId],
   )
 
-  const editFeedback = useCallback(async (feedbackId: number, content: string) => {
-    const updated = await updateFeedback(feedbackId, { content })
-    setFeedbacks((prev) =>
-      prev.map((f) =>
-        f.feedbackId === updated.feedbackId
-          ? { ...f, content: updated.content, updatedAt: updated.updatedAt }
-          : f,
-      ),
-    )
-  }, [])
+  const editFeedback = useCallback(
+    async (feedbackId: number, content: string) => {
+      const actor = await resolveFeedbackActor(guestId)
+      const updated = await updateFeedback(feedbackId, { content, ...actor })
+      setFeedbacks((prev) =>
+        prev.map((f) =>
+          f.feedbackId === updated.feedbackId
+            ? { ...f, content: updated.content, updatedAt: updated.updatedAt }
+            : f,
+        ),
+      )
+    },
+    [guestId],
+  )
 
   const startEditFeedback = useCallback((feedback: Feedback) => {
     setEditingFeedbackId(feedback.feedbackId)

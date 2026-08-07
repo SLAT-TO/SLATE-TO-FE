@@ -19,6 +19,8 @@ export function useHeaderSlot(left: ReactNode, right: ReactNode = null) {
   const { setHeaderLeft, clearHeaderLeft, setHeaderRight, clearHeaderRight } = actions
 
   useEffect(() => {
+    if (left === undefined) return
+
     setHeaderLeft(left)
     setHeaderRight(right)
   }, [left, right, setHeaderLeft, setHeaderRight])

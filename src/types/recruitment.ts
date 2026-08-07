@@ -9,6 +9,7 @@ export type Recruitment = {
   roles: string[]
   categories: string[]
   regions: string[]
+  lengthType?: string
   status: string
   viewCount: number
   bookmarkCount: number

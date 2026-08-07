@@ -118,6 +118,12 @@ export type MockMemberRecord = {
   joinedAt: string
 }
 
+export type MockProjectFileRecord = Omit<ProjectFile, 'uploader'> & {
+  projectId: number
+  storageKey: string
+  uploaderId: number
+}
+
 /* 모의 데이터베이스 타입 정의 */
 export type MockDb = {
   currentUserId: number | null
@@ -130,8 +136,9 @@ export type MockDb = {
   portfolios: Portfolio[]
   projects: MockProjectRecord[]
   members: MockMemberRecord[]
-  files: ProjectFile[]
-  videos: VideoDetail[]
+  files: MockProjectFileRecord[]
+  /** 목록용 hasUnreadFeedback은 VideoDetail에 없고 VideoItem에만 있음 */
+  videos: Array<VideoDetail & { hasUnreadFeedback: boolean }>
   referenceFiles: ReferenceFile[]
   feedbacks: Feedback[]
   replies: FeedbackReply[]
@@ -295,7 +302,7 @@ export const db: MockDb = {
       thumbnailUrl: 'https://img.youtube.com/vi/jNQXAC9IVRw/maxresdefault.jpg',
       progressStatus: 'IN_PROGRESS',
       bookmarked: true,
-      unreadCommentCount: 3,
+      hasUnreadFeedback: true,
       description: '프로젝트 소개글',
       memo: '1차 피드백 반영 예정',
       projectTags: ['다큐'],
@@ -311,7 +318,7 @@ export const db: MockDb = {
       thumbnailUrl: 'https://img.youtube.com/vi/9bZkp7q19f0/maxresdefault.jpg',
       progressStatus: 'DONE',
       bookmarked: false,
-      unreadCommentCount: 0,
+      hasUnreadFeedback: false,
       description: null,
       memo: null,
       projectTags: [],
@@ -327,6 +334,7 @@ export const db: MockDb = {
       contentType: 'application/pdf',
       fileSize: 1024,
       isFinal: false,
+      uploader: { id: 3, nickname: '박편집' },
       createdAt: '2026-06-10T09:00:00Z',
     },
   ],
@@ -384,6 +392,7 @@ export const db: MockDb = {
       description: '감정선 살리는 편집 가능하신 분',
       roles: ['EDITOR'],
       categories: ['FILM_DRAMA'],
+      lengthType: 'SHORT_FORM',
       regions: ['SEOUL'],
       status: 'OPEN',
       viewCount: 120,
@@ -400,6 +409,7 @@ export const db: MockDb = {
       description: '지방 촬영 가능',
       roles: ['CINEMATOGRAPHER'],
       categories: ['DOCUMENTARY'],
+      lengthType: 'LONG_FORM',
       regions: ['NATIONWIDE'],
       status: 'OPEN',
       viewCount: 45,
@@ -416,6 +426,7 @@ export const db: MockDb = {
       description: '아이돌 그룹 신곡 뮤비 연출',
       roles: ['DIRECTOR'],
       categories: ['MUSIC_VIDEO'],
+      lengthType: 'SHORT_FORM',
       regions: ['SEOUL'],
       status: 'OPEN',
       viewCount: 88,
@@ -432,6 +443,7 @@ export const db: MockDb = {
       description: '주말 스튜디오 작업 가능하신 분',
       roles: ['SOUND'],
       categories: ['ENTERTAINMENT'],
+      lengthType: 'SHORT_FORM',
       regions: ['NATIONWIDE'],
       status: 'OPEN',
       viewCount: 33,
@@ -448,6 +460,7 @@ export const db: MockDb = {
       description: '브랜드 광고 세트 디자인',
       roles: ['ART'],
       categories: ['COMMERCIAL'],
+      lengthType: 'SHORT_FORM',
       regions: ['SEOUL'],
       status: 'OPEN',
       viewCount: 61,
@@ -464,6 +477,7 @@ export const db: MockDb = {
       description: '독립영화 제작 경험자 우대',
       roles: ['PD'],
       categories: ['FILM'],
+      lengthType: 'SHORT_FORM',
       regions: ['NATIONWIDE'],
       status: 'OPEN',
       viewCount: 27,

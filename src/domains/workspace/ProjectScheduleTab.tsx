@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { addMonths, format, parse, subMonths } from 'date-fns'
 import {
-  createSchedule,
-  deleteSchedule,
-  getDailySchedules,
-  getProjectSchedules,
-  updatePrivateMemo,
-  updateSchedule,
-} from '../../api/schedules'
+  createWorkspaceSchedule,
+  deleteWorkspaceSchedule,
+  getWorkspaceDailySchedules,
+  getWorkspaceProjectSchedules,
+  updateWorkspacePrivateMemo,
+  updateWorkspaceSchedule,
+} from './workspaceSchedules'
 import ActionMenu from '../../components/ActionMenu'
 import { Button } from '../../components/Button'
 import { Calendar } from '../../components/Calendar'
@@ -169,7 +169,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     async function load() {
       setLoading(true)
       try {
-        const result = await getProjectSchedules(projectId, month)
+        const result = await getWorkspaceProjectSchedules(projectId, month)
         if (!cancelled) setSchedules(result.items)
       } catch {
         if (!cancelled) setSchedules([])
@@ -192,7 +192,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
 
     async function loadDay() {
       try {
-        const result = await getDailySchedules(toDateKey(date), {
+        const result = await getWorkspaceDailySchedules(toDateKey(date), {
           projectId,
           scope: 'PROJECT',
         })
@@ -234,7 +234,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     setActionError(null)
     try {
       const { startAt, endAt } = toScheduleDateTimes(values, selectedDate)
-      const created = await createSchedule({
+      const created = await createWorkspaceSchedule({
         scheduleScope: 'PROJECT',
         projectId,
         title: values.title.trim() || '새 일정',
@@ -256,7 +256,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
       const { startAt, endAt } = toScheduleDateTimes(values, selectedDate)
       const current =
         daySchedules.find((s) => s.id === scheduleId) ?? schedules.find((s) => s.id === scheduleId)
-      const updated = await updateSchedule(
+      const updated = await updateWorkspaceSchedule(
         scheduleId,
         {
           title: values.title.trim() || '새 일정',
@@ -278,7 +278,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
   const handleDelete = async (scheduleId: number) => {
     setActionError(null)
     try {
-      await deleteSchedule(scheduleId)
+      await deleteWorkspaceSchedule(scheduleId)
       setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
     } catch {
       setActionError('일정을 삭제하지 못했습니다. 다시 시도해주세요.')
@@ -290,7 +290,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     const current =
       daySchedules.find((s) => s.id === scheduleId) ?? schedules.find((s) => s.id === scheduleId)
     try {
-      const updated = await updatePrivateMemo(scheduleId, { content: note }, current)
+      const updated = await updateWorkspacePrivateMemo(scheduleId, { content: note }, current)
       setDaySchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
       setSchedules((prev) => prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s)))
     } catch {

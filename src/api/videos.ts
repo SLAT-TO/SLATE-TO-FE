@@ -15,6 +15,7 @@ import type {
   BookmarkVideoResult,
   CreateVideoRequest,
   CreateVideoResult,
+  LinkReferenceFileResult,
   ReferenceFile,
   UpdateVideoRequest,
   UpdateVideoResult,
@@ -94,23 +95,34 @@ export async function validateYoutubeUrl(
   return request({ method: 'POST', url: paths.videos.validateYoutube, data: body })
 }
 
-export async function getReferenceFiles(videoId: number): Promise<{ items: ReferenceFile[] }> {
-  return request({ method: 'GET', url: paths.videos.referenceFiles(videoId) })
+export async function getReferenceFiles(
+  projectId: number,
+  videoId: number,
+): Promise<{ items: ReferenceFile[] }> {
+  return request({ method: 'GET', url: paths.projects.referenceFiles(projectId, videoId) })
 }
 
 export async function linkReferenceFile(
+  projectId: number,
   videoId: number,
   projectFileId: number,
-): Promise<ReferenceFile> {
+): Promise<LinkReferenceFileResult> {
   return request({
     method: 'POST',
-    url: paths.videos.referenceFiles(videoId),
+    url: paths.projects.referenceFiles(projectId, videoId),
     data: { projectFileId },
   })
 }
 
-export async function unlinkReferenceFile(videoId: number, referenceFileId: number): Promise<null> {
-  return request({ method: 'DELETE', url: paths.videos.referenceFile(videoId, referenceFileId) })
+export async function unlinkReferenceFile(
+  projectId: number,
+  videoId: number,
+  referenceFileId: number,
+): Promise<null> {
+  return request({
+    method: 'DELETE',
+    url: paths.projects.referenceFile(projectId, videoId, referenceFileId),
+  })
 }
 
 export async function getFeedbacks(
@@ -125,6 +137,11 @@ export async function getFeedbacks(
   return { items: result.items.map(normalizeFeedback) }
 }
 
+/** Swagger: guestId만 body에 실음. 멤버는 JWT */
+function feedbackGuestBody(body: { guestId?: number }): { guestId?: number } {
+  return body.guestId != null ? { guestId: body.guestId } : {}
+}
+
 export async function createFeedback(
   videoId: number,
   body: CreateFeedbackRequest,
@@ -132,7 +149,12 @@ export async function createFeedback(
   const result = await request<FeedbackStatusRaw>({
     method: 'POST',
     url: paths.videos.feedbacks(videoId),
-    data: body,
+    data: {
+      content: body.content,
+      ...(body.startTime != null ? { startTime: body.startTime } : {}),
+      ...(body.endTime != null ? { endTime: body.endTime } : {}),
+      ...feedbackGuestBody(body),
+    },
   })
   return normalizeFeedback(result)
 }
@@ -144,7 +166,12 @@ export async function updateFeedback(
   const result = await request<FeedbackStatusRaw>({
     method: 'PATCH',
     url: paths.feedbacks.byId(feedbackId),
-    data: body,
+    data: {
+      ...(body.content != null ? { content: body.content } : {}),
+      ...(body.startTime != null ? { startTime: body.startTime } : {}),
+      ...(body.endTime != null ? { endTime: body.endTime } : {}),
+      ...feedbackGuestBody(body),
+    },
   })
   return normalizeFeedback(result)
 }
@@ -167,7 +194,7 @@ export async function updateFeedbackStatus(
   const result = await request<{ feedbackId: number; status: unknown; updatedAt: string }>({
     method: 'PATCH',
     url: paths.feedbacks.status(feedbackId),
-    data: body,
+    data: { status: body.status },
   })
   return { ...result, status: toFeedbackStatus(result.status) }
 }
@@ -189,7 +216,7 @@ export async function createReply(
     url: paths.feedbacks.replies(feedbackId),
     data: {
       content: body.content,
-      ...(body.guestId != null ? { guestId: body.guestId } : {}),
+      ...feedbackGuestBody(body),
     },
   })
   return normalizeFeedbackReply(result)
@@ -214,7 +241,7 @@ export async function updateReplyStatus(
   const result = await request<{ replyId: number; status: unknown; updatedAt: string }>({
     method: 'PATCH',
     url: paths.replies.status(replyId),
-    data: body,
+    data: { status: body.status },
   })
   return { ...result, status: toFeedbackStatus(result.status) }
 }
