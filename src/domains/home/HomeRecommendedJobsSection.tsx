@@ -10,15 +10,6 @@ interface HomeRecommendedJobsSectionProps {
   loading: boolean
 }
 
-const ROLE_LABEL_MAP: Record<string, string> = {
-  DIRECTOR: '연출',
-  EDITOR: '편집',
-  CINEMATOGRAPHER: '촬영 감독',
-  SOUND: '사운드',
-  PD: 'PD',
-  ART: '미술',
-}
-
 export default function HomeRecommendedJobsSection({
   jobs,
   bookmarkedIds,
