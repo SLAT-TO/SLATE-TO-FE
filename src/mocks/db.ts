@@ -118,6 +118,12 @@ export type MockMemberRecord = {
   joinedAt: string
 }
 
+export type MockProjectFileRecord = Omit<ProjectFile, 'uploader'> & {
+  projectId: number
+  storageKey: string
+  uploaderId: number
+}
+
 /* 모의 데이터베이스 타입 정의 */
 export type MockDb = {
   currentUserId: number | null
@@ -130,7 +136,7 @@ export type MockDb = {
   portfolios: Portfolio[]
   projects: MockProjectRecord[]
   members: MockMemberRecord[]
-  files: ProjectFile[]
+  files: MockProjectFileRecord[]
   /** 목록용 hasUnreadFeedback은 VideoDetail에 없고 VideoItem에만 있음 */
   videos: Array<VideoDetail & { hasUnreadFeedback: boolean }>
   referenceFiles: ReferenceFile[]

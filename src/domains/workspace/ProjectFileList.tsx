@@ -21,9 +21,12 @@ import downloadIcon from '../../assets/icons/download.svg?raw'
 import searchIcon from '../../assets/icons/search.svg?raw'
 import starIcon from '../../assets/icons/star.svg?raw'
 import { CARD_BASE } from '../../styles/card'
+import ProjectFileDetailView from './ProjectFileDetailView'
 
 interface ProjectFileListProps {
   projectId: number
+  initialFileId?: number | null
+  onInitialFileConsumed?: () => void
 }
 
 function formatDateTime(iso: string): string {
@@ -36,16 +39,24 @@ function formatDateTime(iso: string): string {
   return `${date.getFullYear()}년 ${month}월 ${day}일 ${hours}:${minutes}`
 }
 
-export default function ProjectFileList({ projectId }: ProjectFileListProps) {
+export default function ProjectFileList({
+  projectId,
+  initialFileId = null,
+  onInitialFileConsumed,
+}: ProjectFileListProps) {
   const [files, setFiles] = useState<ProjectFileListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [keyword, setKeyword] = useState('')
   const [searchKeyword, setSearchKeyword] = useState('')
   const [uploadOpen, setUploadOpen] = useState(false)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadFileName, setUploadFileName] = useState('')
+  const [uploadPinned, setUploadPinned] = useState(false)
   const [description, setDescription] = useState('')
+  const [uploadError, setUploadError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<ProjectFileListItem | null>(null)
+  const [selectedFile, setSelectedFile] = useState<ProjectFileListItem | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSearchKeyword(keyword), 400)
@@ -73,21 +84,37 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
 
   const openUploadModal = () => {
     setUploadFile(null)
+    setUploadFileName('')
+    setUploadPinned(false)
     setDescription('')
+    setUploadError('')
     setUploadOpen(true)
   }
 
   const submitUpload = async () => {
-    if (!uploadFile) return
+    if (!uploadFile || !uploadFileName.trim()) {
+      setUploadError('파일명과 업로드할 파일을 모두 입력해주세요.')
+      return
+    }
     setUploading(true)
+    setUploadError('')
     try {
-      await uploadProjectFile(projectId, uploadFile, {
-        fileName: uploadFile.name,
+      const uploaded = await uploadProjectFile(projectId, uploadFile, {
+        fileName: uploadFileName.trim(),
         description: description.trim() || undefined,
       })
+      if (uploadPinned) {
+        try {
+          await pinProjectFile(projectId, uploaded.id)
+        } catch {
+          window.alert('파일은 업로드됐지만 즐겨찾기를 적용하지 못했습니다.')
+        }
+      }
       const page = await getProjectFiles(projectId, keyword.trim() || undefined)
       setFiles(page.items)
       setUploadOpen(false)
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : '파일 업로드에 실패했습니다.')
     } finally {
       setUploading(false)
     }
@@ -102,6 +129,8 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
     if (!deleteTarget) return
     await deleteFile(projectId, deleteTarget.id)
     setFiles((prev) => prev.filter((f) => f.id !== deleteTarget.id))
+    if (selectedFile?.id === deleteTarget.id) setSelectedFile(null)
+    if (initialFileId === deleteTarget.id) onInitialFileConsumed?.()
     setDeleteTarget(null)
   }
 
@@ -114,6 +143,44 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
     } catch {
       setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, isPinned: !next } : f)))
     }
+  }
+
+  const activeFile =
+    selectedFile ?? files.find((file) => initialFileId != null && file.id === initialFileId) ?? null
+
+  if (activeFile) {
+    return (
+      <>
+        <ProjectFileDetailView
+          file={activeFile}
+          onBack={() => {
+            setSelectedFile(null)
+            onInitialFileConsumed?.()
+          }}
+          onDownload={() => void downloadFile(activeFile.id, activeFile.fileName)}
+          onDelete={() =>
+            setDeleteTarget({
+              id: activeFile.id,
+              fileName: activeFile.fileName,
+              description: activeFile.description,
+              contentType: activeFile.contentType,
+              fileSize: activeFile.fileSize,
+              isPinned: activeFile.isPinned,
+              isFinal: activeFile.isFinal,
+              uploader: activeFile.uploader,
+              createdAt: activeFile.createdAt,
+            })
+          }
+        />
+        <ConfirmModal
+          isOpen={deleteTarget !== null}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={confirmDelete}
+          title="파일을 삭제할까요?"
+          description="삭제한 파일은 복구할 수 없습니다."
+        />
+      </>
+    )
   }
 
   return (
@@ -152,10 +219,14 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
             key={file.id}
             className={`flex items-center justify-between gap-3 ${CARD_BASE} px-4 py-3`}
           >
-            <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSelectedFile(file)}
+              className="flex min-w-0 items-center gap-3 text-left"
+            >
               <InlineIcon svg={documentIcon} className="text-neutral-5 size-6 shrink-0" />
               <span className="text-body-sm text-neutral-11 min-w-0 truncate">{file.fileName}</span>
-            </div>
+            </button>
             <div className="flex shrink-0 items-center gap-4">
               <span className="text-caption-lg text-neutral-6">
                 {formatDateTime(file.createdAt)}
@@ -184,29 +255,58 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
       </div>
 
       <Modal isOpen={uploadOpen} onClose={() => setUploadOpen(false)}>
-        <div className="bg-bg-primary flex w-[420px] flex-col gap-3 rounded-lg p-5">
-          <h3 className="text-body-sm text-neutral-11 font-semibold">파일 추가</h3>
-          <FileInput
-            value={uploadFile ? [uploadFile] : []}
-            onChange={(files) => setUploadFile(files[0] ?? null)}
-            hint="첨부가능 파일 형식 (Png, Pdf, Word, Jpg) 최대 5GB"
-          />
+        <div className="bg-bg-primary flex w-[700px] max-w-[calc(100vw-32px)] flex-col gap-5 rounded-lg p-7">
+          <h3 className="text-head-sm text-neutral-11 font-bold">파일 추가</h3>
+          <label className="flex flex-col gap-2">
+            <span className="text-body-sm text-neutral-11 font-semibold">파일명</span>
+            <span className="relative">
+              <input
+                value={uploadFileName}
+                onChange={(event) => {
+                  setUploadFileName(event.target.value)
+                  setUploadError('')
+                }}
+                placeholder="파일명을 입력해주세요."
+                className="bg-neutral-2 text-body-sm text-neutral-11 placeholder:text-neutral-5 border-neutral-3 h-12 w-full rounded-lg border px-4 pr-12 outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setUploadPinned((value) => !value)}
+                aria-label={uploadPinned ? '즐겨찾기 해제' : '즐겨찾기'}
+                className={`absolute top-1/2 right-3 -translate-y-1/2 ${
+                  uploadPinned ? 'text-caution' : 'text-neutral-5'
+                }`}
+              >
+                <InlineIcon svg={starIcon} className="size-5" />
+              </button>
+            </span>
+          </label>
           <TextArea
             value={description}
-            onChange={setDescription}
+            onChange={(value) => {
+              setDescription(value)
+              setUploadError('')
+            }}
             placeholder="파일 설명 (선택)"
             rows={3}
           />
-          <div className="mt-2 flex gap-2">
-            <Button
-              variant="primary"
-              className="flex-1"
-              disabled={!uploadFile || uploading}
-              onClick={submitUpload}
-            >
+          <FileInput
+            value={uploadFile ? [uploadFile] : []}
+            onChange={(files) => {
+              const file = files[0] ?? null
+              setUploadFile(file)
+              if (file && !uploadFileName.trim()) setUploadFileName(file.name)
+              setUploadError('')
+            }}
+            accept=".png,.pdf,.doc,.docx,.jpg,.jpeg"
+            hint="첨부가능 파일 형식 (Png, Pdf, Word, Jpg) 최대 5GB"
+            error={uploadError || undefined}
+          />
+          <div className="mt-1 flex justify-center gap-3">
+            <Button variant="primary" className="w-40" disabled={uploading} onClick={submitUpload}>
               {uploading ? '업로드 중…' : '업로드'}
             </Button>
-            <Button variant="secondary" className="flex-1" onClick={() => setUploadOpen(false)}>
+            <Button variant="secondary" className="w-40" onClick={() => setUploadOpen(false)}>
               취소
             </Button>
           </div>
