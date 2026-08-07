@@ -1,6 +1,7 @@
 import type { KeyboardEvent, MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import ActionMenu from '../../components/ActionMenu'
+import BookmarkStarIcon from '../../components/icons/BookmarkStarIcon'
 import Tag from '../../components/Tag'
 import { CARD_BASE } from '../../styles/card'
 
@@ -14,6 +15,8 @@ interface VideoCardProps {
   relativeTime?: string
   /** BE VideoItemResDTO.hasUnreadFeedback */
   hasUnreadFeedback?: boolean
+  bookmarked?: boolean
+  onToggleBookmark?: () => void
   /** React Router 경로 — 있으면 `<Link to>`로 이동 */
   to?: string
   onClick?: () => void
@@ -28,6 +31,8 @@ export default function VideoCard({
   progressStatus,
   relativeTime,
   hasUnreadFeedback = false,
+  bookmarked = false,
+  onToggleBookmark,
   to,
   onClick,
   onEdit,
@@ -65,11 +70,26 @@ export default function VideoCard({
         <span className="text-body-sm text-neutral-11 min-w-0 flex-1 truncate text-left font-semibold">
           {title}
         </span>
-        {menuItems.length > 0 && (
-          <div onClick={stopCardClick} onKeyDown={stopCardClick}>
-            <ActionMenu items={menuItems} ariaLabel="영상 메뉴" />
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {onToggleBookmark && (
+            <div onClick={stopCardClick} onKeyDown={stopCardClick}>
+              <button
+                type="button"
+                onClick={onToggleBookmark}
+                aria-pressed={bookmarked}
+                aria-label={bookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+                className={bookmarked ? 'text-caution' : 'text-neutral-6'}
+              >
+                <BookmarkStarIcon filled={bookmarked} className="size-5" />
+              </button>
+            </div>
+          )}
+          {menuItems.length > 0 && (
+            <div onClick={stopCardClick} onKeyDown={stopCardClick}>
+              <ActionMenu items={menuItems} ariaLabel="영상 메뉴" />
+            </div>
+          )}
+        </div>
       </div>
 
       <div aria-hidden className="bg-neutral-3 aspect-video w-full overflow-hidden rounded-lg">
