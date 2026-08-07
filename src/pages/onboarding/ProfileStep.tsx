@@ -1,10 +1,10 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react'
-import profileDefault from '../../assets/images/profile_default.png'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
 import Input from '../../components/Input'
 import TextArea from '../../components/TextArea'
-import { getMe } from '../../api/users'
+import { getMe, submitOnboarding } from '../../api/users'
+import { ApiError } from '../../types/api'
 import { profileSchema } from '../../schemas/onboarding'
 import { useOnboardingStore } from '../../stores/onboardingStore'
 import { OnboardingLayout } from './OnboardingLayout'
@@ -17,8 +17,14 @@ interface ProfileStepProps {
 export function ProfileStep({ onComplete }: ProfileStepProps) {
   const profile = useOnboardingStore((s) => s.profile)
   const setProfileField = useOnboardingStore((s) => s.setProfileField)
+  const agreedTerms = useOnboardingStore((s) => s.agreedTerms)
+  const roles = useOnboardingStore((s) => s.roles)
+  const regions = useOnboardingStore((s) => s.regions)
+  const categories = useOnboardingStore((s) => s.categories)
 
   const [errors, setErrors] = useState<{ name?: string; email?: string; intro?: string }>({})
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const nameId = useId()
   const emailId = useId()
@@ -69,7 +75,7 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
     setProfileField('avatarUrl', url)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // 제출 시 전체 스키마로 재검증
     const result = profileSchema.safeParse({
       name: profile.name,
@@ -86,22 +92,49 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
       return
     }
     setErrors({})
-    onComplete()
+    setSubmitError(null)
+    setSubmitting(true)
+    try {
+      await submitOnboarding({
+        agreedTerms,
+        nickname: profile.name,
+        roles,
+        regions,
+        categories,
+        bio: profile.intro || undefined,
+      })
+      onComplete()
+    } catch (err) {
+      setSubmitError(err instanceof ApiError ? err.message : '온보딩 정보를 저장하지 못했습니다.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <OnboardingLayout
       title="프로필을 만들어 주세요."
       subtitle="나중에 변경할 수 있어요"
-      titleAlign="left"
-      footer={<Button onClick={handleSubmit}>다음</Button>}
+      footer={
+        <div className="flex flex-col items-center gap-3">
+          {submitError && <p className="text-body-sm text-warning">{submitError}</p>}
+          <Button width={846} onClick={handleSubmit} disabled={submitting}>
+            {submitting ? '저장 중…' : '다음'}
+          </Button>
+        </div>
+      }
     >
       {/* 160(아바타) + 86(gap) + 736(입력 필드 채우기) = 982px */}
       <div className="mx-auto flex w-full max-w-245.5 flex-col items-center gap-21.5 sm:flex-row sm:items-start">
         {/* 아바타 + 변경하기: 서브타이틀과 106px 간격(입력 필드 컬럼은 기존 40px 유지, 여기만 66px 추가) */}
-        <div className="mt-16.5 flex w-40 shrink-0 flex-col items-center gap-9">
-          <Avatar src={profile.avatarUrl || profileDefault} size={160} border="gray" />
-          <Button variant="secondary" fullWidth onClick={() => fileInputRef.current?.click()}>
+        <div className="mt-3 flex w-40 shrink-0 flex-col items-center gap-9">
+          <Avatar src={profile.avatarUrl} size={160} />
+          <Button
+            variant="primary"
+            size="md"
+            disabled
+            onClick={() => fileInputRef.current?.click()}
+          >
             변경하기
           </Button>
           <input
@@ -115,7 +148,7 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
         </div>
 
         {/* 입력 필드 — 파란 배경 위 흰 라벨이라 컴포넌트 label 대신 직접 렌더 */}
-        <div className="flex w-full flex-col gap-5">
+        <div className="flex w-full flex-col gap-6">
           <div className="flex flex-col gap-3">
             <label
               htmlFor={nameId}
@@ -164,6 +197,7 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
               rows={3}
               maxLength={200}
               error={errors.intro}
+              className="bg-neutral-2!"
             />
           </div>
         </div>

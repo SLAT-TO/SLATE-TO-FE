@@ -44,7 +44,12 @@ export const userHandlers = [
     if (!body.agreedTerms) {
       return badRequest('필수 약관 미동의')
     }
-    if (!body.roles?.length || !body.region || !body.categories?.length || !body.nickname) {
+    if (
+      !body.roles?.length ||
+      !body.regions?.length ||
+      !body.categories?.length ||
+      !body.nickname
+    ) {
       return badRequest('요청 값이 올바르지 않습니다.')
     }
 
@@ -53,8 +58,9 @@ export const userHandlers = [
     user.bio = body.bio ?? null
     user.profileImageUrl = body.profileImageUrl ?? user.profileImageUrl
     user.roles = body.roles
-    user.region = body.region
-    user.location = body.region
+    // MeUser는 region/location이 단일값 — 온보딩에서 여러 지역을 고르면 첫 번째를 대표 지역으로 저장
+    user.region = body.regions[0]!
+    user.location = body.regions[0]!
     user.categories = body.categories
     user.primaryRole = body.roles[0] ?? null
     user.onboardingCompleted = true

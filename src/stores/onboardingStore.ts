@@ -1,7 +1,7 @@
 import { create } from 'zustand'
-import type { OnboardingRole } from '../constants/onboardingRoles'
 import type { OnboardingVideoCategory } from '../constants/onboardingVideoCategories'
 import type { Region } from '../constants/regions'
+import type { UserRole } from '../types/user'
 
 // 온보딩 4단계에 걸쳐 모은 값을 페이지 레벨에서 소유한다. (공용 컴포넌트가 아님)
 interface OnboardingProfile {
@@ -14,12 +14,15 @@ interface OnboardingProfile {
 }
 
 interface OnboardingState {
-  roles: OnboardingRole[]
+  /** 약관 동의(가입 단계) — TermsPage 연동 전까지는 항상 false */
+  agreedTerms: boolean
+  roles: UserRole[]
   regions: Region[]
   categories: OnboardingVideoCategory[]
   profile: OnboardingProfile
 
-  toggleRole: (role: OnboardingRole) => void
+  setAgreedTerms: (agreed: boolean) => void
+  toggleRole: (role: UserRole) => void
   toggleRegion: (region: Region) => void
   toggleCategory: (category: OnboardingVideoCategory) => void
   setProfileField: <K extends keyof OnboardingProfile>(key: K, value: OnboardingProfile[K]) => void
@@ -39,14 +42,17 @@ const initialProfile: OnboardingProfile = {
 }
 
 export const useOnboardingStore = create<OnboardingState>((set) => ({
+  agreedTerms: false,
   roles: [],
   regions: [],
   categories: [],
   profile: initialProfile,
 
+  setAgreedTerms: (agreedTerms) => set({ agreedTerms }),
   toggleRole: (role) => set((s) => ({ roles: toggle(s.roles, role) })),
   toggleRegion: (region) => set((s) => ({ regions: toggle(s.regions, region) })),
   toggleCategory: (category) => set((s) => ({ categories: toggle(s.categories, category) })),
   setProfileField: (key, value) => set((s) => ({ profile: { ...s.profile, [key]: value } })),
-  reset: () => set({ roles: [], regions: [], categories: [], profile: initialProfile }),
+  reset: () =>
+    set({ agreedTerms: false, roles: [], regions: [], categories: [], profile: initialProfile }),
 }))

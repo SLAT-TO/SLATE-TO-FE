@@ -22,10 +22,10 @@ export function SelectableChip({ label, selected, onToggle, variant }: Selectabl
       type="button"
       aria-pressed={selected}
       onClick={onToggle}
-      className={`text-body-sm rounded-[6.828px] font-semibold shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none ${variantClass[variant]} ${
+      className={`text-body-sm rounded-[6.828px] font-normal shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none ${variantClass[variant]} ${
         selected
-          ? 'bg-neutral-4 text-black'
-          : 'border-neutral-5 bg-neutral-1 hover:bg-main-1 text-neutral-9 border'
+          ? 'bg-main-7 border-main-7 text-neutral-1'
+          : 'border-neutral-5 bg-neutral-1 hover:bg-main-1 text-neutral-5 border-[0.75px]'
       }`}
     >
       {label}

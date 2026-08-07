@@ -11,7 +11,7 @@ interface ChipGridProps {
   selected: ReadonlyArray<string>
   onToggle: (value: string) => void
   /** 한 줄에 표시할 칩 개수 */
-  columns: 2 | 4
+  columns: 2 | 3 | 4
 }
 
 // columns 값을 명시적 클래스로 매핑 (Tailwind가 동적 문자열을 스캔 못 하므로 정적 매핑)
@@ -22,18 +22,21 @@ interface ChipGridProps {
 // lg(1024px) 미만에서는 트랙 폭도 SelectableChip의 축소 폭(140px)에 맞춘다.
 const columnClass: Record<ChipGridProps['columns'], string> = {
   2: 'grid-cols-[repeat(2,264px)] justify-center',
+  3: 'grid-cols-[repeat(3,140px)] justify-center lg:grid-cols-[repeat(3,172px)]',
   4: 'grid-cols-[repeat(4,140px)] justify-center lg:grid-cols-[repeat(4,172px)]',
 }
 
 // columns=4(활동 지역)만 region 사이즈, 나머지(역할·영상 카테고리)는 wide 사이즈
 const chipVariant: Record<ChipGridProps['columns'], 'wide' | 'region'> = {
   2: 'wide',
+  3: 'region',
   4: 'region',
 }
 
 // 화면별 칩 간격 (가로는 피그마 스펙 고정값, 세로는 32px로 통일해 그리드 전체 높이를 맞춘다)
 const gapClass: Record<ChipGridProps['columns'], string> = {
   2: 'gap-x-15.5 gap-y-8',
+  3: 'gap-x-15.5 gap-y-8',
   4: 'gap-x-[43px] gap-y-8',
 }
 
@@ -42,6 +45,7 @@ const gapClass: Record<ChipGridProps['columns'], string> = {
 // 2컬럼: 264*2 + 62 = 590px / 4컬럼: 172*4 + 43*3 = 817px
 const maxWidthClass: Record<ChipGridProps['columns'], string> = {
   2: 'max-w-[590px]',
+  3: 'max-w-[590px]',
   4: 'max-w-[817px]',
 }
 

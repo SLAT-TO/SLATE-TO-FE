@@ -1,16 +1,17 @@
-/** 온보딩 3단계 — 활동 영상 카테고리 */
-export const ONBOARDING_VIDEO_CATEGORY_LABELS = [
-  '영화',
-  '다큐/시사/교양',
-  '드라마',
-  '뮤직비디오',
-  '예능/오락',
-  '광고/이벤트/홍보영상',
-] as const
+import type { UserCategory } from '../types/user'
 
-export type OnboardingVideoCategory = (typeof ONBOARDING_VIDEO_CATEGORY_LABELS)[number]
-
+/** 온보딩 3단계 — 활동 영상 카테고리. BE UserCategory 기준 (ETC 제외) */
 export const ONBOARDING_VIDEO_CATEGORY_OPTIONS: ReadonlyArray<{
-  value: OnboardingVideoCategory
+  value: UserCategory
   label: string
-}> = ONBOARDING_VIDEO_CATEGORY_LABELS.map((label) => ({ value: label, label }))
+}> = [
+  { value: 'YOUTUBE_CONTENT', label: '유튜브 콘텐츠' },
+  { value: 'AD_BRAND', label: '광고 / 브랜드 영상' },
+  { value: 'MUSIC_VIDEO', label: '뮤직비디오' },
+  { value: 'WEDDING_EVENT', label: '웨딩 / 이벤트 영상' },
+  { value: 'DOCUMENTARY', label: '다큐멘터리' },
+  { value: 'FILM_DRAMA', label: '영화 / 드라마' },
+  { value: 'CORPORATE_PROMO', label: '기업 홍보영상' },
+]
+
+export type OnboardingVideoCategory = UserCategory
