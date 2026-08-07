@@ -44,8 +44,7 @@ export const paths = {
       projectId: number | string,
       videoId: number | string,
       referenceFileId: number | string,
-    ) =>
-      `${API_PREFIX}/projects/${projectId}/videos/${videoId}/reference-files/${referenceFileId}`,
+    ) => `${API_PREFIX}/projects/${projectId}/videos/${videoId}/reference-files/${referenceFileId}`,
     files: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/files`,
     file: (projectId: number | string, fileId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/files/${fileId}`,

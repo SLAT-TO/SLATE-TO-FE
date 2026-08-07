@@ -183,34 +183,37 @@ export const videoHandlers = [
     return HttpResponse.json(ok({ items: db.referenceFiles }), { status: 200 })
   }),
 
-  http.post(paths.projects.referenceFiles(':projectId', ':videoId'), async ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
-    if (!db.videos.some((v) => v.videoId === Number(params.videoId))) return notFound()
-    const body = (await request.json()) as { projectFileId: number }
-    const file = db.files.find((f) => f.id === body.projectFileId)
-    if (!file) return notFound()
-    const uploader = db.users.find((user) => user.id === file.uploaderId)
-    if (!uploader) return notFound()
-    const ref = {
-      referenceFileId: allocId(),
-      projectFileId: file.id,
-      fileName: file.fileName,
-      contentType: file.contentType,
-      fileSize: file.fileSize,
-      isFinal: false,
-      uploader: { id: uploader.id, nickname: uploader.nickname },
-      createdAt: new Date().toISOString(),
-    }
-    db.referenceFiles.push(ref)
-    return HttpResponse.json(
-      created({
-        referenceFileId: ref.referenceFileId,
-        projectFileId: ref.projectFileId,
-        createdAt: ref.createdAt,
-      }),
-      { status: 201 },
-    )
-  }),
+  http.post(
+    paths.projects.referenceFiles(':projectId', ':videoId'),
+    async ({ request, params }) => {
+      if (!safeUser()) return unauthorized()
+      if (!db.videos.some((v) => v.videoId === Number(params.videoId))) return notFound()
+      const body = (await request.json()) as { projectFileId: number }
+      const file = db.files.find((f) => f.id === body.projectFileId)
+      if (!file) return notFound()
+      const uploader = db.users.find((user) => user.id === file.uploaderId)
+      if (!uploader) return notFound()
+      const ref = {
+        referenceFileId: allocId(),
+        projectFileId: file.id,
+        fileName: file.fileName,
+        contentType: file.contentType,
+        fileSize: file.fileSize,
+        isFinal: false,
+        uploader: { id: uploader.id, nickname: uploader.nickname },
+        createdAt: new Date().toISOString(),
+      }
+      db.referenceFiles.push(ref)
+      return HttpResponse.json(
+        created({
+          referenceFileId: ref.referenceFileId,
+          projectFileId: ref.projectFileId,
+          createdAt: ref.createdAt,
+        }),
+        { status: 201 },
+      )
+    },
+  ),
 
   http.delete(
     paths.projects.referenceFile(':projectId', ':videoId', ':referenceFileId'),
