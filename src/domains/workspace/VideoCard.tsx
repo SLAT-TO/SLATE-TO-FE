@@ -57,8 +57,12 @@ export default function VideoCard({
     }
   }
 
-  const stopCardClick = (event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
+  const stopCardClick = (event: MouseEvent<HTMLElement>) => {
     event.preventDefault()
+    event.stopPropagation()
+  }
+
+  const stopCardKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     event.stopPropagation()
   }
 
@@ -72,7 +76,7 @@ export default function VideoCard({
         </span>
         <div className="flex shrink-0 items-center gap-1">
           {onToggleBookmark && (
-            <div onClick={stopCardClick} onKeyDown={stopCardClick}>
+            <div onClick={stopCardClick} onKeyDown={stopCardKeyDown}>
               <button
                 type="button"
                 onClick={onToggleBookmark}
@@ -85,7 +89,7 @@ export default function VideoCard({
             </div>
           )}
           {menuItems.length > 0 && (
-            <div onClick={stopCardClick} onKeyDown={stopCardClick}>
+            <div onClick={stopCardClick} onKeyDown={stopCardKeyDown}>
               <ActionMenu items={menuItems} ariaLabel="영상 메뉴" />
             </div>
           )}
