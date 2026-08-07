@@ -42,9 +42,7 @@ export type CreateFeedbackRequest = {
   startTime?: number
   /** 타임코드 종료 시간(초). 단일 시점이면 생략 */
   endTime?: number
-  /** BE: userId XOR guestId — 멤버 작성 시 필수 */
-  userId?: number
-  /** 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
+  /** 공유링크 게스트 — 멤버는 JWT (FeedbackCreateReqDTO.guestId) */
   guestId?: number
 }
 
@@ -52,28 +50,22 @@ export type UpdateFeedbackRequest = {
   content?: string
   startTime?: number
   endTime?: number
-  /** BE: userId XOR guestId */
-  userId?: number
   guestId?: number
 }
 
+/** BE FeedbackStatusReqDTO */
 export type UpdateFeedbackStatusRequest = {
-  /** BE FeedbackStatusReqDTO — 멤버만 가능 */
-  userId: number
   status: boolean
 }
 
 export type CreateReplyRequest = {
   content: string
-  /** BE: userId XOR guestId */
-  userId?: number
-  /** 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
+  /** 공유링크 게스트 — 멤버는 JWT (ReplyCreateReqDTO.guestId) */
   guestId?: number
 }
 
+/** BE ReplyStatusReqDTO */
 export type UpdateReplyStatusRequest = {
-  /** BE ReplyStatusReqDTO */
-  userId: number
   status: boolean
 }
 

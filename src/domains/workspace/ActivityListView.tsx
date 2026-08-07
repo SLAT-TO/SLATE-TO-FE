@@ -1,9 +1,13 @@
-import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '../../components/Button'
+import { markActivityRead, markAllActivitiesRead } from '../../api/projects'
+import { projectKeys } from '../../queries/keys'
 import type { ProjectActivity } from '../../types/project'
-import { CARD_BASE } from '../../styles/card'
+
+const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
 
 interface ActivityListViewProps {
+  projectId: number
   activities: ProjectActivity[]
   onBack: () => void
 }
@@ -18,27 +22,37 @@ function formatActivityDate(iso: string): string {
   return `${month}월 ${day}일 ${hours}:${minutes}`
 }
 
-export default function ActivityListView({ activities, onBack }: ActivityListViewProps) {
-  /** BE에 활동 읽음 API가 없어 로컬에서만 읽음 처리한 id */
-  const [locallyReadIds, setLocallyReadIds] = useState<Set<number>>(() => new Set())
+export default function ActivityListView({ projectId, activities, onBack }: ActivityListViewProps) {
+  const queryClient = useQueryClient()
+  const hasNew = activities.some((item) => item.isNew)
 
-  const items = activities.map((activity) =>
-    locallyReadIds.has(activity.id) ? { ...activity, isRead: true } : activity,
-  )
-  const hasUnread = items.some((item) => !item.isRead)
-
-  const markAllAsRead = () => {
-    setLocallyReadIds(new Set(activities.map((activity) => activity.id)))
+  const patchActivities = (updater: (items: ProjectActivity[]) => ProjectActivity[]) => {
+    queryClient.setQueryData<ProjectActivity[]>(projectKeys.activities(projectId), (prev) =>
+      updater(prev ?? []),
+    )
   }
 
-  /** BE 활동 읽음 API 없음 — 호버 시 로컬에서 읽음 처리해 UI 확인을 쉽게 함 */
-  const markAsRead = (activityId: number) => {
-    setLocallyReadIds((prev) => {
-      if (prev.has(activityId)) return prev
-      const next = new Set(prev)
-      next.add(activityId)
-      return next
-    })
+  const markAsRead = async (activityId: number) => {
+    const target = activities.find((item) => item.activityId === activityId)
+    if (!target?.isNew) return
+    patchActivities((items) =>
+      items.map((item) => (item.activityId === activityId ? { ...item, isNew: false } : item)),
+    )
+    try {
+      await markActivityRead(projectId, activityId)
+    } catch {
+      void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
+    }
+  }
+
+  const markAllAsRead = async () => {
+    if (!hasNew) return
+    patchActivities((items) => items.map((item) => ({ ...item, isNew: false })))
+    try {
+      await markAllActivitiesRead(projectId)
+    } catch {
+      void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
+    }
   }
 
   return (
@@ -55,24 +69,26 @@ export default function ActivityListView({ activities, onBack }: ActivityListVie
           variant="secondary"
           size="md"
           width={112}
-          onClick={markAllAsRead}
-          disabled={!hasUnread}
+          onClick={() => void markAllAsRead()}
+          disabled={!hasNew}
         >
           전체 읽음
         </Button>
       </div>
 
-      {items.length === 0 ? (
+      {activities.length === 0 ? (
         <p className="text-caption-lg text-neutral-6">최근 활동이 없습니다.</p>
       ) : (
         <ul className="flex flex-col gap-4">
-          {items.map((activity) => (
+          {activities.map((activity) => (
             <li
-              key={activity.id}
+              key={activity.activityId}
               onMouseEnter={() => {
-                if (!activity.isRead) markAsRead(activity.id)
+                if (activity.isNew) void markAsRead(activity.activityId)
               }}
-              className={`flex items-center justify-between gap-3 ${CARD_BASE} px-4 py-4`}
+              className={`flex items-center justify-between gap-3 rounded-[10px] px-4 py-4 ${CARD_SHADOW} ${
+                activity.isNew ? 'bg-neutral-1' : 'bg-neutral-3'
+              }`}
             >
               <span className="text-body-sm text-neutral-10 min-w-0 tracking-[-0.32px]">
                 {activity.content}
@@ -81,10 +97,10 @@ export default function ActivityListView({ activities, onBack }: ActivityListVie
                 <span className="text-caption-sm text-neutral-6">
                   {formatActivityDate(activity.createdAt)}
                 </span>
-                {!activity.isRead && (
+                {activity.isNew && (
                   <span
                     className="bg-warning size-2.75 shrink-0 rounded-full"
-                    aria-label="안 읽음"
+                    aria-label="새 활동"
                   />
                 )}
               </div>

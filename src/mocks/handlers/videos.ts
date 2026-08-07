@@ -43,7 +43,8 @@ export const videoHandlers = [
         thumbnailUrl: v.thumbnailUrl,
         bookmarked: v.bookmarked,
         progressStatus: v.progressStatus,
-        unreadCommentCount: v.unreadCommentCount,
+        hasUnreadFeedback: v.hasUnreadFeedback,
+        createdAt: v.createdAt,
         updatedAt: v.updatedAt,
       }))
 
@@ -75,7 +76,7 @@ export const videoHandlers = [
       thumbnailUrl: 'https://img.youtube.com/vi/mockVideo/maxresdefault.jpg',
       progressStatus: 'IN_PROGRESS' as const,
       bookmarked: false,
-      unreadCommentCount: 0,
+      hasUnreadFeedback: false,
       description: null,
       memo: body.memo ?? null,
       projectTags: [],
@@ -176,38 +177,54 @@ export const videoHandlers = [
     )
   }),
 
-  http.get(paths.videos.referenceFiles(':videoId'), ({ params }) => {
+  http.get(paths.projects.referenceFiles(':projectId', ':videoId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     if (!db.videos.some((v) => v.videoId === Number(params.videoId))) return notFound()
     return HttpResponse.json(ok({ items: db.referenceFiles }), { status: 200 })
   }),
 
-  http.post(paths.videos.referenceFiles(':videoId'), async ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
-    if (!db.videos.some((v) => v.videoId === Number(params.videoId))) return notFound()
-    const body = (await request.json()) as { projectFileId: number }
-    const file = db.files.find((f) => f.id === body.projectFileId)
-    if (!file) return notFound()
-    const ref = {
-      referenceFileId: allocId(),
-      projectFileId: file.id,
-      fileName: file.fileName,
-      contentType: file.contentType,
-      fileSize: file.fileSize,
-      isFinal: false,
-      createdAt: new Date().toISOString(),
-    }
-    db.referenceFiles.push(ref)
-    return HttpResponse.json(created(ref), { status: 201 })
-  }),
+  http.post(
+    paths.projects.referenceFiles(':projectId', ':videoId'),
+    async ({ request, params }) => {
+      if (!safeUser()) return unauthorized()
+      if (!db.videos.some((v) => v.videoId === Number(params.videoId))) return notFound()
+      const body = (await request.json()) as { projectFileId: number }
+      const file = db.files.find((f) => f.id === body.projectFileId)
+      if (!file) return notFound()
+      const uploader = db.users.find((user) => user.id === file.uploaderId)
+      if (!uploader) return notFound()
+      const ref = {
+        referenceFileId: allocId(),
+        projectFileId: file.id,
+        fileName: file.fileName,
+        contentType: file.contentType,
+        fileSize: file.fileSize,
+        isFinal: false,
+        uploader: { id: uploader.id, nickname: uploader.nickname },
+        createdAt: new Date().toISOString(),
+      }
+      db.referenceFiles.push(ref)
+      return HttpResponse.json(
+        created({
+          referenceFileId: ref.referenceFileId,
+          projectFileId: ref.projectFileId,
+          createdAt: ref.createdAt,
+        }),
+        { status: 201 },
+      )
+    },
+  ),
 
-  http.delete(paths.videos.referenceFile(':videoId', ':referenceFileId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
-    const id = Number(params.referenceFileId)
-    if (!db.referenceFiles.some((r) => r.referenceFileId === id)) return notFound()
-    db.referenceFiles = db.referenceFiles.filter((r) => r.referenceFileId !== id)
-    return HttpResponse.json(ok(null), { status: 200 })
-  }),
+  http.delete(
+    paths.projects.referenceFile(':projectId', ':videoId', ':referenceFileId'),
+    ({ params }) => {
+      if (!safeUser()) return unauthorized()
+      const id = Number(params.referenceFileId)
+      if (!db.referenceFiles.some((r) => r.referenceFileId === id)) return notFound()
+      db.referenceFiles = db.referenceFiles.filter((r) => r.referenceFileId !== id)
+      return HttpResponse.json(ok(null), { status: 200 })
+    },
+  ),
 
   http.get(paths.videos.feedbacks(':videoId'), ({ request, params }) => {
     // 공유링크 게스트도 목록 조회 가능 (로컬 mock AC — 실 BE는 게스트 인증 보완 필요)

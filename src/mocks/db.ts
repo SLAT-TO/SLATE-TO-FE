@@ -131,7 +131,8 @@ export type MockDb = {
   projects: MockProjectRecord[]
   members: MockMemberRecord[]
   files: ProjectFile[]
-  videos: VideoDetail[]
+  /** 목록용 hasUnreadFeedback은 VideoDetail에 없고 VideoItem에만 있음 */
+  videos: Array<VideoDetail & { hasUnreadFeedback: boolean }>
   referenceFiles: ReferenceFile[]
   feedbacks: Feedback[]
   replies: FeedbackReply[]
@@ -295,7 +296,7 @@ export const db: MockDb = {
       thumbnailUrl: 'https://img.youtube.com/vi/jNQXAC9IVRw/maxresdefault.jpg',
       progressStatus: 'IN_PROGRESS',
       bookmarked: true,
-      unreadCommentCount: 3,
+      hasUnreadFeedback: true,
       description: '프로젝트 소개글',
       memo: '1차 피드백 반영 예정',
       projectTags: ['다큐'],
@@ -311,7 +312,7 @@ export const db: MockDb = {
       thumbnailUrl: 'https://img.youtube.com/vi/9bZkp7q19f0/maxresdefault.jpg',
       progressStatus: 'DONE',
       bookmarked: false,
-      unreadCommentCount: 0,
+      hasUnreadFeedback: false,
       description: null,
       memo: null,
       projectTags: [],
@@ -327,6 +328,7 @@ export const db: MockDb = {
       contentType: 'application/pdf',
       fileSize: 1024,
       isFinal: false,
+      uploader: { id: 3, nickname: '박편집' },
       createdAt: '2026-06-10T09:00:00Z',
     },
   ],
