@@ -179,10 +179,6 @@ export async function getProjectFiles(
   })
 }
 
-export async function getProjectFile(projectId: number, fileId: number): Promise<ProjectFile> {
-  return request({ method: 'GET', url: paths.projects.file(projectId, fileId) })
-}
-
 /** multipart/form-data 직접 업로드 — file(바이너리) + request(JSON 메타데이터) 두 파트로 전송 */
 export async function uploadProjectFile(
   projectId: number,
