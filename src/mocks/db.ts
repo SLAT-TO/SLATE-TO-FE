@@ -328,6 +328,7 @@ export const db: MockDb = {
       contentType: 'application/pdf',
       fileSize: 1024,
       isFinal: false,
+      uploader: { id: 3, nickname: '박편집' },
       createdAt: '2026-06-10T09:00:00Z',
     },
   ],

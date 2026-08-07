@@ -104,5 +104,16 @@ export type ReferenceFile = {
   contentType: string
   fileSize: number
   isFinal: boolean
+  uploader: {
+    id: number
+    nickname: string
+  }
+  createdAt: string
+}
+
+/** BE VideoReferenceFileCreateResDTO */
+export type LinkReferenceFileResult = {
+  referenceFileId: number
+  projectFileId: number
   createdAt: string
 }

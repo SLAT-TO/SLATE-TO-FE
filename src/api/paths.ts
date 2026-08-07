@@ -37,6 +37,15 @@ export const paths = {
       `${API_PREFIX}/projects/${projectId}/videos/${videoId}`,
     videoBookmark: (projectId: number | string, videoId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/videos/${videoId}/bookmark`,
+    /** BE: /projects/{projectId}/videos/{videoId}/reference-files */
+    referenceFiles: (projectId: number | string, videoId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/videos/${videoId}/reference-files`,
+    referenceFile: (
+      projectId: number | string,
+      videoId: number | string,
+      referenceFileId: number | string,
+    ) =>
+      `${API_PREFIX}/projects/${projectId}/videos/${videoId}/reference-files/${referenceFileId}`,
     files: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/files`,
     file: (projectId: number | string, fileId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/files/${fileId}`,
@@ -67,9 +76,6 @@ export const paths = {
   },
   videos: {
     validateYoutube: `${API_PREFIX}/videos/youtube/validate`,
-    referenceFiles: (videoId: number | string) => `${API_PREFIX}/videos/${videoId}/reference-files`,
-    referenceFile: (videoId: number | string, referenceFileId: number | string) =>
-      `${API_PREFIX}/videos/${videoId}/reference-files/${referenceFileId}`,
     feedbacks: (videoId: number | string) => `${API_PREFIX}/videos/${videoId}/feedbacks`,
     shareLinks: (videoId: number | string) => `${API_PREFIX}/videos/${videoId}/share-links`,
   },

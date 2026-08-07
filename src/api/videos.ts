@@ -15,6 +15,7 @@ import type {
   BookmarkVideoResult,
   CreateVideoRequest,
   CreateVideoResult,
+  LinkReferenceFileResult,
   ReferenceFile,
   UpdateVideoRequest,
   UpdateVideoResult,
@@ -94,23 +95,34 @@ export async function validateYoutubeUrl(
   return request({ method: 'POST', url: paths.videos.validateYoutube, data: body })
 }
 
-export async function getReferenceFiles(videoId: number): Promise<{ items: ReferenceFile[] }> {
-  return request({ method: 'GET', url: paths.videos.referenceFiles(videoId) })
+export async function getReferenceFiles(
+  projectId: number,
+  videoId: number,
+): Promise<{ items: ReferenceFile[] }> {
+  return request({ method: 'GET', url: paths.projects.referenceFiles(projectId, videoId) })
 }
 
 export async function linkReferenceFile(
+  projectId: number,
   videoId: number,
   projectFileId: number,
-): Promise<ReferenceFile> {
+): Promise<LinkReferenceFileResult> {
   return request({
     method: 'POST',
-    url: paths.videos.referenceFiles(videoId),
+    url: paths.projects.referenceFiles(projectId, videoId),
     data: { projectFileId },
   })
 }
 
-export async function unlinkReferenceFile(videoId: number, referenceFileId: number): Promise<null> {
-  return request({ method: 'DELETE', url: paths.videos.referenceFile(videoId, referenceFileId) })
+export async function unlinkReferenceFile(
+  projectId: number,
+  videoId: number,
+  referenceFileId: number,
+): Promise<null> {
+  return request({
+    method: 'DELETE',
+    url: paths.projects.referenceFile(projectId, videoId, referenceFileId),
+  })
 }
 
 export async function getFeedbacks(
@@ -125,14 +137,9 @@ export async function getFeedbacks(
   return { items: result.items.map(normalizeFeedback) }
 }
 
-/** BE: userId XOR guestId — 둘 다 오면 guest 우선 */
-function feedbackActorXor(body: { userId?: number; guestId?: number }): {
-  userId?: number
-  guestId?: number
-} {
-  if (body.guestId != null) return { guestId: body.guestId }
-  if (body.userId != null) return { userId: body.userId }
-  return {}
+/** Swagger: guestId만 body에 실음. 멤버는 JWT */
+function feedbackGuestBody(body: { guestId?: number }): { guestId?: number } {
+  return body.guestId != null ? { guestId: body.guestId } : {}
 }
 
 export async function createFeedback(
@@ -146,7 +153,7 @@ export async function createFeedback(
       content: body.content,
       ...(body.startTime != null ? { startTime: body.startTime } : {}),
       ...(body.endTime != null ? { endTime: body.endTime } : {}),
-      ...feedbackActorXor(body),
+      ...feedbackGuestBody(body),
     },
   })
   return normalizeFeedback(result)
@@ -163,7 +170,7 @@ export async function updateFeedback(
       ...(body.content != null ? { content: body.content } : {}),
       ...(body.startTime != null ? { startTime: body.startTime } : {}),
       ...(body.endTime != null ? { endTime: body.endTime } : {}),
-      ...feedbackActorXor(body),
+      ...feedbackGuestBody(body),
     },
   })
   return normalizeFeedback(result)
@@ -171,17 +178,12 @@ export async function updateFeedback(
 
 export async function deleteFeedback(
   feedbackId: number,
-  options?: { userId?: number; guestId?: number },
+  options?: { guestId?: number },
 ): Promise<null> {
   return request({
     method: 'DELETE',
     url: paths.feedbacks.byId(feedbackId),
-    params:
-      options?.guestId != null
-        ? { guestId: options.guestId }
-        : options?.userId != null
-          ? { userId: options.userId }
-          : undefined,
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
   })
 }
 
@@ -192,7 +194,7 @@ export async function updateFeedbackStatus(
   const result = await request<{ feedbackId: number; status: unknown; updatedAt: string }>({
     method: 'PATCH',
     url: paths.feedbacks.status(feedbackId),
-    data: body,
+    data: { status: body.status },
   })
   return { ...result, status: toFeedbackStatus(result.status) }
 }
@@ -214,7 +216,7 @@ export async function createReply(
     url: paths.feedbacks.replies(feedbackId),
     data: {
       content: body.content,
-      ...feedbackActorXor(body),
+      ...feedbackGuestBody(body),
     },
   })
   return normalizeFeedbackReply(result)
@@ -239,7 +241,7 @@ export async function updateReplyStatus(
   const result = await request<{ replyId: number; status: unknown; updatedAt: string }>({
     method: 'PATCH',
     url: paths.replies.status(replyId),
-    data: body,
+    data: { status: body.status },
   })
   return { ...result, status: toFeedbackStatus(result.status) }
 }
