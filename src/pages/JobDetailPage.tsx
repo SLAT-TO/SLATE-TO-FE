@@ -45,7 +45,16 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
 
       <div className="flex flex-col gap-5.25 lg:flex-row">
         <JobInfoCard detail={detail} />
-        <AuthorCard author={detail.author} />
+        <AuthorCard
+          author={detail.author}
+          onViewProfile={() => {
+            if (isOwner) {
+              navigate('/mypage')
+            } else {
+              navigate(`/users/${detail.author.userId}`)
+            }
+          }}
+        />
       </div>
 
       <section className="bg-bg-primary shadow-card min-h-70 rounded-xl p-6">

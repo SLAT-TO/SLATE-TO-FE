@@ -25,6 +25,7 @@ import NavigateBridge from './routes/NavigateBridge'
 import { workspaceRoutes } from './routes/workspace'
 import { matchPath } from './utils/navigation'
 import ApplicantProfilePage from './pages/ApplicantProfilePage'
+import UserProfilePage from './pages/UserProfilePage'
 
 const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
 
@@ -94,6 +95,15 @@ function LegacyAppRoutes() {
       return <p className="text-body-sm text-warning">잘못된 공고 경로입니다.</p>
     }
     return <JobDetailPage jobId={jobId} />
+  }
+
+  const userProfileMatch = matchPath('/users/:userId', path)
+  if (userProfileMatch) {
+    const userId = Number(userProfileMatch.userId)
+    if (!Number.isFinite(userId)) {
+      return <p className="text-body-sm text-warning">잘못된 프로필 경로입니다.</p>
+    }
+    return <UserProfilePage key={userId} userId={userId} />
   }
 
   if (path === '/matching') {
