@@ -8,6 +8,8 @@ import { profileSchema, type ProfileFormValues } from '../schemas/profile'
 import { validateField } from '../utils/validateField'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
+import { navigate } from '../utils/navigation'
+import type { SocialType } from '../types/user'
 
 // 수정 진입 시 GET /api/v1/users/me 응답으로 초기값 채우기.
 // 등록(온보딩 직후)은 빈 값, 수정은 기존 값. 지금은 빈 값 고정.
@@ -29,6 +31,9 @@ function ProfileEditPage() {
   const [errors, setErrors] = useState<FormErrors>({})
   // 프로필 이미지 업로드 API 연동 필요. 지금은 미리보기 URL만.
   const [imagePreview] = useState('https://placehold.co/80x80')
+  // TODO: GET /api/v1/users/me 응답의 socialType으로 교체
+  const [socialType] = useState<SocialType>('EMAIL')
+  const isSocialAccount = socialType !== 'EMAIL'
 
   // 값 변경
   const handleChange = (field: keyof ProfileFormValues) => (value: string) => {
@@ -58,8 +63,7 @@ function ProfileEditPage() {
   }
 
   const handleCancel = () => {
-    // 마이페이지로 이동 (라우터 확정 후 navigate 연결)
-    console.log('취소')
+    navigate('/mypage')
   }
 
   return (
@@ -129,6 +133,8 @@ function ProfileEditPage() {
           value={values.email}
           onChange={handleChange('email')}
           error={errors.email}
+          disabled={isSocialAccount}
+          hint={isSocialAccount ? '소셜 로그인 계정은 이메일을 변경할 수 없습니다.' : undefined}
         />
 
         {/* 자기소개: 전체 너비 */}
