@@ -500,8 +500,7 @@ export const projectHandlers = [
       cursor != null ? sorted.filter((item) => item.activityId < Number(cursor)) : sorted
     const page = filtered.slice(0, size)
     const hasNext = filtered.length > size
-    const nextCursor =
-      hasNext && page.length > 0 ? String(page[page.length - 1]!.activityId) : null
+    const nextCursor = hasNext && page.length > 0 ? String(page[page.length - 1]!.activityId) : null
 
     return HttpResponse.json(ok({ items: page, nextCursor, hasNext }), { status: 200 })
   }),
