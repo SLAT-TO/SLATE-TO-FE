@@ -33,7 +33,7 @@ import {
   projectStatusColor,
   projectStatusLabel,
 } from '../constants/projectStatus'
-import type { ProjectStatus, ProjectSummary } from '../types/project'
+import type { ProjectActivity, ProjectStatus, ProjectSummary } from '../types/project'
 
 /** Strict Mode remount에서도 같은 키 alert가 두 번 뜨지 않도록 모듈 단위로 기록 */
 const alertedPartialErrorKeys = new Set<string>()
@@ -83,6 +83,8 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   const [noticeView, setNoticeView] = useState<'main' | 'list' | number>('main')
   /** 대시보드 탭 내부 최근 활동 서브뷰 — 'main'=대시보드, 'list'=최근 활동 전체 목록 */
   const [activityView, setActivityView] = useState<'main' | 'list'>('main')
+  const [initialFileId, setInitialFileId] = useState<number | null>(null)
+  const [membersPanelOpen, setMembersPanelOpen] = useState(false)
 
   useEffect(() => {
     getMe()
@@ -112,6 +114,47 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     if (key !== 'dashboard') {
       setNoticeView('main')
       setActivityView('main')
+    }
+  }
+
+  const handleActivityNavigate = (activity: ProjectActivity) => {
+    setActivityView('main')
+
+    if (activity.targetType === 'NOTICE' && activity.targetId != null) {
+      setTab('dashboard')
+      setNoticeView(activity.targetId)
+      return
+    }
+
+    if (activity.targetType === 'FILE' && activity.targetId != null) {
+      setNoticeView('main')
+      setTab('files')
+      setInitialFileId(activity.targetId)
+      return
+    }
+
+    if (
+      activity.targetType === 'SCHEDULE' ||
+      activity.type === 'SCHEDULE_CREATED' ||
+      activity.type === 'SCHEDULE_UPDATED'
+    ) {
+      setNoticeView('main')
+      setTab('schedule')
+      return
+    }
+
+    if (activity.type === 'PROJECT_MEMBER_JOINED') {
+      setNoticeView('main')
+      setTab('dashboard')
+      setMembersPanelOpen(true)
+      return
+    }
+
+    if (
+      activity.type === 'PROJECT_UPDATED' ||
+      activity.type === 'PROJECT_STATUS_CHANGED'
+    ) {
+      setView('settings')
     }
   }
 
@@ -149,11 +192,22 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
             meId={meId}
             avatarSize={40}
             onMembersChange={setMembers}
+            panelOpen={membersPanelOpen}
+            onPanelOpenChange={setMembersPanelOpen}
           />
         </div>
       </div>
     )
-  }, [showProjectHeader, project, members, handleToggleBookmark, projectId, meId, setMembers])
+  }, [
+    showProjectHeader,
+    project,
+    members,
+    handleToggleBookmark,
+    projectId,
+    meId,
+    setMembers,
+    membersPanelOpen,
+  ])
 
   const headerRightContent = useMemo(() => {
     if (!showProjectHeader || !project) return null
@@ -324,6 +378,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
           projectId={projectId}
           activities={activities}
           onBack={() => setActivityView('main')}
+          onNavigate={handleActivityNavigate}
         />
       )}
 
@@ -374,7 +429,13 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
           )
         })()}
 
-      {tab === 'files' && <ProjectFileList projectId={projectId} />}
+      {tab === 'files' && (
+        <ProjectFileList
+          projectId={projectId}
+          initialFileId={initialFileId}
+          onInitialFileConsumed={() => setInitialFileId(null)}
+        />
+      )}
 
       {tab === 'feedback' && <VideoFeedbackTab projectId={projectId} />}
 

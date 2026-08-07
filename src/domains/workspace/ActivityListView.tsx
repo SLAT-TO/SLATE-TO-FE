@@ -10,6 +10,7 @@ interface ActivityListViewProps {
   projectId: number
   activities: ProjectActivity[]
   onBack: () => void
+  onNavigate: (activity: ProjectActivity) => void
 }
 
 function formatActivityDate(iso: string): string {
@@ -22,7 +23,25 @@ function formatActivityDate(iso: string): string {
   return `${month}월 ${day}일 ${hours}:${minutes}`
 }
 
-export default function ActivityListView({ projectId, activities, onBack }: ActivityListViewProps) {
+function canNavigate(activity: ProjectActivity): boolean {
+  return (
+    activity.targetType === 'NOTICE' ||
+    activity.targetType === 'FILE' ||
+    activity.targetType === 'SCHEDULE' ||
+    activity.type === 'SCHEDULE_CREATED' ||
+    activity.type === 'SCHEDULE_UPDATED' ||
+    activity.type === 'PROJECT_MEMBER_JOINED' ||
+    activity.type === 'PROJECT_UPDATED' ||
+    activity.type === 'PROJECT_STATUS_CHANGED'
+  )
+}
+
+export default function ActivityListView({
+  projectId,
+  activities,
+  onBack,
+  onNavigate,
+}: ActivityListViewProps) {
   const queryClient = useQueryClient()
   const hasNew = activities.some((item) => item.isNew)
 
@@ -80,32 +99,40 @@ export default function ActivityListView({ projectId, activities, onBack }: Acti
         <p className="text-caption-lg text-neutral-6">최근 활동이 없습니다.</p>
       ) : (
         <ul className="flex flex-col gap-4">
-          {activities.map((activity) => (
-            <li
-              key={activity.activityId}
-              onMouseEnter={() => {
-                if (activity.isNew) void markAsRead(activity.activityId)
-              }}
-              className={`flex items-center justify-between gap-3 rounded-[10px] px-4 py-4 ${CARD_SHADOW} ${
-                activity.isNew ? 'bg-neutral-1' : 'bg-neutral-3'
-              }`}
-            >
-              <span className="text-body-sm text-neutral-10 min-w-0 tracking-[-0.32px]">
-                {activity.content}
-              </span>
-              <div className="flex shrink-0 items-center gap-2">
-                <span className="text-caption-sm text-neutral-6">
-                  {formatActivityDate(activity.createdAt)}
+          {activities.map((activity) => {
+            const navigable = canNavigate(activity)
+            return (
+              <li
+                key={activity.activityId}
+                onClick={() => {
+                  if (!navigable) return
+                  if (activity.isNew) void markAsRead(activity.activityId)
+                  onNavigate(activity)
+                }}
+                onMouseEnter={() => {
+                  if (activity.isNew) void markAsRead(activity.activityId)
+                }}
+                className={`flex items-center justify-between gap-3 rounded-[10px] px-4 py-4 ${CARD_SHADOW} ${
+                  activity.isNew ? 'bg-neutral-1' : 'bg-neutral-3'
+                } ${navigable ? 'cursor-pointer' : ''}`}
+              >
+                <span className="text-body-sm text-neutral-10 min-w-0 tracking-[-0.32px]">
+                  {activity.content}
                 </span>
-                {activity.isNew && (
-                  <span
-                    className="bg-warning size-2.75 shrink-0 rounded-full"
-                    aria-label="새 활동"
-                  />
-                )}
-              </div>
-            </li>
-          ))}
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-caption-sm text-neutral-6">
+                    {formatActivityDate(activity.createdAt)}
+                  </span>
+                  {activity.isNew && (
+                    <span
+                      className="bg-warning size-2.75 shrink-0 rounded-full"
+                      aria-label="새 활동"
+                    />
+                  )}
+                </div>
+              </li>
+            )
+          })}
         </ul>
       )}
     </section>

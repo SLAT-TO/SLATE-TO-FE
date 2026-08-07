@@ -60,6 +60,13 @@ function toFileListItem(file: (typeof db.files)[number]) {
   }
 }
 
+function toProjectFile(file: (typeof db.files)[number]) {
+  return {
+    ...toFileListItem(file),
+    updatedAt: file.updatedAt,
+  }
+}
+
 function findProjectOwner(project: MockProjectRecord) {
   return db.users.find((u) => u.id === project.ownerUserId) ?? db.users[0]!
 }
@@ -593,7 +600,7 @@ export const projectHandlers = [
       updatedAt: now,
     }
     db.files.unshift(file)
-    return HttpResponse.json(created(file), { status: 201 })
+    return HttpResponse.json(created(toProjectFile(file)), { status: 201 })
   }),
 
   http.patch(paths.projects.file(':projectId', ':fileId'), async ({ request, params }) => {
@@ -602,7 +609,7 @@ export const projectHandlers = [
     if (!file) return notFound()
     const body = (await request.json()) as Partial<typeof file>
     Object.assign(file, body, { updatedAt: new Date().toISOString() })
-    return HttpResponse.json(ok(file), { status: 200 })
+    return HttpResponse.json(ok(toProjectFile(file)), { status: 200 })
   }),
 
   http.delete(paths.projects.file(':projectId', ':fileId'), ({ params }) => {
