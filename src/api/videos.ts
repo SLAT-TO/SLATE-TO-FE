@@ -194,8 +194,11 @@ export async function createReply(
     url: paths.feedbacks.replies(feedbackId),
     data: {
       content: body.content,
-      ...(body.guestId != null ? { guestId: body.guestId } : {}),
-      ...(body.userId != null ? { userId: body.userId } : {}),
+      ...(body.guestId != null
+        ? { guestId: body.guestId }
+        : body.userId != null
+          ? { userId: body.userId }
+          : {}),
     },
   })
   return normalizeFeedbackReply(result)
