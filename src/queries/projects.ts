@@ -19,7 +19,7 @@ export function useProjectsQuery() {
     queryKey: projectKeys.list(),
     queryFn: async () => {
       const result = await getProjects()
-      return result.items
+      return sortProjectsByPin(result.items)
     },
   })
 }
@@ -64,13 +64,24 @@ export function useProjectActivitiesQuery(projectId: number) {
   })
 }
 
+/** 핀한 프로젝트를 목록 상단으로 (pinnedAt 최신 우선) */
+function sortProjectsByPin(items: ProjectSummary[]): ProjectSummary[] {
+  return [...items].sort((a, b) => {
+    if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1
+    const aPinned = a.pinnedAt ? Date.parse(a.pinnedAt) : 0
+    const bPinned = b.pinnedAt ? Date.parse(b.pinnedAt) : 0
+    if (aPinned !== bPinned) return bPinned - aPinned
+    return b.id - a.id
+  })
+}
+
 function patchListItem(
   items: ProjectSummary[] | undefined,
   projectId: number,
   patch: Partial<ProjectSummary>,
 ): ProjectSummary[] | undefined {
   if (!items) return items
-  return items.map((p) => (p.id === projectId ? { ...p, ...patch } : p))
+  return sortProjectsByPin(items.map((p) => (p.id === projectId ? { ...p, ...patch } : p)))
 }
 
 export function useToggleProjectPinMutation() {
@@ -90,11 +101,12 @@ export function useToggleProjectPinMutation() {
         projectKeys.detail(projectId),
       )
 
+      const pinnedAt = next ? new Date().toISOString() : null
       queryClient.setQueryData<ProjectSummary[]>(projectKeys.list(), (prev) =>
-        patchListItem(prev, projectId, { isPinned: next }),
+        patchListItem(prev, projectId, { isPinned: next, pinnedAt }),
       )
       queryClient.setQueryData<ProjectDetailResponse>(projectKeys.detail(projectId), (prev) =>
-        prev ? { ...prev, isPinned: next } : prev,
+        prev ? { ...prev, isPinned: next, pinnedAt } : prev,
       )
 
       return { previousList, previousDetail, projectId }

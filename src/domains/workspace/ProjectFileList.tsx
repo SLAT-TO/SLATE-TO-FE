@@ -36,6 +36,14 @@ function formatDateTime(iso: string): string {
   return `${date.getFullYear()}년 ${month}월 ${day}일 ${hours}:${minutes}`
 }
 
+/** 핀한 파일을 목록 상단으로 (BE 목록 정렬과 동일하게 즉시 반영) */
+function sortFilesByPin(files: ProjectFileListItem[]): ProjectFileListItem[] {
+  return [...files].sort((a, b) => {
+    if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1
+    return b.id - a.id
+  })
+}
+
 export default function ProjectFileList({ projectId }: ProjectFileListProps) {
   const [files, setFiles] = useState<ProjectFileListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -107,12 +115,16 @@ export default function ProjectFileList({ projectId }: ProjectFileListProps) {
 
   const toggleFilePin = async (file: ProjectFileListItem) => {
     const next = !file.isPinned
-    setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, isPinned: next } : f)))
+    setFiles((prev) =>
+      sortFilesByPin(prev.map((f) => (f.id === file.id ? { ...f, isPinned: next } : f))),
+    )
     try {
       if (next) await pinProjectFile(projectId, file.id)
       else await unpinProjectFile(projectId, file.id)
     } catch {
-      setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, isPinned: !next } : f)))
+      setFiles((prev) =>
+        sortFilesByPin(prev.map((f) => (f.id === file.id ? { ...f, isPinned: !next } : f))),
+      )
     }
   }
 

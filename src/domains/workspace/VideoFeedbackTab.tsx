@@ -1,13 +1,28 @@
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { useEffect, useState } from 'react'
-import { createVideo, deleteVideo, getVideo, getVideos, updateVideo } from '../../api/videos'
+import {
+  createVideo,
+  deleteVideo,
+  getVideo,
+  getVideos,
+  updateVideo,
+  updateVideoBookmark,
+} from '../../api/videos'
 import ConfirmModal from '../../components/ConfirmModal'
 import VideoCard from './VideoCard'
 import AddVideoModal from './AddVideoModal'
 import EditVideoModal from './EditVideoModal'
 import type { VideoListItem } from '../../types/video'
 import type { CreateVideoValues, UpdateVideoValues } from '../../schemas/video'
+
+/** 북마크한 영상을 목록 상단으로 */
+function sortVideosByBookmark(items: VideoListItem[]): VideoListItem[] {
+  return [...items].sort((a, b) => {
+    if (a.bookmarked !== b.bookmarked) return a.bookmarked ? -1 : 1
+    return b.videoId - a.videoId
+  })
+}
 
 type EditTarget = {
   videoId: number
@@ -36,7 +51,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
       setVideosLoading(true)
       try {
         const result = await getVideos(projectId)
-        if (!cancelled) setVideos(result.items)
+        if (!cancelled) setVideos(sortVideosByBookmark(result.items))
       } finally {
         if (!cancelled) setVideosLoading(false)
       }
@@ -63,19 +78,39 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
 
   const handleCreateVideo = async (values: CreateVideoValues) => {
     const result = await createVideo(projectId, values)
-    setVideos((prev) => [
-      {
-        videoId: result.videoId,
-        title: result.title,
-        thumbnailUrl: result.thumbnailUrl,
-        bookmarked: result.bookmarked,
-        progressStatus: result.progressStatus,
-        hasUnreadFeedback: false,
-        createdAt: result.createdAt,
-        updatedAt: result.createdAt,
-      },
-      ...prev,
-    ])
+    setVideos((prev) =>
+      sortVideosByBookmark([
+        {
+          videoId: result.videoId,
+          title: result.title,
+          thumbnailUrl: result.thumbnailUrl,
+          bookmarked: result.bookmarked,
+          progressStatus: result.progressStatus,
+          hasUnreadFeedback: false,
+          createdAt: result.createdAt,
+          updatedAt: result.createdAt,
+        },
+        ...prev,
+      ]),
+    )
+  }
+
+  const handleToggleBookmark = async (video: VideoListItem) => {
+    const next = !video.bookmarked
+    setVideos((prev) =>
+      sortVideosByBookmark(
+        prev.map((v) => (v.videoId === video.videoId ? { ...v, bookmarked: next } : v)),
+      ),
+    )
+    try {
+      await updateVideoBookmark(projectId, video.videoId, { bookmarked: next })
+    } catch {
+      setVideos((prev) =>
+        sortVideosByBookmark(
+          prev.map((v) => (v.videoId === video.videoId ? { ...v, bookmarked: !next } : v)),
+        ),
+      )
+    }
   }
 
   const openEdit = async (video: VideoListItem) => {
@@ -125,6 +160,8 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
                   locale: ko,
                 })}
                 hasUnreadFeedback={video.hasUnreadFeedback}
+                bookmarked={video.bookmarked}
+                onToggleBookmark={() => void handleToggleBookmark(video)}
                 to={`/workspace/projects/${projectId}/videos/${video.videoId}`}
                 onEdit={() => void openEdit(video)}
                 onDelete={() => setDeleteTarget(video)}
