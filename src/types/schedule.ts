@@ -42,18 +42,20 @@ export type PrivateMemoRequest = {
   content: string
 }
 
-/** GET /api/v1/briefings/today — BE 미구현, 엔티티/컨트롤러 자체가 없음. mock 전용 */
+/** BE BriefingItem — type/targetType은 BE 스펙상 enum 미정의(자유 문자열) */
+export type BriefingItem = {
+  type: string
+  content: string
+  priority: number
+  projectId: number | null
+  targetType: string
+  targetId: number
+  occurredAt: string
+}
+
+/** GET /api/v1/briefings/today — 오늘의 브리핑(일정+최근 주요 알림 조합, 최대 3건) */
 export type TodayBriefing = {
-  date: string
-  scheduleCount: number
-  unreadNotificationCount: number
-  activeProjectCount: number
-  items: Array<{
-    type: string
-    title: string
-    projectId?: number
-    scheduleId?: number
-  }>
+  items: BriefingItem[]
 }
 
 export type ScheduleParticipantCandidate = {

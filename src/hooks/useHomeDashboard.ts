@@ -7,7 +7,16 @@ import type { ScheduleDailyItem, TodayBriefing } from '../types/schedule'
 import { toDateKey } from '../utils/calendarUtils'
 
 /** 홈 화면에 카드로 보여줄 진행 중인 프로젝트 개수 */
-const HOME_PROJECT_LIMIT = 2
+const HOME_PROJECT_LIMIT = 4
+
+/** 완료(COMPLETED) 프로젝트보다 진행 중인 프로젝트를 우선 노출 */
+function sortByInProgressFirst(projects: ProjectSummary[]): ProjectSummary[] {
+  return [...projects].sort((a, b) => {
+    const aDone = a.status === 'COMPLETED' ? 1 : 0
+    const bDone = b.status === 'COMPLETED' ? 1 : 0
+    return aDone - bDone
+  })
+}
 
 export function useHomeDashboard() {
   const [projects, setProjects] = useState<ProjectSummary[]>([])

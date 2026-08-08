@@ -81,11 +81,25 @@ export default function HomeMiniCalendar({ className = '' }: HomeMiniCalendarPro
   }, [month])
 
   return (
-    <div className={`flex flex-col items-start gap-2 ${className}`}>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => navigate('/calendar')}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          navigate('/calendar')
+        }
+      }}
+      className={`flex cursor-pointer flex-col items-start gap-2 ${className}`}
+    >
       <div className="flex items-center gap-2.5">
         <button
           type="button"
-          onClick={() => setMonth((m) => subMonths(m, 1))}
+          onClick={(e) => {
+            e.stopPropagation()
+            setMonth((m) => subMonths(m, 1))
+          }}
           aria-label="이전 달"
           className="flex h-4 w-4 items-center justify-center"
         >
@@ -96,7 +110,10 @@ export default function HomeMiniCalendar({ className = '' }: HomeMiniCalendarPro
         </span>
         <button
           type="button"
-          onClick={() => setMonth((m) => addMonths(m, 1))}
+          onClick={(e) => {
+            e.stopPropagation()
+            setMonth((m) => addMonths(m, 1))
+          }}
           aria-label="다음 달"
           className="flex h-4 w-4 items-center justify-center"
         >
