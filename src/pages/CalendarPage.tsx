@@ -235,13 +235,15 @@ export default function CalendarPage() {
     }
   }
 
-  const handleSaveNote = async (event: CalendarEvent, note: string) => {
+  const handleSaveNote = async (event: CalendarEvent, note: string): Promise<boolean> => {
     setActionError(null)
     try {
       await updatePrivateMemo(Number(event.id), { content: note })
       if (selectedDate) void refreshDaySchedules(selectedDate)
+      return true
     } catch {
       setActionError('메모를 저장하지 못했습니다. 다시 시도해주세요.')
+      return false
     }
   }
 

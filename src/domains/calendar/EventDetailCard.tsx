@@ -15,7 +15,7 @@ interface EventDetailCardProps {
   onBack: () => void
   onEdit: () => void
   onDelete: () => void
-  onSaveNote: (note: string) => void
+  onSaveNote: (note: string) => Promise<boolean>
 }
 
 const LABEL_CLASS = 'text-caption-sm text-neutral-10 font-semibold tracking-[-0.24px]'
@@ -34,6 +34,8 @@ export function EventDetailCard({
   const [note, setNote] = useState(event.note ?? '')
   const [noteFocused, setNoteFocused] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null)
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -43,9 +45,17 @@ export function EventDetailCard({
     }
   }, [])
 
-  const handleSendNote = () => {
+  const handleSendNote = async () => {
     if (note.trim() === (event.note ?? '')) return
-    onSaveNote(note.trim())
+    setSaving(true)
+    setSaveError(null)
+    const succeeded = await onSaveNote(note.trim())
+    setSaving(false)
+
+    if (!succeeded) {
+      setSaveError('저장하지 못했습니다. 다시 시도해주세요.')
+      return
+    }
     setShowSaved(true)
     if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
     savedTimeoutRef.current = setTimeout(() => setShowSaved(false), 1500)
@@ -125,7 +135,12 @@ export function EventDetailCard({
         className="border-neutral-5 relative flex h-27 w-full max-w-[258px] flex-col gap-2 rounded-[8.675px] border-[0.542px] p-4"
         onClick={() => noteTextareaRef.current?.focus()}
       >
-        {showSaved && (
+        {saveError && (
+          <span className="text-caption-sm text-warning absolute right-0 -bottom-5 tracking-[-0.24px]">
+            {saveError}
+          </span>
+        )}
+        {!saveError && showSaved && (
           <span className="text-caption-sm text-neutral-5 absolute right-0 -bottom-5 tracking-[-0.24px]">
             저장되었습니다.
           </span>
@@ -153,8 +168,9 @@ export function EventDetailCard({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={handleSendNote}
+          disabled={saving}
           aria-label="메모 저장"
-          className="absolute right-3 bottom-3 flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2378FE] transition-colors hover:bg-[#1C63D1]"
+          className="absolute right-3 bottom-3 flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2378FE] transition-colors hover:bg-[#1C63D1] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <InlineIcon
             svg={paperPlaneIcon}
