@@ -78,6 +78,7 @@ const ProjectCard = ({
                   e.stopPropagation() // 카드 클릭(상세 이동) 막기
                   onTogglePin()
                 }}
+                onKeyDown={(e) => e.stopPropagation()} // Enter/Space가 카드 handleKeyDown까지 버블링되는 것 방지
                 aria-pressed={isPinned}
                 aria-label={isPinned ? '즐겨찾기 해제' : '즐겨찾기 추가'}
                 className={`shrink-0 ${isPinned ? 'text-caution' : 'text-neutral-6'}`}
@@ -92,7 +93,11 @@ const ProjectCard = ({
         </div>
 
         {menuItems.length > 0 && (
-          <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            className="shrink-0"
+          >
             <ActionMenu items={menuItems} ariaLabel="프로젝트 메뉴" />
           </div>
         )}
