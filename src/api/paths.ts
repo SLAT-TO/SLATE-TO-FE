@@ -15,6 +15,7 @@ export const paths = {
      * FE mock 전용 — BE에 활동 통계 API 미구현 (Swagger에 없음) */
     activityStats: `${API_PREFIX}/users/me/activity-stats`,
     onboarding: `${API_PREFIX}/users/onboarding`,
+    profileImage: `${API_PREFIX}/users/me/profile-image`,
     byId: (userId: number | string) => `${API_PREFIX}/users/${userId}`,
     portfolios: (userId: number | string) => `${API_PREFIX}/users/${userId}/portfolios`,
     notificationSettings: `${API_PREFIX}/users/me/notification-settings`,
