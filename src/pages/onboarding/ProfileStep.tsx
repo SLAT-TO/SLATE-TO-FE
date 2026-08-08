@@ -3,7 +3,7 @@ import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
 import Input from '../../components/Input'
 import TextArea from '../../components/TextArea'
-import { getMe, submitOnboarding } from '../../api/users'
+import { getMe, submitOnboarding, uploadProfileImage } from '../../api/users'
 import { ApiError } from '../../types/api'
 import { profileSchema } from '../../schemas/onboarding'
 import { useOnboardingStore } from '../../stores/onboardingStore'
@@ -25,6 +25,8 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
   const [errors, setErrors] = useState<{ name?: string; email?: string; intro?: string }>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
 
   const nameId = useId()
   const emailId = useId()
@@ -65,14 +67,25 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }))
   }
 
-  const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
-    const url = URL.createObjectURL(file)
-    objectUrlRef.current = url
+    const previewUrl = URL.createObjectURL(file)
+    objectUrlRef.current = previewUrl
     setProfileField('avatarFile', file)
-    setProfileField('avatarUrl', url)
+    setProfileField('avatarUrl', previewUrl) // 업로드 완료 전까지는 로컬 미리보기
+
+    setAvatarError(null)
+    setAvatarUploading(true)
+    try {
+      const { profileImageUrl } = await uploadProfileImage(file)
+      setProfileField('avatarUrl', profileImageUrl) // 실제 CDN URL로 교체
+    } catch {
+      setAvatarError('이미지를 업로드하지 못했습니다. 다시 시도해주세요.')
+    } finally {
+      setAvatarUploading(false)
+    }
   }
 
   const handleSubmit = async () => {
@@ -102,6 +115,11 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
         regions,
         categories,
         bio: profile.intro || undefined,
+        // blob: 미리보기 URL은 서버에서 접근 불가하므로, 업로드가 끝나 실제 CDN URL로 바뀐 경우에만 전달
+        profileImageUrl:
+          profile.avatarUrl && !profile.avatarUrl.startsWith('blob:')
+            ? profile.avatarUrl
+            : undefined,
       })
       onComplete()
     } catch (err) {
@@ -118,7 +136,7 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
       footer={
         <div className="flex flex-col items-center gap-3">
           {submitError && <p className="text-body-sm text-warning">{submitError}</p>}
-          <Button width={846} onClick={handleSubmit} disabled={submitting}>
+          <Button width={846} onClick={handleSubmit} disabled={submitting || avatarUploading}>
             {submitting ? '저장 중…' : '다음'}
           </Button>
         </div>
@@ -130,13 +148,14 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
         <div className="mt-3 flex w-40 shrink-0 flex-col items-center gap-9">
           <Avatar src={profile.avatarUrl} size={160} />
           <Button
-            variant="primary"
+            variant="negative"
             size="md"
-            disabled
+            disabled={avatarUploading}
             onClick={() => fileInputRef.current?.click()}
           >
-            변경하기
+            {avatarUploading ? '업로드 중…' : '변경하기'}
           </Button>
+          {avatarError && <p className="text-body-sm text-warning">{avatarError}</p>}
           <input
             ref={fileInputRef}
             type="file"

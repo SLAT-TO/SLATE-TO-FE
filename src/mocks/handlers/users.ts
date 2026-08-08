@@ -92,6 +92,25 @@ export const userHandlers = [
     return HttpResponse.json(ok(toMeProfile(user)), { status: 200 })
   }),
 
+  http.put(paths.users.profileImage, async ({ request }) => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+
+    const formData = await request.formData()
+    const file = formData.get('file')
+    if (!(file instanceof File)) return badRequest('file 누락')
+
+    const updatedAt = new Date().toISOString()
+    // 실제 S3 업로드 대신 object URL로 대체 — 블롭 URL은 오리진 단위로 등록되어
+    // MSW 서비스워커에서 만들어도 페이지 쪽 <img>에서 그대로 읽힌다.
+    // cdn.example.com 같은 가짜 도메인은 실제로 응답하지 않아 미리보기가 깨진다.
+    user.profileImageUrl = URL.createObjectURL(file)
+
+    return HttpResponse.json(ok({ profileImageUrl: user.profileImageUrl, updatedAt }), {
+      status: 200,
+    })
+  }),
+
   http.delete(paths.users.me, async ({ request }) => {
     const user = safeUser()
     if (!user) return unauthorized()

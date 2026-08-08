@@ -9,6 +9,7 @@ interface SelectionStepProps {
   selected: ReadonlyArray<string>
   onToggle: (value: string) => void
   columns: 2 | 3 | 4
+  variant: 'wide' | 'region' | 'category'
   onNext: () => void
 }
 
@@ -21,6 +22,7 @@ export function SelectionStep({
   selected,
   onToggle,
   columns,
+  variant,
   onNext,
 }: SelectionStepProps) {
   return (
@@ -35,7 +37,13 @@ export function SelectionStep({
         </Button>
       }
     >
-      <ChipGrid options={options} selected={selected} onToggle={onToggle} columns={columns} />
+      <ChipGrid
+        options={options}
+        selected={selected}
+        onToggle={onToggle}
+        columns={columns}
+        variant={variant}
+      />
     </OnboardingLayout>
   )
 }

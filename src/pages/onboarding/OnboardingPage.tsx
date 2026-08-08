@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import {
+  ONBOARDING_ROLE_OPTIONS,
   ONBOARDING_VIDEO_CATEGORY_OPTIONS,
   ONBOARDING_REGION_OPTIONS,
-  ROLE_OPTIONS,
 } from '../../constants'
 import type { OnboardingVideoCategory } from '../../constants/onboardingVideoCategories'
 import type { Region } from '../../constants/regions'
@@ -55,10 +55,11 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
       return (
         <SelectionStep
           title="어떤 역할로 활동하세요?"
-          options={ROLE_OPTIONS}
+          options={ONBOARDING_ROLE_OPTIONS}
           selected={roles}
           onToggle={(v) => toggleRole(v as UserRole)}
           columns={3}
+          variant="region"
           onNext={next}
         />
       )
@@ -70,6 +71,7 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
           selected={regions}
           onToggle={(v) => toggleRegion(v as Region)}
           columns={4}
+          variant="region"
           onNext={next}
         />
       )
@@ -80,7 +82,8 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
           options={ONBOARDING_VIDEO_CATEGORY_OPTIONS}
           selected={categories}
           onToggle={(v) => toggleCategory(v as OnboardingVideoCategory)}
-          columns={2}
+          columns={3}
+          variant="category"
           onNext={next}
         />
       )

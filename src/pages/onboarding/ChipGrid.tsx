@@ -12,25 +12,23 @@ interface ChipGridProps {
   onToggle: (value: string) => void
   /** 한 줄에 표시할 칩 개수 */
   columns: 2 | 3 | 4
+  /** 칩 폭 — columns만으로 못 정함(역할·카테고리 둘 다 3열이지만 폭이 다름) */
+  variant: 'wide' | 'region' | 'category'
 }
 
-// columns 값을 명시적 클래스로 매핑 (Tailwind가 동적 문자열을 스캔 못 하므로 정적 매핑)
-// 칩이 고정폭(264px/172px)이라 1fr 기반 grid-cols를 쓰면 칩이 트랙보다 넓어져 간격이 어긋난다.
+// (columns, variant) 조합별 명시적 클래스 매핑 (Tailwind가 동적 문자열을 스캔 못 하므로 정적 매핑)
+// 칩이 고정폭이라 1fr 기반 grid-cols를 쓰면 칩이 트랙보다 넓어져 간격이 어긋난다.
 // 트랙 폭 자체를 칩 폭으로 고정하고 justify-center로 그리드를 가운데 배치한다.
-// 지역(4열)도 항상 4열로 고정한다. 모바일에서 2열로 줄어들면 행 수가 늘어나
+// 활동 지역(4열)도 항상 4열로 고정한다. 모바일에서 2열로 줄어들면 행 수가 늘어나
 // 역할·카테고리(3행)와 그리드 전체 높이가 크게 어긋나 '다음' 버튼 위치가 달라지기 때문.
-// lg(1024px) 미만에서는 트랙 폭도 SelectableChip의 축소 폭(140px)에 맞춘다.
-const columnClass: Record<ChipGridProps['columns'], string> = {
-  2: 'grid-cols-[repeat(2,264px)] justify-center',
-  3: 'grid-cols-[repeat(3,140px)] justify-center lg:grid-cols-[repeat(3,172px)]',
-  4: 'grid-cols-[repeat(4,140px)] justify-center lg:grid-cols-[repeat(4,172px)]',
-}
+// lg(1024px) 미만에서는 region 트랙 폭도 SelectableChip의 축소 폭(140px)에 맞춘다.
+type LayoutKey = `${ChipGridProps['columns']}-${ChipGridProps['variant']}`
 
-// columns=4(활동 지역)만 region 사이즈, 나머지(역할·영상 카테고리)는 wide 사이즈
-const chipVariant: Record<ChipGridProps['columns'], 'wide' | 'region'> = {
-  2: 'wide',
-  3: 'region',
-  4: 'region',
+const columnClass: Partial<Record<LayoutKey, string>> = {
+  '2-wide': 'grid-cols-[repeat(2,264px)] justify-center',
+  '3-region': 'grid-cols-[repeat(3,140px)] justify-center lg:grid-cols-[repeat(3,172px)]',
+  '4-region': 'grid-cols-[repeat(4,140px)] justify-center lg:grid-cols-[repeat(4,172px)]',
+  '3-category': 'grid-cols-[repeat(3,231px)] justify-center',
 }
 
 // 화면별 칩 간격 (가로는 피그마 스펙 고정값, 세로는 32px로 통일해 그리드 전체 높이를 맞춘다)
@@ -41,19 +39,22 @@ const gapClass: Record<ChipGridProps['columns'], string> = {
 }
 
 // 고정폭 칩 개수 × 칩 너비 + 칩 사이 gap = 실제 그리드 너비.
-// max-w-lg(512px) 고정값을 쓰면 칩(264px/172px)이 컬럼 폭보다 넓어져 간격이 깨지므로 컬럼 수별로 계산한다.
-// 2컬럼: 264*2 + 62 = 590px / 4컬럼: 172*4 + 43*3 = 817px
-const maxWidthClass: Record<ChipGridProps['columns'], string> = {
-  2: 'max-w-[590px]',
-  3: 'max-w-[590px]',
-  4: 'max-w-[817px]',
+// max-w-lg(512px) 고정값을 쓰면 칩(264px/172px/231px)이 컬럼 폭보다 넓어져 간격이 깨지므로 조합별로 계산한다.
+// 2-wide: 264*2 + 62 = 590px / 3-region: 172*3 + 62*2 ≈ 590px / 4-region: 172*4 + 43*3 = 817px / 3-category: 231*3 + 62*2 = 817px
+const maxWidthClass: Partial<Record<LayoutKey, string>> = {
+  '2-wide': 'max-w-[590px]',
+  '3-region': 'max-w-[590px]',
+  '4-region': 'max-w-[817px]',
+  '3-category': 'max-w-[817px]',
 }
 
 // 온보딩 1~3단계 공통 — 옵션 칩을 격자로 배치한 다중선택 그리드.
-export function ChipGrid({ options, selected, onToggle, columns }: ChipGridProps) {
+export function ChipGrid({ options, selected, onToggle, columns, variant }: ChipGridProps) {
+  const layoutKey: LayoutKey = `${columns}-${variant}`
+
   return (
     <div
-      className={`mx-auto grid ${maxWidthClass[columns]} ${gapClass[columns]} ${columnClass[columns]}`}
+      className={`mx-auto grid ${maxWidthClass[layoutKey]} ${gapClass[columns]} ${columnClass[layoutKey]}`}
     >
       {options.map((option) => (
         <SelectableChip
@@ -61,7 +62,7 @@ export function ChipGrid({ options, selected, onToggle, columns }: ChipGridProps
           label={option.label}
           selected={selected.includes(option.value)}
           onToggle={() => onToggle(option.value)}
-          variant={chipVariant[columns]}
+          variant={variant}
         />
       ))}
     </div>

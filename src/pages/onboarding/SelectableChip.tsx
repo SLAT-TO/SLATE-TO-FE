@@ -2,8 +2,8 @@ interface SelectableChipProps {
   label: string
   selected: boolean
   onToggle: () => void
-  /** wide: 역할·영상 카테고리 화면 (264x88) / region: 활동 지역 화면 (172px) */
-  variant: 'wide' | 'region'
+  /** wide: 미사용(264x88) / region: 활동 역할·지역 화면(140~172px) / category: 영상 카테고리 화면(231x88) */
+  variant: 'wide' | 'region' | 'category'
 }
 
 // 화면별 칩 치수 (Figma 스펙 고정값, lg=1024px부터 적용)
@@ -12,6 +12,7 @@ interface SelectableChipProps {
 const variantClass = {
   wide: 'flex w-[264px] h-[88px] items-center justify-center whitespace-nowrap px-4',
   region: 'flex w-35 h-[88px] items-center justify-center whitespace-nowrap px-4 lg:w-[172px]',
+  category: 'flex w-[231px] h-[88px] items-center justify-center whitespace-nowrap px-4',
 } as const
 
 // 온보딩 다중선택 그리드용 칩 버튼. 선택 시 파랑 채움, 미선택은 흰 배경.
