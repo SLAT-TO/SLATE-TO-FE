@@ -11,6 +11,7 @@ import {
 } from '../api/schedules'
 import { Button } from '../components/Button'
 import { Calendar } from '../components/Calendar'
+import { CalendarLoading } from '../components/CalendarLoading'
 import InlineIcon from '../components/InlineIcon'
 import type { CalendarEvent } from '../schemas/calendarEvent'
 import type { ProjectSummary } from '../types/project'
@@ -65,6 +66,7 @@ export default function CalendarPage() {
   const [formModal, setFormModal] = useState<FormModalState>(null)
   const [projects, setProjects] = useState<ProjectSummary[]>([])
   const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [scheduleLoading, setScheduleLoading] = useState(true)
   const [daySchedules, setDaySchedules] = useState<ScheduleDailyItem[]>([])
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -97,6 +99,7 @@ export default function CalendarPage() {
     let cancelled = false
 
     async function loadMonth() {
+      setScheduleLoading(true)
       try {
         const result = await getSchedules({
           month,
@@ -105,6 +108,8 @@ export default function CalendarPage() {
         if (!cancelled) setSchedules(result.items)
       } catch {
         if (!cancelled) setSchedules([])
+      } finally {
+        if (!cancelled) setScheduleLoading(false)
       }
     }
 
@@ -298,12 +303,16 @@ export default function CalendarPage() {
       {/* 헤더 아래: 캘린더(가변폭·가변높이) + 선택한 날짜의 일정 패널 — stretch로 패널 높이를 캘린더에 맞춘다 */}
       <div className="flex min-h-0 flex-1 items-stretch gap-6">
         <div className="h-full min-w-0 flex-1">
-          <Calendar
-            month={month}
-            events={monthEvents}
-            selectedDate={selectedDate}
-            onDateClick={handleDateClick}
-          />
+          {scheduleLoading ? (
+            <CalendarLoading />
+          ) : (
+            <Calendar
+              month={month}
+              events={monthEvents}
+              selectedDate={selectedDate}
+              onDateClick={handleDateClick}
+            />
+          )}
         </div>
 
         {selectedDate && (
