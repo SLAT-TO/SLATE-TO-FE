@@ -5,6 +5,7 @@ import type {
   CreateScheduleRequest,
   PrivateMemoRequest,
   Schedule,
+  ScheduleDailyItem,
   ScheduleScope,
   ScheduleSummaryItem,
   TodayBriefing,
@@ -66,12 +67,12 @@ export async function getProjectSchedules(
   return getSchedules({ projectId, scope: 'PROJECT', month: month ?? new Date() })
 }
 
-/** BE GET /schedules/daily */
+/** BE GET /schedules/daily — 대상자(participants/participantSummary)·메모·수정 가능 여부(canEdit)까지 포함된 응답 그대로 반환 */
 export async function getDailySchedules(
   date: string,
   options?: { projectId?: number; scope?: ScheduleScope | 'ALL' },
-): Promise<{ date: string; items: Schedule[] }> {
-  const result = await request<{ date: string; items: BeScheduleLike[] }>({
+): Promise<{ date: string; items: ScheduleDailyItem[] }> {
+  return request({
     method: 'GET',
     url: paths.schedules.daily,
     params: {
@@ -80,7 +81,6 @@ export async function getDailySchedules(
       ...(options?.projectId != null ? { projectId: options.projectId } : {}),
     },
   })
-  return { date: result.date, items: result.items.map((item) => normalizeSchedule(item)) }
 }
 
 export async function createSchedule(body: CreateScheduleRequest): Promise<Schedule> {

@@ -63,3 +63,26 @@ export type ScheduleParticipantCandidate = {
   profileImageUrl: string | null
   jobRole: string
 }
+
+export type ScheduleDailyParticipant = {
+  userId: number
+  nickname: string
+  profileImageUrl: string | null
+}
+
+/** GET /api/v1/schedules/daily 항목 — 요약(getSchedules)과 달리 대상자/메모/수정 가능 여부까지 포함 */
+export type ScheduleDailyItem = {
+  scheduleId: number
+  scheduleScope: ScheduleScope
+  projectId: number | null
+  projectTitle: string | null
+  title: string
+  startAt: string
+  endAt: string
+  location: string | null
+  participants: ScheduleDailyParticipant[]
+  participantSummary: string | null
+  publicMemo: string | null
+  privateMemo: string | null
+  canEdit: boolean
+}
