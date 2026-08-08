@@ -43,7 +43,7 @@ export function useHomeDashboard() {
         ])
         if (cancelled) return
 
-        setProjects(projectList.items.slice(0, HOME_PROJECT_LIMIT))
+        setProjects(sortByInProgressFirst(projectList.items).slice(0, HOME_PROJECT_LIMIT))
         setBriefing(briefingResult)
         setTodaySchedules(dailyResult.items)
       } catch (err) {
