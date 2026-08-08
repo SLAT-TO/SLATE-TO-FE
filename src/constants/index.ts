@@ -1,23 +1,16 @@
 // src/constants/index.ts
 export { FEEDBACK_TYPE_LABELS, FEEDBACK_TYPE_OPTIONS, type FeedbackType } from './feedbackTypes'
 
-export { ROLE_LABELS, ROLE_OPTIONS, roleLabel, type Role } from './roles'
+export { ONBOARDING_ROLE_OPTIONS, ROLE_LABELS, ROLE_OPTIONS, roleLabel, type Role } from './roles'
 
 export { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL, projectMetaTags } from './projectLabels'
 
 export {
-  ONBOARDING_ROLE_LABELS,
-  ONBOARDING_ROLE_OPTIONS,
-  type OnboardingRole,
-} from './onboardingRoles'
-
-export {
-  ONBOARDING_VIDEO_CATEGORY_LABELS,
   ONBOARDING_VIDEO_CATEGORY_OPTIONS,
   type OnboardingVideoCategory,
 } from './onboardingVideoCategories'
 
-export { ONBOARDING_REGION_LABELS, ONBOARDING_REGION_OPTIONS, type Region } from './regions'
+export { ONBOARDING_REGION_OPTIONS, type Region } from './regions'
 
 export {
   FILM_LENGTH_LABELS,

@@ -31,7 +31,7 @@ export default function DashboardActivityCard({
         ) : (
           <ul className="flex flex-col gap-4">
             {activities.map((activity) => (
-              <li key={activity.id} className="text-body-sm text-neutral-10">
+              <li key={activity.activityId} className="text-body-sm text-neutral-10">
                 {activity.content}
               </li>
             ))}

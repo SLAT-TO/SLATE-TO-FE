@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import ActionMenu from '../../components/ActionMenu'
 import ConfirmModal from '../../components/ConfirmModal'
@@ -15,7 +15,7 @@ interface EventDetailCardProps {
   onBack: () => void
   onEdit: () => void
   onDelete: () => void
-  onSaveNote: (note: string) => void
+  onSaveNote: (note: string) => Promise<boolean>
 }
 
 const LABEL_CLASS = 'text-caption-sm text-neutral-10 font-semibold tracking-[-0.24px]'
@@ -33,11 +33,32 @@ export function EventDetailCard({
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [note, setNote] = useState(event.note ?? '')
   const [noteFocused, setNoteFocused] = useState(false)
+  const [showSaved, setShowSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleSendNote = () => {
+  useEffect(() => {
+    return () => {
+      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+    }
+  }, [])
+
+  const handleSendNote = async () => {
     if (note.trim() === (event.note ?? '')) return
-    onSaveNote(note.trim())
+    setSaving(true)
+    setSaveError(null)
+    const succeeded = await onSaveNote(note.trim())
+    setSaving(false)
+
+    if (!succeeded) {
+      setSaveError('저장하지 못했습니다. 다시 시도해주세요.')
+      return
+    }
+    setShowSaved(true)
+    if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+    savedTimeoutRef.current = setTimeout(() => setShowSaved(false), 1500)
   }
 
   return (
@@ -114,6 +135,16 @@ export function EventDetailCard({
         className="border-neutral-5 relative flex h-27 w-full max-w-[258px] flex-col gap-2 rounded-[8.675px] border-[0.542px] p-4"
         onClick={() => noteTextareaRef.current?.focus()}
       >
+        {saveError && (
+          <span className="text-caption-sm text-warning absolute right-0 -bottom-5 tracking-[-0.24px]">
+            {saveError}
+          </span>
+        )}
+        {!saveError && showSaved && (
+          <span className="text-caption-sm text-neutral-5 absolute right-0 -bottom-5 tracking-[-0.24px]">
+            저장되었습니다.
+          </span>
+        )}
         {!note && !noteFocused && (
           <span className="text-caption-sm text-neutral-5 pointer-events-none font-semibold tracking-[-0.24px]">
             참고 (나에게만 보여요)
@@ -124,10 +155,7 @@ export function EventDetailCard({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           onFocus={() => setNoteFocused(true)}
-          onBlur={() => {
-            setNoteFocused(false)
-            handleSendNote()
-          }}
+          onBlur={() => setNoteFocused(false)}
           className="text-caption-sm text-neutral-5 min-h-0 flex-1 resize-none bg-transparent pr-8 tracking-[-0.24px] outline-none"
         />
         {!note && !noteFocused && (
@@ -138,9 +166,11 @@ export function EventDetailCard({
 
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={handleSendNote}
+          disabled={saving}
           aria-label="메모 저장"
-          className="absolute right-3 bottom-3 flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2378FE]"
+          className="absolute right-3 bottom-3 flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2378FE] transition-colors hover:bg-[#1C63D1] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <InlineIcon
             svg={paperPlaneIcon}

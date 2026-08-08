@@ -44,7 +44,12 @@ export const userHandlers = [
     if (!body.agreedTerms) {
       return badRequest('필수 약관 미동의')
     }
-    if (!body.roles?.length || !body.region || !body.categories?.length || !body.nickname) {
+    if (
+      !body.roles?.length ||
+      !body.regions?.length ||
+      !body.categories?.length ||
+      !body.nickname
+    ) {
       return badRequest('요청 값이 올바르지 않습니다.')
     }
 
@@ -53,8 +58,9 @@ export const userHandlers = [
     user.bio = body.bio ?? null
     user.profileImageUrl = body.profileImageUrl ?? user.profileImageUrl
     user.roles = body.roles
-    user.region = body.region
-    user.location = body.region
+    // MeUser는 region/location이 단일값 — 온보딩에서 여러 지역을 고르면 첫 번째를 대표 지역으로 저장
+    user.region = body.regions[0]!
+    user.location = body.regions[0]!
     user.categories = body.categories
     user.primaryRole = body.roles[0] ?? null
     user.onboardingCompleted = true
@@ -84,6 +90,25 @@ export const userHandlers = [
     }
 
     return HttpResponse.json(ok(toMeProfile(user)), { status: 200 })
+  }),
+
+  http.put(paths.users.profileImage, async ({ request }) => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+
+    const formData = await request.formData()
+    const file = formData.get('file')
+    if (!(file instanceof File)) return badRequest('file 누락')
+
+    const updatedAt = new Date().toISOString()
+    // 실제 S3 업로드 대신 object URL로 대체 — 블롭 URL은 오리진 단위로 등록되어
+    // MSW 서비스워커에서 만들어도 페이지 쪽 <img>에서 그대로 읽힌다.
+    // cdn.example.com 같은 가짜 도메인은 실제로 응답하지 않아 미리보기가 깨진다.
+    user.profileImageUrl = URL.createObjectURL(file)
+
+    return HttpResponse.json(ok({ profileImageUrl: user.profileImageUrl, updatedAt }), {
+      status: 200,
+    })
   }),
 
   http.delete(paths.users.me, async ({ request }) => {

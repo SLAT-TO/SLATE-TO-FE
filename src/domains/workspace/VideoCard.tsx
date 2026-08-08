@@ -1,6 +1,7 @@
 import type { KeyboardEvent, MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import ActionMenu from '../../components/ActionMenu'
+import BookmarkStarIcon from '../../components/icons/BookmarkStarIcon'
 import Tag from '../../components/Tag'
 import { CARD_BASE } from '../../styles/card'
 
@@ -12,7 +13,10 @@ interface VideoCardProps {
   progressStatus: VideoCardProgressStatus
   /** 상태 태그 옆에 보여줄 상대 시간 문구 (예: "2시간 전") — 계산은 호출부에서 */
   relativeTime?: string
-  unreadCommentCount?: number
+  /** BE VideoItemResDTO.hasUnreadFeedback */
+  hasUnreadFeedback?: boolean
+  bookmarked?: boolean
+  onToggleBookmark?: () => void
   /** React Router 경로 — 있으면 `<Link to>`로 이동 */
   to?: string
   onClick?: () => void
@@ -26,7 +30,9 @@ export default function VideoCard({
   thumbnailUrl,
   progressStatus,
   relativeTime,
-  unreadCommentCount = 0,
+  hasUnreadFeedback = false,
+  bookmarked = false,
+  onToggleBookmark,
   to,
   onClick,
   onEdit,
@@ -51,8 +57,12 @@ export default function VideoCard({
     }
   }
 
-  const stopCardClick = (event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
+  const stopCardClick = (event: MouseEvent<HTMLElement>) => {
     event.preventDefault()
+    event.stopPropagation()
+  }
+
+  const stopCardKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     event.stopPropagation()
   }
 
@@ -64,11 +74,26 @@ export default function VideoCard({
         <span className="text-body-sm text-neutral-11 min-w-0 flex-1 truncate text-left font-semibold">
           {title}
         </span>
-        {menuItems.length > 0 && (
-          <div onClick={stopCardClick} onKeyDown={stopCardClick}>
-            <ActionMenu items={menuItems} ariaLabel="영상 메뉴" />
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {onToggleBookmark && (
+            <div onClick={stopCardClick} onKeyDown={stopCardKeyDown}>
+              <button
+                type="button"
+                onClick={onToggleBookmark}
+                aria-pressed={bookmarked}
+                aria-label={bookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+                className={bookmarked ? 'text-caution' : 'text-neutral-6'}
+              >
+                <BookmarkStarIcon filled={bookmarked} className="size-5" />
+              </button>
+            </div>
+          )}
+          {menuItems.length > 0 && (
+            <div onClick={stopCardClick} onKeyDown={stopCardKeyDown}>
+              <ActionMenu items={menuItems} ariaLabel="영상 메뉴" />
+            </div>
+          )}
+        </div>
       </div>
 
       <div aria-hidden className="bg-neutral-3 aspect-video w-full overflow-hidden rounded-lg">
@@ -82,10 +107,11 @@ export default function VideoCard({
           </Tag>
           {relativeTime && <span className="text-caption-sm text-neutral-6">{relativeTime}</span>}
         </div>
-        {unreadCommentCount > 0 && (
-          <span className="bg-warning flex size-5 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold text-white">
-            {unreadCommentCount}
-          </span>
+        {hasUnreadFeedback && (
+          <span
+            className="bg-warning size-2.75 shrink-0 rounded-full"
+            aria-label="읽지 않은 피드백"
+          />
         )}
       </div>
     </>

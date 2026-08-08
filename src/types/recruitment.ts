@@ -46,6 +46,12 @@ export type UpdateRecruitmentRequest = Partial<CreateRecruitmentRequest> & {
   status?: string
 }
 
+/** BE RecruitmentBookmarkResponse */
+export type RecruitmentBookmarkResult = {
+  recruitmentId: number
+  isBookmarked: boolean
+}
+
 export type ApplicationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | string
 
 export type Application = {

@@ -1,16 +1,13 @@
-import { request } from './client'
-import { paths } from './paths'
-import { normalizeSchedule, type BeScheduleLike } from './scheduleNormalize'
+import { request } from '../../api/client'
+import { paths } from '../../api/paths'
+import { normalizeSchedule, type BeScheduleLike } from '../../api/scheduleNormalize'
 import type {
   CreateScheduleRequest,
   PrivateMemoRequest,
   Schedule,
-  ScheduleDailyItem,
   ScheduleScope,
-  ScheduleSummaryItem,
-  TodayBriefing,
   UpdateScheduleRequest,
-} from '../types/schedule'
+} from '../../types/schedule'
 
 function monthRangeIso(anchor: Date): { startAt: string; endAt: string } {
   const y = anchor.getFullYear()
@@ -23,56 +20,33 @@ function monthRangeIso(anchor: Date): { startAt: string; endAt: string } {
   return { startAt: fmt(start), endAt: fmt(end) }
 }
 
-export async function getTodayBriefing(): Promise<TodayBriefing> {
-  return request({ method: 'GET', url: paths.briefings.today })
-}
-
-/** FE mock 전용 path — BE 미구현 */
-export async function getScheduleSummary(): Promise<{ items: ScheduleSummaryItem[] }> {
-  return request({ method: 'GET', url: paths.schedules.summary })
-}
-
-/** BE GET /schedules — startAt/endAt 필수, scope·projectId 선택 */
-export async function getSchedules(options?: {
-  projectId?: number
-  scope?: ScheduleScope | 'ALL'
-  startAt?: string
-  endAt?: string
-  /** startAt/endAt 생략 시 이 달 기준으로 캘린더 조회 */
-  month?: Date
-}): Promise<{ items: Schedule[] }> {
-  const range =
-    options?.startAt && options?.endAt
-      ? { startAt: options.startAt, endAt: options.endAt }
-      : monthRangeIso(options?.month ?? new Date())
-
+/**
+ * 워크스페이스 전용 일정 API.
+ * 배포 Swagger: JWT bearer + 응답 `items` (공용 api/schedules와 동일 계약, 캘린더/홈과 분리 유지).
+ */
+export async function getWorkspaceProjectSchedules(
+  projectId: number,
+  month?: Date,
+): Promise<{ items: Schedule[] }> {
+  const range = monthRangeIso(month ?? new Date())
   const result = await request<{ items: BeScheduleLike[] }>({
     method: 'GET',
     url: paths.schedules.root,
     params: {
       startAt: range.startAt,
       endAt: range.endAt,
-      scope: options?.scope ?? (options?.projectId != null ? 'PROJECT' : 'ALL'),
-      ...(options?.projectId != null ? { projectId: options.projectId } : {}),
+      scope: 'PROJECT',
+      projectId,
     },
   })
   return { items: result.items.map((item) => normalizeSchedule(item)) }
 }
 
-/** 프로젝트 일정 탭/대시보드 — BE 캘린더 API (중첩 /projects/:id/schedules 아님) */
-export async function getProjectSchedules(
-  projectId: number,
-  month?: Date,
-): Promise<{ items: Schedule[] }> {
-  return getSchedules({ projectId, scope: 'PROJECT', month: month ?? new Date() })
-}
-
-/** BE GET /schedules/daily — 대상자(participants/participantSummary)·메모·수정 가능 여부(canEdit)까지 포함된 응답 그대로 반환 */
-export async function getDailySchedules(
+export async function getWorkspaceDailySchedules(
   date: string,
   options?: { projectId?: number; scope?: ScheduleScope | 'ALL' },
-): Promise<{ date: string; items: ScheduleDailyItem[] }> {
-  return request({
+): Promise<{ date: string; items: Schedule[] }> {
+  const result = await request<{ date: string; items: BeScheduleLike[] }>({
     method: 'GET',
     url: paths.schedules.daily,
     params: {
@@ -81,9 +55,10 @@ export async function getDailySchedules(
       ...(options?.projectId != null ? { projectId: options.projectId } : {}),
     },
   })
+  return { date: result.date, items: result.items.map((item) => normalizeSchedule(item)) }
 }
 
-export async function createSchedule(body: CreateScheduleRequest): Promise<Schedule> {
+export async function createWorkspaceSchedule(body: CreateScheduleRequest): Promise<Schedule> {
   const result = await request<BeScheduleLike>({
     method: 'POST',
     url: paths.schedules.root,
@@ -97,7 +72,7 @@ export async function createSchedule(body: CreateScheduleRequest): Promise<Sched
   })
 }
 
-export async function updateSchedule(
+export async function updateWorkspaceSchedule(
   scheduleId: number,
   body: UpdateScheduleRequest,
   current?: Schedule,
@@ -116,12 +91,14 @@ export async function updateSchedule(
   })
 }
 
-export async function deleteSchedule(scheduleId: number): Promise<null> {
-  return request({ method: 'DELETE', url: paths.schedules.byId(scheduleId) })
+export async function deleteWorkspaceSchedule(scheduleId: number): Promise<null> {
+  return request({
+    method: 'DELETE',
+    url: paths.schedules.byId(scheduleId),
+  })
 }
 
-/** BE PATCH body: { content } — 응답은 privateMemo로 병합해 Schedule 형태 유지 */
-export async function updatePrivateMemo(
+export async function updateWorkspacePrivateMemo(
   scheduleId: number,
   body: PrivateMemoRequest,
   current?: Schedule,
