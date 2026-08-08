@@ -42,9 +42,7 @@ export function DateSingleCalendar({ value, onChange }: DateCalendarProps) {
         {WEEKDAYS.map((label) => (
           <span
             key={label}
-            className={`flex h-7.5 w-7.5 items-center justify-center text-[18px] leading-7.5 font-normal tracking-[-0.36px] capitalize ${
-              label === '일' ? 'text-neutral-10' : 'text-black'
-            }`}
+            className="text-neutral-10 flex h-7.5 w-7.5 items-center justify-center text-[18px] leading-7.5 font-normal tracking-[-0.36px] capitalize"
           >
             {label}
           </span>

@@ -1,5 +1,6 @@
 import JobCard from '../../components/JobCard'
 import type { Recruitment } from '../../types/recruitment'
+import { navigate } from '../../utils/navigation'
 import { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
 
 interface HomeRecommendedJobsSectionProps {
@@ -18,6 +19,15 @@ const ROLE_LABEL_MAP: Record<string, string> = {
   ART: '미술',
 }
 
+function JobCardSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="border-border-input bg-neutral-2 h-40 rounded-xl border-[0.749px]"
+    />
+  )
+}
+
 export default function HomeRecommendedJobsSection({
   jobs,
   bookmarkedIds,
@@ -28,7 +38,18 @@ export default function HomeRecommendedJobsSection({
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">추천 공고</h2>
 
-      {loading && <p className="text-caption-sm text-neutral-6">불러오는 중…</p>}
+      {loading && (
+        <div
+          className="grid grid-cols-1 gap-x-10.5 gap-y-5 sm:grid-cols-2"
+          role="status"
+          aria-busy="true"
+          aria-live="polite"
+          aria-label="추천 공고 불러오는 중"
+        >
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+        </div>
+      )}
 
       {!loading && jobs.length === 0 && (
         <p className="text-caption-sm text-neutral-6">추천 공고가 없어요.</p>
@@ -46,11 +67,11 @@ export default function HomeRecommendedJobsSection({
                   : undefined
               }
               title={job.title}
-              description={job.description}
               role={ROLE_LABEL_MAP[job.roles[0]] ?? job.roles[0] ?? '전체'}
               dDay={job.status === 'OPEN' ? '상시모집' : '마감'}
               isBookmarked={bookmarkedIds.has(job.id)}
               onBookmarkClick={() => onToggleBookmark(job.id)}
+              onClick={() => navigate(`/matching/${job.id}`)}
             />
           ))}
         </div>

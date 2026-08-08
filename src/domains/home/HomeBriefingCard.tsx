@@ -41,7 +41,7 @@ function BriefingLineIcon() {
 }
 
 export default function HomeBriefingCard({ briefing, loading }: HomeBriefingCardProps) {
-  const lines = briefing?.items.map((item) => item.title) ?? []
+  const lines = briefing?.items.map((item) => item.content) ?? []
 
   return (
     <section className="flex flex-col gap-5">
@@ -49,7 +49,14 @@ export default function HomeBriefingCard({ briefing, loading }: HomeBriefingCard
 
       <div className="flex items-center justify-between gap-4 rounded-[10.242px] bg-white py-4 pr-10.25 pl-4 shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]">
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 pl-5.25">
-          {loading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
+          {loading && (
+            <div
+              role="status"
+              aria-busy="true"
+              aria-label="브리핑 불러오는 중"
+              className="border-border-input bg-neutral-2 h-45 w-full rounded-lg border-[0.749px]"
+            />
+          )}
 
           {!loading && lines.length === 0 && (
             <p className="text-body-sm text-neutral-6">오늘은 브리핑이 없어요.</p>

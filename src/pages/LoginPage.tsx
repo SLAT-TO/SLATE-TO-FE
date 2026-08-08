@@ -27,8 +27,8 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
 
   // 라우팅 가드가 비로그인 상태로 보호된 경로 접근 시 ?redirectTo=로 원래 경로를 실어 보냄 —
-  // 있으면 로그인 후 그 경로로, 없으면 기존 온보딩 체험 기본값으로
-  const redirectTo = new URLSearchParams(window.location.search).get('redirectTo') || '/onboarding'
+  // 있으면 /auth/callback이 refresh 후 그 경로로 보내고, 없으면 온보딩 완료 여부로 알아서 분기
+  const redirectTo = new URLSearchParams(window.location.search).get('redirectTo') ?? undefined
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(115deg,#9ff0ff_33.5%,#b9d6ff_98%)]">
@@ -36,6 +36,10 @@ export function LoginPage() {
         src={loginBg}
         alt=""
         className="pointer-events-none absolute inset-0 size-full object-cover"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 size-full bg-[#a3dfff] mix-blend-multiply"
       />
 
       <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">
@@ -94,18 +98,11 @@ export function LoginPage() {
 
             <button
               type="button"
-              // TODO: /auth/callback 페이지 생기면 redirectTo 제거하고 콜백에서 토큰 처리
               // mockUser: 'new' — 온보딩 플로우 체험용 하드코딩 (README 참고)
               onClick={() => void startGoogleLogin({ redirectTo, mockUser: 'new' })}
               className="bg-neutral-1 border-neutral-5 text-body-sm text-neutral-10 h-12 w-full max-w-[400px] rounded-lg border"
             >
               구글 로그인 / 회원가입
-            </button>
-            <button
-              type="button"
-              className="border-neutral-5 text-body-sm text-neutral-10 h-12 w-full max-w-[400px] rounded-lg border bg-[#fee500]"
-            >
-              카카오 로그인 / 회원가입
             </button>
           </div>
         </div>
