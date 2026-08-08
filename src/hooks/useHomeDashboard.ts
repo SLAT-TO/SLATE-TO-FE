@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { getProjects } from '../api/projects'
+import { useCallback, useEffect, useState } from 'react'
+import { deleteProject, getProjects, leaveProject, pinProject, unpinProject } from '../api/projects'
 import { getTodayBriefing, getSchedules } from '../api/schedules'
 import { ApiError } from '../types/api'
 import type { ProjectSummary } from '../types/project'
@@ -59,5 +59,37 @@ export function useHomeDashboard() {
     }
   }, [])
 
-  return { projects, briefing, todaySchedules, loading, error }
+  const togglePin = useCallback(async (project: ProjectSummary) => {
+    const next = !project.isPinned
+    setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, isPinned: next } : p)))
+    try {
+      const result = next ? await pinProject(project.id) : await unpinProject(project.id)
+      setProjects((prev) =>
+        prev.map((p) => (p.id === project.id ? { ...p, isPinned: result.isPinned } : p)),
+      )
+    } catch {
+      setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, isPinned: !next } : p)))
+    }
+  }, [])
+
+  const removeProject = useCallback(async (projectId: number) => {
+    await deleteProject(projectId)
+    setProjects((prev) => prev.filter((p) => p.id !== projectId))
+  }, [])
+
+  const leaveCurrentProject = useCallback(async (projectId: number) => {
+    await leaveProject(projectId)
+    setProjects((prev) => prev.filter((p) => p.id !== projectId))
+  }, [])
+
+  return {
+    projects,
+    briefing,
+    todaySchedules,
+    loading,
+    error,
+    togglePin,
+    removeProject,
+    leaveProject: leaveCurrentProject,
+  }
 }

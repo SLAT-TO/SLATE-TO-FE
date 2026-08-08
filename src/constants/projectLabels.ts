@@ -8,7 +8,7 @@ export const PROJECT_LENGTH_TYPE_LABEL: Record<string, string> = {
 /** BE CategoryName 기준 */
 export const PROJECT_TYPE_LABEL: Record<string, string> = {
   YOUTUBE_CONTENT: '유튜브 콘텐츠',
-  AD_BRAND: '광고/브랜드 영상',
+  AD_BRAND: '광고 브랜드',
   MUSIC_VIDEO: '뮤직비디오',
   WEDDING_EVENT: '웨딩/이벤트 영상',
   DOCUMENTARY: '다큐멘터리',
