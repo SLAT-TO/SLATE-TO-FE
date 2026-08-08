@@ -9,6 +9,7 @@ export type Recruitment = {
   roles: string[]
   categories: string[]
   regions: string[]
+  lengthType?: string
   status: string
   viewCount: number
   bookmarkCount: number
@@ -29,6 +30,12 @@ export type CreateRecruitmentRequest = {
 
 export type UpdateRecruitmentRequest = Partial<CreateRecruitmentRequest> & {
   status?: string
+}
+
+/** BE RecruitmentBookmarkResponse */
+export type RecruitmentBookmarkResult = {
+  recruitmentId: number
+  isBookmarked: boolean
 }
 
 export type ApplicationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | string

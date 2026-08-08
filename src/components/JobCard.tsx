@@ -2,25 +2,27 @@
 import Tag from './Tag'
 
 interface JobCardProps {
-  type: string
   category: string
+  length?: string
   title: string
-  description: string
+  description?: string
   role: string
-  price?: string
   dDay: string
   isBookmarked: boolean
   onClick?: () => void
   onBookmarkClick: () => void
+  /** @deprecated 하위호환용 — 렌더링 안 함. 홈 등 기존 사용처 호환 */
+  type?: string
+  /** @deprecated 하위호환용 — 렌더링 안 함 */
+  price?: string
 }
 
 function JobCard({
-  type,
+  length,
   category,
   title,
   description,
   role,
-  price,
   dDay,
   isBookmarked,
   onClick,
@@ -36,8 +38,8 @@ function JobCard({
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3.5">
-            <Tag>{type}</Tag>
-            <Tag>{category}</Tag>
+            <Tag variant="meta">{category}</Tag>
+            {length && <Tag variant="meta">{length}</Tag>}
           </div>
 
           <button
@@ -65,17 +67,13 @@ function JobCard({
 
         <div className="flex flex-col gap-2">
           <h3 className="text-body-sm text-neutral-11 font-semibold">{title}</h3>
-          <p className="text-caption-lg text-neutral-11">{description}</p>
+          {description && <p className="text-caption-lg text-neutral-11">{description}</p>}
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-3">
         <Tag variant="primary">{role}</Tag>
-
-        <div className="flex shrink-0 items-center gap-4">
-          {price && <span className="text-caption-sm text-neutral-11 font-semibold">{price}</span>}
-          <span className="text-body-sm text-neutral-11 font-semibold">{dDay}</span>
-        </div>
+        <span className="text-body-sm text-neutral-11 shrink-0 font-semibold">{dDay}</span>
       </div>
     </article>
   )

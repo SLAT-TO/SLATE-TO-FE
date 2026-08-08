@@ -6,12 +6,28 @@ import { useState } from 'react'
 import { navigate } from '../utils/navigation'
 import ApplyModal from '../domains/recruit/ApplyModal'
 import { MOCK_JOB_DETAILS } from '../domains/recruit/mockJobDetail'
+import { useHeaderSlot } from '../hooks/useHeaderSlot'
+
+function JobDetailBackHeader() {
+  return (
+    <button
+      type="button"
+      onClick={() => navigate('/matching')}
+      className="text-caption-lg text-neutral-6 hover:text-neutral-9 w-fit"
+    >
+      &lt; 공고 목록
+    </button>
+  )
+}
+
+const HEADER = <JobDetailBackHeader />
 
 interface JobDetailPageProps {
   jobId: number
 }
 
 function JobDetailPage({ jobId }: JobDetailPageProps) {
+  useHeaderSlot(HEADER)
   const [isApplyOpen, setIsApplyOpen] = useState(false)
   // TODO: API 연동 — GET /recruitments/:id
   // mock에는 상세 데이터가 1건뿐이라 미존재 id는 첫 항목으로 대체
@@ -24,7 +40,7 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
   const isOwner = detail.isOwner
 
   return (
-    <div className="flex flex-col gap-6 px-8 py-6">
+    <div className="flex flex-col gap-6">
       <JobDetailHeader detail={detail} isOwner={isOwner} />
 
       <div className="flex flex-col gap-5.25 lg:flex-row">

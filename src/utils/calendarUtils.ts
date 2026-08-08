@@ -73,13 +73,15 @@ export function assignEventLanes(
   const weekEndKey = toDateKey(weekDays[weekDays.length - 1])
 
   const segments = events
-    .filter((event) => event.startDate <= weekEndKey && event.endDate >= weekStartKey)
-    .map((event) => {
+    // events는 생성 순서(오래된 게 먼저)로 들어오므로, 그 인덱스를 정렬 타이브레이커로 들고 다닌다
+    .map((event, createdOrder) => ({ event, createdOrder }))
+    .filter(({ event }) => event.startDate <= weekEndKey && event.endDate >= weekStartKey)
+    .map(({ event, createdOrder }) => {
       const segStartKey = event.startDate > weekStartKey ? event.startDate : weekStartKey
       const segEndKey = event.endDate < weekEndKey ? event.endDate : weekEndKey
       const startCol = weekDays.findIndex((day) => toDateKey(day) === segStartKey)
       const endCol = weekDays.findIndex((day) => toDateKey(day) === segEndKey)
-      return { event, startCol, endCol }
+      return { event, startCol, endCol, createdOrder }
     })
     // startDate/endDate가 주 형식과 안 맞는 등 findIndex가 못 찾은 segment는 배치하지 않음
     .filter((seg) => seg.startCol !== -1 && seg.endCol !== -1)
@@ -87,8 +89,10 @@ export function assignEventLanes(
       event: seg.event,
       startCol: seg.startCol,
       span: seg.endCol - seg.startCol + 1,
+      createdOrder: seg.createdOrder,
     }))
-    .sort((a, b) => a.startCol - b.startCol || a.span - b.span)
+    // 같은 날 시작하는 이벤트끼리는 먼저 생성된 것이 위쪽(작은 lane)에 오도록 정렬
+    .sort((a, b) => a.startCol - b.startCol || a.createdOrder - b.createdOrder)
 
   // 레인별로 "다음 빈 컬럼"을 기록해두고, 시작 컬럼이 그 이상이면 그 레인에 배정
   const laneNextFreeCol: number[] = []

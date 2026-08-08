@@ -1,6 +1,7 @@
 import ApplicantRow from '../domains/recruit/ApplicantRow'
 import { MOCK_APPLICANTS } from '../domains/recruit/mockApplicants'
 import { MOCK_JOB_DETAILS } from '../domains/recruit/mockJobDetail'
+import { navigate } from '../utils/navigation'
 
 interface JobApplicantsPageProps {
   jobId: number
@@ -36,8 +37,9 @@ function JobApplicantsPage({ jobId }: JobApplicantsPageProps) {
               <ApplicantRow
                 key={applicant.id}
                 applicant={applicant}
-                // TODO: 공개 프로필 페이지 연결 (디자인 확정 후)
-                onViewProfile={() => {}}
+                onViewProfile={(applicantId) =>
+                  navigate(`/matching/${jobId}/applicants/${applicantId}`)
+                }
               />
             ))}
           </ul>

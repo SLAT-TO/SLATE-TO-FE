@@ -1,58 +1,92 @@
-import { useEffect, useState } from 'react'
-import {
-  getProject,
-  getProjectActivities,
-  getProjectMembers,
-  getProjectNotices,
-} from '../api/projects'
+import { useCallback, type Dispatch, type SetStateAction } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { getProjectMembers } from '../api/projects'
 import { ApiError } from '../types/api'
-import type { MemberSummary, ProjectActivity, ProjectDetailResponse } from '../types/project'
+import type { MemberSummary, ProjectDetailResponse } from '../types/project'
 import type { ProjectNoticeListItem } from '../types/notice'
+import { projectKeys } from '../queries/keys'
+import {
+  useProjectActivitiesQuery,
+  useProjectMembersQuery,
+  useProjectNoticesQuery,
+  useProjectQuery,
+} from '../queries/projects'
 
 export function useProjectDetail(projectId: number) {
-  const [project, setProject] = useState<ProjectDetailResponse | null>(null)
-  const [members, setMembers] = useState<MemberSummary[]>([])
-  const [activities, setActivities] = useState<ProjectActivity[]>([])
-  const [notices, setNotices] = useState<ProjectNoticeListItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+  const projectQuery = useProjectQuery(projectId)
+  const membersQuery = useProjectMembersQuery(projectId)
+  const noticesQuery = useProjectNoticesQuery(projectId)
+  const activitiesQuery = useProjectActivitiesQuery(projectId)
 
-  useEffect(() => {
-    let cancelled = false
+  const setProject: Dispatch<SetStateAction<ProjectDetailResponse | null>> = useCallback(
+    (update) => {
+      queryClient.setQueryData<ProjectDetailResponse>(projectKeys.detail(projectId), (prev) => {
+        const current = prev ?? null
+        const next = typeof update === 'function' ? update(current) : update
+        return next ?? undefined
+      })
+    },
+    [projectId, queryClient],
+  )
 
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const emptyActivities = { items: [] as ProjectActivity[], nextCursor: null, hasNext: false }
-        const [projectResult, activityPage, noticePage, memberList] = await Promise.all([
-          getProject(projectId),
-          getProjectActivities(projectId).catch(() => emptyActivities),
-          getProjectNotices(projectId),
-          getProjectMembers(projectId).catch(() => ({
-            items: [] as MemberSummary[],
-            memberCount: 0,
-          })),
-        ])
-        if (cancelled) return
-        setProject(projectResult)
-        setActivities(activityPage.items)
-        setNotices(noticePage.items)
-        setMembers(memberList.items)
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : '프로젝트 정보를 불러오지 못했습니다.')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
+  const setMembers: Dispatch<SetStateAction<MemberSummary[]>> = useCallback(
+    (update) => {
+      queryClient.setQueryData<MemberSummary[]>(projectKeys.members(projectId), (prev) => {
+        const current = prev ?? []
+        return typeof update === 'function' ? update(current) : update
+      })
+    },
+    [projectId, queryClient],
+  )
 
-    void load()
-    return () => {
-      cancelled = true
-    }
-  }, [projectId])
+  const setNotices: Dispatch<SetStateAction<ProjectNoticeListItem[]>> = useCallback(
+    (update) => {
+      queryClient.setQueryData<ProjectNoticeListItem[]>(projectKeys.notices(projectId), (prev) => {
+        const current = prev ?? []
+        return typeof update === 'function' ? update(current) : update
+      })
+    },
+    [projectId, queryClient],
+  )
 
-  return { project, setProject, members, activities, notices, setNotices, loading, error }
+  const reloadMembers = useCallback(async () => {
+    return queryClient.fetchQuery({
+      queryKey: projectKeys.members(projectId),
+      queryFn: async () => {
+        const page = await getProjectMembers(projectId)
+        return page.items
+      },
+    })
+  }, [projectId, queryClient])
+
+  // 최근 활동 실패는 빈 목록으로 취급 (빨간 문구·alert 없음). 공지/멤버만 soft alert.
+  const partialErrors: string[] = []
+  if (noticesQuery.isError) partialErrors.push('공지를 불러오지 못했습니다.')
+  if (membersQuery.isError) partialErrors.push('참여 인원을 불러오지 못했습니다.')
+
+  // 캐시가 있으면 재조회 실패로 화면 전체를 내리지 않음
+  const error =
+    projectQuery.isError && !projectQuery.data
+      ? projectQuery.error instanceof ApiError
+        ? projectQuery.error.message
+        : '프로젝트 정보를 불러오지 못했습니다.'
+      : null
+  if (projectQuery.isError && projectQuery.data) {
+    partialErrors.push('프로젝트 정보를 새로고침하지 못했습니다.')
+  }
+
+  return {
+    project: projectQuery.data ?? null,
+    setProject,
+    members: membersQuery.data ?? [],
+    setMembers,
+    reloadMembers,
+    activities: activitiesQuery.data ?? [],
+    notices: noticesQuery.data ?? [],
+    setNotices,
+    loading: projectQuery.isPending && !projectQuery.data,
+    error,
+    partialErrors,
+  }
 }

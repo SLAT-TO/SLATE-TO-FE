@@ -26,13 +26,16 @@ export interface FilterConfig {
 
 export interface JobPost {
   id: number
-  type: string
   category: string
+  length?: string
   title: string
-  description: string
+  description?: string
   role: string
-  price?: string
   dDay: string
+  /** @deprecated 하위호환용 — 카드에서 미사용 */
+  type?: string
+  /** @deprecated 하위호환용 — 카드에서 미사용 */
+  price?: string
 }
 
 export interface RecruitmentDetail {
@@ -77,6 +80,10 @@ export interface RecruitApplicant {
   applicantProfileImageUrl: string
   appliedAt: string
   introduction: string
+  comment: string
+  referenceLink?: string
+  fileName?: string
+  fileUrl?: string
 }
 
 export interface JobPostFormValues {
@@ -88,4 +95,11 @@ export interface JobPostFormValues {
   participationPeriod?: { from?: Date; to?: Date }
   pay: string
   description: string
+}
+
+export interface ApplicationInfo {
+  comment: string
+  referenceLink?: string
+  fileName?: string
+  fileUrl?: string
 }

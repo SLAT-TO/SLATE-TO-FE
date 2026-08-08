@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import {
   createFeedback,
   deleteFeedback,
@@ -11,8 +12,9 @@ import type { Feedback } from '../types/feedback'
 export type FeedbackFilter = 'all' | 'unresolved'
 
 /** 영상 상세의 피드백 목록 · 작성(구간 첨부) · 수정 · 삭제 · 해결 토글을 다루는 훅
- * @param currentTime 영상 플레이어의 현재 재생 시간(초) — "현재 시점 첨부" 버튼에 사용 */
-export function useFeedbacks(videoId: number, currentTime: number) {
+ * @param getCurrentTime 플레이어 실제 재생 시각(초) — 클릭 시점에 읽어 단일/구간 첨부
+ * @param guestId 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
+export function useFeedbacks(videoId: number, getCurrentTime: () => number, guestId?: number) {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [filter, setFilter] = useState<FeedbackFilter>('all')
   const [newFeedback, setNewFeedback] = useState('')
@@ -24,10 +26,10 @@ export function useFeedbacks(videoId: number, currentTime: number) {
   const [editingFeedbackContent, setEditingFeedbackContent] = useState('')
 
   const load = useCallback(async () => {
-    const page = await getFeedbacks(videoId)
+    const page = await getFeedbacks(videoId, guestId != null ? { guestId } : undefined)
     setFeedbacks(page.items)
     return page.items
-  }, [videoId])
+  }, [videoId, guestId])
 
   const clearPendingTime = useCallback(() => {
     setPendingStart(null)
@@ -36,45 +38,47 @@ export function useFeedbacks(videoId: number, currentTime: number) {
   }, [])
 
   const attachCurrentTime = useCallback(() => {
-    setPendingStart(Math.floor(currentTime))
+    setPendingStart(Math.floor(getCurrentTime()))
     setPendingEnd(null)
     setIsCapturingRange(false)
-  }, [currentTime])
+  }, [getCurrentTime])
 
   /** 구간 기록 버튼 — 첫 클릭은 시작점, 재생 위치를 옮긴 뒤 두 번째 클릭은 종료점 */
   const toggleRangeCapture = useCallback(() => {
+    const t = Math.floor(getCurrentTime())
     setIsCapturingRange((capturing) => {
       if (!capturing) {
-        setPendingStart(Math.floor(currentTime))
+        setPendingStart(t)
         setPendingEnd(null)
         return true
       }
-      setPendingEnd(Math.floor(currentTime))
+      setPendingEnd(t)
       return false
     })
-  }, [currentTime])
+  }, [getCurrentTime])
 
   const submitFeedback = useCallback(async () => {
     if (!newFeedback.trim()) return
+    const actor = await resolveFeedbackActor(guestId)
     const created = await createFeedback(videoId, {
       content: newFeedback.trim(),
       startTime: pendingStart ?? undefined,
       endTime: pendingEnd ?? undefined,
+      ...actor,
     })
     setFeedbacks((prev) => [created, ...prev])
     setNewFeedback('')
     clearPendingTime()
-  }, [videoId, newFeedback, pendingStart, pendingEnd, clearPendingTime])
+  }, [videoId, newFeedback, pendingStart, pendingEnd, guestId, clearPendingTime])
 
   /** 체크 아이콘 토글 — UI 먼저 반영 후 status API 호출 (실패 시 롤백) */
-  const toggleResolved = useCallback(async (feedback: Feedback, userId: number) => {
+  const toggleResolved = useCallback(async (feedback: Feedback) => {
     const nextStatus = !feedback.status
     setFeedbacks((prev) =>
       prev.map((f) => (f.feedbackId === feedback.feedbackId ? { ...f, status: nextStatus } : f)),
     )
     try {
       const updated = await updateFeedbackStatus(feedback.feedbackId, {
-        userId,
         status: nextStatus,
       })
       setFeedbacks((prev) =>
@@ -93,21 +97,29 @@ export function useFeedbacks(videoId: number, currentTime: number) {
     }
   }, [])
 
-  const removeFeedback = useCallback(async (feedbackId: number) => {
-    await deleteFeedback(feedbackId)
-    setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== feedbackId))
-  }, [])
+  const removeFeedback = useCallback(
+    async (feedbackId: number) => {
+      const actor = await resolveFeedbackActor(guestId)
+      await deleteFeedback(feedbackId, actor)
+      setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== feedbackId))
+    },
+    [guestId],
+  )
 
-  const editFeedback = useCallback(async (feedbackId: number, content: string) => {
-    const updated = await updateFeedback(feedbackId, { content })
-    setFeedbacks((prev) =>
-      prev.map((f) =>
-        f.feedbackId === updated.feedbackId
-          ? { ...f, content: updated.content, updatedAt: updated.updatedAt }
-          : f,
-      ),
-    )
-  }, [])
+  const editFeedback = useCallback(
+    async (feedbackId: number, content: string) => {
+      const actor = await resolveFeedbackActor(guestId)
+      const updated = await updateFeedback(feedbackId, { content, ...actor })
+      setFeedbacks((prev) =>
+        prev.map((f) =>
+          f.feedbackId === updated.feedbackId
+            ? { ...f, content: updated.content, updatedAt: updated.updatedAt }
+            : f,
+        ),
+      )
+    },
+    [guestId],
+  )
 
   const startEditFeedback = useCallback((feedback: Feedback) => {
     setEditingFeedbackId(feedback.feedbackId)

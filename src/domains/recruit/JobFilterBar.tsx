@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import SortDropdown from './SortDropdown'
 import FilterPanel from './FilterPanel'
 import FilterChip from './FilterChip'
+import { Button } from '../../components/Button'
 import { FILTER_CONFIGS, type SortValue } from '../../constants'
 import type { FilterCategory, SelectedFilterChip, SelectedFilters } from '../../types/Recruit.types'
 
@@ -13,6 +14,7 @@ interface JobFilterBarProps {
   openCategory: FilterCategory | null
   onOpenCategoryChange: (category: FilterCategory | null) => void
   chips: SelectedFilterChip[]
+  onCreatePost: () => void
 }
 
 function JobFilterBar({
@@ -23,6 +25,7 @@ function JobFilterBar({
   openCategory,
   onOpenCategoryChange,
   chips,
+  onCreatePost,
 }: JobFilterBarProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const openConfig = FILTER_CONFIGS.find((config) => config.key === openCategory)
@@ -71,6 +74,15 @@ function JobFilterBar({
             </svg>
           </button>
         ))}
+        <Button
+          size="sm"
+          onClick={onCreatePost}
+          icon={<span aria-hidden>+</span>}
+          width="fit-content"
+          className="ml-auto px-5"
+        >
+          공고 올리기
+        </Button>
       </div>
 
       {openConfig && (

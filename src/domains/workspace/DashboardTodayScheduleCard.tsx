@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { getProjectSchedules } from '../../api/schedules'
+import { getWorkspaceDailySchedules } from './workspaceSchedules'
 import type { Schedule } from '../../types/schedule'
 import { toDateKey } from '../../utils/calendarUtils'
 import { CARD_BASE } from '../../styles/card'
 
 interface DashboardTodayScheduleCardProps {
   projectId: number
+  onExpand: () => void
 }
 
 function formatTime(iso: string): string {
@@ -15,7 +16,10 @@ function formatTime(iso: string): string {
   return `${hours}:${minutes}`
 }
 
-export default function DashboardTodayScheduleCard({ projectId }: DashboardTodayScheduleCardProps) {
+export default function DashboardTodayScheduleCard({
+  projectId,
+  onExpand,
+}: DashboardTodayScheduleCardProps) {
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -25,7 +29,10 @@ export default function DashboardTodayScheduleCard({ projectId }: DashboardToday
     async function load() {
       setLoading(true)
       try {
-        const result = await getProjectSchedules(projectId)
+        const result = await getWorkspaceDailySchedules(toDateKey(new Date()), {
+          projectId,
+          scope: 'PROJECT',
+        })
         if (!cancelled) setSchedules(result.items)
       } catch {
         if (!cancelled) setSchedules([])
@@ -40,15 +47,24 @@ export default function DashboardTodayScheduleCard({ projectId }: DashboardToday
     }
   }, [projectId])
 
-  const today = toDateKey(new Date())
-  const todaySchedules = schedules.filter(
-    (s) => s.startAt.slice(0, 10) <= today && s.endAt.slice(0, 10) >= today,
-  )
+  const todaySchedules = schedules
 
   return (
     <section className="flex flex-col gap-5">
-      <h2 className="text-head-sm text-neutral-11 font-bold">오늘 일정</h2>
-      <div className={`flex min-h-[183px] flex-col justify-center ${CARD_BASE} p-4`}>
+      <button
+        type="button"
+        onClick={onExpand}
+        aria-label="프로젝트 일정으로 이동"
+        className="w-fit text-left"
+      >
+        <h2 className="text-head-sm text-neutral-11 font-bold">오늘 일정 {'>'}</h2>
+      </button>
+      <button
+        type="button"
+        onClick={onExpand}
+        aria-label="프로젝트 일정으로 이동"
+        className={`flex min-h-[183px] flex-col justify-center ${CARD_BASE} p-4 text-left`}
+      >
         {loading ? (
           <p className="text-caption-lg text-neutral-6">불러오는 중…</p>
         ) : todaySchedules.length === 0 ? (
@@ -69,7 +85,7 @@ export default function DashboardTodayScheduleCard({ projectId }: DashboardToday
             ))}
           </ul>
         )}
-      </div>
+      </button>
     </section>
   )
 }

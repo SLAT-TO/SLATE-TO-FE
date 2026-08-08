@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   addDays,
   addMonths,
@@ -10,6 +10,9 @@ import {
   startOfWeek,
   subMonths,
 } from 'date-fns'
+import { getScheduleSummary } from '../../api/schedules'
+import { toDateKey } from '../../utils/calendarUtils'
+import { navigate } from '../../utils/navigation'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -48,24 +51,58 @@ interface HomeMiniCalendarProps {
 export default function HomeMiniCalendar({ className = '' }: HomeMiniCalendarProps) {
   const [month, setMonth] = useState(new Date())
   const days = useMemo(() => getSundayStartGrid(month), [month])
+  const [scheduledDates, setScheduledDates] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    let cancelled = false
+
+    getScheduleSummary()
+      .then((result) => {
+        if (!cancelled) setScheduledDates(new Set(result.items.map((item) => item.date)))
+      })
+      .catch(() => {
+        if (!cancelled) setScheduledDates(new Set())
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
-    <div className={`flex flex-col items-start gap-2 ${className}`}>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => navigate('/calendar')}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          navigate('/calendar')
+        }
+      }}
+      className={`flex cursor-pointer flex-col items-start gap-2 ${className}`}
+    >
       <div className="flex items-center gap-2.5">
         <button
           type="button"
-          onClick={() => setMonth((m) => subMonths(m, 1))}
+          onClick={(e) => {
+            e.stopPropagation()
+            setMonth((m) => subMonths(m, 1))
+          }}
           aria-label="이전 달"
           className="flex h-4 w-4 items-center justify-center"
         >
           <PrevIcon />
         </button>
-        <span className="text-caption-lg text-neutral-10 text-center font-semibold tracking-[-0.32px]">
+        <span className="text-body-sm text-neutral-10 text-center font-semibold tracking-[-0.32px] capitalize">
           {format(month, 'yyyy.M')}
         </span>
         <button
           type="button"
-          onClick={() => setMonth((m) => addMonths(m, 1))}
+          onClick={(e) => {
+            e.stopPropagation()
+            setMonth((m) => addMonths(m, 1))
+          }}
           aria-label="다음 달"
           className="flex h-4 w-4 items-center justify-center"
         >
@@ -73,29 +110,37 @@ export default function HomeMiniCalendar({ className = '' }: HomeMiniCalendarPro
         </button>
       </div>
 
-      <div className="grid grid-cols-[repeat(7,30px)] gap-0">
+      <div className="grid grid-cols-[repeat(7,30px)] gap-x-1.5 gap-y-0">
         {WEEKDAYS.map((day) => (
           <span
             key={day}
-            className="text-neutral-11 text-caption-lg flex h-6 w-6 items-center justify-center text-center leading-6 tracking-[-0.36px]"
+            className="flex h-7.5 w-7.5 items-center justify-center text-center text-[18px] leading-7.5 font-normal tracking-[-0.36px] text-black capitalize"
           >
             {day}
           </span>
         ))}
       </div>
 
-      <div className="grid grid-cols-[repeat(7,30px)] gap-0">
+      <div className="grid grid-cols-[repeat(7,30px)] gap-x-1.5 gap-y-0">
         {days.map((day) => {
           const inMonth = isSameMonth(day, month)
           const today = isToday(day)
+          const hasSchedule = inMonth && scheduledDates.has(toDateKey(day))
           return (
             <span
               key={day.toISOString()}
-              className={`text-caption-lg flex h-6 w-6 items-center justify-center text-center leading-6 tracking-[-0.36px] ${
-                inMonth ? 'text-neutral-10' : 'text-neutral-4'
-              } ${today ? 'text-primary font-bold' : ''}`}
+              className="relative flex h-7.5 w-7.5 items-center justify-center"
             >
-              {format(day, 'd')}
+              {hasSchedule && (
+                <span className="bg-main-3 absolute size-5 rounded-full" aria-hidden />
+              )}
+              <span
+                className={`relative text-center text-[18px] leading-7.5 font-normal tracking-[-0.36px] capitalize ${
+                  inMonth ? 'text-neutral-10' : 'text-neutral-4'
+                } ${today ? 'text-primary font-bold' : ''}`}
+              >
+                {format(day, 'd')}
+              </span>
             </span>
           )
         })}

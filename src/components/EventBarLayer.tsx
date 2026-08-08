@@ -12,7 +12,7 @@ interface WeekEventBarsProps {
 export function WeekEventBars({ positioned, onEventClick }: WeekEventBarsProps) {
   return (
     <div
-      className="pointer-events-none absolute inset-0 grid grid-cols-7 gap-y-1 pt-7"
+      className="pointer-events-none absolute inset-0 grid grid-cols-7 gap-y-1.5 pt-8"
       style={{ gridAutoRows: '22px' }}
     >
       {positioned.map(({ event, startCol, span, lane }) => {

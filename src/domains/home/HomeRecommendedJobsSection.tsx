@@ -1,6 +1,7 @@
 import JobCard from '../../components/JobCard'
-import { PROJECT_TYPE_LABEL } from '../../constants/projectLabels'
 import type { Recruitment } from '../../types/recruitment'
+import { navigate } from '../../utils/navigation'
+import { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
 
 interface HomeRecommendedJobsSectionProps {
   jobs: Recruitment[]
@@ -8,9 +9,6 @@ interface HomeRecommendedJobsSectionProps {
   onToggleBookmark: (recruitmentId: number) => void
   loading: boolean
 }
-
-/** 채용 공고 게시판이라 모든 공고가 사실상 외주 형태 */
-const JOB_TYPE_LABEL = '외주'
 
 const ROLE_LABEL_MAP: Record<string, string> = {
   DIRECTOR: '연출',
@@ -28,7 +26,7 @@ export default function HomeRecommendedJobsSection({
   loading,
 }: HomeRecommendedJobsSectionProps) {
   return (
-    <section className="flex flex-col gap-2.5">
+    <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">추천 공고</h2>
 
       {loading && <p className="text-caption-sm text-neutral-6">불러오는 중…</p>}
@@ -42,14 +40,18 @@ export default function HomeRecommendedJobsSection({
           {jobs.map((job) => (
             <JobCard
               key={job.id}
-              type={JOB_TYPE_LABEL}
               category={PROJECT_TYPE_LABEL[job.categories[0]] ?? job.categories[0] ?? '기타'}
+              length={
+                job.lengthType
+                  ? (PROJECT_LENGTH_TYPE_LABEL[job.lengthType] ?? job.lengthType)
+                  : undefined
+              }
               title={job.title}
-              description={job.description}
               role={ROLE_LABEL_MAP[job.roles[0]] ?? job.roles[0] ?? '전체'}
               dDay={job.status === 'OPEN' ? '상시모집' : '마감'}
               isBookmarked={bookmarkedIds.has(job.id)}
               onBookmarkClick={() => onToggleBookmark(job.id)}
+              onClick={() => navigate(`/matching/${job.id}`)}
             />
           ))}
         </div>

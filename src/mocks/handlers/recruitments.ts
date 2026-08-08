@@ -24,12 +24,12 @@ function safeUser() {
 export const recruitmentHandlers = [
   http.get(paths.recruitments.root, () => {
     if (!safeUser()) return unauthorized()
-    return HttpResponse.json(ok({ content: db.recruitments }), { status: 200 })
+    return HttpResponse.json(ok({ items: db.recruitments }), { status: 200 })
   }),
 
   http.get(paths.recruitments.recommended, () => {
     if (!safeUser()) return unauthorized()
-    return HttpResponse.json(ok({ content: db.recruitments.slice(0, 6) }), { status: 200 })
+    return HttpResponse.json(ok({ items: db.recruitments.slice(0, 6) }), { status: 200 })
   }),
 
   http.get(paths.recruitments.byId(':recruitmentId'), ({ params }) => {
@@ -86,15 +86,15 @@ export const recruitmentHandlers = [
   http.get(paths.users.myRecruitments, () => {
     const user = safeUser()
     if (!user) return unauthorized()
-    const content = db.recruitments.filter((r) => r.authorId === user.id)
-    return HttpResponse.json(ok({ content }), { status: 200 })
+    const items = db.recruitments.filter((r) => r.authorId === user.id)
+    return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
   http.get(paths.users.myApplications, () => {
     const user = safeUser()
     if (!user) return unauthorized()
-    const content = db.applications.filter((a) => a.userId === user.id)
-    return HttpResponse.json(ok({ content }), { status: 200 })
+    const items = db.applications.filter((a) => a.userId === user.id)
+    return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
   http.get(paths.users.myRecruitmentBookmarks, () => {
@@ -103,8 +103,8 @@ export const recruitmentHandlers = [
     const ids = db.recruitmentBookmarks
       .filter((b) => b.userId === user.id)
       .map((b) => b.recruitmentId)
-    const content = db.recruitments.filter((r) => ids.includes(r.id))
-    return HttpResponse.json(ok({ content }), { status: 200 })
+    const items = db.recruitments.filter((r) => ids.includes(r.id))
+    return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
   http.post(paths.recruitments.bookmark(':recruitmentId'), ({ params }) => {
@@ -160,8 +160,8 @@ export const recruitmentHandlers = [
 
   http.get(paths.recruitments.applications(':recruitmentId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
-    const content = db.applications.filter((a) => a.recruitmentId === Number(params.recruitmentId))
-    return HttpResponse.json(ok({ content }), { status: 200 })
+    const items = db.applications.filter((a) => a.recruitmentId === Number(params.recruitmentId))
+    return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
   http.patch(

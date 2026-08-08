@@ -23,6 +23,9 @@ function safeUser() {
   }
 }
 
+/** mock 전용 — registerGuest로 발급한 guestId → 이름 매핑 (실 BE 게스트 세션 대체) */
+const mockGuests = new Map<number, { name: string; shareLinkId: number }>()
+
 export const videoHandlers = [
   http.get(paths.projects.videos(':projectId'), ({ request, params }) => {
     if (!safeUser()) return unauthorized()
@@ -40,7 +43,8 @@ export const videoHandlers = [
         thumbnailUrl: v.thumbnailUrl,
         bookmarked: v.bookmarked,
         progressStatus: v.progressStatus,
-        unreadCommentCount: v.unreadCommentCount,
+        hasUnreadFeedback: v.hasUnreadFeedback,
+        createdAt: v.createdAt,
         updatedAt: v.updatedAt,
       }))
 
@@ -72,7 +76,7 @@ export const videoHandlers = [
       thumbnailUrl: 'https://img.youtube.com/vi/mockVideo/maxresdefault.jpg',
       progressStatus: 'IN_PROGRESS' as const,
       bookmarked: false,
-      unreadCommentCount: 0,
+      hasUnreadFeedback: false,
       description: null,
       memo: body.memo ?? null,
       projectTags: [],
@@ -111,12 +115,18 @@ export const videoHandlers = [
     const body = (await request.json()) as UpdateVideoRequest
     if (body.title !== undefined) video.title = body.title
     if (body.memo !== undefined) video.memo = body.memo
+    if (body.youtubeUrl !== undefined) {
+      video.youtubeUrl = body.youtubeUrl
+      video.youtubeVideoId = 'mockVideo'
+      video.thumbnailUrl = 'https://img.youtube.com/vi/mockVideo/maxresdefault.jpg'
+    }
     video.updatedAt = new Date().toISOString()
     return HttpResponse.json(
       ok({
         videoId: video.videoId,
         title: video.title,
         memo: video.memo,
+        youtubeUrl: video.youtubeUrl,
         updatedAt: video.updatedAt,
       }),
       { status: 200 },
@@ -167,41 +177,57 @@ export const videoHandlers = [
     )
   }),
 
-  http.get(paths.videos.referenceFiles(':videoId'), ({ params }) => {
+  http.get(paths.projects.referenceFiles(':projectId', ':videoId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     if (!db.videos.some((v) => v.videoId === Number(params.videoId))) return notFound()
     return HttpResponse.json(ok({ items: db.referenceFiles }), { status: 200 })
   }),
 
-  http.post(paths.videos.referenceFiles(':videoId'), async ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
-    if (!db.videos.some((v) => v.videoId === Number(params.videoId))) return notFound()
-    const body = (await request.json()) as { projectFileId: number }
-    const file = db.files.find((f) => f.id === body.projectFileId)
-    if (!file) return notFound()
-    const ref = {
-      referenceFileId: allocId(),
-      projectFileId: file.id,
-      fileName: file.fileName,
-      contentType: file.contentType,
-      fileSize: file.fileSize,
-      isFinal: false,
-      createdAt: new Date().toISOString(),
-    }
-    db.referenceFiles.push(ref)
-    return HttpResponse.json(created(ref), { status: 201 })
-  }),
+  http.post(
+    paths.projects.referenceFiles(':projectId', ':videoId'),
+    async ({ request, params }) => {
+      if (!safeUser()) return unauthorized()
+      if (!db.videos.some((v) => v.videoId === Number(params.videoId))) return notFound()
+      const body = (await request.json()) as { projectFileId: number }
+      const file = db.files.find((f) => f.id === body.projectFileId)
+      if (!file) return notFound()
+      const uploader = db.users.find((user) => user.id === file.uploaderId)
+      if (!uploader) return notFound()
+      const ref = {
+        referenceFileId: allocId(),
+        projectFileId: file.id,
+        fileName: file.fileName,
+        contentType: file.contentType,
+        fileSize: file.fileSize,
+        isFinal: false,
+        uploader: { id: uploader.id, nickname: uploader.nickname },
+        createdAt: new Date().toISOString(),
+      }
+      db.referenceFiles.push(ref)
+      return HttpResponse.json(
+        created({
+          referenceFileId: ref.referenceFileId,
+          projectFileId: ref.projectFileId,
+          createdAt: ref.createdAt,
+        }),
+        { status: 201 },
+      )
+    },
+  ),
 
-  http.delete(paths.videos.referenceFile(':videoId', ':referenceFileId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
-    const id = Number(params.referenceFileId)
-    if (!db.referenceFiles.some((r) => r.referenceFileId === id)) return notFound()
-    db.referenceFiles = db.referenceFiles.filter((r) => r.referenceFileId !== id)
-    return HttpResponse.json(ok(null), { status: 200 })
-  }),
+  http.delete(
+    paths.projects.referenceFile(':projectId', ':videoId', ':referenceFileId'),
+    ({ params }) => {
+      if (!safeUser()) return unauthorized()
+      const id = Number(params.referenceFileId)
+      if (!db.referenceFiles.some((r) => r.referenceFileId === id)) return notFound()
+      db.referenceFiles = db.referenceFiles.filter((r) => r.referenceFileId !== id)
+      return HttpResponse.json(ok(null), { status: 200 })
+    },
+  ),
 
   http.get(paths.videos.feedbacks(':videoId'), ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
+    // 공유링크 게스트도 목록 조회 가능 (로컬 mock AC — 실 BE는 게스트 인증 보완 필요)
     const url = new URL(request.url)
     const statusParam = url.searchParams.get('status')
 
@@ -222,16 +248,22 @@ export const videoHandlers = [
   }),
 
   http.post(paths.videos.feedbacks(':videoId'), async ({ request, params }) => {
-    const user = safeUser()
-    if (!user) return unauthorized()
     const body = (await request.json()) as CreateFeedbackRequest
     if (!body.content) return badRequest()
     if (body.endTime !== undefined && body.startTime === undefined) return badRequest()
+
+    const user = safeUser()
+    const guest = body.guestId != null ? mockGuests.get(body.guestId) : undefined
+    if (!user && !guest) return unauthorized()
+
     const now = new Date().toISOString()
+    const actor = guest
+      ? { type: 'GUEST' as const, id: body.guestId!, name: guest.name }
+      : { type: 'USER' as const, id: user!.id, name: user!.nickname }
     const feedback = {
       feedbackId: allocId(),
       videoId: Number(params.videoId),
-      actor: { type: 'USER' as const, id: user.id, name: user.nickname },
+      actor,
       content: body.content,
       startTime: body.startTime ?? null,
       endTime: body.endTime ?? null,
@@ -267,8 +299,8 @@ export const videoHandlers = [
     if (!safeUser()) return unauthorized()
     const feedback = db.feedbacks.find((f) => f.feedbackId === Number(params.feedbackId))
     if (!feedback) return notFound()
-    const body = (await request.json()) as { userId?: number; status: boolean }
-    if (body.userId == null || body.status === undefined) return badRequest()
+    const body = (await request.json()) as { status: boolean }
+    if (body.status === undefined) return badRequest()
     feedback.status = body.status
     feedback.updatedAt = new Date().toISOString()
     return HttpResponse.json(
@@ -282,24 +314,30 @@ export const videoHandlers = [
   }),
 
   http.get(paths.feedbacks.replies(':feedbackId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
+    // 공유링크 게스트도 답글 조회 가능
     const items = db.replies.filter((r) => r.feedbackId === Number(params.feedbackId))
     return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
   http.post(paths.feedbacks.replies(':feedbackId'), async ({ request, params }) => {
-    const user = safeUser()
-    if (!user) return unauthorized()
     const body = (await request.json()) as CreateReplyRequest
     if (!body.content) return badRequest()
+
+    const user = safeUser()
+    const guest = body.guestId != null ? mockGuests.get(body.guestId) : undefined
+    if (!user && !guest) return unauthorized()
+
     const now = new Date().toISOString()
+    const actor = guest
+      ? { type: 'GUEST' as const, id: body.guestId!, name: guest.name }
+      : { type: 'USER' as const, id: user!.id, name: user!.nickname }
     const reply = {
       replyId: allocId(),
       feedbackId: Number(params.feedbackId),
-      actor: { type: 'USER' as const, id: user.id, name: user.nickname },
+      actor,
       content: body.content,
-      startTime: body.startTime ?? null,
-      endTime: body.endTime ?? null,
+      startTime: null,
+      endTime: null,
       status: false,
       createdAt: now,
       updatedAt: now,
@@ -328,8 +366,8 @@ export const videoHandlers = [
     if (!safeUser()) return unauthorized()
     const reply = db.replies.find((r) => r.replyId === Number(params.replyId))
     if (!reply) return notFound()
-    const body = (await request.json()) as { userId?: number; status: boolean }
-    if (body.userId == null || body.status === undefined) return badRequest()
+    const body = (await request.json()) as { status: boolean }
+    if (body.status === undefined) return badRequest()
     reply.status = body.status
     reply.updatedAt = new Date().toISOString()
     return HttpResponse.json(
@@ -346,6 +384,18 @@ export const videoHandlers = [
     if (!safeUser()) return unauthorized()
     const videoId = Number(params.videoId)
     if (!db.videos.some((v) => v.videoId === videoId)) return notFound()
+    const existing = db.shareLinks.find((s) => s.videoId === videoId)
+    if (existing) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'SHARELINK409',
+          message: '이미 공유 링크가 있습니다.',
+          result: null,
+        },
+        { status: 409 },
+      )
+    }
     const link = {
       shareLinkId: allocId(),
       videoId,
@@ -360,8 +410,9 @@ export const videoHandlers = [
 
   http.get(paths.videos.shareLinks(':videoId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
-    const items = db.shareLinks.filter((s) => s.videoId === Number(params.videoId))
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const link = db.shareLinks.find((s) => s.videoId === Number(params.videoId))
+    if (!link) return notFound()
+    return HttpResponse.json(ok(link), { status: 200 })
   }),
 
   http.get(paths.shareLinks.byToken(':token'), ({ params }) => {
@@ -382,9 +433,16 @@ export const videoHandlers = [
     const link = db.shareLinks.find((s) => s.token === params.token && s.isActive)
     if (!link) return notFound()
     const body = (await request.json()) as RegisterGuestRequest
-    if (!body.nickname) return badRequest()
+    if (!body.name) return badRequest()
+    const guestId = allocId()
+    mockGuests.set(guestId, { name: body.name, shareLinkId: link.shareLinkId })
     return HttpResponse.json(
-      created({ guestId: allocId(), nickname: body.nickname, videoId: link.videoId }),
+      created({
+        guestId,
+        shareLinkId: link.shareLinkId,
+        name: body.name,
+        createdAt: new Date().toISOString(),
+      }),
       { status: 201 },
     )
   }),
@@ -393,7 +451,9 @@ export const videoHandlers = [
     if (!safeUser()) return unauthorized()
     const link = db.shareLinks.find((s) => s.shareLinkId === Number(params.shareLinkId))
     if (!link) return notFound()
-    link.isActive = false
-    return HttpResponse.json(ok(link), { status: 200 })
+    link.isActive = !link.isActive
+    return HttpResponse.json(ok({ shareLinkId: link.shareLinkId, isActive: link.isActive }), {
+      status: 200,
+    })
   }),
 ]

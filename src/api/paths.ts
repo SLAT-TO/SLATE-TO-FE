@@ -37,25 +37,37 @@ export const paths = {
       `${API_PREFIX}/projects/${projectId}/videos/${videoId}`,
     videoBookmark: (projectId: number | string, videoId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/videos/${videoId}/bookmark`,
+    /** BE: /projects/{projectId}/videos/{videoId}/reference-files */
+    referenceFiles: (projectId: number | string, videoId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/videos/${videoId}/reference-files`,
+    referenceFile: (
+      projectId: number | string,
+      videoId: number | string,
+      referenceFileId: number | string,
+    ) => `${API_PREFIX}/projects/${projectId}/videos/${videoId}/reference-files/${referenceFileId}`,
     files: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/files`,
     file: (projectId: number | string, fileId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/files/${fileId}`,
     download: (projectId: number | string, fileId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/files/${fileId}/download`,
+    filePin: (projectId: number | string, fileId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/files/${fileId}/pin`,
     invitations: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/invitations`,
     members: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/members`,
     member: (projectId: number | string, memberId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/members/${memberId}`,
     leave: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/members/me`,
-    /** FE mock 전용 — BE 활동 피드 API 미구현. BE에 activity_log 테이블/엔티티는 있으나 컨트롤러 없음 */
+    /** BE Recent Activity */
     activities: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/activities`,
-    /** FE mock 전용 — BE에 프로젝트별 하위 일정 API 없음 (최상위 /schedules만 존재) */
-    schedules: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/schedules`,
-    scheduleCandidates: (projectId: number | string) =>
-      `${API_PREFIX}/projects/${projectId}/schedule-participants/candidates`,
+    activityRead: (projectId: number | string, activityId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/activities/${activityId}/read`,
+    activitiesReadAll: (projectId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/activities/read-all`,
     notices: (projectId: number | string) => `${API_PREFIX}/projects/${projectId}/notices`,
     notice: (projectId: number | string, noticeId: number | string) =>
       `${API_PREFIX}/projects/${projectId}/notices/${noticeId}`,
+    noticeRead: (projectId: number | string, noticeId: number | string) =>
+      `${API_PREFIX}/projects/${projectId}/notices/${noticeId}/read`,
   },
   projectInvitations: {
     byToken: (token: string) => `${API_PREFIX}/project-invitations/${token}`,
@@ -63,9 +75,6 @@ export const paths = {
   },
   videos: {
     validateYoutube: `${API_PREFIX}/videos/youtube/validate`,
-    referenceFiles: (videoId: number | string) => `${API_PREFIX}/videos/${videoId}/reference-files`,
-    referenceFile: (videoId: number | string, referenceFileId: number | string) =>
-      `${API_PREFIX}/videos/${videoId}/reference-files/${referenceFileId}`,
     feedbacks: (videoId: number | string) => `${API_PREFIX}/videos/${videoId}/feedbacks`,
     shareLinks: (videoId: number | string) => `${API_PREFIX}/videos/${videoId}/share-links`,
   },
@@ -106,7 +115,6 @@ export const paths = {
     privateMemo: (scheduleId: number | string) =>
       `${API_PREFIX}/schedules/${scheduleId}/private-memo`,
   },
-  /** FE mock 전용 — BE에 브리핑 관련 엔티티/컨트롤러가 전혀 없음 (계획 자체가 안 보임) */
   briefings: {
     today: `${API_PREFIX}/briefings/today`,
   },

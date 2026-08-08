@@ -6,7 +6,7 @@ interface ProfileOverviewCardProps {
   profile: ProfileSummary
   projectTypeStats: StatItem[]
   roleStats: StatItem[]
-  onEditClick: () => void
+  onEditClick?: () => void
 }
 
 function ProfileOverviewCard({

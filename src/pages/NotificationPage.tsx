@@ -41,6 +41,10 @@ function NotificationCard({
             aria-hidden
           />
         )}
+        <span className="text-body-sm text-neutral-11 pr-4 font-semibold tracking-[-0.32px]">
+          {notification.title}
+          {notification.groupCount > 1 && ` 외 ${notification.groupCount - 1}건`}
+        </span>
         <span className="text-body-sm text-neutral-11 pr-4 font-normal tracking-[-0.32px]">
           {notification.content}
         </span>

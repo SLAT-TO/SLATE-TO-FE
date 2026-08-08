@@ -123,7 +123,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="-mb-5 flex h-[calc(100%+5rem)] flex-col gap-4">
       {/* 월 이동 헤더 + 버튼 — 페이지 전체 폭 기준으로 고정, 패널 유무와 무관하게 자리 유지 */}
       <header className="flex shrink-0 items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -153,13 +153,13 @@ export default function CalendarPage() {
             onChange={setProjectFilter}
           />
           <Button
-            variant="secondary"
+            variant="primary"
             size="sm"
             width={200}
             onClick={() => setFormModal({ mode: 'create' })}
           >
-            <span className="flex w-full items-center justify-center gap-2">
-              <InlineIcon svg={plusIcon} className="text-primary size-6" />
+            <span className="flex w-full items-center justify-center gap-1">
+              <InlineIcon svg={plusIcon} className="size-6 text-white" />
               일정 추가
             </span>
           </Button>

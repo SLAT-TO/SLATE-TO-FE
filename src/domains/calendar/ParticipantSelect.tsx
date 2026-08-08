@@ -51,7 +51,7 @@ export function ParticipantSelect({
     onChange(selectedIds.includes(id) ? selectedIds.filter((i) => i !== id) : [...selectedIds, id])
   }
 
-  const selectedMembers = members.filter((m) => selectedIds.includes(String(m.memberId)))
+  const selectedMembers = members.filter((m) => selectedIds.includes(String(m.userId)))
   const label = loading ? '불러오는 중…' : '참여 인원을 선택하세요.'
 
   return (
@@ -83,7 +83,7 @@ export function ParticipantSelect({
             </li>
           )}
           {members.map((member) => {
-            const id = String(member.memberId)
+            const id = String(member.userId)
             const checked = selectedIds.includes(id)
             return (
               <li key={id} role="option" aria-selected={checked}>
@@ -116,7 +116,7 @@ export function ParticipantSelect({
       {selectedMembers.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {selectedMembers.map((member) => {
-            const id = String(member.memberId)
+            const id = String(member.userId)
             return (
               <div
                 key={id}

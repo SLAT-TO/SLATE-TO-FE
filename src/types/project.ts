@@ -1,6 +1,6 @@
 import type { UserCategory } from './user'
 
-export type ProjectStatus = 'PREPARING' | 'EDITING' | 'REVIEWING' | 'COMPLETED' | string
+export type ProjectStatus = 'PREPARING' | 'SHOOTING' | 'EDITING' | 'COMPLETED' | string
 export type ProjectLengthType = 'LONG_FORM' | 'SHORT_FORM' | string
 export type ProjectPermission = 'ADMIN' | 'MEMBER' | string
 export type ProjectKind = 'PERSONAL' | 'EXTERNAL' | string
@@ -18,8 +18,15 @@ export type ProjectSummary = {
   deadlineProgressPercent: number | null
   lastActivityAt: string | null
   isPinned: boolean
+  pinnedAt?: string | null
+  previewImageUrl?: string | null
   memberPreviewImageUrls: string[]
   memberCount: number
+  /** FE 확장 — 상세 응답(roleNames/myPermission)과 동일 패턴, 목록 API에 아직 없으면 BE 정합 필요 */
+  roleNames: string[]
+  myPermission: ProjectPermission
+  canEdit: boolean
+  canDelete: boolean
   createdAt: string
   updatedAt: string
 }
@@ -138,22 +145,35 @@ export type ProjectInvitationDetailResponse = {
   expiresAt: string
 }
 
-export type ActivityActor = {
-  type: 'USER' | 'CLIENT_REVIEWER' | 'SYSTEM'
-  id?: number
-  name?: string
+/** BE ActivityLogItem.type */
+export type ProjectActivityType =
+  | 'PROJECT_MEMBER_JOINED'
+  | 'PROJECT_STATUS_CHANGED'
+  | 'PROJECT_UPDATED'
+  | 'SCHEDULE_CREATED'
+  | 'SCHEDULE_UPDATED'
+  | 'NOTICE_CREATED'
+  | 'FILE_UPLOADED'
+  | 'VIDEO_FEEDBACK_COMMENTED'
+  | string
+
+/** BE ActivityLogItem */
+export type ProjectActivity = {
+  activityId: number
+  type: ProjectActivityType
+  content: string
+  targetType: string | null
+  targetId: number | null
+  createdAt: string
+  /** 미확인이면 true (홈 알림 isRead와 반대 의미) */
+  isNew: boolean
 }
 
-/** FE mock 전용 — BE activities API 미구현 */
-export type ProjectActivity = {
-  id: number
-  projectId: number
-  type: string
-  content: string
-  actor: ActivityActor
-  groupCount: number
-  metadata: Record<string, unknown>
-  createdAt: string
+/** BE ActivityLogListResponse — nextCursor는 string */
+export type ActivityLogListResult = {
+  items: ProjectActivity[]
+  nextCursor: string | null
+  hasNext: boolean
 }
 
 export type CursorPage<T> = {

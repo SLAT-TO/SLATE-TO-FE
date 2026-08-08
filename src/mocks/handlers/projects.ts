@@ -1,6 +1,11 @@
 import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
-import type { CreateProjectRequest, UpdateProjectRequest } from '../../types/project'
+import type {
+  CreateProjectRequest,
+  ProjectActivity,
+  ProjectActivityType,
+  UpdateProjectRequest,
+} from '../../types/project'
 import type { CreateNoticeRequest, UpdateNoticeRequest } from '../../types/notice'
 import {
   allocId,
@@ -31,6 +36,7 @@ function toNoticeListItem(notice: (typeof db.notices)[number]) {
     title: notice.title,
     content: notice.content,
     writer: { id: notice.writerId, nickname: notice.writerNickname },
+    isRead: notice.isRead,
     createdAt: notice.createdAt,
     updatedAt: notice.updatedAt,
   }
@@ -54,8 +60,78 @@ function toFileListItem(file: (typeof db.files)[number]) {
   }
 }
 
+function toProjectFile(file: (typeof db.files)[number]) {
+  return {
+    ...toFileListItem(file),
+    updatedAt: file.updatedAt,
+  }
+}
+
 function findProjectOwner(project: MockProjectRecord) {
   return db.users.find((u) => u.id === project.ownerUserId) ?? db.users[0]!
+}
+
+/** Swagger ActivityLogItem 모양 — 조회 시점에 파일/공지/피드백 등을 취합 */
+function buildProjectActivities(projectId: number): ProjectActivity[] {
+  type Draft = Omit<ProjectActivity, 'activityId' | 'isNew'> & { sourceKey: string }
+
+  const files: Draft[] = db.files
+    .filter((f) => f.projectId === projectId)
+    .map((f) => ({
+      sourceKey: `file-${f.id}`,
+      type: 'FILE_UPLOADED' satisfies ProjectActivityType,
+      content: `${f.fileName} 파일이 업로드되었습니다`,
+      targetType: 'FILE',
+      targetId: f.id,
+      createdAt: f.createdAt,
+    }))
+
+  const notices: Draft[] = db.notices
+    .filter((n) => n.projectId === projectId)
+    .map((n) => ({
+      sourceKey: `notice-${n.id}`,
+      type: 'NOTICE_CREATED' satisfies ProjectActivityType,
+      content: `${n.title} 공지가 등록되었습니다`,
+      targetType: 'NOTICE',
+      targetId: n.id,
+      createdAt: n.createdAt,
+    }))
+
+  const feedbacks: Draft[] = db.feedbacks
+    .filter((f) => db.videos.find((v) => v.videoId === f.videoId)?.projectId === projectId)
+    .map((f) => ({
+      sourceKey: `feedback-${f.feedbackId}`,
+      type: 'VIDEO_FEEDBACK_COMMENTED' satisfies ProjectActivityType,
+      content: `${f.actor.name ?? '누군가'}님이 피드백을 남겼습니다`,
+      targetType: 'FEEDBACK',
+      targetId: f.feedbackId,
+      createdAt: f.createdAt,
+    }))
+
+  const merged = [...files, ...notices, ...feedbacks].sort((a, b) =>
+    b.createdAt.localeCompare(a.createdAt),
+  )
+  return merged.map((item, index) => {
+    const { sourceKey: _sourceKey, ...rest } = item
+    void _sourceKey
+    return {
+      ...rest,
+      activityId: merged.length - index,
+      isNew: index < 2,
+    }
+  })
+}
+
+/** mock 전용 — 프로젝트별 확인 처리된 activityId */
+const readActivityIdsByProject = new Map<number, Set<number>>()
+
+function getReadActivityIds(projectId: number): Set<number> {
+  let set = readActivityIdsByProject.get(projectId)
+  if (!set) {
+    set = new Set()
+    readActivityIdsByProject.set(projectId, set)
+  }
+  return set
 }
 
 function toMemberSummary(member: MockMemberRecord) {
@@ -89,11 +165,12 @@ function calcDeadlineProgress(startDate: string | null, endDate: string | null):
   return Math.round(Math.min(1, Math.max(0, ratio)) * 100)
 }
 
-function toProjectSummary(project: MockProjectRecord) {
+function toProjectSummary(project: MockProjectRecord, currentUserId: number) {
   const memberPreviewImageUrls = db.members
     .map((m) => m.profileImageUrl)
     .filter((url): url is string => Boolean(url))
     .slice(0, 4)
+  const me = db.members.find((m) => m.userId === currentUserId)
 
   return {
     id: project.id,
@@ -109,6 +186,10 @@ function toProjectSummary(project: MockProjectRecord) {
     isPinned: project.isPinned,
     memberPreviewImageUrls,
     memberCount: db.members.length,
+    roleNames: me?.roleNames ?? [],
+    myPermission: me?.permission ?? 'MEMBER',
+    canEdit: me?.permission === 'ADMIN',
+    canDelete: me?.permission === 'ADMIN',
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
   }
@@ -152,8 +233,9 @@ function isInvitationExpired(expiresAt: string): boolean {
 
 export const projectHandlers = [
   http.get(paths.projects.root, () => {
-    if (!safeUser()) return unauthorized()
-    const items = db.projects.map(toProjectSummary)
+    const user = safeUser()
+    if (!user) return unauthorized()
+    const items = db.projects.map((project) => toProjectSummary(project, user.id))
     return HttpResponse.json(ok({ items, nextCursor: null, hasNext: false }), {
       status: 200,
     })
@@ -407,7 +489,6 @@ export const projectHandlers = [
     )
   }),
 
-  // BE 미구현 — activity_log 테이블/엔티티는 있으나 컨트롤러 없음
   http.get(paths.projects.activities(':projectId'), ({ request, params }) => {
     if (!safeUser()) return unauthorized()
     const projectId = Number(params.projectId)
@@ -415,11 +496,38 @@ export const projectHandlers = [
 
     const url = new URL(request.url)
     const cursor = url.searchParams.get('cursor')
-    const size = Number(url.searchParams.get('size') ?? 30)
-    const items = db.activities.filter((a) => a.projectId === projectId)
-    const page = paginateByCursor(items, cursor ? Number(cursor) : null, size)
+    const size = Number(url.searchParams.get('size') ?? 20)
+    const readIds = getReadActivityIds(projectId)
+    const items = buildProjectActivities(projectId).map((item) => ({
+      ...item,
+      isNew: item.isNew && !readIds.has(item.activityId),
+    }))
+    const sorted = [...items].sort((a, b) => b.activityId - a.activityId)
+    const filtered =
+      cursor != null ? sorted.filter((item) => item.activityId < Number(cursor)) : sorted
+    const page = filtered.slice(0, size)
+    const hasNext = filtered.length > size
+    const nextCursor = hasNext && page.length > 0 ? String(page[page.length - 1]!.activityId) : null
 
-    return HttpResponse.json(ok(page), { status: 200 })
+    return HttpResponse.json(ok({ items: page, nextCursor, hasNext }), { status: 200 })
+  }),
+
+  http.patch(paths.projects.activityRead(':projectId', ':activityId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const projectId = Number(params.projectId)
+    const activityId = Number(params.activityId)
+    if (!db.projects.some((p) => p.id === projectId)) return notFound()
+    getReadActivityIds(projectId).add(activityId)
+    return HttpResponse.json(ok(null), { status: 200 })
+  }),
+
+  http.patch(paths.projects.activitiesReadAll(':projectId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const projectId = Number(params.projectId)
+    if (!db.projects.some((p) => p.id === projectId)) return notFound()
+    const readIds = getReadActivityIds(projectId)
+    for (const item of buildProjectActivities(projectId)) readIds.add(item.activityId)
+    return HttpResponse.json(ok(null), { status: 200 })
   }),
 
   http.get(paths.projects.files(':projectId'), ({ request, params }) => {
@@ -491,7 +599,7 @@ export const projectHandlers = [
       updatedAt: now,
     }
     db.files.unshift(file)
-    return HttpResponse.json(created(file), { status: 201 })
+    return HttpResponse.json(created(toProjectFile(file)), { status: 201 })
   }),
 
   http.patch(paths.projects.file(':projectId', ':fileId'), async ({ request, params }) => {
@@ -500,7 +608,7 @@ export const projectHandlers = [
     if (!file) return notFound()
     const body = (await request.json()) as Partial<typeof file>
     Object.assign(file, body, { updatedAt: new Date().toISOString() })
-    return HttpResponse.json(ok(file), { status: 200 })
+    return HttpResponse.json(ok(toProjectFile(file)), { status: 200 })
   }),
 
   http.delete(paths.projects.file(':projectId', ':fileId'), ({ params }) => {
@@ -563,6 +671,8 @@ export const projectHandlers = [
       content: body.content,
       writerId: user.id,
       writerNickname: user.nickname,
+      /** 작성자 본인은 자기 공지를 이미 읽은 것으로 간주 */
+      isRead: true,
       createdAt: now,
       updatedAt: now,
     }
@@ -591,5 +701,34 @@ export const projectHandlers = [
 
     db.notices = db.notices.filter((n) => n.id !== id)
     return HttpResponse.json(ok(null), { status: 200 })
+  }),
+
+  http.patch(paths.projects.noticeRead(':projectId', ':noticeId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const notice = db.notices.find((n) => n.id === Number(params.noticeId))
+    if (!notice || notice.projectId !== Number(params.projectId)) return notFound()
+
+    notice.isRead = true
+    const readAt = new Date().toISOString()
+    return HttpResponse.json(ok({ id: notice.id, isRead: true, readAt }), { status: 200 })
+  }),
+
+  http.post(paths.projects.filePin(':projectId', ':fileId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const file = db.files.find((f) => f.id === Number(params.fileId))
+    if (!file || file.projectId !== Number(params.projectId)) return notFound()
+
+    file.isPinned = true
+    const pinnedAt = new Date().toISOString()
+    return HttpResponse.json(ok({ id: file.id, isPinned: true, pinnedAt }), { status: 200 })
+  }),
+
+  http.delete(paths.projects.filePin(':projectId', ':fileId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const file = db.files.find((f) => f.id === Number(params.fileId))
+    if (!file || file.projectId !== Number(params.projectId)) return notFound()
+
+    file.isPinned = false
+    return HttpResponse.json(ok({ id: file.id, isPinned: false, pinnedAt: null }), { status: 200 })
   }),
 ]
