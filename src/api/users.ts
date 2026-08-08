@@ -41,6 +41,23 @@ export async function updateProfile(body: UpdateProfileRequest): Promise<MeProfi
   return normalizeMe(result)
 }
 
+/** PUT /users/me/profile-image — 프로필 이미지를 S3에 업로드하고 CDN 공개 URL로 교체 */
+export async function uploadProfileImage(
+  file: File,
+): Promise<{ profileImageUrl: string; updatedAt: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  // apiClient 기본 Content-Type이 application/json이라, 여기서 명시적으로 undefined로
+  // 지워야 axios가 FormData를 JSON으로 오인해 직렬화하지 않고 브라우저가 boundary를
+  // 포함한 multipart/form-data 값을 자동으로 채우게 둔다.
+  return request({
+    method: 'PUT',
+    url: paths.users.profileImage,
+    data: formData,
+    headers: { 'Content-Type': undefined },
+  })
+}
+
 /** FE mock 전용 — BE에 DELETE /users/me(회원탈퇴) 미구현. BE 연동 시 API 존재 여부 재확인 필요 */
 export async function deleteAccount(body: DeleteAccountRequest): Promise<null> {
   return request<null>({ method: 'DELETE', url: paths.users.me, data: body })

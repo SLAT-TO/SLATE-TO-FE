@@ -8,7 +8,8 @@ interface SelectionStepProps {
   options: ReadonlyArray<{ value: string; label: string }>
   selected: ReadonlyArray<string>
   onToggle: (value: string) => void
-  columns: 2 | 4
+  columns: 2 | 3 | 4
+  variant: 'wide' | 'region' | 'category'
   onNext: () => void
 }
 
@@ -21,6 +22,7 @@ export function SelectionStep({
   selected,
   onToggle,
   columns,
+  variant,
   onNext,
 }: SelectionStepProps) {
   return (
@@ -30,12 +32,18 @@ export function SelectionStep({
       contentGapClassName="mt-16"
       footerGapClassName="mt-19.25"
       footer={
-        <Button onClick={onNext} disabled={selected.length === 0}>
+        <Button width={846} onClick={onNext} disabled={selected.length === 0}>
           다음
         </Button>
       }
     >
-      <ChipGrid options={options} selected={selected} onToggle={onToggle} columns={columns} />
+      <ChipGrid
+        options={options}
+        selected={selected}
+        onToggle={onToggle}
+        columns={columns}
+        variant={variant}
+      />
     </OnboardingLayout>
   )
 }

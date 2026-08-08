@@ -82,7 +82,7 @@ export type OnboardingRequest = {
   agreedTerms: boolean
   nickname: string
   roles: UserRole[]
-  region: UserRegion | string
+  regions: (UserRegion | string)[]
   categories: UserCategory[]
   bio?: string
   profileImageUrl?: string
