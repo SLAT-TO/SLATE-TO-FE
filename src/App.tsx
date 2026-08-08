@@ -29,16 +29,16 @@ import UserProfilePage from './pages/UserProfilePage'
 
 const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
 
-function getHeaderTitle(pathname: string): string {
+function getHeaderTitle(pathname: string): string | undefined {
   if (pathname === '/' || pathname === '') return `안녕하세요 ${USER_NAME} 님`
   if (pathname === '/calendar') return '통합 캘린더'
-  if (pathname === '/matching') return ''
+  if (pathname === '/matching') return '구인구직'
   if (pathname === '/mypage') return '마이페이지'
   if (pathname === '/mypage/edit') return '프로필 수정'
   if (pathname === '/mypage/project/new') return '프로젝트 추가'
   if (matchPath('/mypage/project/:id/edit', pathname)) return '프로젝트 수정'
   if (matchPath('/mypage/project/:id', pathname)) return '프로젝트 개요'
-  return ''
+  return undefined
 }
 
 /** 아직 React Router로 옮기지 않은 화면 — 워크스페이스는 workspaceRoutes 담당 */
@@ -46,7 +46,7 @@ function LegacyAppRoutes() {
   const pathname = useLocation().pathname
   const headerTitle = useMemo(() => getHeaderTitle(pathname), [pathname])
   const headerContent = useMemo(
-    () => (headerTitle ? <HeaderTitle>{headerTitle}</HeaderTitle> : null),
+    () => (headerTitle === undefined ? undefined : <HeaderTitle>{headerTitle}</HeaderTitle>),
     [headerTitle],
   )
   useHeaderSlot(headerContent)

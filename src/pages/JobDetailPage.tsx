@@ -7,12 +7,18 @@ import { navigate } from '../utils/navigation'
 import ApplyModal from '../domains/recruit/ApplyModal'
 import { MOCK_JOB_DETAILS } from '../domains/recruit/mockJobDetail'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 function JobDetailBackHeader() {
+  const nav = useNavigate()
+  const location = useLocation()
+  // 앱 내부 이동일 때만 히스토리가 쌓임 (직접 진입·새 탭은 'default')
+  const canGoBack = location.key !== 'default'
+
   return (
     <button
       type="button"
-      onClick={() => navigate('/matching')}
+      onClick={() => (canGoBack ? nav(-1) : nav('/matching'))}
       className="text-caption-lg text-neutral-6 hover:text-neutral-9 w-fit"
     >
       &lt; 공고 목록
