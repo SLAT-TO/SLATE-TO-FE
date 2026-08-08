@@ -73,15 +73,9 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     repliesByFeedback,
     newReply,
     setNewReply,
-    replyPendingStart,
-    replyPendingEnd,
-    isCapturingReplyRange,
     toggleReplies,
-    clearReplyPendingTime,
-    attachReplyCurrentTime,
-    toggleReplyRangeCapture,
     submitReply,
-  } = useFeedbackReplies(() => 0, guestId ?? undefined)
+  } = useFeedbackReplies(guestId ?? undefined)
 
   useEffect(() => {
     if (guestId === null || !access) return
@@ -169,13 +163,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
           repliesByFeedback={repliesByFeedback}
           newReply={newReply}
           setNewReply={setNewReply}
-          replyPendingStart={replyPendingStart}
-          replyPendingEnd={replyPendingEnd}
-          isCapturingReplyRange={isCapturingReplyRange}
           toggleReplies={toggleReplies}
-          clearReplyPendingTime={clearReplyPendingTime}
-          attachReplyCurrentTime={attachReplyCurrentTime}
-          toggleReplyRangeCapture={toggleReplyRangeCapture}
           submitReply={submitReply}
           meId={null}
           onSeek={() => {}}

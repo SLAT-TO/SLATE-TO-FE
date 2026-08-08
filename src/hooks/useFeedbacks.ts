@@ -1,8 +1,5 @@
 import { useCallback, useState } from 'react'
-import {
-  resolveFeedbackActor,
-  resolveMemberUserId,
-} from '../domains/workspace/resolveFeedbackActor'
+import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import {
   createFeedback,
   deleteFeedback,
@@ -81,9 +78,7 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
       prev.map((f) => (f.feedbackId === feedback.feedbackId ? { ...f, status: nextStatus } : f)),
     )
     try {
-      const userId = await resolveMemberUserId()
       const updated = await updateFeedbackStatus(feedback.feedbackId, {
-        userId,
         status: nextStatus,
       })
       setFeedbacks((prev) =>

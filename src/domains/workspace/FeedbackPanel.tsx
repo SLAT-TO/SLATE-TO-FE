@@ -38,13 +38,7 @@ type FeedbackPanelProps = Pick<
     | 'repliesByFeedback'
     | 'newReply'
     | 'setNewReply'
-    | 'replyPendingStart'
-    | 'replyPendingEnd'
-    | 'isCapturingReplyRange'
     | 'toggleReplies'
-    | 'clearReplyPendingTime'
-    | 'attachReplyCurrentTime'
-    | 'toggleReplyRangeCapture'
     | 'submitReply'
   > & {
     meId: number | null
@@ -76,20 +70,14 @@ export default function FeedbackPanel({
   repliesByFeedback,
   newReply,
   setNewReply,
-  replyPendingStart,
-  replyPendingEnd,
-  isCapturingReplyRange,
   toggleReplies,
-  clearReplyPendingTime,
-  attachReplyCurrentTime,
-  toggleReplyRangeCapture,
   submitReply,
   meId,
   onSeek,
 }: FeedbackPanelProps) {
   return (
     <div
-      className={`flex min-h-[144px] w-full flex-col gap-4 ${CARD_BASE} p-4 lg:sticky lg:top-6 lg:h-[calc(100vh-140px)] lg:w-[300px] lg:shrink-0`}
+      className={`flex min-h-[144px] w-full min-w-0 flex-col gap-4 overflow-x-hidden ${CARD_BASE} p-4 lg:sticky lg:top-6 lg:h-[calc(100vh-140px)] lg:w-[340px] lg:shrink-0`}
     >
       <div className="flex shrink-0 items-center justify-between">
         <h2 className="text-head-sm text-neutral-11 font-semibold">피드백</h2>
@@ -119,7 +107,7 @@ export default function FeedbackPanel({
         </div>
       </div>
 
-      <ul className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
+      <ul className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto">
         {filteredFeedbacks.map((feedback) => {
           const isMine =
             meId !== null && feedback.actor.type === 'USER' && feedback.actor.id === meId
@@ -146,13 +134,7 @@ export default function FeedbackPanel({
               replies={repliesByFeedback[feedback.feedbackId] ?? []}
               newReply={newReply}
               setNewReply={setNewReply}
-              replyPendingStart={replyPendingStart}
-              replyPendingEnd={replyPendingEnd}
-              isCapturingReplyRange={isCapturingReplyRange}
-              clearReplyPendingTime={clearReplyPendingTime}
-              attachReplyCurrentTime={attachReplyCurrentTime}
-              toggleReplyRangeCapture={toggleReplyRangeCapture}
-              onSubmitReply={() => submitReply(feedback.feedbackId)}
+              onSubmitReply={() => void submitReply(feedback.feedbackId)}
             />
           )
         })}

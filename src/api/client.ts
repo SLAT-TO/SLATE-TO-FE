@@ -144,7 +144,7 @@ apiClient.interceptors.response.use(
       return apiClient.request(originalRequest)
     } catch {
       setAccessToken(null)
-      const redirectTo = encodeURIComponent(window.location.pathname)
+      const redirectTo = encodeURIComponent(window.location.pathname + window.location.search)
       navigate(`/login?redirectTo=${redirectTo}`)
       return Promise.reject(error)
     }

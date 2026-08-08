@@ -17,6 +17,8 @@ function safeUser() {
   }
 }
 
+/** 홈 화면에 노출할 오늘의 브리핑 개수 */
+const BRIEFING_LIMIT = 3
 function toBeSchedule(s: (typeof db.schedules)[number]) {
   return {
     scheduleId: s.id,
@@ -44,20 +46,36 @@ function toBeSchedule(s: (typeof db.schedules)[number]) {
 export const scheduleHandlers = [
   http.get(paths.briefings.today, () => {
     if (!safeUser()) return unauthorized()
-    const unread = db.notifications.filter((n) => !n.isRead).length
+
+    const todayKey = new Date().toISOString().slice(0, 10)
+
+    const scheduleItems = db.schedules
+      .filter((s) => s.startAt.slice(0, 10) === todayKey)
+      .map((s) => ({
+        type: 'TODAY_SCHEDULE',
+        content: `오늘 [${s.title}] 일정이 있어요`,
+        priority: 1,
+        projectId: s.projectId,
+        targetType: 'SCHEDULE',
+        targetId: s.id,
+        occurredAt: s.startAt,
+      }))
+
+    const notificationItems = [...db.notifications]
+      .filter((n) => !n.isRead)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map((n) => ({
+        type: 'NOTIFICATION',
+        content: n.content,
+        priority: 2,
+        projectId: n.projectId,
+        targetType: n.targetType,
+        targetId: n.targetId,
+        occurredAt: n.createdAt,
+      }))
+
     return HttpResponse.json(
-      ok({
-        date: '2026-07-10',
-        scheduleCount: db.schedules.length,
-        unreadNotificationCount: unread,
-        activeProjectCount: db.projects.length,
-        items: db.schedules.map((s) => ({
-          type: 'SCHEDULE',
-          title: s.title,
-          projectId: s.projectId,
-          scheduleId: s.id,
-        })),
-      }),
+      ok({ items: [...scheduleItems, ...notificationItems].slice(0, BRIEFING_LIMIT) }),
       { status: 200 },
     )
   }),

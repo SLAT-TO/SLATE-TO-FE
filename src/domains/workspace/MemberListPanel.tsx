@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { removeMember, updateMemberRole } from '../../api/projects'
 import ActionMenu from '../../components/ActionMenu'
 import { Avatar } from '../../components/Avatar'
@@ -20,6 +20,9 @@ interface MemberListPanelProps {
   /** 아바타 옆 라벨 (영상 상세: 참여 인원) */
   label?: string
   onMembersChange: (members: MemberSummary[]) => void
+  /** 외부에서 참여 인원 패널을 열 때 */
+  panelOpen?: boolean
+  onPanelOpenChange?: (open: boolean) => void
   /** 외부에서 초대 모달을 열 때 (영상 헤더 +초대) */
   inviteOpen?: boolean
   onInviteOpenChange?: (open: boolean) => void
@@ -33,11 +36,13 @@ export default function MemberListPanel({
   avatarSize = 33,
   label,
   onMembersChange,
+  panelOpen: panelOpenProp,
+  onPanelOpenChange,
   inviteOpen: inviteOpenProp,
   onInviteOpenChange,
 }: MemberListPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [open, setOpen] = useState(false)
+  const [internalPanelOpen, setInternalPanelOpen] = useState(false)
   const [manageMode, setManageMode] = useState(false)
   const [editingMemberId, setEditingMemberId] = useState<number | null>(null)
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
@@ -47,19 +52,27 @@ export default function MemberListPanel({
   const [actionError, setActionError] = useState('')
 
   const inviteOpen = inviteOpenProp ?? internalInviteOpen
+  const panelOpen = panelOpenProp ?? internalPanelOpen
+  const setPanelOpen = useCallback(
+    (next: boolean) => {
+      if (onPanelOpenChange) onPanelOpenChange(next)
+      else setInternalPanelOpen(next)
+    },
+    [onPanelOpenChange],
+  )
   const setInviteOpen = (next: boolean) => {
     if (onInviteOpenChange) onInviteOpenChange(next)
     else setInternalInviteOpen(next)
   }
 
   useEffect(() => {
-    if (!open) return
+    if (!panelOpen) return
 
     const handlePointerDown = (e: PointerEvent) => {
       // ConfirmModal은 portal이라 패널 밖 — 제거 확인 중에는 닫지 않음
       if (removeTarget != null) return
       if (!containerRef.current?.contains(e.target as Node)) {
-        setOpen(false)
+        setPanelOpen(false)
         setManageMode(false)
         setEditingMemberId(null)
         setActionError('')
@@ -67,7 +80,7 @@ export default function MemberListPanel({
     }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setOpen(false)
+        setPanelOpen(false)
         setManageMode(false)
         setEditingMemberId(null)
         setActionError('')
@@ -80,7 +93,7 @@ export default function MemberListPanel({
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [open, removeTarget])
+  }, [panelOpen, removeTarget, setPanelOpen])
 
   const startEdit = (member: MemberSummary) => {
     setManageMode(false)
@@ -144,9 +157,9 @@ export default function MemberListPanel({
 
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setPanelOpen(!panelOpen)}
         aria-label="참여 목록 열기"
-        aria-expanded={open}
+        aria-expanded={panelOpen}
         className="flex -space-x-2"
       >
         {previewMembers.length === 0 ? (
@@ -166,7 +179,7 @@ export default function MemberListPanel({
         )}
       </button>
 
-      {open && (
+      {panelOpen && (
         <div
           className={`absolute top-full right-0 z-20 mt-2 flex w-[320px] flex-col gap-4 p-4 ${CARD_BASE}`}
           role="dialog"
@@ -276,7 +289,7 @@ export default function MemberListPanel({
             variant="secondary"
             className="w-full"
             onClick={() => {
-              setOpen(false)
+              setPanelOpen(false)
               setInviteOpen(true)
             }}
           >

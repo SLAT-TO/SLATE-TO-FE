@@ -145,24 +145,35 @@ export type ProjectInvitationDetailResponse = {
   expiresAt: string
 }
 
-export type ActivityActor = {
-  type: 'USER' | 'CLIENT_REVIEWER' | 'SYSTEM'
-  id?: number
-  name?: string
+/** BE ActivityLogItem.type */
+export type ProjectActivityType =
+  | 'PROJECT_MEMBER_JOINED'
+  | 'PROJECT_STATUS_CHANGED'
+  | 'PROJECT_UPDATED'
+  | 'SCHEDULE_CREATED'
+  | 'SCHEDULE_UPDATED'
+  | 'NOTICE_CREATED'
+  | 'FILE_UPLOADED'
+  | 'VIDEO_FEEDBACK_COMMENTED'
+  | string
+
+/** BE ActivityLogItem */
+export type ProjectActivity = {
+  activityId: number
+  type: ProjectActivityType
+  content: string
+  targetType: string | null
+  targetId: number | null
+  createdAt: string
+  /** 미확인이면 true (홈 알림 isRead와 반대 의미) */
+  isNew: boolean
 }
 
-/** FE mock 전용 — BE activities API 미구현 */
-export type ProjectActivity = {
-  id: number
-  projectId: number
-  type: string
-  content: string
-  actor: ActivityActor
-  groupCount: number
-  metadata: Record<string, unknown>
-  createdAt: string
-  /** FE mock 전용 — BE 활동 읽음 API 없음 */
-  isRead: boolean
+/** BE ActivityLogListResponse — nextCursor는 string */
+export type ActivityLogListResult = {
+  items: ProjectActivity[]
+  nextCursor: string | null
+  hasNext: boolean
 }
 
 export type CursorPage<T> = {

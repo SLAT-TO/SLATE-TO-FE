@@ -45,7 +45,7 @@ function LegacyAppRoutes() {
   const pathname = useLocation().pathname
   const headerTitle = useMemo(() => getHeaderTitle(pathname), [pathname])
   const headerContent = useMemo(
-    () => (headerTitle ? <HeaderTitle>{headerTitle}</HeaderTitle> : undefined),
+    () => (headerTitle ? <HeaderTitle>{headerTitle}</HeaderTitle> : null),
     [headerTitle],
   )
   useHeaderSlot(headerContent)

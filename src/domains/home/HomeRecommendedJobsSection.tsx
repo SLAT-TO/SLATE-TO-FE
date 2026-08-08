@@ -1,5 +1,6 @@
 import JobCard from '../../components/JobCard'
 import type { Recruitment } from '../../types/recruitment'
+import { navigate } from '../../utils/navigation'
 import { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
 
 interface HomeRecommendedJobsSectionProps {
@@ -46,11 +47,11 @@ export default function HomeRecommendedJobsSection({
                   : undefined
               }
               title={job.title}
-              description={job.description}
               role={ROLE_LABEL_MAP[job.roles[0]] ?? job.roles[0] ?? '전체'}
               dDay={job.status === 'OPEN' ? '상시모집' : '마감'}
               isBookmarked={bookmarkedIds.has(job.id)}
               onBookmarkClick={() => onToggleBookmark(job.id)}
+              onClick={() => navigate(`/matching/${job.id}`)}
             />
           ))}
         </div>

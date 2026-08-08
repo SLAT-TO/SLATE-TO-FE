@@ -41,7 +41,7 @@ function BriefingLineIcon() {
 }
 
 export default function HomeBriefingCard({ briefing, loading }: HomeBriefingCardProps) {
-  const lines = briefing?.items.map((item) => item.title) ?? []
+  const lines = briefing?.items.map((item) => item.content) ?? []
 
   return (
     <section className="flex flex-col gap-5">
