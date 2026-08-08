@@ -21,7 +21,10 @@ const ROLE_LABEL_MAP: Record<string, string> = {
 
 function JobCardSkeleton() {
   return (
-    <div aria-hidden="true" className="border-border-input bg-neutral-2 h-40 rounded-xl border-[0.749px]" />
+    <div
+      aria-hidden="true"
+      className="border-border-input bg-neutral-2 h-40 rounded-xl border-[0.749px]"
+    />
   )
 }
 
