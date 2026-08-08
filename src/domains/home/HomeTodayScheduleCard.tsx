@@ -8,7 +8,23 @@ interface HomeTodayScheduleCardProps {
 export default function HomeTodayScheduleCard({ schedules, loading }: HomeTodayScheduleCardProps) {
   return (
     <section className="flex w-full flex-col gap-3">
-      {loading && <p className="text-caption-lg text-neutral-6">불러오는 중…</p>}
+      {loading && (
+        <div
+          className="flex flex-col gap-3"
+          role="status"
+          aria-busy="true"
+          aria-live="polite"
+          aria-label="오늘 일정 불러오는 중"
+        >
+          {Array.from({ length: 3 }, (_, index) => (
+            <div
+              key={index}
+              aria-hidden="true"
+              className="border-border-input bg-neutral-2 h-16 w-full rounded-lg border-[0.749px]"
+            />
+          ))}
+        </div>
+      )}
 
       {!loading &&
         schedules.map((schedule) => (
