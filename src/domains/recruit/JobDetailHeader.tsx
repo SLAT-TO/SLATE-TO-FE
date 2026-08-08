@@ -61,8 +61,8 @@ function JobDetailHeader({ detail, isOwner }: JobDetailHeaderProps) {
           </>
         ) : (
           <>
-            <Tag>{detail.type}</Tag>
-            <Tag>{detail.category}</Tag>
+            <Tag variant="meta">{detail.videoType}</Tag>
+            <Tag variant="meta">{detail.videoLength}</Tag>
             <span className="text-caption-lg text-neutral-11 font-bold">{detail.dDay}</span>
           </>
         )}
