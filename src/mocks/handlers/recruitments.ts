@@ -1,11 +1,10 @@
-/** BE 미구현 — Recruitment 컨트롤러 자체가 없음 (엔티티만 존재, Swagger에 미노출).
- * BE 엔티티 필드(recruitPart/shootingPeriod/pay/contact/location/deadline)가 아래 FE 모델과
- * 구조가 많이 달라서, 컨트롤러가 실제로 나오기 전까지는 이 파일을 엔티티에 맞춰 미리 바꾸지 않음. */
 import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
+import type { UserRegion } from '../../types/user'
 import type {
   CreateApplicationRequest,
   CreateRecruitmentRequest,
+  Recruitment,
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
 } from '../../types/recruitment'
@@ -21,58 +20,86 @@ function safeUser() {
   }
 }
 
+/** 요청 유저 기준으로 isBookmarked / isMine을 계산해 응답 형태로 변환 */
+function toResponse(r: Recruitment, userId: number): Recruitment {
+  return {
+    ...r,
+    isBookmarked: db.recruitmentBookmarks.some(
+      (b) => b.userId === userId && b.recruitmentId === r.id,
+    ),
+    isMine: r.writer.id === userId,
+  }
+}
+
+/** 커서 페이지네이션 응답 (mock은 전량 반환) */
+function toPage(items: Recruitment[]) {
+  return { items, nextCursor: null, hasNext: false }
+}
+
 export const recruitmentHandlers = [
   http.get(paths.recruitments.root, () => {
-    if (!safeUser()) return unauthorized()
-    return HttpResponse.json(ok({ items: db.recruitments }), { status: 200 })
+    const user = safeUser()
+    if (!user) return unauthorized()
+    const items = db.recruitments.map((r) => toResponse(r, user.id))
+    return HttpResponse.json(ok(toPage(items)), { status: 200 })
   }),
 
   http.get(paths.recruitments.recommended, () => {
-    if (!safeUser()) return unauthorized()
-    return HttpResponse.json(ok({ items: db.recruitments.slice(0, 6) }), { status: 200 })
+    const user = safeUser()
+    if (!user) return unauthorized()
+    const items = db.recruitments.slice(0, 6).map((r) => toResponse(r, user.id))
+    return HttpResponse.json(ok(toPage(items)), { status: 200 })
   }),
 
   http.get(paths.recruitments.byId(':recruitmentId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
+    const user = safeUser()
+    if (!user) return unauthorized()
     const recruitment = db.recruitments.find((r) => r.id === Number(params.recruitmentId))
     if (!recruitment) return notFound()
     recruitment.viewCount += 1
-    return HttpResponse.json(ok(recruitment), { status: 200 })
+    return HttpResponse.json(ok(toResponse(recruitment, user.id)), { status: 200 })
   }),
 
   http.post(paths.recruitments.root, async ({ request }) => {
     const user = safeUser()
     if (!user) return unauthorized()
     const body = (await request.json()) as CreateRecruitmentRequest
-    if (!body.title || !body.description) return badRequest()
-    const now = new Date().toISOString()
-    const recruitment = {
+    if (!body.title) return badRequest()
+    const recruitment: Recruitment = {
       id: allocId(),
       title: body.title,
-      description: body.description,
-      roles: body.roles ?? [],
-      categories: body.categories ?? [],
-      regions: body.regions ?? [],
-      status: 'OPEN',
+      category: body.category,
+      lengthType: body.lengthType ?? null,
+      recruitPart: body.recruitPart,
+      location: body.location,
+      pay: body.pay ?? '협의',
+      deadline: body.deadline,
+      dday: 30,
+      status: 'RECRUITING',
       viewCount: 0,
-      bookmarkCount: 0,
-      applicationCount: 0,
-      authorId: user.id,
-      authorNickname: user.nickname,
-      createdAt: now,
-      updatedAt: now,
+      isBookmarked: false,
+      isMine: true,
+      writer: {
+        id: user.id,
+        nickname: user.nickname,
+        profileImageUrl: user.profileImageUrl,
+        primaryRole: user.primaryRole,
+        locations: user.location ? ([user.location] as UserRegion[]) : [],
+      },
+      createdAt: new Date().toISOString(),
     }
     db.recruitments.unshift(recruitment)
     return HttpResponse.json(created(recruitment), { status: 201 })
   }),
 
   http.patch(paths.recruitments.byId(':recruitmentId'), async ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
+    const user = safeUser()
+    if (!user) return unauthorized()
     const recruitment = db.recruitments.find((r) => r.id === Number(params.recruitmentId))
     if (!recruitment) return notFound()
     const body = (await request.json()) as UpdateRecruitmentRequest
-    Object.assign(recruitment, body, { updatedAt: new Date().toISOString() })
-    return HttpResponse.json(ok(recruitment), { status: 200 })
+    Object.assign(recruitment, body)
+    return HttpResponse.json(ok(toResponse(recruitment, user.id)), { status: 200 })
   }),
 
   http.delete(paths.recruitments.byId(':recruitmentId'), ({ params }) => {
@@ -86,8 +113,10 @@ export const recruitmentHandlers = [
   http.get(paths.users.myRecruitments, () => {
     const user = safeUser()
     if (!user) return unauthorized()
-    const items = db.recruitments.filter((r) => r.authorId === user.id)
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const items = db.recruitments
+      .filter((r) => r.writer.id === user.id)
+      .map((r) => toResponse(r, user.id))
+    return HttpResponse.json(ok(toPage(items)), { status: 200 })
   }),
 
   http.get(paths.users.myApplications, () => {
@@ -103,8 +132,10 @@ export const recruitmentHandlers = [
     const ids = db.recruitmentBookmarks
       .filter((b) => b.userId === user.id)
       .map((b) => b.recruitmentId)
-    const items = db.recruitments.filter((r) => ids.includes(r.id))
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const items = db.recruitments
+      .filter((r) => ids.includes(r.id))
+      .map((r) => toResponse(r, user.id))
+    return HttpResponse.json(ok(toPage(items)), { status: 200 })
   }),
 
   http.post(paths.recruitments.bookmark(':recruitmentId'), ({ params }) => {
@@ -118,8 +149,6 @@ export const recruitmentHandlers = [
       )
     ) {
       db.recruitmentBookmarks.push({ userId: user.id, recruitmentId })
-      const recruitment = db.recruitments.find((r) => r.id === recruitmentId)
-      if (recruitment) recruitment.bookmarkCount += 1
     }
     return HttpResponse.json(ok({ bookmarked: true }), { status: 200 })
   }),
@@ -131,8 +160,6 @@ export const recruitmentHandlers = [
     db.recruitmentBookmarks = db.recruitmentBookmarks.filter(
       (b) => !(b.userId === user.id && b.recruitmentId === recruitmentId),
     )
-    const recruitment = db.recruitments.find((r) => r.id === recruitmentId)
-    if (recruitment && recruitment.bookmarkCount > 0) recruitment.bookmarkCount -= 1
     return HttpResponse.json(ok({ bookmarked: false }), { status: 200 })
   }),
 
@@ -154,7 +181,6 @@ export const recruitmentHandlers = [
       createdAt: new Date().toISOString(),
     }
     db.applications.push(application)
-    recruitment.applicationCount += 1
     return HttpResponse.json(created(application), { status: 201 })
   }),
 

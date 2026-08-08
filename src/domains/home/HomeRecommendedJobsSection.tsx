@@ -1,22 +1,14 @@
 import JobCard from '../../components/JobCard'
 import type { Recruitment } from '../../types/recruitment'
-import { navigate } from '../../utils/navigation'
 import { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
+import { roleLabel } from '../../constants/roles'
+import { navigate } from '../../utils/navigation'
 
 interface HomeRecommendedJobsSectionProps {
   jobs: Recruitment[]
   bookmarkedIds: Set<number>
   onToggleBookmark: (recruitmentId: number) => void
   loading: boolean
-}
-
-const ROLE_LABEL_MAP: Record<string, string> = {
-  DIRECTOR: '연출',
-  EDITOR: '편집',
-  CINEMATOGRAPHER: '촬영 감독',
-  SOUND: '사운드',
-  PD: 'PD',
-  ART: '미술',
 }
 
 function JobCardSkeleton() {
@@ -60,15 +52,15 @@ export default function HomeRecommendedJobsSection({
           {jobs.map((job) => (
             <JobCard
               key={job.id}
-              category={PROJECT_TYPE_LABEL[job.categories[0]] ?? job.categories[0] ?? '기타'}
+              category={PROJECT_TYPE_LABEL[job.category] ?? job.category}
               length={
                 job.lengthType
                   ? (PROJECT_LENGTH_TYPE_LABEL[job.lengthType] ?? job.lengthType)
                   : undefined
               }
               title={job.title}
-              role={ROLE_LABEL_MAP[job.roles[0]] ?? job.roles[0] ?? '전체'}
-              dDay={job.status === 'OPEN' ? '상시모집' : '마감'}
+              role={roleLabel(job.recruitPart)}
+              dDay={job.status === 'CLOSED' ? '마감' : `D-${job.dday}`}
               isBookmarked={bookmarkedIds.has(job.id)}
               onBookmarkClick={() => onToggleBookmark(job.id)}
               onClick={() => navigate(`/matching/${job.id}`)}
