@@ -16,3 +16,7 @@ export const ONBOARDING_REGION_OPTIONS: ReadonlyArray<{ value: UserRegion; label
 ]
 
 export type Region = UserRegion
+
+export function regionLabel(region: string): string {
+  return ONBOARDING_REGION_OPTIONS.find((o) => o.value === region)?.label ?? region
+}
