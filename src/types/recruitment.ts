@@ -72,3 +72,16 @@ export type CreateApplicationRequest = {
 export type UpdateApplicationRequest = {
   status: ApplicationStatus
 }
+
+export type ApplicationStatusValue = 'PENDING' | 'ACCEPTED' | 'REJECTED'
+
+/** GET /recruitments/{id} — 목록 필드 + 상세 전용 필드 */
+export type RecruitmentDetailResponse = Recruitment & {
+  description: string
+  shootingPeriod: string
+  contact: string
+  applicantCount: number
+  hasApplied: boolean
+  myApplicationStatus: ApplicationStatusValue | null
+  updatedAt: string
+}

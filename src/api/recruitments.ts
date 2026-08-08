@@ -6,6 +6,7 @@ import type {
   CreateRecruitmentRequest,
   Recruitment,
   RecruitmentBookmarkResult,
+  RecruitmentDetailResponse,
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
 } from '../types/recruitment'
@@ -18,7 +19,7 @@ export async function getRecommendedRecruitments(): Promise<{ items: Recruitment
   return request({ method: 'GET', url: paths.recruitments.recommended })
 }
 
-export async function getRecruitment(recruitmentId: number): Promise<Recruitment> {
+export async function getRecruitment(recruitmentId: number): Promise<RecruitmentDetailResponse> {
   return request({ method: 'GET', url: paths.recruitments.byId(recruitmentId) })
 }
 
