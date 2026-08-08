@@ -1,21 +1,63 @@
+import { useState } from 'react'
 import HomeProjectCard from './HomeProjectCard'
+import ConfirmModal from '../../components/ConfirmModal'
 import type { ProjectSummary } from '../../types/project'
 import { navigate } from '../../utils/navigation'
 
 interface HomeProjectsSectionProps {
   projects: ProjectSummary[]
   loading: boolean
+  onTogglePin: (project: ProjectSummary) => void
+  onDeleteProject: (projectId: number) => Promise<void>
+  onLeaveProject: (projectId: number) => Promise<void>
 }
 
-export default function HomeProjectsSection({ projects, loading }: HomeProjectsSectionProps) {
+export default function HomeProjectsSection({
+  projects,
+  loading,
+  onTogglePin,
+  onDeleteProject,
+  onLeaveProject,
+}: HomeProjectsSectionProps) {
+  const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [leaveTarget, setLeaveTarget] = useState<ProjectSummary | null>(null)
+  const [leaveError, setLeaveError] = useState<string | null>(null)
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    try {
+      await onDeleteProject(deleteTarget.id)
+      setDeleteTarget(null)
+      setDeleteError(null)
+    } catch {
+      setDeleteTarget(null)
+      setDeleteError('프로젝트를 삭제하지 못했습니다.')
+    }
+  }
+
+  const confirmLeave = async () => {
+    if (!leaveTarget) return
+    try {
+      await onLeaveProject(leaveTarget.id)
+      setLeaveTarget(null)
+      setLeaveError(null)
+    } catch {
+      setLeaveTarget(null)
+      setLeaveError('프로젝트에서 나가지 못했습니다.')
+    }
+  }
+
   return (
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">진행 중인 프로젝트</h2>
 
       {loading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
+      {deleteError && <p className="text-body-sm text-warning">{deleteError}</p>}
+      {leaveError && <p className="text-body-sm text-warning">{leaveError}</p>}
 
       {!loading && projects.length === 0 && (
-        <div className="flex h-46 flex-col items-center justify-center gap-5 rounded-[10.242px] bg-white shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]">
+        <div className="flex h-46 flex-col items-center justify-center gap-5 rounded-[10.242px] bg-white shadow-[0px_3.414px_12.461px_rgba(169,204,244,0.15)]">
           <p className="text-body-sm text-neutral-6">
             진행중인 프로젝트가 없어요. 프로젝트를 추가해보세요.
           </p>
@@ -35,10 +77,43 @@ export default function HomeProjectsSection({ projects, loading }: HomeProjectsS
       {!loading && projects.length > 0 && (
         <div className="grid grid-cols-1 gap-x-10.5 gap-y-10 sm:grid-cols-2">
           {projects.map((project) => (
-            <HomeProjectCard key={project.id} project={project} />
+            <HomeProjectCard
+              key={project.id}
+              project={project}
+              onTogglePin={() => onTogglePin(project)}
+              menuItems={
+                project.myPermission === 'ADMIN'
+                  ? [
+                      {
+                        action: 'edit',
+                        label: '설정',
+                        onClick: () => navigate(`/workspace/projects/${project.id}?view=settings`),
+                      },
+                      { action: 'delete', onClick: () => setDeleteTarget(project) },
+                    ]
+                  : [{ action: 'leave', onClick: () => setLeaveTarget(project) }]
+              }
+              onClick={() => navigate(`/workspace/projects/${project.id}`)}
+            />
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => void confirmDelete()}
+        title="정말 삭제하시겠습니까?"
+        description="삭제된 워크스페이스 데이터는 되돌릴 수 없어요"
+      />
+
+      <ConfirmModal
+        isOpen={leaveTarget !== null}
+        onClose={() => setLeaveTarget(null)}
+        onConfirm={() => void confirmLeave()}
+        title={leaveTarget ? `${leaveTarget.title}에서 나가시겠습니까?` : ''}
+        confirmText="나가기"
+      />
     </section>
   )
 }

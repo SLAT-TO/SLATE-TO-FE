@@ -108,6 +108,7 @@ export type MockProjectRecord = {
 
 export type MockMemberRecord = {
   memberId: number
+  projectId: number
   userId: number
   nickname: string
   email: string
@@ -232,8 +233,10 @@ export const db: MockDb = {
     },
   ],
   members: [
+    /* 프로젝트 1 "위로, 또 위로" 팀 — 2명 */
     {
       memberId: 1,
+      projectId: 1,
       userId: completeUser.id,
       nickname: completeUser.nickname,
       profileImageUrl: completeUser.profileImageUrl,
@@ -245,6 +248,7 @@ export const db: MockDb = {
     },
     {
       memberId: 2,
+      projectId: 1,
       userId: publicEditor.id,
       nickname: publicEditor.nickname,
       profileImageUrl: publicEditor.profileImageUrl,
@@ -253,6 +257,55 @@ export const db: MockDb = {
       permission: 'MEMBER',
       roleNames: ['EDITOR'],
       joinedAt: '2026-06-02T09:00:00Z',
+    },
+    /* 프로젝트 2 "브랜드 필름 A" 팀 — 4명 (카드 "+N" 아바타 뱃지 확인용) */
+    {
+      memberId: 3,
+      projectId: 2,
+      userId: completeUser.id,
+      nickname: completeUser.nickname,
+      profileImageUrl: completeUser.profileImageUrl,
+      email: completeUser.email,
+      bio: completeUser.bio,
+      permission: 'ADMIN',
+      roleNames: ['DIRECTOR'],
+      joinedAt: '2026-05-01T09:00:00Z',
+    },
+    {
+      memberId: 4,
+      projectId: 2,
+      userId: 9004,
+      nickname: '테스트멤버4',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=14',
+      email: 'member4@example.com',
+      bio: null,
+      permission: 'MEMBER',
+      roleNames: ['CINEMATOGRAPHER'],
+      joinedAt: '2026-05-02T09:00:00Z',
+    },
+    {
+      memberId: 5,
+      projectId: 2,
+      userId: 9005,
+      nickname: '테스트멤버5',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=15',
+      email: 'member5@example.com',
+      bio: null,
+      permission: 'MEMBER',
+      roleNames: ['SOUND'],
+      joinedAt: '2026-05-03T09:00:00Z',
+    },
+    {
+      memberId: 6,
+      projectId: 2,
+      userId: 9006,
+      nickname: '테스트멤버6',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=16',
+      email: 'member6@example.com',
+      bio: null,
+      permission: 'MEMBER',
+      roleNames: ['LIGHTING'],
+      joinedAt: '2026-05-04T09:00:00Z',
     },
   ],
   files: [

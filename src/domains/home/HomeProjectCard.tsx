@@ -1,55 +1,132 @@
+import type { KeyboardEvent } from 'react'
+import { formatDistanceToNow } from 'date-fns'
+import { ko } from 'date-fns/locale'
 import Tag from '../../components/Tag'
 import ProgressBar from '../../components/ProgressBar'
 import { Avatar } from '../../components/Avatar'
+import ActionMenu from '../../components/ActionMenu'
+import BookmarkStarIcon from '../../components/icons/BookmarkStarIcon'
+import type { ActionMenuItem } from '../../constants/actionMenu'
 import { projectMetaTags } from '../../constants/projectLabels'
+import { projectStatusLabel } from '../../constants/projectStatus'
+import { roleLabel } from '../../constants/roles'
 import type { ProjectSummary } from '../../types/project'
 
 interface HomeProjectCardProps {
   project: ProjectSummary
+  onTogglePin?: () => void
+  menuItems?: ActionMenuItem[]
+  onClick?: () => void
 }
 
 const VISIBLE_AVATAR_COUNT = 3
 
-export default function HomeProjectCard({ project }: HomeProjectCardProps) {
+export default function HomeProjectCard({
+  project,
+  onTogglePin,
+  menuItems = [],
+  onClick,
+}: HomeProjectCardProps) {
   const variant = project.status === 'COMPLETED' ? 'success' : 'default'
-  const tags = projectMetaTags(project)
+  const statusVariant = project.status === 'COMPLETED' ? 'ghost' : 'secondary'
+  const tags = projectMetaTags({ type: project.type, lengthType: project.lengthType })
   const visibleMembers = project.memberPreviewImageUrls.slice(0, VISIBLE_AVATAR_COUNT)
   const extraCount = project.memberCount - visibleMembers.length
+  const relativeTime = project.lastActivityAt
+    ? formatDistanceToNow(new Date(project.lastActivityAt), { addSuffix: true, locale: ko })
+    : undefined
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLElement>) => {
+    if (!onClick) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onClick()
+    }
+  }
 
   return (
-    <article className="flex h-34 flex-col items-start gap-2 overflow-hidden rounded-[10.242px] bg-white p-4 shadow-[0_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]">
-      <h3 className="text-body-sm text-neutral-11 self-stretch font-semibold tracking-[-0.32px]">
-        {project.title}
-      </h3>
+    <article
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      className={`flex min-h-42 flex-col items-start justify-between gap-2 rounded-[10.242px] bg-white p-4 shadow-[0px_3.414px_12.461px_rgba(169,204,244,0.15)] ${
+        onClick ? 'cursor-pointer' : ''
+      }`}
+    >
+      <div className="flex w-full flex-col items-start gap-3">
+        <div className="flex w-full items-start justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <h3 className="text-caption-lg text-neutral-11 truncate font-semibold tracking-[-0.32px]">
+                {project.title}
+              </h3>
+              {onTogglePin && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onTogglePin()
+                  }}
+                  aria-pressed={project.isPinned}
+                  aria-label={project.isPinned ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+                  className={`shrink-0 ${project.isPinned ? 'text-caution' : 'text-neutral-6'}`}
+                >
+                  <BookmarkStarIcon filled={project.isPinned} className="size-5" />
+                </button>
+              )}
+            </div>
+            <Tag variant={statusVariant} className="shrink-0">
+              {projectStatusLabel(project.status)}
+            </Tag>
+          </div>
 
-      <ProgressBar
-        value={project.deadlineProgressPercent ?? 0}
-        variant={variant}
-        className="mt-6 self-stretch"
-      />
-
-      <div className="mt-auto flex w-full items-center justify-between">
-        <div className="flex min-w-0 flex-1 items-center gap-3.5 overflow-hidden">
-          {tags.map((tag) => (
-            <Tag key={tag}>{tag}</Tag>
-          ))}
+          {menuItems.length > 0 && (
+            <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+              <ActionMenu items={menuItems} ariaLabel="프로젝트 메뉴" />
+            </div>
+          )}
         </div>
 
-        {project.memberCount > 0 && (
-          <div className="flex shrink-0 items-center -space-x-2">
-            {visibleMembers.map((imageUrl, index) => (
-              <Avatar key={index} src={imageUrl} size={28} border="gray" />
+        {relativeTime && (
+          <span className="text-caption-sm text-neutral-6">{relativeTime} 편집</span>
+        )}
+      </div>
+
+      <div className="flex w-full flex-col items-start gap-6">
+        <ProgressBar
+          value={project.deadlineProgressPercent ?? 0}
+          variant={variant}
+          className="self-stretch"
+        />
+
+        <div className="flex w-full items-center justify-between">
+          <div className="flex min-w-0 items-center gap-2">
+            {tags.map((tag) => (
+              <Tag key={tag} variant="ghost" className="max-w-18 truncate">
+                {tag}
+              </Tag>
             ))}
-            {extraCount > 0 && (
-              <div
-                className="border-border text-caption-sm text-neutral-6 flex items-center justify-center rounded-full border bg-white"
-                style={{ width: 28, height: 28 }}
-              >
-                +{extraCount}
-              </div>
+            {project.roleNames.length > 0 && (
+              <Tag variant="primary" className="max-w-18 truncate">
+                {roleLabel(project.roleNames[0])}
+              </Tag>
             )}
           </div>
-        )}
+
+          {project.memberCount > 0 && (
+            <div className="flex shrink-0 items-center gap-1.5">
+              {extraCount > 0 && (
+                <span className="text-caption-sm text-neutral-6">+{extraCount}</span>
+              )}
+              <div className="flex items-center -space-x-2">
+                {visibleMembers.map((imageUrl, index) => (
+                  <Avatar key={index} src={imageUrl} size={28} border="gray" />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </article>
   )
