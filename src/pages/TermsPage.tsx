@@ -3,6 +3,8 @@ import Choice from '../components/Choice'
 import { Button } from '../components/Button'
 import termsBg from '../assets/images/terms-bg.png'
 import termsAvatar from '../assets/images/terms-avatar.png'
+import { useOnboardingStore } from '../stores/onboardingStore'
+import { navigate } from '../utils/navigation'
 
 const TERMS = [
   { key: 'service', label: '이용약관 동의(필수)' },
@@ -11,8 +13,8 @@ const TERMS = [
   { key: 'collect', label: '개인정보 수집 및 이용 동의(필수)' },
 ] as const
 
-// 약관 동의 화면. 가입 처리 로직은 이후 작업에서 연결.
 export function TermsPage() {
+  const setAgreedTerms = useOnboardingStore((s) => s.setAgreedTerms)
   const [agreed, setAgreed] = useState<Record<(typeof TERMS)[number]['key'], boolean>>({
     service: false,
     age: false,
@@ -24,6 +26,11 @@ export function TermsPage() {
 
   const toggleAll = (checked: boolean) => {
     setAgreed(TERMS.reduce((acc, t) => ({ ...acc, [t.key]: checked }), {} as typeof agreed))
+  }
+
+  const handleSubmit = () => {
+    setAgreedTerms(allAgreed)
+    if (allAgreed) navigate('/onboarding')
   }
 
   return (
@@ -40,7 +47,10 @@ export function TermsPage() {
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
         <form
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleSubmit()
+          }}
           className="bg-neutral-1 flex w-full max-w-[1062px] flex-col gap-12 rounded-xl p-12 shadow-[0_3px_12px_rgba(169,204,244,0.15)]"
         >
           <div className="flex items-center gap-6">
