@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import {
   createFeedback,
   deleteFeedback,
@@ -25,10 +26,10 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
   const [editingFeedbackContent, setEditingFeedbackContent] = useState('')
 
   const load = useCallback(async () => {
-    const page = await getFeedbacks(videoId)
+    const page = await getFeedbacks(videoId, guestId != null ? { guestId } : undefined)
     setFeedbacks(page.items)
     return page.items
-  }, [videoId])
+  }, [videoId, guestId])
 
   const clearPendingTime = useCallback(() => {
     setPendingStart(null)
@@ -58,11 +59,12 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
 
   const submitFeedback = useCallback(async () => {
     if (!newFeedback.trim()) return
+    const actor = await resolveFeedbackActor(guestId)
     const created = await createFeedback(videoId, {
       content: newFeedback.trim(),
       startTime: pendingStart ?? undefined,
       endTime: pendingEnd ?? undefined,
-      guestId,
+      ...actor,
     })
     setFeedbacks((prev) => [created, ...prev])
     setNewFeedback('')
@@ -70,14 +72,13 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
   }, [videoId, newFeedback, pendingStart, pendingEnd, guestId, clearPendingTime])
 
   /** 체크 아이콘 토글 — UI 먼저 반영 후 status API 호출 (실패 시 롤백) */
-  const toggleResolved = useCallback(async (feedback: Feedback, userId: number) => {
+  const toggleResolved = useCallback(async (feedback: Feedback) => {
     const nextStatus = !feedback.status
     setFeedbacks((prev) =>
       prev.map((f) => (f.feedbackId === feedback.feedbackId ? { ...f, status: nextStatus } : f)),
     )
     try {
       const updated = await updateFeedbackStatus(feedback.feedbackId, {
-        userId,
         status: nextStatus,
       })
       setFeedbacks((prev) =>
@@ -96,21 +97,29 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
     }
   }, [])
 
-  const removeFeedback = useCallback(async (feedbackId: number) => {
-    await deleteFeedback(feedbackId)
-    setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== feedbackId))
-  }, [])
+  const removeFeedback = useCallback(
+    async (feedbackId: number) => {
+      const actor = await resolveFeedbackActor(guestId)
+      await deleteFeedback(feedbackId, actor)
+      setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== feedbackId))
+    },
+    [guestId],
+  )
 
-  const editFeedback = useCallback(async (feedbackId: number, content: string) => {
-    const updated = await updateFeedback(feedbackId, { content })
-    setFeedbacks((prev) =>
-      prev.map((f) =>
-        f.feedbackId === updated.feedbackId
-          ? { ...f, content: updated.content, updatedAt: updated.updatedAt }
-          : f,
-      ),
-    )
-  }, [])
+  const editFeedback = useCallback(
+    async (feedbackId: number, content: string) => {
+      const actor = await resolveFeedbackActor(guestId)
+      const updated = await updateFeedback(feedbackId, { content, ...actor })
+      setFeedbacks((prev) =>
+        prev.map((f) =>
+          f.feedbackId === updated.feedbackId
+            ? { ...f, content: updated.content, updatedAt: updated.updatedAt }
+            : f,
+        ),
+      )
+    },
+    [guestId],
+  )
 
   const startEditFeedback = useCallback((feedback: Feedback) => {
     setEditingFeedbackId(feedback.feedbackId)

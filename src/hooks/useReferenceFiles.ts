@@ -13,10 +13,10 @@ export function useReferenceFiles(projectId: number, videoId: number) {
   const [projectFiles, setProjectFiles] = useState<ProjectFileListItem[]>([])
 
   const load = useCallback(async () => {
-    const refFiles = await getReferenceFiles(videoId)
+    const refFiles = await getReferenceFiles(projectId, videoId)
     setReferenceFiles(refFiles.items)
     return refFiles.items
-  }, [videoId])
+  }, [projectId, videoId])
 
   const openPicker = useCallback(async () => {
     setPickerOpen(true)
@@ -28,19 +28,19 @@ export function useReferenceFiles(projectId: number, videoId: number) {
 
   const attachFile = useCallback(
     async (projectFileId: number) => {
-      const linked = await linkReferenceFile(videoId, projectFileId)
-      setReferenceFiles((prev) => [...prev, linked])
+      await linkReferenceFile(projectId, videoId, projectFileId)
+      await load()
       setPickerOpen(false)
     },
-    [videoId],
+    [projectId, videoId, load],
   )
 
   const removeReferenceFile = useCallback(
     async (referenceFileId: number) => {
-      await unlinkReferenceFile(videoId, referenceFileId)
+      await unlinkReferenceFile(projectId, videoId, referenceFileId)
       setReferenceFiles((prev) => prev.filter((f) => f.referenceFileId !== referenceFileId))
     },
-    [videoId],
+    [projectId, videoId],
   )
 
   const downloadReferenceFile = useCallback(

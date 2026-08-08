@@ -10,7 +10,10 @@ export type AppNotification = {
   notificationId: number
   projectId: number | null
   type: NotificationType
+  title: string
   content: string
+  /** 동일 건이 묶여 발송된 개수 — 1이면 단건 */
+  groupCount: number
   targetType: string
   targetId: number
   isRead: boolean

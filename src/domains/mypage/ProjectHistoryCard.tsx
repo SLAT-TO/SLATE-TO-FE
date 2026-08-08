@@ -12,6 +12,7 @@ interface ProjectHistoryCardProps {
 
 function ProjectHistoryCard({ project, onEdit, onDelete, onClick }: ProjectHistoryCardProps) {
   const { id, title, thumbnailUrl, tags } = project
+  const hasMenu = Boolean(onEdit || onDelete)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -43,59 +44,70 @@ function ProjectHistoryCard({ project, onEdit, onDelete, onClick }: ProjectHisto
   return (
     <article
       onClick={() => onClick?.(id)}
-      className="cursor-pointer overflow-hidden rounded-xl bg-white shadow-xs"
+      className={[
+        'overflow-hidden rounded-xl bg-white shadow-xs',
+        onClick ? 'cursor-pointer' : '',
+      ].join(' ')}
     >
       <div className="relative flex items-center justify-between p-3 pb-2">
         <h4 className="text-neutral-11 text-sm font-semibold">{title}</h4>
 
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation() // 카드 클릭 막기 ★
-            setIsMenuOpen((prev) => !prev)
-          }}
-          aria-label="프로젝트 옵션 더보기"
-          aria-haspopup="menu"
-          aria-expanded={isMenuOpen}
-          className="text-neutral-7 hover:bg-neutral-1 shrink-0 rounded p-1"
-        >
-          {/* 인라인 SVG - svgr 미도입 상태라 인라인 방식 유지 */}
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <circle cx="8" cy="3" r="1.3" fill="currentColor" />
-            <circle cx="8" cy="8" r="1.3" fill="currentColor" />
-            <circle cx="8" cy="13" r="1.3" fill="currentColor" />
-          </svg>
-        </button>
+        {hasMenu && (
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsMenuOpen((prev) => !prev)
+              }}
+              aria-label="프로젝트 옵션 더보기"
+              aria-haspopup="menu"
+              aria-expanded={isMenuOpen}
+              className="text-neutral-7 hover:bg-neutral-1 shrink-0 rounded p-1"
+            >
+              {/* 인라인 SVG - svgr 미도입 상태라 인라인 방식 유지 */}
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle cx="8" cy="3" r="1.3" fill="currentColor" />
+                <circle cx="8" cy="8" r="1.3" fill="currentColor" />
+                <circle cx="8" cy="13" r="1.3" fill="currentColor" />
+              </svg>
+            </button>
 
-        {isMenuOpen && (
-          <div
-            ref={menuRef}
-            role="menu"
-            className="border-border absolute top-10 right-3 z-10 w-32 overflow-hidden rounded-lg border bg-white shadow-md"
-          >
-            <button
-              type="button"
-              role="menuitem"
-              onClick={handleEditClick}
-              className="text-neutral-11 hover:bg-neutral-1 block w-full px-4 py-2 text-left text-sm"
-            >
-              수정하기
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={handleDeleteClick}
-              className="text-neutral-11 hover:bg-neutral-1 block w-full px-4 py-2 text-left text-sm"
-            >
-              삭제하기
-            </button>
-          </div>
+            {isMenuOpen && (
+              <div
+                ref={menuRef}
+                role="menu"
+                className="border-border absolute top-10 right-3 z-10 w-32 overflow-hidden rounded-lg border bg-white shadow-md"
+              >
+                {onEdit && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleEditClick}
+                    className="text-neutral-11 hover:bg-neutral-1 block w-full px-4 py-2 text-left text-sm"
+                  >
+                    수정하기
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleDeleteClick}
+                    className="text-neutral-11 hover:bg-neutral-1 block w-full px-4 py-2 text-left text-sm"
+                  >
+                    삭제하기
+                  </button>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 

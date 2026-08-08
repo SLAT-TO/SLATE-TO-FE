@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { deleteProject, leaveProject, pinProject, unpinProject } from '../api/projects'
+import { useQueryClient } from '@tanstack/react-query'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getMe } from '../api/users'
+import {
+  useDeleteProjectMutation,
+  useLeaveProjectMutation,
+  useToggleProjectPinMutation,
+} from '../queries/projects'
+import { projectKeys } from '../queries/keys'
 import ActionMenu from '../components/ActionMenu'
 import ConfirmModal from '../components/ConfirmModal'
 import BookmarkStarIcon from '../components/icons/BookmarkStarIcon'
@@ -26,8 +33,10 @@ import {
   projectStatusColor,
   projectStatusLabel,
 } from '../constants/projectStatus'
-import type { ProjectStatus } from '../types/project'
-import { navigate } from '../utils/navigation'
+import type { ProjectActivity, ProjectStatus, ProjectSummary } from '../types/project'
+
+/** Strict Mode remount에서도 같은 키 alert가 두 번 뜨지 않도록 모듈 단위로 기록 */
+const alertedPartialErrorKeys = new Set<string>()
 
 const DETAIL_TABS = [
   { key: 'dashboard', label: '대시보드' },
@@ -36,11 +45,78 @@ const DETAIL_TABS = [
   { key: 'feedback', label: '피드백' },
 ]
 
-type ProjectDetailPageProps = {
-  projectId: number
+const DETAIL_TAB_KEYS = new Set(DETAIL_TABS.map((t) => t.key))
+
+type DashboardPanel = 'notices' | 'activity'
+
+type ProjectSearchNext = {
+  tab?: string
+  panel?: DashboardPanel | null
+  noticeId?: number | null
+  view?: 'settings' | null
 }
 
-export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps) {
+type ProjectDetailPageProps = {
+  projectId: number
+  /** URL `/workspace/projects/:id/videos/:videoId` 에서 전달 — 있으면 영상 상세 */
+  videoId?: number | null
+}
+
+function parseProjectSearch(search: string): {
+  view: 'main' | 'settings'
+  tab: string
+  noticeView: 'main' | 'list' | number
+  activityView: 'main' | 'list'
+} {
+  const params = new URLSearchParams(search)
+  if (params.get('view') === 'settings') {
+    return { view: 'settings', tab: 'dashboard', noticeView: 'main', activityView: 'main' }
+  }
+
+  const panel = params.get('panel')
+  const noticeIdRaw = params.get('noticeId')
+  const tabParam = params.get('tab')
+
+  if (panel === 'notices') {
+    const noticeId = noticeIdRaw != null ? Number(noticeIdRaw) : NaN
+    return {
+      view: 'main',
+      tab: 'dashboard',
+      noticeView: Number.isFinite(noticeId) ? noticeId : 'list',
+      activityView: 'main',
+    }
+  }
+  if (panel === 'activity') {
+    return { view: 'main', tab: 'dashboard', noticeView: 'main', activityView: 'list' }
+  }
+
+  const tab =
+    tabParam != null && DETAIL_TAB_KEYS.has(tabParam) && tabParam !== 'dashboard'
+      ? tabParam
+      : 'dashboard'
+  return { view: 'main', tab, noticeView: 'main', activityView: 'main' }
+}
+
+function buildProjectSearch(next: ProjectSearchNext): string {
+  const params = new URLSearchParams()
+  if (next.view === 'settings') {
+    params.set('view', 'settings')
+  } else if (next.panel === 'notices') {
+    params.set('panel', 'notices')
+    if (next.noticeId != null) params.set('noticeId', String(next.noticeId))
+  } else if (next.panel === 'activity') {
+    params.set('panel', 'activity')
+  } else if (next.tab != null && next.tab !== 'dashboard' && DETAIL_TAB_KEYS.has(next.tab)) {
+    params.set('tab', next.tab)
+  }
+  const qs = params.toString()
+  return qs ? `?${qs}` : ''
+}
+
+export default function ProjectDetailPage({ projectId, videoId = null }: ProjectDetailPageProps) {
+  const queryClient = useQueryClient()
+  const routerNavigate = useNavigate()
+  const location = useLocation()
   const {
     project,
     setProject,
@@ -53,21 +129,26 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
     error,
     partialErrors,
   } = useProjectDetail(projectId)
+  const pinMutation = useToggleProjectPinMutation()
+  const deleteMutation = useDeleteProjectMutation()
+  const leaveMutation = useLeaveProjectMutation()
   const statusMenuRef = useRef<HTMLDivElement>(null)
   const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
-  const [tab, setTab] = useState('dashboard')
-  /** 목록의 "설정" 메뉴에서 `?view=settings`로 진입하는 경우를 초기값에 반영 (최초 마운트 1회) */
-  const [view, setView] = useState<'main' | 'settings'>(() =>
-    new URLSearchParams(window.location.search).get('view') === 'settings' ? 'settings' : 'main',
-  )
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
-  const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null)
   const [meId, setMeId] = useState<number | null>(null)
-  /** 대시보드 탭 내부 공지사항 서브뷰 — 'main'=대시보드, 'list'=공지사항 목록, number=공지 상세(noticeId) */
-  const [noticeView, setNoticeView] = useState<'main' | 'list' | number>('main')
-  /** 대시보드 탭 내부 최근 활동 서브뷰 — 'main'=대시보드, 'list'=최근 활동 전체 목록 */
-  const [activityView, setActivityView] = useState<'main' | 'list'>('main')
+  /** 탭·공지/활동 패널·설정 — URL searchParams에서 파생 (뒤로가기·공유용) */
+  const { view, tab, noticeView, activityView } = parseProjectSearch(location.search)
+
+  const setProjectSearch = useCallback(
+    (next: ProjectSearchNext, options?: { replace?: boolean }) => {
+      const to = `/workspace/projects/${projectId}${buildProjectSearch(next)}`
+      routerNavigate(to, { replace: options?.replace })
+    },
+    [projectId, routerNavigate],
+  )
+  const [initialFileId, setInitialFileId] = useState<number | null>(null)
+  const [membersPanelOpen, setMembersPanelOpen] = useState(false)
 
   useEffect(() => {
     getMe()
@@ -75,33 +156,67 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
       .catch(() => setMeId(null))
   }, [])
 
+  const partialErrorKey = partialErrors.join('|')
+  useEffect(() => {
+    if (!partialErrorKey) return
+    const alertKey = `${projectId}:${partialErrorKey}`
+    if (alertedPartialErrorKeys.has(alertKey)) return
+    alertedPartialErrorKeys.add(alertKey)
+    for (const message of partialErrorKey.split('|')) {
+      if (message) window.alert(message)
+    }
+  }, [partialErrorKey, projectId])
+
   // 서브상태 리셋은 App의 <ProjectDetailPage key={projectId} /> 리마운트에 위임
 
+  const closeVideo = useCallback(() => {
+    routerNavigate(`/workspace/projects/${projectId}`, { replace: true })
+  }, [projectId, routerNavigate])
+
   const handleTabChange = (key: string) => {
-    setTab(key)
-    if (key !== 'dashboard') {
-      setNoticeView('main')
-      setActivityView('main')
+    setProjectSearch(key === 'dashboard' ? {} : { tab: key })
+  }
+
+  const handleActivityNavigate = (activity: ProjectActivity) => {
+    if (activity.targetType === 'NOTICE' && activity.targetId != null) {
+      setProjectSearch({ panel: 'notices', noticeId: activity.targetId })
+      return
+    }
+
+    if (activity.targetType === 'FILE' && activity.targetId != null) {
+      setInitialFileId(activity.targetId)
+      setProjectSearch({ tab: 'files' })
+      return
+    }
+
+    if (
+      activity.targetType === 'SCHEDULE' ||
+      activity.type === 'SCHEDULE_CREATED' ||
+      activity.type === 'SCHEDULE_UPDATED'
+    ) {
+      setProjectSearch({ tab: 'schedule' })
+      return
+    }
+
+    if (activity.type === 'PROJECT_MEMBER_JOINED') {
+      setMembersPanelOpen(true)
+      setProjectSearch({})
+      return
+    }
+
+    if (activity.type === 'PROJECT_UPDATED' || activity.type === 'PROJECT_STATUS_CHANGED') {
+      setProjectSearch({ view: 'settings' })
     }
   }
 
-  const handleToggleBookmark = useCallback(async () => {
+  const handleToggleBookmark = useCallback(() => {
     if (!project) return
-    const next = !project.isPinned
-    setProject((prev) => (prev ? { ...prev, isPinned: next } : prev))
-    try {
-      const result = next ? await pinProject(projectId) : await unpinProject(projectId)
-      setProject((prev) =>
-        prev ? { ...prev, isPinned: result.isPinned, pinnedAt: result.pinnedAt } : prev,
-      )
-    } catch {
-      setProject((prev) => (prev ? { ...prev, isPinned: !next } : prev))
-    }
-  }, [project, projectId, setProject])
+    pinMutation.mutate({ projectId, next: !project.isPinned })
+  }, [project, projectId, pinMutation])
 
   /** 전역 헤더: 제목·즐겨찾기 + 참여인원(왼쪽 끝) → 알림·프로필·ActionMenu. 설정·영상 상세에서는 비움.
    * useMemo로 감싸지 않으면 매 렌더 새 JSX가 만들어져 useHeaderSlot의 effect가 무한 반복된다. */
-  const showProjectHeader = Boolean(project) && view === 'main' && selectedVideoId === null
+  const showProjectHeader = Boolean(project) && view === 'main' && videoId == null
 
   const headerLeftContent = useMemo(() => {
     if (!showProjectHeader || !project) return null
@@ -128,23 +243,38 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
             meId={meId}
             avatarSize={40}
             onMembersChange={setMembers}
+            panelOpen={membersPanelOpen}
+            onPanelOpenChange={setMembersPanelOpen}
           />
         </div>
       </div>
     )
-  }, [showProjectHeader, project, members, handleToggleBookmark, projectId, meId, setMembers])
+  }, [
+    showProjectHeader,
+    project,
+    members,
+    handleToggleBookmark,
+    projectId,
+    meId,
+    setMembers,
+    membersPanelOpen,
+  ])
+
+  const openSettings = useCallback(() => {
+    setProjectSearch({ view: 'settings' })
+  }, [setProjectSearch])
 
   const headerRightContent = useMemo(() => {
     if (!showProjectHeader || !project) return null
     const items =
       project.myPermission === 'ADMIN'
         ? [
-            { action: 'edit' as const, label: '설정', onClick: () => setView('settings') },
+            { action: 'edit' as const, label: '설정', onClick: openSettings },
             { action: 'delete' as const, onClick: () => setDeleteOpen(true) },
           ]
         : [{ action: 'leave' as const, onClick: () => setLeaveOpen(true) }]
     return <ActionMenu items={items} ariaLabel="프로젝트 메뉴" />
-  }, [showProjectHeader, project])
+  }, [showProjectHeader, project, openSettings])
 
   useHeaderSlot(headerLeftContent, headerRightContent)
 
@@ -158,7 +288,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         <p className="text-body-sm text-warning">{error ?? '프로젝트를 찾을 수 없습니다.'}</p>
         <button
           type="button"
-          onClick={() => navigate('/workspace')}
+          onClick={() => routerNavigate('/workspace')}
           className="text-body-sm text-primary w-fit underline"
         >
           워크스페이스로 돌아가기
@@ -169,23 +299,22 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
   const metaTags = projectMetaTags(project)
 
-  const confirmDeleteProject = async () => {
-    await deleteProject(projectId)
-    navigate('/workspace')
+  const confirmDeleteProject = () => {
+    deleteMutation.mutate(projectId, {
+      onSuccess: () => routerNavigate('/workspace'),
+    })
   }
 
-  const confirmLeaveProject = async () => {
-    await leaveProject(projectId)
-    navigate('/workspace')
+  const confirmLeaveProject = () => {
+    leaveMutation.mutate(projectId, {
+      onSuccess: () => routerNavigate('/workspace'),
+    })
   }
 
   if (view === 'settings') {
     // ?view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
     const leaveSettings = () => {
-      if (window.location.search) {
-        window.history.replaceState({}, '', window.location.pathname)
-      }
-      setView('main')
+      setProjectSearch({}, { replace: true })
     }
     return (
       <ProjectSettingsView
@@ -193,22 +322,37 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         onCancel={leaveSettings}
         onSaved={(updated) => {
           setProject(updated)
+          queryClient.setQueryData<ProjectSummary[]>(projectKeys.list(), (prev) =>
+            prev?.map((item) =>
+              item.id === updated.id
+                ? {
+                    ...item,
+                    title: updated.title,
+                    endDate: updated.endDate,
+                    clientName: updated.clientName,
+                    type: updated.type,
+                    lengthType: updated.lengthType,
+                    status: updated.status,
+                  }
+                : item,
+            ),
+          )
           leaveSettings()
         }}
       />
     )
   }
 
-  if (selectedVideoId !== null) {
+  if (videoId != null) {
     return (
       <VideoDetailView
         projectId={projectId}
-        videoId={selectedVideoId}
+        videoId={videoId}
         meId={meId}
         isAdmin={project.myPermission === 'ADMIN'}
         lengthType={project.lengthType}
         myRoleNames={project.roleNames}
-        onBack={() => setSelectedVideoId(null)}
+        onBack={closeVideo}
       />
     )
   }
@@ -271,27 +415,31 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
 
       {tab === 'dashboard' && noticeView === 'main' && activityView === 'main' && (
         <div className="flex flex-col gap-8">
-          {partialErrors.length > 0 && (
-            <ul className="text-body-sm text-warning flex flex-col gap-1">
-              {partialErrors.map((message) => (
-                <li key={message}>{message}</li>
-              ))}
-            </ul>
-          )}
           <div className="grid gap-8 lg:grid-cols-2">
-            <DashboardNoticeCard notices={notices} onExpand={() => setNoticeView('list')} />
+            <DashboardNoticeCard
+              notices={notices}
+              onExpand={() => setProjectSearch({ panel: 'notices' })}
+            />
             <DashboardTodayScheduleCard
               projectId={projectId}
               onExpand={() => handleTabChange('schedule')}
             />
           </div>
 
-          <DashboardActivityCard activities={activities} onExpand={() => setActivityView('list')} />
+          <DashboardActivityCard
+            activities={activities}
+            onExpand={() => setProjectSearch({ panel: 'activity' })}
+          />
         </div>
       )}
 
       {tab === 'dashboard' && activityView === 'list' && (
-        <ActivityListView activities={activities} onBack={() => setActivityView('main')} />
+        <ActivityListView
+          projectId={projectId}
+          activities={activities}
+          onBack={() => setProjectSearch({})}
+          onNavigate={handleActivityNavigate}
+        />
       )}
 
       {tab === 'schedule' && <ProjectScheduleTab projectId={projectId} members={members} />}
@@ -300,8 +448,8 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
         <NoticeListView
           projectId={projectId}
           notices={notices}
-          onBack={() => setNoticeView('main')}
-          onOpenNotice={(noticeId) => setNoticeView(noticeId)}
+          onBack={() => setProjectSearch({})}
+          onOpenNotice={(noticeId) => setProjectSearch({ panel: 'notices', noticeId })}
           onCreated={(notice) => setNotices((prev) => [notice, ...prev])}
         />
       )}
@@ -316,7 +464,7 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
                 <p className="text-body-sm text-warning">공지를 찾을 수 없습니다.</p>
                 <button
                   type="button"
-                  onClick={() => setNoticeView('list')}
+                  onClick={() => setProjectSearch({ panel: 'notices' })}
                   className="text-body-sm text-primary w-fit underline"
                 >
                   공지 목록으로 돌아가기
@@ -329,23 +477,27 @@ export default function ProjectDetailPage({ projectId }: ProjectDetailPageProps)
               projectId={projectId}
               notice={selectedNotice}
               meId={meId}
-              onBack={() => setNoticeView('list')}
+              onBack={() => setProjectSearch({ panel: 'notices' })}
               onUpdated={(updated) => {
                 setNotices((prev) => prev.map((n) => (n.id === updated.id ? updated : n)))
               }}
               onDeleted={(noticeId) => {
                 setNotices((prev) => prev.filter((n) => n.id !== noticeId))
-                setNoticeView('list')
+                setProjectSearch({ panel: 'notices' })
               }}
             />
           )
         })()}
 
-      {tab === 'files' && <ProjectFileList projectId={projectId} />}
-
-      {tab === 'feedback' && (
-        <VideoFeedbackTab projectId={projectId} onSelectVideo={setSelectedVideoId} />
+      {tab === 'files' && (
+        <ProjectFileList
+          projectId={projectId}
+          initialFileId={initialFileId}
+          onInitialFileConsumed={() => setInitialFileId(null)}
+        />
       )}
+
+      {tab === 'feedback' && <VideoFeedbackTab projectId={projectId} />}
 
       <ConfirmModal
         isOpen={deleteOpen}

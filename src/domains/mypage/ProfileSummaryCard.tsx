@@ -3,7 +3,7 @@ import Tag from '../../components/Tag'
 
 interface ProfileSummaryCardProps {
   profile: ProfileSummary
-  onEditClick: () => void
+  onEditClick?: () => void
 }
 
 function ProfileSummaryCard({ profile, onEditClick }: ProfileSummaryCardProps) {
@@ -23,13 +23,15 @@ function ProfileSummaryCard({ profile, onEditClick }: ProfileSummaryCardProps) {
             <span className="text-neutral-11 text-lg font-semibold">{nickname}</span>
             <Tag>{role}</Tag>
           </div>
-          <button
-            type="button"
-            onClick={onEditClick}
-            className="border-border text-neutral-8 hover:bg-neutral-1 shrink-0 rounded-md border px-3 py-1.5 text-xs font-normal transition-colors"
-          >
-            수정하기
-          </button>
+          {onEditClick && (
+            <button
+              type="button"
+              onClick={onEditClick}
+              className="border-border text-neutral-8 hover:bg-neutral-1 shrink-0 rounded-md border px-3 py-1.5 text-xs font-normal transition-colors"
+            >
+              수정하기
+            </button>
+          )}
         </div>
 
         {region && <span className="text-neutral-7 text-sm">{region}</span>}

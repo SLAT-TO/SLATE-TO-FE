@@ -12,7 +12,14 @@ export default function DashboardActivityCard({
 }: DashboardActivityCardProps) {
   return (
     <section className="flex flex-col gap-5">
-      <h2 className="text-head-sm text-neutral-11 font-bold">최근 활동</h2>
+      <button
+        type="button"
+        onClick={onExpand}
+        aria-label="최근 활동 전체 보기"
+        className="w-fit text-left"
+      >
+        <h2 className="text-head-sm text-neutral-11 font-bold">최근 활동 {'>'}</h2>
+      </button>
       <button
         type="button"
         onClick={onExpand}
@@ -24,7 +31,7 @@ export default function DashboardActivityCard({
         ) : (
           <ul className="flex flex-col gap-4">
             {activities.map((activity) => (
-              <li key={activity.id} className="text-body-sm text-neutral-10">
+              <li key={activity.activityId} className="text-body-sm text-neutral-10">
                 {activity.content}
               </li>
             ))}

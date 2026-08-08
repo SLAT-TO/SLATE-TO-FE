@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '../../components/Button'
+import { markActivityRead, markAllActivitiesRead } from '../../api/projects'
+import { projectKeys } from '../../queries/keys'
 import type { ProjectActivity } from '../../types/project'
-import { CARD_BASE } from '../../styles/card'
+
+const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
 
 interface ActivityListViewProps {
+  projectId: number
   activities: ProjectActivity[]
   onBack: () => void
+  onNavigate: (activity: ProjectActivity) => void
 }
 
 function formatActivityDate(iso: string): string {
@@ -18,80 +23,129 @@ function formatActivityDate(iso: string): string {
   return `${month}월 ${day}일 ${hours}:${minutes}`
 }
 
-export default function ActivityListView({ activities, onBack }: ActivityListViewProps) {
-  /** BE에 활동 읽음 API가 없어 로컬에서만 읽음 처리한 id */
-  const [locallyReadIds, setLocallyReadIds] = useState<Set<number>>(() => new Set())
-
-  const items = activities.map((activity) =>
-    locallyReadIds.has(activity.id) ? { ...activity, isRead: true } : activity,
+function canNavigate(activity: ProjectActivity): boolean {
+  return (
+    activity.targetType === 'NOTICE' ||
+    activity.targetType === 'FILE' ||
+    activity.targetType === 'SCHEDULE' ||
+    activity.type === 'SCHEDULE_CREATED' ||
+    activity.type === 'SCHEDULE_UPDATED' ||
+    activity.type === 'PROJECT_MEMBER_JOINED' ||
+    activity.type === 'PROJECT_UPDATED' ||
+    activity.type === 'PROJECT_STATUS_CHANGED'
   )
-  const hasUnread = items.some((item) => !item.isRead)
+}
 
-  const markAllAsRead = () => {
-    setLocallyReadIds(new Set(activities.map((activity) => activity.id)))
+export default function ActivityListView({
+  projectId,
+  activities,
+  onBack,
+  onNavigate,
+}: ActivityListViewProps) {
+  const queryClient = useQueryClient()
+  const hasNew = activities.some((item) => item.isNew)
+
+  const patchActivities = (updater: (items: ProjectActivity[]) => ProjectActivity[]) => {
+    queryClient.setQueryData<ProjectActivity[]>(projectKeys.activities(projectId), (prev) =>
+      updater(prev ?? []),
+    )
   }
 
-  /** BE 활동 읽음 API 없음 — 호버 시 로컬에서 읽음 처리해 UI 확인을 쉽게 함 */
-  const markAsRead = (activityId: number) => {
-    setLocallyReadIds((prev) => {
-      if (prev.has(activityId)) return prev
-      const next = new Set(prev)
-      next.add(activityId)
-      return next
-    })
+  const markAsRead = async (activityId: number) => {
+    const target = activities.find((item) => item.activityId === activityId)
+    if (!target?.isNew) return
+    patchActivities((items) =>
+      items.map((item) => (item.activityId === activityId ? { ...item, isNew: false } : item)),
+    )
+    try {
+      await markActivityRead(projectId, activityId)
+    } catch {
+      void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
+    }
+  }
+
+  const markAllAsRead = async () => {
+    if (!hasNew) return
+    patchActivities((items) => items.map((item) => ({ ...item, isNew: false })))
+    try {
+      await markAllActivitiesRead(projectId)
+    } catch {
+      void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
+    }
   }
 
   return (
     <section className="flex flex-col gap-4">
-      <button
-        type="button"
-        onClick={onBack}
-        className="text-body-sm text-neutral-11 w-fit font-semibold"
-      >
-        {'< 대시보드'}
-      </button>
-
       <div className="flex items-center justify-between">
-        <h2 className="text-head-sm text-neutral-11 font-bold">최근 활동</h2>
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-head-sm text-neutral-11 w-fit font-bold"
+        >
+          {'< 최근 활동'}
+        </button>
         <Button
           variant="secondary"
-          size="sm"
-          onClick={markAllAsRead}
-          disabled={!hasUnread}
-          className="w-23"
+          size="md"
+          width={112}
+          onClick={() => void markAllAsRead()}
+          disabled={!hasNew}
         >
           전체 읽음
         </Button>
       </div>
 
-      {items.length === 0 ? (
+      {activities.length === 0 ? (
         <p className="text-caption-lg text-neutral-6">최근 활동이 없습니다.</p>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {items.map((activity) => (
-            <li
-              key={activity.id}
-              onMouseEnter={() => {
-                if (!activity.isRead) markAsRead(activity.id)
-              }}
-              className={`flex items-center justify-between gap-3 ${CARD_BASE} px-4 py-4`}
-            >
-              <span className="text-body-sm text-neutral-10 min-w-0 tracking-[-0.32px]">
-                {activity.content}
-              </span>
-              <div className="flex shrink-0 items-center gap-2">
-                <span className="text-caption-sm text-neutral-6">
-                  {formatActivityDate(activity.createdAt)}
+        <ul className="flex flex-col gap-4">
+          {activities.map((activity) => {
+            const navigable = canNavigate(activity)
+            const navigate = () => {
+              if (!navigable) return
+              if (activity.isNew) void markAsRead(activity.activityId)
+              onNavigate(activity)
+            }
+            return (
+              <li
+                key={activity.activityId}
+                role={navigable ? 'button' : undefined}
+                tabIndex={navigable ? 0 : undefined}
+                onClick={navigate}
+                onKeyDown={(event) => {
+                  if (
+                    navigable &&
+                    (event.key === 'Enter' || event.key === ' ') &&
+                    !event.nativeEvent.isComposing
+                  ) {
+                    event.preventDefault()
+                    navigate()
+                  }
+                }}
+                onMouseEnter={() => {
+                  if (activity.isNew) void markAsRead(activity.activityId)
+                }}
+                className={`flex items-center justify-between gap-3 rounded-[10px] px-4 py-4 ${CARD_SHADOW} ${
+                  activity.isNew ? 'bg-neutral-1' : 'bg-neutral-3'
+                } ${navigable ? 'cursor-pointer' : ''}`}
+              >
+                <span className="text-body-sm text-neutral-10 min-w-0 tracking-[-0.32px]">
+                  {activity.content}
                 </span>
-                {!activity.isRead && (
-                  <span
-                    className="bg-warning size-2.75 shrink-0 rounded-full"
-                    aria-label="안 읽음"
-                  />
-                )}
-              </div>
-            </li>
-          ))}
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-caption-sm text-neutral-6">
+                    {formatActivityDate(activity.createdAt)}
+                  </span>
+                  {activity.isNew && (
+                    <span
+                      className="bg-warning size-2.75 shrink-0 rounded-full"
+                      aria-label="새 활동"
+                    />
+                  )}
+                </div>
+              </li>
+            )
+          })}
         </ul>
       )}
     </section>

@@ -46,7 +46,12 @@ export default function ReferenceFilesSection({
         >
           <div className="flex min-w-0 items-center gap-3">
             <InlineIcon svg={documentIcon} className="text-neutral-5 size-6 shrink-0" />
-            <span className="text-body-sm text-neutral-11 truncate">{file.fileName}</span>
+            <div className="min-w-0">
+              <p className="text-body-sm text-neutral-11 truncate">{file.fileName}</p>
+              <p className="text-caption-lg text-neutral-6 truncate">
+                업로더 · {file.uploader.nickname}
+              </p>
+            </div>
           </div>
           <div className="flex shrink-0 items-center gap-4">
             <span className="text-caption-lg text-neutral-6">{formatDate(file.createdAt)}</span>

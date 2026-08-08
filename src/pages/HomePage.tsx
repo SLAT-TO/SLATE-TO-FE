@@ -43,7 +43,9 @@ export default function HomePage() {
 
         <aside className="flex w-full shrink-0 flex-col items-center lg:w-81.75">
           <HomeMiniCalendar className="self-end" />
-          <HomeTodayScheduleCard schedules={todaySchedules} loading={loading} />
+          <div className="mt-11 w-61.5 self-end">
+            <HomeTodayScheduleCard schedules={todaySchedules} loading={loading} />
+          </div>
         </aside>
       </div>
     </div>

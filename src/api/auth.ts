@@ -1,7 +1,7 @@
-import { request, setAccessToken } from './client'
+import { request, setAccessToken, refreshAccessToken } from './client'
 import { paths } from './paths'
 import { navigate } from '../utils/navigation'
-import type { AuthTokens, RefreshTokenResult } from '../types/auth'
+import type { AuthTokens } from '../types/auth'
 
 const apiBase = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -41,16 +41,12 @@ export async function logout(): Promise<null> {
   }
 }
 
-/** POST /api/v1/auth/refresh — refreshToken은 HttpOnly 쿠키, 본문 없음 */
-export async function refreshToken(): Promise<RefreshTokenResult> {
-  const result = await request<RefreshTokenResult>({
-    method: 'POST',
-    url: paths.auth.refresh,
-    withCredentials: true,
-  })
-  setAccessToken(result.accessToken)
-  return result
-}
+/**
+ * POST /api/v1/auth/refresh — refreshToken은 HttpOnly 쿠키, 본문 없음.
+ * 실제 구현은 client.ts에 있음 — 401 인터셉터와 같은 함수·같은 in-flight promise를
+ * 공유해야 해서, client.ts가 auth.ts를 참조하는 대신 여기서 client.ts를 재노출한다.
+ */
+export const refreshToken = refreshAccessToken
 
 /** mock/dev: refresh 쿠키 없이 토큰 직접 주입 */
 export function setMockAuthTokens(tokens: AuthTokens): void {

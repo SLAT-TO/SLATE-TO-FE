@@ -1,26 +1,27 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { addMonths, format, parse, subMonths } from 'date-fns'
 import { getProjects } from '../api/projects'
+import {
+  createSchedule,
+  deleteSchedule,
+  getDailySchedules,
+  getSchedules,
+  updatePrivateMemo,
+  updateSchedule,
+} from '../api/schedules'
 import { Button } from '../components/Button'
 import { Calendar } from '../components/Calendar'
 import InlineIcon from '../components/InlineIcon'
 import type { CalendarEvent } from '../schemas/calendarEvent'
 import type { ProjectSummary } from '../types/project'
+import type { Schedule, ScheduleDailyItem, ScheduleScope } from '../types/schedule'
 import { CalendarFilterMenu } from '../domains/calendar/CalendarFilterMenu'
 import { CalendarDaySchedulePanel } from '../domains/calendar/CalendarDaySchedulePanel'
 import { EventFormModal, type EventFormValues } from '../domains/calendar/EventFormModal'
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons/ChevronIcons'
-import { useCalendarStore } from '../stores/calendarStore'
-import { toDateKey } from '../utils/calendarUtils'
-import { formatTarget } from '../utils/scheduleAdapter'
+import { pickEventColor, toDateKey } from '../utils/calendarUtils'
+import { scheduleToCalendarEvent } from '../utils/scheduleAdapter'
 import plusIcon from '../assets/icons/plus.svg?raw'
-
-// index.css 팔레트의 event-1~10 (CSS 변수 참조라 팔레트 값이 바뀌어도 자동으로 따라감)
-const EVENT_COLORS = Array.from({ length: 10 }, (_, i) => `var(--color-event-${i + 1})`)
-
-function randomEventColor() {
-  return EVENT_COLORS[Math.floor(Math.random() * EVENT_COLORS.length)]
-}
 
 // 저장된 CalendarEvent를 "수정하기" 폼의 초기값으로 되돌린다
 function eventToFormValues(event: CalendarEvent): EventFormValues {
@@ -37,6 +38,23 @@ function eventToFormValues(event: CalendarEvent): EventFormValues {
   }
 }
 
+// GET /schedules/daily 응답(대상자·메모·수정 가능 여부 포함)을 캘린더 공용 컴포넌트가 쓰는 CalendarEvent로 변환
+function dailyItemToCalendarEvent(item: ScheduleDailyItem): CalendarEvent {
+  return {
+    id: String(item.scheduleId),
+    startDate: item.startAt.slice(0, 10),
+    endDate: item.endAt.slice(0, 10),
+    title: item.title,
+    color: pickEventColor(String(item.scheduleId)),
+    place: item.location ?? undefined,
+    projectId: item.projectId != null ? String(item.projectId) : undefined,
+    target: item.participantSummary ?? undefined,
+    participantIds: item.participants.map((p) => String(p.userId)),
+    memo: item.publicMemo ?? undefined,
+    note: item.privateMemo ?? undefined,
+  }
+}
+
 type FormModalState = { mode: 'create' } | { mode: 'edit'; event: CalendarEvent } | null
 
 // 캘린더 화면(페이지). 데이터 소유 + 컴포넌트 콜백 처리 담당.
@@ -46,10 +64,9 @@ export default function CalendarPage() {
   const [projectFilter, setProjectFilter] = useState<string | null>(null)
   const [formModal, setFormModal] = useState<FormModalState>(null)
   const [projects, setProjects] = useState<ProjectSummary[]>([])
-  const events = useCalendarStore((s) => s.events)
-  const addEvent = useCalendarStore((s) => s.addEvent)
-  const updateEvent = useCalendarStore((s) => s.updateEvent)
-  const removeEvent = useCalendarStore((s) => s.removeEvent)
+  const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [daySchedules, setDaySchedules] = useState<ScheduleDailyItem[]>([])
+  const [actionError, setActionError] = useState<string | null>(null)
 
   // 일정 필터·일정 추가 폼이 공유하는 실제 프로젝트 목록
   useEffect(() => {
@@ -75,51 +92,159 @@ export default function CalendarPage() {
     [projects],
   )
 
-  // "일정 필터"에서 프로젝트를 고르면 그 프로젝트의 일정만 남긴다
-  const filteredEvents = useMemo(() => {
-    if (!projectFilter) return events
-    return events.filter((event) => event.projectId === projectFilter)
-  }, [events, projectFilter])
+  // 달력 그리드 — GET /schedules (기간 기준 통합 조회). scope/projectId는 "일정 필터" 선택에 따라 서버에서 걸러진다
+  useEffect(() => {
+    let cancelled = false
 
-  const selectedDateEvents = useMemo(() => {
-    if (!selectedDate) return []
-    const key = toDateKey(selectedDate)
-    return filteredEvents.filter((event) => event.startDate <= key && event.endDate >= key)
-  }, [filteredEvents, selectedDate])
+    async function loadMonth() {
+      try {
+        const result = await getSchedules({
+          month,
+          projectId: projectFilter ? Number(projectFilter) : undefined,
+        })
+        if (!cancelled) setSchedules(result.items)
+      } catch {
+        if (!cancelled) setSchedules([])
+      }
+    }
+
+    void loadMonth()
+    return () => {
+      cancelled = true
+    }
+  }, [month, projectFilter])
+
+  const monthEvents = useMemo(
+    () => schedules.map((schedule) => scheduleToCalendarEvent(schedule, [])),
+    [schedules],
+  )
+
+  // 일정 생성/수정/삭제/메모 저장 뒤 "선택한 날짜" 패널을 다시 불러오기 위한 공용 함수 (핸들러에서만 호출 — 이펙트 밖)
+  const refreshDaySchedules = useCallback(
+    async (date: Date) => {
+      try {
+        const result = await getDailySchedules(toDateKey(date), {
+          projectId: projectFilter ? Number(projectFilter) : undefined,
+          scope: projectFilter ? 'PROJECT' : 'ALL',
+        })
+        setDaySchedules(result.items)
+      } catch {
+        setDaySchedules([])
+        setActionError('하루 일정을 불러오지 못했습니다. 다시 시도해주세요.')
+      }
+    },
+    [projectFilter],
+  )
+
+  // 선택한 날짜가 바뀔 때 GET /schedules/daily (대상자/메모/수정 가능 여부 포함)로 그날 상세를 불러온다
+  useEffect(() => {
+    if (!selectedDate) return
+
+    let cancelled = false
+    const date = selectedDate
+
+    async function loadDay() {
+      try {
+        const result = await getDailySchedules(toDateKey(date), {
+          projectId: projectFilter ? Number(projectFilter) : undefined,
+          scope: projectFilter ? 'PROJECT' : 'ALL',
+        })
+        if (!cancelled) setDaySchedules(result.items)
+      } catch {
+        if (!cancelled) {
+          setDaySchedules([])
+          setActionError('하루 일정을 불러오지 못했습니다. 다시 시도해주세요.')
+        }
+      }
+    }
+
+    void loadDay()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedDate, projectFilter])
+
+  const selectedDateEvents = useMemo(
+    () => daySchedules.map(dailyItemToCalendarEvent),
+    [daySchedules],
+  )
 
   // 같은 날짜를 다시 클릭하면 패널을 닫는다
   const handleDateClick = (date: Date) => {
     setSelectedDate((prev) => (prev && toDateKey(prev) === toDateKey(date) ? null : date))
   }
 
-  const handleCreateEvent = (values: EventFormValues) => {
+  const handleCreateEvent = async (values: EventFormValues) => {
+    setActionError(null)
     const startDate = toDateKey(values.startDate ?? selectedDate ?? new Date())
-    addEvent({
-      id: crypto.randomUUID(),
-      startDate,
-      endDate: values.endDate ? toDateKey(values.endDate) : startDate,
-      title: values.title.trim() || '새 일정',
-      color: randomEventColor(),
-      place: values.place.trim() || undefined,
-      memo: values.memo.trim() || undefined,
-      participantIds: values.participantIds.length > 0 ? values.participantIds : undefined,
-      target: formatTarget(values.participantNames),
-      projectId: values.projectId || undefined,
-    })
+    const endDate = values.endDate ? toDateKey(values.endDate) : startDate
+    const scheduleScope: ScheduleScope = values.projectId ? 'PROJECT' : 'PERSONAL'
+    try {
+      const created = await createSchedule({
+        scheduleScope,
+        projectId: values.projectId ? Number(values.projectId) : undefined,
+        title: values.title.trim() || '새 일정',
+        startAt: `${startDate}T00:00:00`,
+        endAt: `${endDate}T23:59:59`,
+        location: values.place.trim() || undefined,
+        publicMemo: values.memo.trim() || undefined,
+        participantIds: scheduleScope === 'PROJECT' ? values.participantIds.map(Number) : undefined,
+      })
+      setSchedules((prev) => [created, ...prev])
+      if (selectedDate) void refreshDaySchedules(selectedDate)
+    } catch {
+      setActionError('일정을 추가하지 못했습니다. 다시 시도해주세요.')
+    }
   }
 
-  const handleUpdateEvent = (id: string, values: EventFormValues) => {
+  const handleDeleteEvent = async (event: CalendarEvent) => {
+    setActionError(null)
+    try {
+      const scheduleId = Number(event.id)
+      await deleteSchedule(scheduleId)
+      setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
+      if (selectedDate) void refreshDaySchedules(selectedDate)
+    } catch {
+      setActionError('일정을 삭제하지 못했습니다. 다시 시도해주세요.')
+    }
+  }
+
+  const handleUpdateEvent = async (id: string, values: EventFormValues) => {
+    setActionError(null)
     const startDate = toDateKey(values.startDate ?? selectedDate ?? new Date())
-    updateEvent(id, {
-      startDate,
-      endDate: values.endDate ? toDateKey(values.endDate) : startDate,
-      title: values.title.trim() || '새 일정',
-      place: values.place.trim() || undefined,
-      memo: values.memo.trim() || undefined,
-      participantIds: values.participantIds.length > 0 ? values.participantIds : undefined,
-      target: formatTarget(values.participantNames),
-      projectId: values.projectId || undefined,
-    })
+    const endDate = values.endDate ? toDateKey(values.endDate) : startDate
+    try {
+      const scheduleId = Number(id)
+      const current = schedules.find((s) => s.id === scheduleId)
+      const updated = await updateSchedule(
+        scheduleId,
+        {
+          title: values.title.trim() || '새 일정',
+          startAt: `${startDate}T00:00:00`,
+          endAt: `${endDate}T23:59:59`,
+          location: values.place.trim() || undefined,
+          publicMemo: values.memo.trim() || undefined,
+          participantIds: values.projectId ? values.participantIds.map(Number) : undefined,
+        },
+        current,
+      )
+      setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+      if (selectedDate) void refreshDaySchedules(selectedDate)
+    } catch {
+      setActionError('일정을 수정하지 못했습니다. 다시 시도해주세요.')
+    }
+  }
+
+  const handleSaveNote = async (event: CalendarEvent, note: string): Promise<boolean> => {
+    setActionError(null)
+    try {
+      await updatePrivateMemo(Number(event.id), { content: note })
+      if (selectedDate) void refreshDaySchedules(selectedDate)
+      return true
+    } catch {
+      setActionError('메모를 저장하지 못했습니다. 다시 시도해주세요.')
+      return false
+    }
   }
 
   return (
@@ -135,7 +260,9 @@ export default function CalendarPage() {
           >
             <ChevronLeftIcon className="size-5" />
           </button>
-          <h2 className="text-neutral-11 text-base font-bold">{format(month, 'yyyy년 M월')}</h2>
+          <h2 className="text-neutral-11 text-head-sm font-semibold">
+            {format(month, 'yyyy년 M월')}
+          </h2>
           <button
             type="button"
             onClick={() => setMonth(addMonths(month, 1))}
@@ -166,12 +293,14 @@ export default function CalendarPage() {
         </div>
       </header>
 
+      {actionError && <p className="text-caption-lg text-warning">{actionError}</p>}
+
       {/* 헤더 아래: 캘린더(가변폭·가변높이) + 선택한 날짜의 일정 패널 — stretch로 패널 높이를 캘린더에 맞춘다 */}
       <div className="flex min-h-0 flex-1 items-stretch gap-6">
         <div className="h-full min-w-0 flex-1">
           <Calendar
             month={month}
-            events={filteredEvents}
+            events={monthEvents}
             selectedDate={selectedDate}
             onDateClick={handleDateClick}
           />
@@ -183,8 +312,8 @@ export default function CalendarPage() {
             events={selectedDateEvents}
             onDeselect={() => setSelectedDate(null)}
             onEditEvent={(event) => setFormModal({ mode: 'edit', event })}
-            onDeleteEvent={(event) => removeEvent(event.id)}
-            onSaveNote={(event, note) => updateEvent(event.id, { note })}
+            onDeleteEvent={handleDeleteEvent}
+            onSaveNote={handleSaveNote}
           />
         )}
       </div>

@@ -5,15 +5,16 @@ import type {
   CreateApplicationRequest,
   CreateRecruitmentRequest,
   Recruitment,
+  RecruitmentBookmarkResult,
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
 } from '../types/recruitment'
 
-export async function getRecruitments(): Promise<{ content: Recruitment[] }> {
+export async function getRecruitments(): Promise<{ items: Recruitment[] }> {
   return request({ method: 'GET', url: paths.recruitments.root })
 }
 
-export async function getRecommendedRecruitments(): Promise<{ content: Recruitment[] }> {
+export async function getRecommendedRecruitments(): Promise<{ items: Recruitment[] }> {
   return request({ method: 'GET', url: paths.recruitments.recommended })
 }
 
@@ -36,25 +37,27 @@ export async function deleteRecruitment(recruitmentId: number): Promise<null> {
   return request({ method: 'DELETE', url: paths.recruitments.byId(recruitmentId) })
 }
 
-export async function getMyRecruitments(): Promise<{ content: Recruitment[] }> {
+export async function getMyRecruitments(): Promise<{ items: Recruitment[] }> {
   return request({ method: 'GET', url: paths.users.myRecruitments })
 }
 
-export async function getMyApplications(): Promise<{ content: Application[] }> {
+export async function getMyApplications(): Promise<{ items: Application[] }> {
   return request({ method: 'GET', url: paths.users.myApplications })
 }
 
-export async function getMyRecruitmentBookmarks(): Promise<{ content: Recruitment[] }> {
+export async function getMyRecruitmentBookmarks(): Promise<{ items: Recruitment[] }> {
   return request({ method: 'GET', url: paths.users.myRecruitmentBookmarks })
 }
 
-export async function bookmarkRecruitment(recruitmentId: number): Promise<{ bookmarked: boolean }> {
+export async function bookmarkRecruitment(
+  recruitmentId: number,
+): Promise<RecruitmentBookmarkResult> {
   return request({ method: 'POST', url: paths.recruitments.bookmark(recruitmentId) })
 }
 
 export async function unbookmarkRecruitment(
   recruitmentId: number,
-): Promise<{ bookmarked: boolean }> {
+): Promise<RecruitmentBookmarkResult> {
   return request({ method: 'DELETE', url: paths.recruitments.bookmark(recruitmentId) })
 }
 
@@ -69,7 +72,7 @@ export async function applyRecruitment(
   })
 }
 
-export async function getApplications(recruitmentId: number): Promise<{ content: Application[] }> {
+export async function getApplications(recruitmentId: number): Promise<{ items: Application[] }> {
   return request({ method: 'GET', url: paths.recruitments.applications(recruitmentId) })
 }
 

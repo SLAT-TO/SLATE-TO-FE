@@ -50,7 +50,7 @@ export function DateRangeField({ value, onChange }: DateRangeFieldProps) {
 
       {/* 달력 (열렸을 때 트리거 아래에 가운데 정렬로 표시, 배경·테두리 없음) */}
       {open && (
-        <div className="mt-2 flex justify-center">
+        <div className="mt-10 flex justify-center">
           <DateRangeCalendar value={value} onChange={onChange} onComplete={() => setOpen(false)} />
         </div>
       )}

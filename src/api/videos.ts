@@ -1,4 +1,5 @@
 import { request } from './client'
+import { ApiError } from '../types/api'
 import {
   normalizeFeedback,
   normalizeFeedbackReply,
@@ -14,6 +15,7 @@ import type {
   BookmarkVideoResult,
   CreateVideoRequest,
   CreateVideoResult,
+  LinkReferenceFileResult,
   ReferenceFile,
   UpdateVideoRequest,
   UpdateVideoResult,
@@ -93,31 +95,51 @@ export async function validateYoutubeUrl(
   return request({ method: 'POST', url: paths.videos.validateYoutube, data: body })
 }
 
-export async function getReferenceFiles(videoId: number): Promise<{ items: ReferenceFile[] }> {
-  return request({ method: 'GET', url: paths.videos.referenceFiles(videoId) })
+export async function getReferenceFiles(
+  projectId: number,
+  videoId: number,
+): Promise<{ items: ReferenceFile[] }> {
+  return request({ method: 'GET', url: paths.projects.referenceFiles(projectId, videoId) })
 }
 
 export async function linkReferenceFile(
+  projectId: number,
   videoId: number,
   projectFileId: number,
-): Promise<ReferenceFile> {
+): Promise<LinkReferenceFileResult> {
   return request({
     method: 'POST',
-    url: paths.videos.referenceFiles(videoId),
+    url: paths.projects.referenceFiles(projectId, videoId),
     data: { projectFileId },
   })
 }
 
-export async function unlinkReferenceFile(videoId: number, referenceFileId: number): Promise<null> {
-  return request({ method: 'DELETE', url: paths.videos.referenceFile(videoId, referenceFileId) })
+export async function unlinkReferenceFile(
+  projectId: number,
+  videoId: number,
+  referenceFileId: number,
+): Promise<null> {
+  return request({
+    method: 'DELETE',
+    url: paths.projects.referenceFile(projectId, videoId, referenceFileId),
+  })
 }
 
-export async function getFeedbacks(videoId: number): Promise<{ items: Feedback[] }> {
+export async function getFeedbacks(
+  videoId: number,
+  options?: { guestId?: number },
+): Promise<{ items: Feedback[] }> {
   const result = await request<{ items: FeedbackStatusRaw[] }>({
     method: 'GET',
     url: paths.videos.feedbacks(videoId),
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
   })
   return { items: result.items.map(normalizeFeedback) }
+}
+
+/** Swagger: guestId만 body에 실음. 멤버는 JWT */
+function feedbackGuestBody(body: { guestId?: number }): { guestId?: number } {
+  return body.guestId != null ? { guestId: body.guestId } : {}
 }
 
 export async function createFeedback(
@@ -127,7 +149,12 @@ export async function createFeedback(
   const result = await request<FeedbackStatusRaw>({
     method: 'POST',
     url: paths.videos.feedbacks(videoId),
-    data: body,
+    data: {
+      content: body.content,
+      ...(body.startTime != null ? { startTime: body.startTime } : {}),
+      ...(body.endTime != null ? { endTime: body.endTime } : {}),
+      ...feedbackGuestBody(body),
+    },
   })
   return normalizeFeedback(result)
 }
@@ -139,13 +166,25 @@ export async function updateFeedback(
   const result = await request<FeedbackStatusRaw>({
     method: 'PATCH',
     url: paths.feedbacks.byId(feedbackId),
-    data: body,
+    data: {
+      ...(body.content != null ? { content: body.content } : {}),
+      ...(body.startTime != null ? { startTime: body.startTime } : {}),
+      ...(body.endTime != null ? { endTime: body.endTime } : {}),
+      ...feedbackGuestBody(body),
+    },
   })
   return normalizeFeedback(result)
 }
 
-export async function deleteFeedback(feedbackId: number): Promise<null> {
-  return request({ method: 'DELETE', url: paths.feedbacks.byId(feedbackId) })
+export async function deleteFeedback(
+  feedbackId: number,
+  options?: { guestId?: number },
+): Promise<null> {
+  return request({
+    method: 'DELETE',
+    url: paths.feedbacks.byId(feedbackId),
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+  })
 }
 
 export async function updateFeedbackStatus(
@@ -155,7 +194,7 @@ export async function updateFeedbackStatus(
   const result = await request<{ feedbackId: number; status: unknown; updatedAt: string }>({
     method: 'PATCH',
     url: paths.feedbacks.status(feedbackId),
-    data: body,
+    data: { status: body.status },
   })
   return { ...result, status: toFeedbackStatus(result.status) }
 }
@@ -175,7 +214,10 @@ export async function createReply(
   const result = await request<FeedbackReplyStatusRaw>({
     method: 'POST',
     url: paths.feedbacks.replies(feedbackId),
-    data: body,
+    data: {
+      content: body.content,
+      ...feedbackGuestBody(body),
+    },
   })
   return normalizeFeedbackReply(result)
 }
@@ -199,17 +241,36 @@ export async function updateReplyStatus(
   const result = await request<{ replyId: number; status: unknown; updatedAt: string }>({
     method: 'PATCH',
     url: paths.replies.status(replyId),
-    data: body,
+    data: { status: body.status },
   })
   return { ...result, status: toFeedbackStatus(result.status) }
 }
 
-export async function createShareLink(videoId: number): Promise<ShareLink> {
-  return request({ method: 'POST', url: paths.videos.shareLinks(videoId) })
+export async function createShareLink(
+  videoId: number,
+  body?: { expiredAt?: string },
+): Promise<ShareLink> {
+  return request({
+    method: 'POST',
+    url: paths.videos.shareLinks(videoId),
+    data: body ?? {},
+  })
 }
 
-export async function getShareLinks(videoId: number): Promise<{ items: ShareLink[] }> {
+/** BE는 영상당 단건 ShareLinkInfoResDTO. 없으면 404 — 호출부에서 처리 */
+export async function getShareLink(videoId: number): Promise<ShareLink> {
   return request({ method: 'GET', url: paths.videos.shareLinks(videoId) })
+}
+
+/** @deprecated BE 단건 응답 — getShareLink 사용. 하위호환용으로 items 래핑 */
+export async function getShareLinks(videoId: number): Promise<{ items: ShareLink[] }> {
+  try {
+    const link = await getShareLink(videoId)
+    return { items: [link] }
+  } catch (err) {
+    if (err instanceof ApiError && err.code === 'COMMON404') return { items: [] }
+    throw err
+  }
 }
 
 export async function accessShareLink(token: string): Promise<ShareLinkAccess> {
@@ -223,6 +284,9 @@ export async function registerGuest(
   return request({ method: 'POST', url: paths.shareLinks.guests(token), data: body })
 }
 
-export async function deactivateShareLink(shareLinkId: number): Promise<ShareLink> {
+/** BE 토글 — isActive만 갱신된 응답 */
+export async function deactivateShareLink(
+  shareLinkId: number,
+): Promise<{ shareLinkId: number; isActive: boolean }> {
   return request({ method: 'PATCH', url: paths.shareLinks.byId(shareLinkId) })
 }

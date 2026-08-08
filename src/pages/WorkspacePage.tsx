@@ -1,105 +1,107 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { deleteProject, getProjects, leaveProject, pinProject, unpinProject } from '../api/projects'
 import ProjectCard from '../domains/project/ProjectCard'
 import WorkspaceListSkeleton from '../domains/workspace/WorkspaceListSkeleton'
+import { Button } from '../components/Button'
 import ConfirmModal from '../components/ConfirmModal'
 import { projectMetaTags } from '../constants/projectLabels'
 import { projectStatusLabel } from '../constants/projectStatus'
 import type { ProjectSummary } from '../types/project'
 import { ApiError } from '../types/api'
 import { navigate } from '../utils/navigation'
+import {
+  useDeleteProjectMutation,
+  useLeaveProjectMutation,
+  useProjectsQuery,
+  useToggleProjectPinMutation,
+} from '../queries/projects'
 
 export default function WorkspacePage() {
-  const [projects, setProjects] = useState<ProjectSummary[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const projectsQuery = useProjectsQuery()
+  const pinMutation = useToggleProjectPinMutation()
+  const deleteMutation = useDeleteProjectMutation()
+  const leaveMutation = useLeaveProjectMutation()
+
   const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [leaveTarget, setLeaveTarget] = useState<ProjectSummary | null>(null)
-  const [leaveError, setLeaveError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
+  const projects = projectsQuery.data ?? []
+  const loading = projectsQuery.isPending && !projectsQuery.data
+  const fatalError =
+    projectsQuery.isError && !projectsQuery.data
+      ? projectsQuery.error instanceof ApiError
+        ? projectsQuery.error.message
+        : '프로젝트 목록을 불러오지 못했습니다.'
+      : null
+  const refreshError =
+    projectsQuery.isError && projectsQuery.data
+      ? projectsQuery.error instanceof ApiError
+        ? projectsQuery.error.message
+        : '프로젝트 목록을 새로고침하지 못했습니다.'
+      : null
 
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const result = await getProjects()
-        if (!cancelled) setProjects(result.items)
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : '프로젝트 목록을 불러오지 못했습니다.')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
+  const handleTogglePin = (project: ProjectSummary) => {
+    pinMutation.mutate({ projectId: project.id, next: !project.isPinned })
+  }
 
-    void load()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const handleTogglePin = useCallback(async (project: ProjectSummary) => {
-    const next = !project.isPinned
-    setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, isPinned: next } : p)))
-    try {
-      const result = next ? await pinProject(project.id) : await unpinProject(project.id)
-      setProjects((prev) =>
-        prev.map((p) => (p.id === project.id ? { ...p, isPinned: result.isPinned } : p)),
-      )
-    } catch {
-      setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, isPinned: !next } : p)))
-    }
-  }, [])
-
-  const confirmDelete = useCallback(async () => {
+  const confirmDelete = () => {
     if (!deleteTarget) return
-    try {
-      await deleteProject(deleteTarget.id)
-      setProjects((prev) => prev.filter((p) => p.id !== deleteTarget.id))
-      setDeleteTarget(null)
-      setDeleteError(null)
-    } catch (err) {
-      setDeleteTarget(null)
-      setDeleteError(err instanceof ApiError ? err.message : '프로젝트를 삭제하지 못했습니다.')
-    }
-  }, [deleteTarget])
+    const targetId = deleteTarget.id
+    deleteMutation.mutate(targetId, {
+      onSuccess: () => {
+        setDeleteTarget(null)
+        setActionError(null)
+      },
+      onError: (err) => {
+        setDeleteTarget(null)
+        setActionError(err instanceof ApiError ? err.message : '프로젝트를 삭제하지 못했습니다.')
+      },
+    })
+  }
 
-  const confirmLeave = useCallback(async () => {
+  const confirmLeave = () => {
     if (!leaveTarget) return
-    try {
-      await leaveProject(leaveTarget.id)
-      setProjects((prev) => prev.filter((p) => p.id !== leaveTarget.id))
-      setLeaveTarget(null)
-      setLeaveError(null)
-    } catch (err) {
-      setLeaveTarget(null)
-      setLeaveError(err instanceof ApiError ? err.message : '프로젝트에서 나가지 못했습니다.')
-    }
-  }, [leaveTarget])
+    const targetId = leaveTarget.id
+    leaveMutation.mutate(targetId, {
+      onSuccess: () => {
+        setLeaveTarget(null)
+        setActionError(null)
+      },
+      onError: (err) => {
+        setLeaveTarget(null)
+        setActionError(err instanceof ApiError ? err.message : '프로젝트에서 나가지 못했습니다.')
+      },
+    })
+  }
 
   return (
     <section className="flex flex-col gap-6">
-      <header>
+      <header className="flex items-center justify-between">
         <h1 className="text-head-lg text-neutral-11 font-bold">프로젝트 목록</h1>
+        <Button
+          variant="secondary"
+          size="sm"
+          width="auto"
+          onClick={() => navigate('/workspace/projects/new')}
+          className="border-primary text-primary hover:border-primary hover:text-primary hover:bg-main-1 px-3"
+        >
+          + 추가하기
+        </Button>
       </header>
 
       {loading && <WorkspaceListSkeleton />}
 
-      {!loading && error && <p className="text-body-sm text-warning">{error}</p>}
-      {deleteError && <p className="text-body-sm text-warning">{deleteError}</p>}
-      {leaveError && <p className="text-body-sm text-warning">{leaveError}</p>}
+      {!loading && fatalError && <p className="text-body-sm text-warning">{fatalError}</p>}
+      {refreshError && <p className="text-body-sm text-warning">{refreshError}</p>}
+      {actionError && <p className="text-body-sm text-warning">{actionError}</p>}
 
-      {!loading && !error && projects.length === 0 && (
+      {!loading && !fatalError && projects.length === 0 && (
         <p className="text-body-sm text-neutral-6">아직 등록된 프로젝트가 없어요</p>
       )}
 
-      {!loading && !error && projects.length > 0 && (
+      {!loading && !fatalError && projects.length > 0 && (
         <div className="flex flex-col gap-10">
           {projects.map((project) => (
             <ProjectCard
@@ -111,7 +113,7 @@ export default function WorkspacePage() {
               progress={project.deadlineProgressPercent ?? undefined}
               members={project.memberPreviewImageUrls.map((src) => ({ src }))}
               isPinned={project.isPinned}
-              onTogglePin={() => void handleTogglePin(project)}
+              onTogglePin={() => handleTogglePin(project)}
               relativeTime={
                 project.lastActivityAt
                   ? formatDistanceToNow(new Date(project.lastActivityAt), {

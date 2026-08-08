@@ -39,8 +39,6 @@ export function VideoDetailView({
 }: VideoDetailViewProps) {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  /** soft-fail된 부가 영역 안내 (영상 본문은 유지) */
-  const [partialErrors, setPartialErrors] = useState<string[]>([])
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
 
@@ -114,15 +112,9 @@ export function VideoDetailView({
     repliesByFeedback,
     newReply,
     setNewReply,
-    replyPendingStart,
-    replyPendingEnd,
-    isCapturingReplyRange,
     toggleReplies,
-    clearReplyPendingTime,
-    attachReplyCurrentTime,
-    toggleReplyRangeCapture,
     submitReply,
-  } = useFeedbackReplies(getCurrentTime)
+  } = useFeedbackReplies()
 
   const { members, setMembers, load: loadMembers } = useProjectMembersInvite(projectId)
 
@@ -132,24 +124,20 @@ export function VideoDetailView({
     async function load() {
       setLoading(true)
       setLoadError(null)
-      setPartialErrors([])
       try {
         // 영상 본문만 필수 — 참고파일·피드백·멤버는 실패해도 상세 유지
         await loadVideoDetail()
         if (cancelled) return
-        const softErrors: string[] = []
         await Promise.all([
-          loadReferenceFiles().catch(() => {
-            softErrors.push('참고 파일을 불러오지 못했습니다.')
-          }),
+          // 참고파일 API 부재/빈 응답은 빈 목록으로 취급
+          loadReferenceFiles().catch(() => {}),
           loadFeedbacks().catch(() => {
-            softErrors.push('피드백을 불러오지 못했습니다.')
+            if (!cancelled) window.alert('피드백을 불러오지 못했습니다.')
           }),
           loadMembers().catch(() => {
-            softErrors.push('참여 인원을 불러오지 못했습니다.')
+            if (!cancelled) window.alert('참여 인원을 불러오지 못했습니다.')
           }),
         ])
-        if (!cancelled) setPartialErrors(softErrors)
       } catch (err) {
         if (!cancelled) {
           setLoadError(err instanceof ApiError ? err.message : '영상 정보를 불러오지 못했습니다.')
@@ -220,14 +208,6 @@ export function VideoDetailView({
         </span>
       </div>
 
-      {partialErrors.length > 0 && (
-        <ul className="text-body-sm text-warning flex flex-col gap-1">
-          {partialErrors.map((message) => (
-            <li key={message}>{message}</li>
-          ))}
-        </ul>
-      )}
-
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="flex min-w-0 flex-1 flex-col gap-6">
           <VideoPlayerSection
@@ -287,13 +267,7 @@ export function VideoDetailView({
           repliesByFeedback={repliesByFeedback}
           newReply={newReply}
           setNewReply={setNewReply}
-          replyPendingStart={replyPendingStart}
-          replyPendingEnd={replyPendingEnd}
-          isCapturingReplyRange={isCapturingReplyRange}
           toggleReplies={toggleReplies}
-          clearReplyPendingTime={clearReplyPendingTime}
-          attachReplyCurrentTime={attachReplyCurrentTime}
-          toggleReplyRangeCapture={toggleReplyRangeCapture}
           submitReply={submitReply}
           meId={meId}
           onSeek={seekTo}
@@ -336,8 +310,10 @@ export function VideoDetailView({
 
       <EditVideoModal
         key={editOpen ? `video-${videoId}-open` : 'video-edit-closed'}
+        projectId={projectId}
         isOpen={editOpen}
         initialTitle={videoDetail?.title ?? ''}
+        initialYoutubeUrl={videoDetail?.youtubeUrl ?? ''}
         initialMemo={videoDetail?.memo ?? ''}
         onClose={() => setEditOpen(false)}
         onSubmit={handleUpdateVideo}

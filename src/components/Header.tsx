@@ -1,6 +1,6 @@
 import { navigate } from '../utils/navigation'
 import { useContext } from 'react'
-import { HeaderSlotContext } from '../layouts/headerSlotContext'
+import { HeaderSlotContentContext } from '../layouts/headerSlotContext'
 import HeaderProfileMenu from './HeaderProfileMenu'
 import { CONTENT_PX } from '../constants/layout'
 type HeaderProps = {
@@ -17,7 +17,7 @@ function BellIcon() {
 }
 
 export default function Header({ userName = '000' }: HeaderProps) {
-  const slot = useContext(HeaderSlotContext)
+  const slot = useContext(HeaderSlotContentContext)
   const headerLeft = slot?.headerLeft ?? null
   const headerRight = slot?.headerRight ?? null
 
