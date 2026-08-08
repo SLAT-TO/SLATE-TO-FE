@@ -1,6 +1,7 @@
 import { request } from './client'
 import { paths } from './paths'
 import type {
+  AppliedRecruitment,
   Application,
   CreateApplicationRequest,
   CreateRecruitmentRequest,
@@ -10,6 +11,7 @@ import type {
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
 } from '../types/recruitment'
+import type { CursorPage } from '../types/project'
 
 export async function getRecruitments(): Promise<{ items: Recruitment[] }> {
   return request({ method: 'GET', url: paths.recruitments.root })
@@ -38,15 +40,15 @@ export async function deleteRecruitment(recruitmentId: number): Promise<null> {
   return request({ method: 'DELETE', url: paths.recruitments.byId(recruitmentId) })
 }
 
-export async function getMyRecruitments(): Promise<{ items: Recruitment[] }> {
-  return request({ method: 'GET', url: paths.users.myRecruitments })
-}
-
-export async function getMyApplications(): Promise<{ items: Application[] }> {
+export async function getMyApplications(): Promise<CursorPage<AppliedRecruitment>> {
   return request({ method: 'GET', url: paths.users.myApplications })
 }
 
-export async function getMyRecruitmentBookmarks(): Promise<{ items: Recruitment[] }> {
+export async function getMyRecruitments(): Promise<CursorPage<Recruitment>> {
+  return request({ method: 'GET', url: paths.users.myRecruitments })
+}
+
+export async function getMyRecruitmentBookmarks(): Promise<CursorPage<Recruitment>> {
   return request({ method: 'GET', url: paths.users.myRecruitmentBookmarks })
 }
 

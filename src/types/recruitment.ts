@@ -85,3 +85,10 @@ export type RecruitmentDetailResponse = Recruitment & {
   myApplicationStatus: ApplicationStatusValue | null
   updatedAt: string
 }
+
+/** GET /users/me/applications — 공고 정보 + 내 지원 정보 */
+export type AppliedRecruitment = Recruitment & {
+  applicationId: number
+  applicationStatus: ApplicationStatusValue
+  appliedAt: string
+}
