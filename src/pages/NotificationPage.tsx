@@ -53,6 +53,25 @@ function NotificationCard({
   )
 }
 
+function NotificationListSkeleton() {
+  return (
+    <ul
+      className="flex flex-col gap-6"
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label="알림 목록 불러오는 중"
+    >
+      {Array.from({ length: 5 }, (_, index) => (
+        <li
+          key={index}
+          className="border-border-input bg-neutral-2 flex h-30 w-full items-center rounded-lg border-[0.749px] px-4 py-3"
+        />
+      ))}
+    </ul>
+  )
+}
+
 /** 알림 type 기준 이동 경로 산출 — BE targetType은 enum 미정의(자유 문자열)라 type으로 분기 */
 function notificationLink(notification: AppNotification): string | null {
   switch (notification.type) {
@@ -104,7 +123,7 @@ export default function NotificationPage() {
         </Button>
       </header>
 
-      {loading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
+      {loading && <NotificationListSkeleton />}
       {error && <p className="text-body-sm text-warning">{error}</p>}
 
       {!loading && !error && notifications.length === 0 && (

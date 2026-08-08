@@ -7,12 +7,18 @@ import { navigate } from '../utils/navigation'
 import ApplyModal from '../domains/recruit/ApplyModal'
 import { MOCK_JOB_DETAILS } from '../domains/recruit/mockJobDetail'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 function JobDetailBackHeader() {
+  const nav = useNavigate()
+  const location = useLocation()
+  // 앱 내부 이동일 때만 히스토리가 쌓임 (직접 진입·새 탭은 'default')
+  const canGoBack = location.key !== 'default'
+
   return (
     <button
       type="button"
-      onClick={() => navigate('/matching')}
+      onClick={() => (canGoBack ? nav(-1) : nav('/matching'))}
       className="text-caption-lg text-neutral-6 hover:text-neutral-9 w-fit"
     >
       &lt; 공고 목록
@@ -45,7 +51,16 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
 
       <div className="flex flex-col gap-5.25 lg:flex-row">
         <JobInfoCard detail={detail} />
-        <AuthorCard author={detail.author} />
+        <AuthorCard
+          author={detail.author}
+          onViewProfile={() => {
+            if (isOwner) {
+              navigate('/mypage')
+            } else {
+              navigate(`/users/${detail.author.userId}`)
+            }
+          }}
+        />
       </div>
 
       <section className="bg-bg-primary shadow-card min-h-70 rounded-xl p-6">

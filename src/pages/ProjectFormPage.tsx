@@ -9,6 +9,7 @@ import { portfolioSchema, type PortfolioFormValues } from '../schemas/portfolio'
 import { validateField } from '../utils/validateField'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
+import { navigate } from '../utils/navigation'
 
 type ProjectFormMode = 'create' | 'edit'
 
@@ -80,8 +81,7 @@ function ProjectFormPage({ mode }: ProjectFormPageProps) {
   }
 
   const handleCancel = () => {
-    // 마이페이지로 이동 (라우터 확정 후 navigate 연결).
-    console.log('취소')
+    navigate('/mypage')
   }
 
   const thumbnail = getYoutubeThumbnail(values.youtubeUrl)
