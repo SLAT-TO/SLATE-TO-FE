@@ -118,6 +118,13 @@ export type MockMemberRecord = {
   joinedAt: string
 }
 
+export type MockRecruitmentRecord = Recruitment & {
+  description: string
+  shootingPeriod: string
+  contact: string
+  updatedAt: string
+}
+
 export type MockProjectFileRecord = Omit<ProjectFile, 'uploader'> & {
   projectId: number
   storageKey: string
@@ -143,7 +150,7 @@ export type MockDb = {
   feedbacks: Feedback[]
   replies: FeedbackReply[]
   shareLinks: ShareLink[]
-  recruitments: Recruitment[]
+  recruitments: MockRecruitmentRecord[]
   applications: Application[]
   recruitmentBookmarks: Array<{ userId: number; recruitmentId: number }>
   schedules: Schedule[]
@@ -411,7 +418,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: true,
       writer: toWriter(completeUser),
+      description: '감정선을 살리는 편집이 가능하신 분을 찾습니다.',
+      shootingPeriod: '2026.08.25 ~ 2026.09.10',
+      contact: 'slate@example.com',
       createdAt: '2026-06-15T00:00:00Z',
+      updatedAt: '2026-06-15T00:00:00Z',
     },
     {
       id: 2,
@@ -428,7 +439,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: false,
       writer: toWriter(publicEditor),
+      description: '지방 촬영이 가능하신 촬영 감독을 모십니다.',
+      shootingPeriod: '2026.09.01 ~ 2026.10.15',
+      contact: 'park@example.com',
       createdAt: '2026-07-01T00:00:00Z',
+      updatedAt: '2026-07-01T00:00:00Z',
     },
     {
       id: 3,
@@ -445,7 +460,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: true,
       writer: toWriter(completeUser),
+      description: '아이돌 그룹 신곡 뮤직비디오 연출을 맡아주실 분을 찾습니다.',
+      shootingPeriod: '2026.08.20 ~ 2026.08.28',
+      contact: 'slate@example.com',
       createdAt: '2026-07-03T00:00:00Z',
+      updatedAt: '2026-07-03T00:00:00Z',
     },
     {
       id: 4,
@@ -462,7 +481,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: false,
       writer: toWriter(publicEditor),
+      description: '주말 스튜디오 작업이 가능하신 분을 우대합니다.',
+      shootingPeriod: '2026.09.05 ~ 2026.09.20',
+      contact: 'park@example.com',
       createdAt: '2026-07-05T00:00:00Z',
+      updatedAt: '2026-07-05T00:00:00Z',
     },
     {
       id: 5,
@@ -479,7 +502,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: true,
       writer: toWriter(completeUser),
+      description: '브랜드 광고 세트 디자인을 담당하실 미술팀을 모집합니다.',
+      shootingPeriod: '2026.08.22 ~ 2026.09.02',
+      contact: 'slate@example.com',
       createdAt: '2026-07-08T00:00:00Z',
+      updatedAt: '2026-07-08T00:00:00Z',
     },
     {
       id: 6,
@@ -496,7 +523,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: false,
       writer: toWriter(publicEditor),
+      description: '독립영화 제작 경험이 있으신 분을 우대합니다.',
+      shootingPeriod: '2026.09.10 ~ 2026.11.30',
+      contact: 'park@example.com',
       createdAt: '2026-07-10T00:00:00Z',
+      updatedAt: '2026-07-10T00:00:00Z',
     },
   ],
   applications: [
