@@ -16,7 +16,7 @@ import AddVideoModal from './AddVideoModal'
 import EditVideoModal from './EditVideoModal'
 import type { VideoListItem } from '../../types/video'
 import type { CreateVideoValues } from '../../schemas/video'
-import { projectKeys } from '../../queries/keys'
+import { invalidateProjectActivityData } from '../../queries/projectInvalidation'
 
 /** 북마크한 영상을 목록 상단으로 */
 function sortVideosByBookmark(items: VideoListItem[]): VideoListItem[] {
@@ -48,10 +48,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
 
   const refreshProjectData = () => {
-    void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
-    void queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) })
-    void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
-    void queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'latest-video'] })
+    void invalidateProjectActivityData(queryClient, projectId)
   }
 
   useEffect(() => {

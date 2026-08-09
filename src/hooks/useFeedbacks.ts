@@ -9,7 +9,7 @@ import {
   updateFeedbackStatus,
 } from '../api/videos'
 import type { Feedback } from '../types/feedback'
-import { projectKeys } from '../queries/keys'
+import { invalidateProjectActivityData } from '../queries/projectInvalidation'
 
 export type FeedbackFilter = 'all' | 'unresolved'
 
@@ -47,9 +47,7 @@ export function useFeedbacks(
 
   const refreshProjectActivity = useCallback(() => {
     if (projectId == null) return
-    void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
-    void queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) })
-    void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
+    void invalidateProjectActivityData(queryClient, projectId)
   }, [projectId, queryClient])
 
   const attachCurrentTime = useCallback(() => {

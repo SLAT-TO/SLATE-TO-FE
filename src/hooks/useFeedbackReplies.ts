@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import { createReply, getReplies } from '../api/videos'
 import type { FeedbackReply } from '../types/feedback'
-import { projectKeys } from '../queries/keys'
+import { invalidateProjectActivityData } from '../queries/projectInvalidation'
 
 /** 피드백 답글 펼침/목록/작성
  * @param guestId 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
@@ -51,9 +51,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
       }))
       resetReplyCompose()
       if (projectId != null) {
-        void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
-        void queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) })
-        void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
+        void invalidateProjectActivityData(queryClient, projectId)
       }
     },
     [newReply, guestId, projectId, queryClient, resetReplyCompose],
