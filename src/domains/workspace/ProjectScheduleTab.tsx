@@ -57,7 +57,7 @@ interface ScheduleDetailCardProps {
   members: MemberSummary[]
   onEdit: () => void
   onDelete: () => void
-  onSaveNote: (note: string) => void
+  onSaveNote: (note: string) => Promise<void>
 }
 
 // "일정 상세" 아래 카드 한 쌍(정보 + 나에게만 보이는 메모) — 워크스페이스 일정 탭 전용 레이아웃
@@ -70,14 +70,17 @@ function ScheduleDetailCard({
 }: ScheduleDetailCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [note, setNote] = useState(schedule.privateMemo ?? '')
+  const [noteSaved, setNoteSaved] = useState(false)
 
   const participantNames = schedule.participantIds
     .map((id) => members.find((m) => m.userId === id)?.nickname)
     .filter((name): name is string => !!name)
 
-  const handleSendNote = () => {
+  const handleSendNote = async () => {
     if (note.trim() === (schedule.privateMemo ?? '')) return
-    onSaveNote(note.trim())
+    await onSaveNote(note.trim())
+    setNoteSaved(true)
+    window.setTimeout(() => setNoteSaved(false), 2000)
   }
 
   return (
@@ -114,27 +117,35 @@ function ScheduleDetailCard({
       </div>
 
       <div className="border-border-input flex h-full flex-col justify-between gap-2 rounded-[10.242px] border bg-white p-4 shadow-[0_3.414px_12.461px_rgba(169,204,244,0.15)]">
-        <span className="text-caption-sm text-neutral-5 font-semibold tracking-[-0.24px]">
+        <span
+          className={`text-caption-sm text-neutral-5 font-semibold tracking-[-0.24px] ${
+            note.trim() ? 'hidden' : ''
+          }`}
+        >
           참고 (나에게만 보여요)
         </span>
         <div className="flex items-end justify-between gap-2">
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            onBlur={handleSendNote}
             placeholder="클릭하여 메모 추가하기"
             rows={2}
             className="text-caption-sm text-neutral-5 placeholder:text-neutral-5 min-w-0 flex-1 resize-none bg-transparent tracking-[-0.24px] outline-none"
           />
           <button
             type="button"
-            onClick={handleSendNote}
+            onClick={() => void handleSendNote()}
             aria-label="메모 저장"
             className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2378FE]"
           >
             <InlineIcon svg={paperPlaneIcon} className="text-neutral-1 size-4" />
           </button>
         </div>
+        {noteSaved && (
+          <p className="text-caption-sm text-success" role="status" aria-live="polite">
+            저장되었습니다.
+          </p>
+        )}
       </div>
 
       <ConfirmModal
