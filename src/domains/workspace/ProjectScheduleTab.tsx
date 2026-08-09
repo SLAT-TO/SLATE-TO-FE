@@ -71,6 +71,8 @@ function ScheduleDetailCard({
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [note, setNote] = useState(schedule.privateMemo ?? '')
   const [noteSaved, setNoteSaved] = useState(false)
+  const [noteSaving, setNoteSaving] = useState(false)
+  const [noteError, setNoteError] = useState('')
 
   const participantNames = schedule.participantIds
     .map((id) => members.find((m) => m.userId === id)?.nickname)
@@ -78,9 +80,17 @@ function ScheduleDetailCard({
 
   const handleSendNote = async () => {
     if (note.trim() === (schedule.privateMemo ?? '')) return
-    await onSaveNote(note.trim())
-    setNoteSaved(true)
-    window.setTimeout(() => setNoteSaved(false), 2000)
+    setNoteSaving(true)
+    setNoteError('')
+    try {
+      await onSaveNote(note.trim())
+      setNoteSaved(true)
+      window.setTimeout(() => setNoteSaved(false), 2000)
+    } catch {
+      setNoteError('메모를 저장하지 못했습니다. 다시 시도해주세요.')
+    } finally {
+      setNoteSaving(false)
+    }
   }
 
   return (
@@ -136,7 +146,8 @@ function ScheduleDetailCard({
             type="button"
             onClick={() => void handleSendNote()}
             aria-label="메모 저장"
-            className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2378FE]"
+            disabled={noteSaving}
+            className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#2378FE] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <InlineIcon svg={paperPlaneIcon} className="text-neutral-1 size-4" />
           </button>
@@ -144,6 +155,11 @@ function ScheduleDetailCard({
         {noteSaved && (
           <p className="text-caption-sm text-success" role="status" aria-live="polite">
             저장되었습니다.
+          </p>
+        )}
+        {noteError && (
+          <p className="text-caption-sm text-warning" role="alert">
+            {noteError}
           </p>
         )}
       </div>
@@ -306,6 +322,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
       setSchedules((prev) => prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s)))
     } catch {
       setActionError('메모를 저장하지 못했습니다. 다시 시도해주세요.')
+      throw new Error('메모 저장에 실패했습니다.')
     }
   }
 
