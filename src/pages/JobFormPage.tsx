@@ -12,8 +12,13 @@ import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import { navigate } from '../utils/navigation'
 import { validateField } from '../utils/validateField'
 import { jobPostSchema } from '../schemas/jobPost'
-import { createRecruitment } from '../api/recruitments'
-import { toRecruitmentRequest } from '../utils/recruitmentForm'
+import { createRecruitment, updateRecruitment } from '../api/recruitments'
+import { useRecruitmentDetail } from '../hooks/useRecruitmentDetail'
+import {
+  toRecruitmentRequest,
+  parseDateString,
+  parseShootingPeriod,
+} from '../utils/recruitmentForm'
 import {
   ROLE_OPTIONS,
   VIDEO_CATEGORY_OPTIONS,
@@ -21,7 +26,7 @@ import {
   ONBOARDING_REGION_OPTIONS,
 } from '../constants'
 
-function JobFormHeader() {
+function JobFormHeader({ title }: { title: string }) {
   return (
     <div className="flex flex-col gap-2">
       <button
@@ -31,12 +36,13 @@ function JobFormHeader() {
       >
         &lt; 공고 목록
       </button>
-      <HeaderTitle>공고 작성</HeaderTitle>
+      <HeaderTitle>{title}</HeaderTitle>
     </div>
   )
 }
 
-const HEADER = <JobFormHeader />
+const CREATE_HEADER = <JobFormHeader title="공고 작성" />
+const EDIT_HEADER = <JobFormHeader title="공고 수정" />
 
 interface FormValues {
   title: string
@@ -64,12 +70,36 @@ const INITIAL_VALUES: FormValues = {
 
 type FormErrors = Partial<Record<keyof FormValues, string>>
 
-function JobFormPage() {
-  useHeaderSlot(HEADER)
+interface JobFormPageProps {
+  mode: 'create' | 'edit'
+  jobId?: number
+}
+
+function JobFormPage({ mode, jobId }: JobFormPageProps) {
+  const isEdit = mode === 'edit'
+  useHeaderSlot(isEdit ? EDIT_HEADER : CREATE_HEADER)
 
   const [values, setValues] = useState<FormValues>(INITIAL_VALUES)
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitting, setSubmitting] = useState(false)
+  const { detail, loading, error } = useRecruitmentDetail(isEdit ? (jobId ?? 0) : 0)
+  const [filledId, setFilledId] = useState<number | null>(null)
+
+  // 서버 응답 도착 시 한 번만 폼에 채운다 (effect 대신 렌더 중 조정)
+  if (isEdit && detail && filledId !== detail.id) {
+    setFilledId(detail.id)
+    setValues({
+      title: detail.title,
+      deadline: parseDateString(detail.deadline),
+      recruitPart: detail.recruitPart,
+      location: detail.location,
+      category: detail.category,
+      lengthType: detail.lengthType ?? '',
+      shootingPeriod: parseShootingPeriod(detail.shootingPeriod),
+      pay: detail.pay ?? '',
+      description: detail.description ?? '',
+    })
+  }
 
   const handleChange = (field: keyof FormValues) => (value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }))
@@ -94,14 +124,32 @@ function JobFormPage() {
 
     setSubmitting(true)
     try {
-      const created = await createRecruitment(toRecruitmentRequest(result.data))
-      navigate(`/matching/${created.id}`)
-    } catch (error) {
-      console.error(error)
-      alert('공고 등록에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      const body = toRecruitmentRequest(result.data)
+      if (isEdit && jobId) {
+        await updateRecruitment(jobId, body)
+        navigate(`/matching/${jobId}`)
+      } else {
+        const created = await createRecruitment(body)
+        navigate(`/matching/${created.id}`)
+      }
+    } catch (err) {
+      console.error(err)
+      alert(
+        isEdit
+          ? '공고 수정에 실패했습니다. 잠시 후 다시 시도해주세요.'
+          : '공고 등록에 실패했습니다. 잠시 후 다시 시도해주세요.',
+      )
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (isEdit && loading) {
+    return <p className="text-body-sm text-neutral-6">불러오는 중…</p>
+  }
+
+  if (isEdit && (error || !detail)) {
+    return <p className="text-body-sm text-neutral-6">{error ?? '공고를 찾을 수 없습니다.'}</p>
   }
 
   return (
@@ -199,7 +247,7 @@ function JobFormPage() {
 
       <div className="flex justify-center gap-3">
         <Button onClick={handleSubmit} disabled={submitting} className="w-[180px]">
-          {submitting ? '등록 중...' : '등록'}
+          {submitting ? (isEdit ? '수정 중...' : '등록 중...') : isEdit ? '수정' : '등록'}
         </Button>
         <Button
           variant="secondary"

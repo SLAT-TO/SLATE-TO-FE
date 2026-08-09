@@ -29,3 +29,22 @@ export function toRecruitmentRequest(values: JobPostFormValues): CreateRecruitme
     deadline: toDateString(values.deadline),
   }
 }
+
+/** 'YYYY-MM-DD' → Date (로컬 자정 기준) */
+export function parseDateString(value: string | null | undefined): Date | undefined {
+  if (!value) return undefined
+  const [y, m, d] = value.split('-').map(Number)
+  if (!y || !m || !d) return undefined
+  const date = new Date(y, m - 1, d)
+  return Number.isNaN(date.getTime()) ? undefined : date
+}
+
+/** '2026-08-10 ~ 2026-08-13' → { from, to }. 형식이 다르면 undefined */
+export function parseShootingPeriod(value: string | null | undefined) {
+  if (!value) return undefined
+  const [rawFrom, rawTo] = value.split('~').map((s) => s.trim())
+  const from = parseDateString(rawFrom)
+  const to = parseDateString(rawTo)
+  if (!from || !to) return undefined
+  return { from, to }
+}

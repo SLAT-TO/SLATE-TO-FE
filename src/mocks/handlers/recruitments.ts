@@ -100,8 +100,8 @@ export const recruitmentHandlers = [
         locations: user.location ? ([user.location] as UserRegion[]) : [],
       },
       description: body.description,
-      shootingPeriod: '',
-      contact: '',
+      shootingPeriod: body.shootingPeriod ?? '',
+      contact: body.contact ?? '',
       createdAt: now,
       updatedAt: now,
     }

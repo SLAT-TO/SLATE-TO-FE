@@ -56,7 +56,11 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <JobDetailHeader detail={detail} onBookmarkClick={() => void handleBookmarkClick()} />
+      <JobDetailHeader
+        detail={detail}
+        onBookmarkClick={() => void handleBookmarkClick()}
+        onDeleteClick={() => {}}
+      />
 
       <div className="flex flex-col gap-5.25 lg:flex-row">
         <JobInfoCard detail={detail} />
