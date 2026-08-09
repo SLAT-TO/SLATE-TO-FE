@@ -34,14 +34,15 @@ export type RecruitmentListResponse = CursorPage<Recruitment>
 export type CreateRecruitmentRequest = {
   title: string
   description: string
-  category: UserCategory
+  category?: UserCategory
   lengthType?: ProjectLengthType
   recruitPart: UserRole
-  location: UserRegion
+  location?: UserRegion
+  shootingPeriod?: string
   pay?: string
-  deadline: string
+  contact?: string
+  deadline?: string
 }
-
 export type UpdateRecruitmentRequest = Partial<CreateRecruitmentRequest> & {
   status?: string
 }
