@@ -27,7 +27,9 @@ function ShareLinkModalBody({ videoId, onClose }: { videoId: number; onClose: ()
         } catch (err) {
           if (
             !(err instanceof ApiError) ||
-            (err.code !== 'COMMON404' && err.code !== 'SHARE_LINK404')
+            (err.code !== 'COMMON404' &&
+              err.code !== 'SHARE_LINK404' &&
+              err.code !== 'SHARELINK404')
           ) {
             throw err
           }
