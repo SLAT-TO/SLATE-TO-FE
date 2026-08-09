@@ -40,7 +40,10 @@ export default function WorkspacePage() {
     })),
   })
   const latestThumbnailByProjectId = new Map(
-    projects.map((project, index) => [project.id, latestVideoQueries[index]?.data?.items[0]?.thumbnailUrl]),
+    projects.map((project, index) => [
+      project.id,
+      latestVideoQueries[index]?.data?.items[0]?.thumbnailUrl,
+    ]),
   )
   const recentActivityQueries = useQueries({
     queries: projects.map((project) => ({
@@ -50,7 +53,10 @@ export default function WorkspacePage() {
     })),
   })
   const recentActivityTimeByProjectId = new Map(
-    projects.map((project, index) => [project.id, recentActivityQueries[index]?.data?.items[0]?.createdAt]),
+    projects.map((project, index) => [
+      project.id,
+      recentActivityQueries[index]?.data?.items[0]?.createdAt,
+    ]),
   )
   const loading = projectsQuery.isPending && !projectsQuery.data
   const fatalError =

@@ -104,7 +104,9 @@ const ProjectCard = ({
       <div className="flex gap-10">
         <div className="bg-neutral-2 flex aspect-23/8 w-2/5 shrink-0 items-center justify-center overflow-hidden rounded-lg">
           {thumbnailUrl && <img src={thumbnailUrl} alt="" className="h-full w-full object-cover" />}
-          <p className={thumbnailUrl ? 'hidden' : 'text-caption-lg text-neutral-6 px-4 text-center'}>
+          <p
+            className={thumbnailUrl ? 'hidden' : 'text-caption-lg text-neutral-6 px-4 text-center'}
+          >
             아직 등록된 영상이 없어요
           </p>
         </div>
