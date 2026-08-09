@@ -62,7 +62,7 @@ export function useVideoDetail(projectId: number, videoId: number, onDeleted: ()
               title: result.title,
               memo: result.memo,
               updatedAt: result.updatedAt,
-              youtubeUrl: result.youtubeUrl ?? values.youtubeUrl ?? prev.youtubeUrl,
+              youtubeUrl: result.youtubeUrl ?? prev.youtubeUrl,
             }
           : prev,
       )

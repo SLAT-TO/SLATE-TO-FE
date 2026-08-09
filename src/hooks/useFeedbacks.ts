@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import {
   createFeedback,
@@ -8,13 +9,20 @@ import {
   updateFeedbackStatus,
 } from '../api/videos'
 import type { Feedback } from '../types/feedback'
+import { projectKeys } from '../queries/keys'
 
 export type FeedbackFilter = 'all' | 'unresolved'
 
 /** 영상 상세의 피드백 목록 · 작성(구간 첨부) · 수정 · 삭제 · 해결 토글을 다루는 훅
  * @param getCurrentTime 플레이어 실제 재생 시각(초) — 클릭 시점에 읽어 단일/구간 첨부
  * @param guestId 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
-export function useFeedbacks(videoId: number, getCurrentTime: () => number, guestId?: number) {
+export function useFeedbacks(
+  videoId: number,
+  getCurrentTime: () => number,
+  guestId?: number,
+  projectId?: number,
+) {
+  const queryClient = useQueryClient()
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [filter, setFilter] = useState<FeedbackFilter>('all')
   const [newFeedback, setNewFeedback] = useState('')
@@ -36,6 +44,13 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
     setPendingEnd(null)
     setIsCapturingRange(false)
   }, [])
+
+  const refreshProjectActivity = useCallback(() => {
+    if (projectId == null) return
+    void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
+    void queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) })
+    void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
+  }, [projectId, queryClient])
 
   const attachCurrentTime = useCallback(() => {
     setPendingStart(Math.floor(getCurrentTime()))
@@ -59,7 +74,7 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
 
   const submitFeedback = useCallback(async () => {
     if (!newFeedback.trim()) return
-    const actor = await resolveFeedbackActor(guestId)
+    const actor = resolveFeedbackActor(guestId)
     const created = await createFeedback(videoId, {
       content: newFeedback.trim(),
       startTime: pendingStart ?? undefined,
@@ -69,7 +84,16 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
     setFeedbacks((prev) => [created, ...prev])
     setNewFeedback('')
     clearPendingTime()
-  }, [videoId, newFeedback, pendingStart, pendingEnd, guestId, clearPendingTime])
+    refreshProjectActivity()
+  }, [
+    videoId,
+    newFeedback,
+    pendingStart,
+    pendingEnd,
+    guestId,
+    clearPendingTime,
+    refreshProjectActivity,
+  ])
 
   /** 체크 아이콘 토글 — UI 먼저 반영 후 status API 호출 (실패 시 롤백) */
   const toggleResolved = useCallback(async (feedback: Feedback) => {
@@ -99,7 +123,7 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
 
   const removeFeedback = useCallback(
     async (feedbackId: number) => {
-      const actor = await resolveFeedbackActor(guestId)
+      const actor = resolveFeedbackActor(guestId)
       await deleteFeedback(feedbackId, actor)
       setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== feedbackId))
     },
@@ -108,7 +132,7 @@ export function useFeedbacks(videoId: number, getCurrentTime: () => number, gues
 
   const editFeedback = useCallback(
     async (feedbackId: number, content: string) => {
-      const actor = await resolveFeedbackActor(guestId)
+      const actor = resolveFeedbackActor(guestId)
       const updated = await updateFeedback(feedbackId, { content, ...actor })
       setFeedbacks((prev) =>
         prev.map((f) =>

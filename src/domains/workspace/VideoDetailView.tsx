@@ -105,7 +105,7 @@ export function VideoDetailView({
     startEditFeedback,
     cancelEditFeedback,
     saveEditFeedback,
-  } = useFeedbacks(videoId, getCurrentTime)
+  } = useFeedbacks(videoId, getCurrentTime, undefined, projectId)
 
   const {
     expandedFeedbackId,
@@ -114,7 +114,7 @@ export function VideoDetailView({
     setNewReply,
     toggleReplies,
     submitReply,
-  } = useFeedbackReplies()
+  } = useFeedbackReplies(undefined, projectId)
 
   const { members, setMembers, load: loadMembers } = useProjectMembersInvite(projectId)
 
@@ -310,7 +310,6 @@ export function VideoDetailView({
 
       <EditVideoModal
         key={editOpen ? `video-${videoId}-open` : 'video-edit-closed'}
-        projectId={projectId}
         isOpen={editOpen}
         initialTitle={videoDetail?.title ?? ''}
         initialYoutubeUrl={videoDetail?.youtubeUrl ?? ''}

@@ -1,11 +1,14 @@
 import { useCallback, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import { createReply, getReplies } from '../api/videos'
 import type { FeedbackReply } from '../types/feedback'
+import { projectKeys } from '../queries/keys'
 
 /** 피드백 답글 펼침/목록/작성
  * @param guestId 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
-export function useFeedbackReplies(guestId?: number) {
+export function useFeedbackReplies(guestId?: number, projectId?: number) {
+  const queryClient = useQueryClient()
   const [expandedFeedbackId, setExpandedFeedbackId] = useState<number | null>(null)
   const [repliesByFeedback, setRepliesByFeedback] = useState<Record<number, FeedbackReply[]>>({})
   const [newReply, setNewReply] = useState('')
@@ -37,7 +40,7 @@ export function useFeedbackReplies(guestId?: number) {
   const submitReply = useCallback(
     async (feedbackId: number) => {
       if (!newReply.trim()) return
-      const actor = await resolveFeedbackActor(guestId)
+      const actor = resolveFeedbackActor(guestId)
       const created = await createReply(feedbackId, {
         content: newReply.trim(),
         ...actor,
@@ -47,8 +50,13 @@ export function useFeedbackReplies(guestId?: number) {
         [feedbackId]: [...(prev[feedbackId] ?? []), created],
       }))
       resetReplyCompose()
+      if (projectId != null) {
+        void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
+        void queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) })
+        void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
+      }
     },
-    [newReply, guestId, resetReplyCompose],
+    [newReply, guestId, projectId, queryClient, resetReplyCompose],
   )
 
   return {
