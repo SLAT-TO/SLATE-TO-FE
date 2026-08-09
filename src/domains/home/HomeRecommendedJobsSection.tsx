@@ -28,7 +28,16 @@ export default function HomeRecommendedJobsSection({
 }: HomeRecommendedJobsSectionProps) {
   return (
     <section className="flex flex-col gap-5">
-      <h2 className="text-head-sm text-neutral-11 font-bold">추천 공고</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-head-sm text-neutral-11 font-bold">추천 공고</h2>
+        <button
+          type="button"
+          onClick={() => navigate('/matching')}
+          className="text-body-sm text-neutral-11 font-semibold tracking-[-0.32px] capitalize"
+        >
+          전체 보기
+        </button>
+      </div>
 
       {loading && (
         <div

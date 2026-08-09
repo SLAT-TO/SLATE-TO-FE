@@ -8,7 +8,7 @@ import type {
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
 } from '../../types/recruitment'
-import { allocId, db, requireUser } from '../db'
+import { allocId, db, requireUser, type MockRecruitmentRecord } from '../db'
 import { badRequest, notFound, unauthorized } from '../errors'
 import { created, ok } from '../response'
 
@@ -57,7 +57,19 @@ export const recruitmentHandlers = [
     const recruitment = db.recruitments.find((r) => r.id === Number(params.recruitmentId))
     if (!recruitment) return notFound()
     recruitment.viewCount += 1
-    return HttpResponse.json(ok(toResponse(recruitment, user.id)), { status: 200 })
+
+    const applications = db.applications.filter((a) => a.recruitmentId === recruitment.id)
+    const mine = applications.find((a) => a.userId === user.id)
+
+    return HttpResponse.json(
+      ok({
+        ...toResponse(recruitment, user.id),
+        applicantCount: applications.length,
+        hasApplied: Boolean(mine),
+        myApplicationStatus: mine?.status ?? null,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.post(paths.recruitments.root, async ({ request }) => {
@@ -65,7 +77,8 @@ export const recruitmentHandlers = [
     if (!user) return unauthorized()
     const body = (await request.json()) as CreateRecruitmentRequest
     if (!body.title) return badRequest()
-    const recruitment: Recruitment = {
+    const now = new Date().toISOString()
+    const recruitment: MockRecruitmentRecord = {
       id: allocId(),
       title: body.title,
       category: body.category ?? 'ETC',
@@ -86,7 +99,11 @@ export const recruitmentHandlers = [
         primaryRole: user.primaryRole,
         locations: user.location ? ([user.location] as UserRegion[]) : [],
       },
-      createdAt: new Date().toISOString(),
+      description: body.description,
+      shootingPeriod: '',
+      contact: '',
+      createdAt: now,
+      updatedAt: now,
     }
     db.recruitments.unshift(recruitment)
     return HttpResponse.json(created(recruitment), { status: 201 })
