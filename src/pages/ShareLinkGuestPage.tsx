@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { accessShareLink, registerGuest } from '../api/videos'
+import { getAccessToken } from '../api/client'
+import { getMe } from '../api/users'
 import { useFeedbacks } from '../hooks/useFeedbacks'
 import { useFeedbackReplies } from '../hooks/useFeedbackReplies'
 import FeedbackPanel from '../domains/workspace/FeedbackPanel'
@@ -25,6 +27,8 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [guestId, setGuestId] = useState<number | null>(null)
+  const [meId, setMeId] = useState<number | null>(null)
+  const [authResolved, setAuthResolved] = useState(() => !getAccessToken())
   const [registering, setRegistering] = useState(false)
   const [registerError, setRegisterError] = useState<string | null>(null)
 
@@ -41,6 +45,26 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
       cancelled = true
     }
   }, [token])
+
+  useEffect(() => {
+    if (!getAccessToken()) return
+
+    let cancelled = false
+    void getMe()
+      .then((me) => {
+        if (!cancelled) setMeId(me.id)
+      })
+      .catch(() => {
+        if (!cancelled) setMeId(null)
+      })
+      .finally(() => {
+        if (!cancelled) setAuthResolved(true)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const videoId = access?.videoId ?? 0
 
@@ -66,7 +90,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     startEditFeedback,
     cancelEditFeedback,
     saveEditFeedback,
-  } = useFeedbacks(videoId, () => 0, guestId ?? undefined)
+  } = useFeedbacks(videoId, () => 0, meId !== null ? undefined : (guestId ?? undefined))
 
   const {
     expandedFeedbackId,
@@ -75,12 +99,12 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     setNewReply,
     toggleReplies,
     submitReply,
-  } = useFeedbackReplies(guestId ?? undefined)
+  } = useFeedbackReplies(meId !== null ? undefined : (guestId ?? undefined))
 
   useEffect(() => {
-    if (guestId === null || !access) return
+    if (!access || !authResolved || (meId === null && guestId === null)) return
     void loadFeedbacks()
-  }, [guestId, access, loadFeedbacks])
+  }, [guestId, access, authResolved, meId, loadFeedbacks])
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -113,7 +137,15 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     )
   }
 
-  if (guestId === null) {
+  if (!authResolved) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <p className="text-body-sm text-neutral-6">참여 정보를 확인하는 중입니다.</p>
+      </div>
+    )
+  }
+
+  if (meId === null && guestId === null) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <form
@@ -165,7 +197,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
           setNewReply={setNewReply}
           toggleReplies={toggleReplies}
           submitReply={submitReply}
-          meId={null}
+          meId={meId}
           onSeek={() => {}}
         />
       </div>

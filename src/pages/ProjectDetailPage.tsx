@@ -117,6 +117,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   const queryClient = useQueryClient()
   const routerNavigate = useNavigate()
   const location = useLocation()
+  const { view, tab, noticeView, activityView } = parseProjectSearch(location.search)
   const {
     project,
     setProject,
@@ -128,7 +129,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     loading,
     error,
     partialErrors,
-  } = useProjectDetail(projectId)
+  } = useProjectDetail(projectId, activityView === 'list' ? 100 : 5)
   const pinMutation = useToggleProjectPinMutation()
   const deleteMutation = useDeleteProjectMutation()
   const leaveMutation = useLeaveProjectMutation()
@@ -138,7 +139,6 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   const [leaveOpen, setLeaveOpen] = useState(false)
   const [meId, setMeId] = useState<number | null>(null)
   /** 탭·공지/활동 패널·설정 — URL searchParams에서 파생 (뒤로가기·공유용) */
-  const { view, tab, noticeView, activityView } = parseProjectSearch(location.search)
 
   const setProjectSearch = useCallback(
     (next: ProjectSearchNext, options?: { replace?: boolean }) => {

@@ -138,7 +138,7 @@ export async function getFeedbacks(
 }
 
 /** Swagger: guestId만 body에 실음. 멤버는 JWT */
-function feedbackGuestBody(body: { guestId?: number }): { guestId?: number } {
+function feedbackActorBody(body: { guestId?: number }): { guestId?: number } {
   return body.guestId != null ? { guestId: body.guestId } : {}
 }
 
@@ -153,7 +153,7 @@ export async function createFeedback(
       content: body.content,
       ...(body.startTime != null ? { startTime: body.startTime } : {}),
       ...(body.endTime != null ? { endTime: body.endTime } : {}),
-      ...feedbackGuestBody(body),
+      ...feedbackActorBody(body),
     },
   })
   return normalizeFeedback(result)
@@ -170,7 +170,7 @@ export async function updateFeedback(
       ...(body.content != null ? { content: body.content } : {}),
       ...(body.startTime != null ? { startTime: body.startTime } : {}),
       ...(body.endTime != null ? { endTime: body.endTime } : {}),
-      ...feedbackGuestBody(body),
+      ...feedbackActorBody(body),
     },
   })
   return normalizeFeedback(result)
@@ -216,7 +216,7 @@ export async function createReply(
     url: paths.feedbacks.replies(feedbackId),
     data: {
       content: body.content,
-      ...feedbackGuestBody(body),
+      ...feedbackActorBody(body),
     },
   })
   return normalizeFeedbackReply(result)

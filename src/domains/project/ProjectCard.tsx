@@ -26,6 +26,7 @@ interface ProjectCardProps {
   onTogglePin?: () => void
   /** "n분 전" 등 상대 시간 — 계산은 호출부에서 (VideoCard와 동일 패턴) */
   relativeTime?: string
+  thumbnailUrl?: string | null
   /** ActionMenu(⋮) 항목 — 미전달 시 메뉴 자체를 숨김 */
   menuItems?: ActionMenuItem[]
   onClick?: () => void
@@ -44,6 +45,7 @@ const ProjectCard = ({
   isPinned = false,
   onTogglePin,
   relativeTime,
+  thumbnailUrl,
   menuItems = [],
   onClick,
   className = '',
@@ -100,8 +102,11 @@ const ProjectCard = ({
 
       {/* 영상 썸네일(좌) · 태그/진행률/멤버(우) — 가로 분할 */}
       <div className="flex gap-10">
-        <div className="bg-neutral-2 flex aspect-23/8 w-2/5 shrink-0 items-center justify-center rounded-lg">
-          <p className="text-caption-lg text-neutral-6 px-4 text-center">
+        <div className="bg-neutral-2 flex aspect-23/8 w-2/5 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+          {thumbnailUrl && <img src={thumbnailUrl} alt="" className="h-full w-full object-cover" />}
+          <p
+            className={thumbnailUrl ? 'hidden' : 'text-caption-lg text-neutral-6 px-4 text-center'}
+          >
             아직 등록된 영상이 없어요
           </p>
         </div>

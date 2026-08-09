@@ -12,12 +12,12 @@ import {
   useProjectQuery,
 } from '../queries/projects'
 
-export function useProjectDetail(projectId: number) {
+export function useProjectDetail(projectId: number, activitySize = 5) {
   const queryClient = useQueryClient()
   const projectQuery = useProjectQuery(projectId)
   const membersQuery = useProjectMembersQuery(projectId)
   const noticesQuery = useProjectNoticesQuery(projectId)
-  const activitiesQuery = useProjectActivitiesQuery(projectId)
+  const activitiesQuery = useProjectActivitiesQuery(projectId, activitySize)
 
   const setProject: Dispatch<SetStateAction<ProjectDetailResponse | null>> = useCallback(
     (update) => {

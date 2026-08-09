@@ -46,7 +46,7 @@ export default function ActivityListView({
   const hasNew = activities.some((item) => item.isNew)
 
   const patchActivities = (updater: (items: ProjectActivity[]) => ProjectActivity[]) => {
-    queryClient.setQueryData<ProjectActivity[]>(projectKeys.activities(projectId), (prev) =>
+    queryClient.setQueryData<ProjectActivity[]>(projectKeys.activities(projectId, 100), (prev) =>
       updater(prev ?? []),
     )
   }
@@ -59,6 +59,7 @@ export default function ActivityListView({
     )
     try {
       await markActivityRead(projectId, activityId)
+      void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
     } catch {
       void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
     }
@@ -69,6 +70,7 @@ export default function ActivityListView({
     patchActivities((items) => items.map((item) => ({ ...item, isNew: false })))
     try {
       await markAllActivitiesRead(projectId)
+      void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
     } catch {
       void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
     }
