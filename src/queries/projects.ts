@@ -57,8 +57,16 @@ export function useProjectActivitiesQuery(projectId: number, size = 5) {
   return useQuery({
     queryKey: projectKeys.activities(projectId, size),
     queryFn: async () => {
-      const result = await getProjectActivities(projectId, { size })
-      return result.items
+      let result = await getProjectActivities(projectId, { size })
+      const items = [...result.items]
+
+      // 활동 목록 화면은 전체 이력을 보여준다. 카드/미리보기의 단건·5건 조회는 한 페이지만 사용한다.
+      while (size === 100 && result.hasNext && result.nextCursor) {
+        result = await getProjectActivities(projectId, { cursor: result.nextCursor, size })
+        items.push(...result.items)
+      }
+
+      return items
     },
     retry: false,
   })
