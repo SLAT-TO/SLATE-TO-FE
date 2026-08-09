@@ -76,7 +76,13 @@ export default function ProjectFileUploadModal({
         fileName: fileName.trim(),
         description: description.trim() || undefined,
       })
-      if (pinned) await pinProjectFile(projectId, uploaded.id)
+      if (pinned) {
+        try {
+          await pinProjectFile(projectId, uploaded.id)
+        } catch {
+          window.alert('파일은 업로드됐지만 즐겨찾기를 적용하지 못했습니다.')
+        }
+      }
       await onUploaded()
       resetAndClose(true)
     } catch (uploadError) {
