@@ -53,11 +53,11 @@ export function useProjectNoticesQuery(projectId: number) {
   })
 }
 
-export function useProjectActivitiesQuery(projectId: number) {
+export function useProjectActivitiesQuery(projectId: number, size = 5) {
   return useQuery({
-    queryKey: projectKeys.activities(projectId),
+    queryKey: projectKeys.activities(projectId, size),
     queryFn: async () => {
-      const result = await getProjectActivities(projectId)
+      const result = await getProjectActivities(projectId, { size })
       return result.items
     },
     retry: false,

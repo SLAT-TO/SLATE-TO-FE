@@ -13,6 +13,8 @@ interface FileInputProps {
   hint?: string
   label?: string
   required?: boolean
+  maxSizeBytes?: number
+  onInvalidFiles?: (files: File[]) => void
   className?: string
   ref?: Ref<HTMLInputElement>
 }
@@ -29,6 +31,8 @@ const FileInput = ({
   hint,
   label,
   required = false,
+  maxSizeBytes,
+  onInvalidFiles,
   className = '',
   ref,
 }: FileInputProps) => {
@@ -45,15 +49,6 @@ const FileInput = ({
     inputRef.current = node
     if (typeof ref === 'function') ref(node)
     else if (ref) ref.current = node
-  }
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    onChange(Array.from(e.target.files ?? []))
-    e.target.value = ''
-  }
-
-  const openPicker = () => {
-    if (!disabled) inputRef.current?.click()
   }
 
   const fileMatchesAccept = (file: File) => {
@@ -73,6 +68,27 @@ const FileInput = ({
     })
   }
 
+  const isValidFile = (file: File) =>
+    fileMatchesAccept(file) && (maxSizeBytes == null || file.size <= maxSizeBytes)
+
+  const selectFiles = (files: File[]) => {
+    const invalidFiles = files.filter((file) => !isValidFile(file))
+    if (invalidFiles.length > 0) onInvalidFiles?.(invalidFiles)
+
+    let validFiles = files.filter(isValidFile)
+    if (!multiple && validFiles.length > 0) validFiles = [validFiles[0]!]
+    if (validFiles.length > 0) onChange(validFiles)
+  }
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    selectFiles(Array.from(e.target.files ?? []))
+    e.target.value = ''
+  }
+
+  const openPicker = () => {
+    if (!disabled) inputRef.current?.click()
+  }
+
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     if (!disabled) setIsDragging(true)
@@ -86,10 +102,7 @@ const FileInput = ({
     e.preventDefault()
     setIsDragging(false)
     if (disabled) return
-    let files = Array.from(e.dataTransfer.files).filter(fileMatchesAccept)
-    if (!multiple && files.length > 0) files = [files[0]!]
-    if (files.length === 0) return
-    onChange(files)
+    selectFiles(Array.from(e.dataTransfer.files))
   }
 
   return (

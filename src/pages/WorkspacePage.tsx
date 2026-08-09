@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQueries } from '@tanstack/react-query'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import ProjectCard from '../domains/project/ProjectCard'
@@ -9,6 +10,9 @@ import { projectMetaTags } from '../constants/projectLabels'
 import { projectStatusLabel } from '../constants/projectStatus'
 import type { ProjectSummary } from '../types/project'
 import { ApiError } from '../types/api'
+import { getVideos } from '../api/videos'
+import { getProjectActivities } from '../api/projects'
+import { projectKeys } from '../queries/keys'
 import { navigate } from '../utils/navigation'
 import {
   useDeleteProjectMutation,
@@ -28,6 +32,26 @@ export default function WorkspacePage() {
   const [actionError, setActionError] = useState<string | null>(null)
 
   const projects = projectsQuery.data ?? []
+  const latestVideoQueries = useQueries({
+    queries: projects.map((project) => ({
+      queryKey: ['projects', project.id, 'latest-video'] as const,
+      queryFn: () => getVideos(project.id, undefined, 1),
+      staleTime: 60_000,
+    })),
+  })
+  const latestThumbnailByProjectId = new Map(
+    projects.map((project, index) => [project.id, latestVideoQueries[index]?.data?.items[0]?.thumbnailUrl]),
+  )
+  const recentActivityQueries = useQueries({
+    queries: projects.map((project) => ({
+      queryKey: projectKeys.activities(project.id, 1),
+      queryFn: () => getProjectActivities(project.id, { size: 1 }),
+      staleTime: 60_000,
+    })),
+  })
+  const recentActivityTimeByProjectId = new Map(
+    projects.map((project, index) => [project.id, recentActivityQueries[index]?.data?.items[0]?.createdAt]),
+  )
   const loading = projectsQuery.isPending && !projectsQuery.data
   const fatalError =
     projectsQuery.isError && !projectsQuery.data
@@ -111,12 +135,13 @@ export default function WorkspacePage() {
               statusVariant={project.status === 'COMPLETED' ? 'ghost' : 'secondary'}
               tags={projectMetaTags(project)}
               progress={project.deadlineProgressPercent ?? undefined}
+              thumbnailUrl={latestThumbnailByProjectId.get(project.id)}
               members={project.memberPreviewImageUrls.map((src) => ({ src }))}
               isPinned={project.isPinned}
               onTogglePin={() => handleTogglePin(project)}
               relativeTime={
-                project.lastActivityAt
-                  ? formatDistanceToNow(new Date(project.lastActivityAt), {
+                recentActivityTimeByProjectId.get(project.id)
+                  ? formatDistanceToNow(new Date(recentActivityTimeByProjectId.get(project.id)!), {
                       addSuffix: true,
                       locale: ko,
                     })
