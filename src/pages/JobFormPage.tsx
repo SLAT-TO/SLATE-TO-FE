@@ -12,11 +12,13 @@ import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import { navigate } from '../utils/navigation'
 import { validateField } from '../utils/validateField'
 import { jobPostSchema } from '../schemas/jobPost'
+import { createRecruitment } from '../api/recruitments'
+import { toRecruitmentRequest } from '../utils/recruitmentForm'
 import {
   ROLE_OPTIONS,
   VIDEO_CATEGORY_OPTIONS,
   FILM_LENGTH_OPTIONS,
-  REGION_OPTIONS,
+  ONBOARDING_REGION_OPTIONS,
 } from '../constants'
 
 function JobFormHeader() {
@@ -37,23 +39,25 @@ function JobFormHeader() {
 const HEADER = <JobFormHeader />
 
 interface FormValues {
+  title: string
   deadline?: Date
   recruitPart: string
-  shootingRegion: string
-  videoType: string
-  videoLength: string
-  participationPeriod?: DateRangeValue
+  location: string
+  category: string
+  lengthType: string
+  shootingPeriod?: DateRangeValue
   pay: string
   description: string
 }
 
 const INITIAL_VALUES: FormValues = {
+  title: '',
   deadline: undefined,
   recruitPart: '',
-  shootingRegion: '',
-  videoType: '',
-  videoLength: '',
-  participationPeriod: undefined,
+  location: '',
+  category: '',
+  lengthType: '',
+  shootingPeriod: undefined,
   pay: '',
   description: '',
 }
@@ -65,6 +69,7 @@ function JobFormPage() {
 
   const [values, setValues] = useState<FormValues>(INITIAL_VALUES)
   const [errors, setErrors] = useState<FormErrors>({})
+  const [submitting, setSubmitting] = useState(false)
 
   const handleChange = (field: keyof FormValues) => (value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }))
@@ -75,7 +80,7 @@ function JobFormPage() {
     setErrors((prev) => ({ ...prev, [field]: message }))
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const result = jobPostSchema.safeParse(values)
     if (!result.success) {
       const nextErrors: FormErrors = {}
@@ -86,12 +91,31 @@ function JobFormPage() {
       setErrors(nextErrors)
       return
     }
-    // TODO: API 연동 — POST /recruitments
-    navigate('/matching')
+
+    setSubmitting(true)
+    try {
+      const created = await createRecruitment(toRecruitmentRequest(result.data))
+      navigate(`/matching/${created.id}`)
+    } catch (error) {
+      console.error(error)
+      alert('공고 등록에 실패했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <div className="bg-bg-primary shadow-card flex flex-col gap-6 rounded-xl p-8">
+      <Input
+        label="공고 제목"
+        required
+        placeholder="공고 제목을 입력해주세요"
+        value={values.title}
+        onChange={handleChange('title')}
+        onBlur={handleBlur('title')}
+        error={errors.title}
+      />
+
       <FormField label="모집 마감일" required error={errors.deadline}>
         <DateSingleField
           value={values.deadline}
@@ -114,11 +138,11 @@ function JobFormPage() {
         <Select
           label="촬영 지역"
           required
-          options={REGION_OPTIONS}
-          value={values.shootingRegion}
-          onChange={handleChange('shootingRegion')}
-          onBlur={handleBlur('shootingRegion')}
-          error={errors.shootingRegion}
+          options={ONBOARDING_REGION_OPTIONS}
+          value={values.location}
+          onChange={handleChange('location')}
+          onBlur={handleBlur('location')}
+          error={errors.location}
           placeholder="촬영 지역을 선택해주세요."
         />
 
@@ -126,10 +150,10 @@ function JobFormPage() {
           label="영상 유형"
           required
           options={VIDEO_CATEGORY_OPTIONS}
-          value={values.videoType}
-          onChange={handleChange('videoType')}
-          onBlur={handleBlur('videoType')}
-          error={errors.videoType}
+          value={values.category}
+          onChange={handleChange('category')}
+          onBlur={handleBlur('category')}
+          error={errors.category}
           placeholder="영상 유형을 입력하세요."
         />
 
@@ -137,17 +161,17 @@ function JobFormPage() {
           label="영상 길이"
           required
           options={FILM_LENGTH_OPTIONS}
-          value={values.videoLength}
-          onChange={handleChange('videoLength')}
-          onBlur={handleBlur('videoLength')}
-          error={errors.videoLength}
+          value={values.lengthType}
+          onChange={handleChange('lengthType')}
+          onBlur={handleBlur('lengthType')}
+          error={errors.lengthType}
           placeholder="영상 길이를 선택해주세요."
         />
 
-        <FormField label="참여기간" required error={errors.participationPeriod}>
+        <FormField label="참여기간" required error={errors.shootingPeriod}>
           <DateRangeField
-            value={values.participationPeriod}
-            onChange={(range) => setValues((prev) => ({ ...prev, participationPeriod: range }))}
+            value={values.shootingPeriod}
+            onChange={(range) => setValues((prev) => ({ ...prev, shootingPeriod: range }))}
           />
         </FormField>
 
@@ -157,6 +181,7 @@ function JobFormPage() {
           placeholder="보수를 입력해주세요."
           value={values.pay}
           onChange={handleChange('pay')}
+          onBlur={handleBlur('pay')}
           error={errors.pay}
         />
       </div>
@@ -173,10 +198,15 @@ function JobFormPage() {
       />
 
       <div className="flex justify-center gap-3">
-        <Button onClick={handleSubmit} className="w-[180px]">
-          등록
+        <Button onClick={handleSubmit} disabled={submitting} className="w-[180px]">
+          {submitting ? '등록 중...' : '등록'}
         </Button>
-        <Button variant="secondary" onClick={() => navigate('/matching')} className="w-[180px]">
+        <Button
+          variant="secondary"
+          onClick={() => navigate('/matching')}
+          disabled={submitting}
+          className="w-[180px]"
+        >
           취소
         </Button>
       </div>
