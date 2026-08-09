@@ -23,6 +23,27 @@ import starIcon from '../../assets/icons/star.svg?raw'
 import { CARD_BASE } from '../../styles/card'
 import ProjectFileDetailView from './ProjectFileDetailView'
 
+const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024
+const ALLOWED_FILE_EXTENSIONS = ['.png', '.pdf', '.doc', '.docx', '.jpg', '.jpeg']
+const ALLOWED_FILE_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+])
+
+function getFileValidationError(file: File): string | null {
+  const isAllowed = ALLOWED_FILE_EXTENSIONS.some((extension) =>
+    file.name.toLowerCase().endsWith(extension),
+  )
+  if (!isAllowed || (file.type && !ALLOWED_FILE_TYPES.has(file.type))) {
+    return '지원하지 않는 파일 형식입니다.'
+  }
+  if (file.size > MAX_FILE_SIZE_BYTES) return '파일은 최대 100MB까지 업로드할 수 있습니다.'
+  return null
+}
+
 interface ProjectFileListProps {
   projectId: number
   initialFileId?: number | null
@@ -102,6 +123,11 @@ export default function ProjectFileList({
   const submitUpload = async () => {
     if (!uploadFile || !uploadFileName.trim()) {
       setUploadError('파일명과 업로드할 파일을 모두 입력해주세요.')
+      return
+    }
+    const fileValidationError = getFileValidationError(uploadFile)
+    if (fileValidationError) {
+      setUploadError(fileValidationError)
       return
     }
     setUploading(true)
@@ -311,7 +337,9 @@ export default function ProjectFileList({
               setUploadError('')
             }}
             accept=".png,.pdf,.doc,.docx,.jpg,.jpeg"
-            hint="첨부가능 파일 형식 (Png, Pdf, Word, Jpg) 최대 5GB"
+            maxSizeBytes={MAX_FILE_SIZE_BYTES}
+            onInvalidFiles={(files) => setUploadError(getFileValidationError(files[0]!) ?? '')}
+            hint="첨부가능 파일 형식 (Png, Pdf, Word, Jpg) 최대 100MB"
             error={uploadError || undefined}
           />
           <div className="mt-1 flex justify-center gap-3">
