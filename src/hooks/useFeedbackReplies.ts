@@ -7,10 +7,7 @@ import { projectKeys } from '../queries/keys'
 
 /** 피드백 답글 펼침/목록/작성
  * @param guestId 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
-export function useFeedbackReplies(
-  guestId?: number,
-  projectId?: number,
-) {
+export function useFeedbackReplies(guestId?: number, projectId?: number) {
   const queryClient = useQueryClient()
   const [expandedFeedbackId, setExpandedFeedbackId] = useState<number | null>(null)
   const [repliesByFeedback, setRepliesByFeedback] = useState<Record<number, FeedbackReply[]>>({})

@@ -85,7 +85,15 @@ export function useFeedbacks(
     setNewFeedback('')
     clearPendingTime()
     refreshProjectActivity()
-  }, [videoId, newFeedback, pendingStart, pendingEnd, guestId, clearPendingTime, refreshProjectActivity])
+  }, [
+    videoId,
+    newFeedback,
+    pendingStart,
+    pendingEnd,
+    guestId,
+    clearPendingTime,
+    refreshProjectActivity,
+  ])
 
   /** 체크 아이콘 토글 — UI 먼저 반영 후 status API 호출 (실패 시 롤백) */
   const toggleResolved = useCallback(async (feedback: Feedback) => {
