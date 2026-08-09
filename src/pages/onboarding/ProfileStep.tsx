@@ -4,6 +4,7 @@ import { Button } from '../../components/Button'
 import Input from '../../components/Input'
 import TextArea from '../../components/TextArea'
 import { getMe, submitOnboarding, uploadProfileImage } from '../../api/users'
+import profileAvatarDefault from '../../assets/images/profile-avatar.png'
 import { ApiError } from '../../types/api'
 import { profileSchema } from '../../schemas/onboarding'
 import { useOnboardingStore } from '../../stores/onboardingStore'
@@ -146,7 +147,17 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
       <div className="mx-auto flex w-full max-w-245.5 flex-col items-center gap-21.5 sm:flex-row sm:items-start">
         {/* 아바타 + 변경하기: 서브타이틀과 106px 간격(입력 필드 컬럼은 기존 40px 유지, 여기만 66px 추가) */}
         <div className="mt-3 flex w-40 shrink-0 flex-col items-center gap-9">
-          <Avatar src={profile.avatarUrl} size={160} />
+          <Avatar
+            src={profile.avatarUrl}
+            size={160}
+            fallback={
+              <img
+                src={profileAvatarDefault}
+                alt=""
+                className="h-full w-full scale-110 object-cover"
+              />
+            }
+          />
           <Button
             variant="negative"
             size="md"
