@@ -3,6 +3,7 @@ import { paths } from './paths'
 import type {
   AppliedRecruitment,
   Application,
+  ApplicationResult,
   CreateApplicationRequest,
   CreateRecruitmentRequest,
   Recruitment,
@@ -13,11 +14,25 @@ import type {
 } from '../types/recruitment'
 import type { CursorPage } from '../types/project'
 
-export async function getRecruitments(): Promise<{ items: Recruitment[] }> {
-  return request({ method: 'GET', url: paths.recruitments.root })
+export type RecruitmentListParams = {
+  keyword?: string
+  category?: string
+  lengthType?: string
+  recruitPart?: string
+  location?: string
+  status?: string
+  sort?: string
+  cursor?: number
+  size?: number
 }
 
-export async function getRecommendedRecruitments(): Promise<{ items: Recruitment[] }> {
+export async function getRecruitments(
+  params: RecruitmentListParams = {},
+): Promise<CursorPage<Recruitment>> {
+  return request({ method: 'GET', url: paths.recruitments.root, params })
+}
+
+export async function getRecommendedRecruitments(): Promise<CursorPage<Recruitment>> {
   return request({ method: 'GET', url: paths.recruitments.recommended })
 }
 
@@ -66,8 +81,8 @@ export async function unbookmarkRecruitment(
 
 export async function applyRecruitment(
   recruitmentId: number,
-  body: CreateApplicationRequest = {},
-): Promise<Application> {
+  body: CreateApplicationRequest,
+): Promise<ApplicationResult> {
   return request({
     method: 'POST',
     url: paths.recruitments.applications(recruitmentId),

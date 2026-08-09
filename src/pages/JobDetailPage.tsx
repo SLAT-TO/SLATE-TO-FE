@@ -9,6 +9,7 @@ import ApplyModal from '../domains/recruit/ApplyModal'
 import { useRecruitmentDetail } from '../hooks/useRecruitmentDetail'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { applyRecruitment } from '../api/recruitments'
 
 function JobDetailBackHeader() {
   const nav = useNavigate()
@@ -47,6 +48,7 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
     return <p className="text-body-sm text-neutral-6">{error ?? '공고를 찾을 수 없습니다.'}</p>
   }
 
+  // 등록 시에만 안내 모달을 띄운다 (해제 시엔 없음)
   const handleBookmarkClick = async () => {
     const nowBookmarked = await toggleBookmark()
     if (nowBookmarked) setIsBookmarkModalOpen(true)
@@ -88,9 +90,11 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
       <ApplyModal
         isOpen={isApplyOpen}
         onClose={() => setIsApplyOpen(false)}
-        onSubmit={(values) => {
-          // TODO: API 연동 — POST /recruitments/:id/applications
-          void values
+        onSubmit={async (values) => {
+          await applyRecruitment(jobId, {
+            message: values.comment,
+            referenceLink: values.referenceLink || undefined,
+          })
         }}
       />
       <BookmarkModal isOpen={isBookmarkModalOpen} onClose={() => setIsBookmarkModalOpen(false)} />

@@ -9,6 +9,7 @@ interface SortDropdownProps {
 function SortDropdown({ value, onChange }: SortDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const selectedLabel = SORT_OPTIONS.find((option) => option.value === value)?.label ?? '정렬'
 
   useEffect(() => {
     if (!isOpen) return
@@ -35,9 +36,9 @@ function SortDropdown({ value, onChange }: SortDropdownProps) {
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        className="border-primary text-primary text-caption-lg bg-bg-primary flex items-center gap-1 rounded-lg border px-4 py-2"
+        className="border-primary text-primary text-caption-lg bg-bg-primary flex items-center gap-1 rounded-lg border px-4 py-2 whitespace-nowrap"
       >
-        정렬
+        {selectedLabel}
         <svg
           width="12"
           height="12"

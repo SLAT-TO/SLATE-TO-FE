@@ -19,7 +19,7 @@ function RecruitPage() {
   const [sort, setSort] = useState<SortValue>('latest')
   const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>(INITIAL_FILTERS)
   const [openCategory, setOpenCategory] = useState<FilterCategory | null>(null)
-  const { recommended, jobs, bookmarkedIds, toggleBookmark, loading, error } = useRecruitments()
+  const { recommended, jobs, bookmarkedIds, toggleBookmark, loading, error } = useRecruitments(sort)
   const [isBookmarkModalOpen, setIsBookmarkModalOpen] = useState(false)
 
   const handleToggleFilter = (category: FilterCategory, value: string) => {

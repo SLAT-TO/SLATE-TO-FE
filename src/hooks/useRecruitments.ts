@@ -7,9 +7,11 @@ import {
 } from '../api/recruitments'
 import { ApiError } from '../types/api'
 import type { Recruitment } from '../types/recruitment'
+import { SORT_PARAM } from '../constants/recruitFilters'
+import type { SortValue } from '../constants'
 
 /** 구인구직 목록 화면 — 추천 공고와 전체 공고를 함께 조회한다 */
-export function useRecruitments() {
+export function useRecruitments(sort: SortValue) {
   const [recommended, setRecommended] = useState<Recruitment[]>([])
   const [jobs, setJobs] = useState<Recruitment[]>([])
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set())
@@ -25,7 +27,7 @@ export function useRecruitments() {
       try {
         const [recommendedPage, jobPage] = await Promise.all([
           getRecommendedRecruitments(),
-          getRecruitments(),
+          getRecruitments({ sort: SORT_PARAM[sort] }),
         ])
         if (cancelled) return
         setRecommended(recommendedPage.items)
@@ -48,7 +50,7 @@ export function useRecruitments() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [sort])
 
   /** 낙관적 업데이트 — 실패 시 이전 상태로 되돌린다 */
   async function toggleBookmark(recruitmentId: number) {

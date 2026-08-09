@@ -66,7 +66,8 @@ export type Application = {
 }
 
 export type CreateApplicationRequest = {
-  message?: string
+  message: string
+  referenceLink?: string
 }
 
 export type UpdateApplicationRequest = {
@@ -90,5 +91,15 @@ export type RecruitmentDetailResponse = Recruitment & {
 export type AppliedRecruitment = Recruitment & {
   applicationId: number
   applicationStatus: ApplicationStatusValue
+  appliedAt: string
+}
+
+/** POST /recruitments/{id}/applications 응답 */
+export type ApplicationResult = {
+  applicationId: number
+  recruitmentId: number
+  applicationStatus: ApplicationStatusValue
+  message: string
+  referenceLink: string | null
   appliedAt: string
 }
