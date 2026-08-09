@@ -45,9 +45,9 @@ function InviteLinkModalBody({ projectId, onClose }: { projectId: number; onClos
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <h2 className="text-head-sm text-neutral-11 font-bold">게스트 초대하기</h2>
+        <h2 className="text-head-sm text-neutral-11 font-bold">프로젝트 초대하기</h2>
         <p className="text-body-sm text-neutral-6">
-          링크를 공유하여 프로젝트에 게스트를 추가해보세요.
+          링크를 공유하여 프로젝트 멤버를 초대해보세요.
         </p>
       </div>
 
