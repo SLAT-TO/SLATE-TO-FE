@@ -82,7 +82,11 @@ export const userHandlers = [
 
     if (body.nickname) user.nickname = body.nickname
     if (body.bio !== undefined) user.bio = body.bio
-    if (body.location) user.location = body.location
+    if (body.locations) {
+      user.regions = body.locations
+      user.location = body.locations[0] ?? null
+      user.region = body.locations[0] ?? null
+    }
     if (body.profileImageUrl !== undefined) user.profileImageUrl = body.profileImageUrl
     if (body.roles) {
       user.roles = body.roles
