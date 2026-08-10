@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import ApplicantRow from '../domains/recruit/ApplicantRow'
-import { getApplications, getRecruitment } from '../api/recruitments'
+import { getAllApplications, getRecruitment } from '../api/recruitments'
 import type { RecruitmentApplication } from '../types/recruitment'
 import { navigate } from '../utils/navigation'
 
@@ -21,10 +21,13 @@ function JobApplicantsPage({ jobId }: JobApplicantsPageProps) {
       setIsLoading(true)
       setError(null)
       try {
-        const [detail, page] = await Promise.all([getRecruitment(jobId), getApplications(jobId)])
+        const [detail, items] = await Promise.all([
+          getRecruitment(jobId),
+          getAllApplications(jobId),
+        ])
         if (ignore) return
         setTitle(detail.title)
-        setApplications(page.items)
+        setApplications(items)
       } catch {
         if (!ignore) setError('지원자 목록을 불러오지 못했습니다.')
       } finally {

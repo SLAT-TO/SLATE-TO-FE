@@ -120,3 +120,22 @@ export async function updateApplicationStatus(
     data: body,
   })
 }
+
+/** 지원자 전량 조회 — 디자인상 페이지네이션 UI가 없어 hasNext가 끝날 때까지 이어 받음 */
+export async function getAllApplications(
+  recruitmentId: number,
+  params: Omit<ApplicationListParams, 'cursor'> = {},
+): Promise<RecruitmentApplication[]> {
+  const items: RecruitmentApplication[] = []
+  let cursor: number | undefined
+
+  // 서버가 hasNext만 true로 주고 커서를 누락해도 멈추도록 반복 횟수에 상한을 둠
+  for (let i = 0; i < 20; i += 1) {
+    const page = await getApplications(recruitmentId, { ...params, cursor })
+    items.push(...page.items)
+    if (!page.hasNext || page.nextCursor == null) break
+    cursor = page.nextCursor
+  }
+
+  return items
+}
