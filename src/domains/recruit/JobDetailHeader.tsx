@@ -3,20 +3,21 @@ import ActionMenu from '../../components/ActionMenu'
 import type { ActionMenuItem } from '../../constants/actionMenu'
 import type { RecruitmentDetailResponse } from '../../types/recruitment'
 import { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
+import { navigate } from '../../utils/navigation'
 
 interface JobDetailHeaderProps {
   detail: RecruitmentDetailResponse
   onBookmarkClick: () => void
+  onDeleteClick: () => void
 }
 
-function JobDetailHeader({ detail, onBookmarkClick }: JobDetailHeaderProps) {
+function JobDetailHeader({ detail, onBookmarkClick, onDeleteClick }: JobDetailHeaderProps) {
   const isOwner = detail.isMine
   const isClosed = detail.status === 'CLOSED'
 
-  // TODO: 공고 수정 페이지 연결 (별도 이슈), 삭제 확인 모달 연결
   const menuItems: ActionMenuItem[] = [
-    { action: 'edit', onClick: () => {} },
-    { action: 'delete', onClick: () => {} },
+    { action: 'edit', onClick: () => navigate(`/matching/${detail.id}/edit`) },
+    { action: 'delete', onClick: onDeleteClick },
   ]
 
   return (

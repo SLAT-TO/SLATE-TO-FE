@@ -66,7 +66,16 @@ function LegacyAppRoutes() {
   }
 
   if (path === '/matching/new') {
-    return <JobFormPage />
+    return <JobFormPage mode="create" />
+  }
+
+  const jobEditMatch = matchPath('/matching/:jobId/edit', path)
+  if (jobEditMatch) {
+    const jobId = Number(jobEditMatch.jobId)
+    if (!Number.isFinite(jobId)) {
+      return <p className="text-body-sm text-warning">잘못된 공고 경로입니다.</p>
+    }
+    return <JobFormPage key={jobId} mode="edit" jobId={jobId} />
   }
 
   const applicantProfileMatch = matchPath('/matching/:jobId/applicants/:applicantId', path)

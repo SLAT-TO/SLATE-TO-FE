@@ -97,8 +97,17 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     repliesByFeedback,
     newReply,
     setNewReply,
+    editingReplyId,
+    editingReplyContent,
+    setEditingReplyContent,
+    isSubmittingReply,
+    pendingReplyActionId,
     toggleReplies,
     submitReply,
+    startEditReply,
+    cancelEditReply,
+    saveEditReply,
+    removeReply,
   } = useFeedbackReplies(meId !== null ? undefined : (guestId ?? undefined))
 
   useEffect(() => {
@@ -195,9 +204,19 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
           repliesByFeedback={repliesByFeedback}
           newReply={newReply}
           setNewReply={setNewReply}
+          editingReplyId={editingReplyId}
+          editingReplyContent={editingReplyContent}
+          setEditingReplyContent={setEditingReplyContent}
+          isSubmittingReply={isSubmittingReply}
+          pendingReplyActionId={pendingReplyActionId}
           toggleReplies={toggleReplies}
           submitReply={submitReply}
+          startEditReply={startEditReply}
+          cancelEditReply={cancelEditReply}
+          saveEditReply={saveEditReply}
+          removeReply={removeReply}
           meId={meId}
+          guestId={meId === null ? (guestId ?? undefined) : undefined}
           onSeek={() => {}}
         />
       </div>

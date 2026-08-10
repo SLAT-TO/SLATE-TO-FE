@@ -6,6 +6,7 @@ type InputProps = {
   placeholder?: string
   value: string
   onChange: (value: string) => void
+  onBlur?: () => void
   disabled?: boolean
   error?: string
   hint?: string
@@ -40,6 +41,7 @@ export default function Input({
   placeholder,
   value,
   onChange,
+  onBlur,
   disabled = false,
   error,
   hint,
@@ -66,6 +68,7 @@ export default function Input({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           disabled={disabled}
           aria-required={required}
           className={`bg-neutral-2 text-body-sm text-neutral-10 placeholder:text-neutral-5 h-12 w-full rounded-lg border px-4 py-3 transition-colors outline-none disabled:cursor-not-allowed disabled:opacity-40 ${showPasswordToggle ? 'pr-12' : ''} ${borderClass}`}
