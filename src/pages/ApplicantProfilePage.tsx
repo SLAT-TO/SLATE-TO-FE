@@ -15,8 +15,8 @@ interface ApplicantProfilePageProps {
 const MOCK_PROFILE: ProfileSummary = {
   profileImageUrl: 'https://placehold.co/64x64',
   nickname: '김수민',
-  role: '연출자',
-  region: '서울',
+  roles: ['연출자'],
+  regions: ['서울'],
   email: 'soomin.kim@example.com',
   introduction:
     '사람의 이야기를 영상으로 담아내는 것을 좋아합니다.\n함께 좋은 작품 만들어갔으면 좋겠습니다!',
