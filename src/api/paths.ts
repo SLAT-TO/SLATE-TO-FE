@@ -13,7 +13,7 @@ export const paths = {
     me: `${API_PREFIX}/users/me`,
     /** Notion DB에 GET /users/me 중복 등록 — 통계는 임시 path 분리
      * FE mock 전용 — BE에 활동 통계 API 미구현 (Swagger에 없음) */
-    activityStats: `${API_PREFIX}/users/me/activity-stats`,
+    activityStats: `${API_PREFIX}/users/me/stats`,
     onboarding: `${API_PREFIX}/users/onboarding`,
     profileImage: `${API_PREFIX}/users/me/profile-image`,
     byId: (userId: number | string) => `${API_PREFIX}/users/${userId}`,
