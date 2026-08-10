@@ -16,10 +16,10 @@ import type { CursorPage } from '../types/project'
 
 export type RecruitmentListParams = {
   keyword?: string
-  category?: string
-  lengthType?: string
-  recruitPart?: string
-  location?: string
+  category?: string[]
+  lengthType?: string // ← 배열 아님, 단수
+  recruitPart?: string[]
+  location?: string[]
   status?: string
   sort?: string
   cursor?: number
