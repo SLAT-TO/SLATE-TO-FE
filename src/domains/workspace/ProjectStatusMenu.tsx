@@ -1,5 +1,6 @@
 import { useRef, useState, type Dispatch, type SetStateAction } from 'react'
-import ConfirmModal from '../../components/ConfirmModal'
+import Modal from '../../components/Modal'
+import { Button } from '../../components/Button'
 import { projectMetaTags } from '../../constants/projectLabels'
 import {
   PROJECT_STATUS_LABEL,
@@ -85,15 +86,34 @@ export default function ProjectStatusMenu({
           </ul>
         )}
       </div>
-      <ConfirmModal
+      <Modal
         isOpen={completeConfirmOpen}
         onClose={() => setCompleteConfirmOpen(false)}
-        onConfirm={confirmCompletion}
-        title="프로젝트를 완료로 전환할까요?"
-        description="완료로 전환하면 참여자들의 포트폴리오에 자동으로 추가됩니다. 각자의 프로필 페이지에서 수정 및 삭제가 가능합니다. 완료로 변경하면 진행 상황을 수정할 수 없습니다."
-        confirmText="진행하기"
-        cancelText="취소"
-      />
+        className="w-[calc(100vw-32px)] max-w-[780px]"
+      >
+        <div className="flex flex-col items-center px-6 py-6 text-center sm:px-16 sm:py-8">
+          <h2 className="text-head-lg text-neutral-11 max-w-[560px] font-bold">
+            완료로 전환하면 참여자들의 포트폴리오에 자동으로 추가됩니다.
+          </h2>
+          <div className="text-body-sm text-neutral-6 mt-5 flex flex-col gap-1">
+            <p>각자의 프로필 페이지에서 수정 삭제가 가능합니다.</p>
+            <p>완료로 변경 시 진행 상황 변경이 불가합니다.</p>
+          </div>
+          <div className="mt-12 flex w-full max-w-[550px] gap-6">
+            <Button variant="primary" size="md" className="flex-1" onClick={confirmCompletion}>
+              확인
+            </Button>
+            <Button
+              variant="negative"
+              size="md"
+              className="flex-1"
+              onClick={() => setCompleteConfirmOpen(false)}
+            >
+              취소
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
