@@ -34,13 +34,13 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
       resetReplyCompose()
       setRepliesByFeedback((prev) => {
         if (prev[feedbackId]) return prev
-        void getReplies(feedbackId).then((page) => {
+        void getReplies(feedbackId, guestId != null ? { guestId } : undefined).then((page) => {
           setRepliesByFeedback((p) => ({ ...p, [feedbackId]: page.items }))
         })
         return prev
       })
     },
-    [expandedFeedbackId, resetReplyCompose],
+    [expandedFeedbackId, guestId, resetReplyCompose],
   )
 
   const submitReply = useCallback(

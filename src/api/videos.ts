@@ -199,10 +199,14 @@ export async function updateFeedbackStatus(
   return { ...result, status: toFeedbackStatus(result.status) }
 }
 
-export async function getReplies(feedbackId: number): Promise<{ items: FeedbackReply[] }> {
+export async function getReplies(
+  feedbackId: number,
+  options?: { guestId?: number },
+): Promise<{ items: FeedbackReply[] }> {
   const result = await request<{ items: FeedbackReplyStatusRaw[] }>({
     method: 'GET',
     url: paths.feedbacks.replies(feedbackId),
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
   })
   return { items: result.items.map(normalizeFeedbackReply) }
 }
