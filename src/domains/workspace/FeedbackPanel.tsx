@@ -38,10 +38,20 @@ type FeedbackPanelProps = Pick<
     | 'repliesByFeedback'
     | 'newReply'
     | 'setNewReply'
+    | 'editingReplyId'
+    | 'editingReplyContent'
+    | 'setEditingReplyContent'
+    | 'isSubmittingReply'
+    | 'pendingReplyActionId'
     | 'toggleReplies'
     | 'submitReply'
+    | 'startEditReply'
+    | 'cancelEditReply'
+    | 'saveEditReply'
+    | 'removeReply'
   > & {
     meId: number | null
+    guestId?: number
     onSeek: (seconds: number) => void
   }
 
@@ -70,9 +80,19 @@ export default function FeedbackPanel({
   repliesByFeedback,
   newReply,
   setNewReply,
+  editingReplyId,
+  editingReplyContent,
+  setEditingReplyContent,
+  isSubmittingReply,
+  pendingReplyActionId,
   toggleReplies,
   submitReply,
+  startEditReply,
+  cancelEditReply,
+  saveEditReply,
+  removeReply,
   meId,
+  guestId,
   onSeek,
 }: FeedbackPanelProps) {
   return (
@@ -110,7 +130,8 @@ export default function FeedbackPanel({
       <ul className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto">
         {filteredFeedbacks.map((feedback) => {
           const isMine =
-            meId !== null && feedback.actor.type === 'USER' && feedback.actor.id === meId
+            (feedback.actor.type === 'USER' && meId !== null && feedback.actor.id === meId) ||
+            (feedback.actor.type === 'GUEST' && guestId != null && feedback.actor.id === guestId)
           return (
             <FeedbackListItem
               key={feedback.feedbackId}
@@ -135,6 +156,17 @@ export default function FeedbackPanel({
               newReply={newReply}
               setNewReply={setNewReply}
               onSubmitReply={() => void submitReply(feedback.feedbackId)}
+              meId={meId}
+              guestId={guestId}
+              editingReplyId={editingReplyId}
+              editingReplyContent={editingReplyContent}
+              isSubmittingReply={isSubmittingReply}
+              pendingReplyActionId={pendingReplyActionId}
+              onEditingReplyContentChange={setEditingReplyContent}
+              onEditReply={startEditReply}
+              onCancelEditReply={cancelEditReply}
+              onSaveEditReply={(replyId) => void saveEditReply(feedback.feedbackId, replyId)}
+              onRemoveReply={(replyId) => void removeReply(feedback.feedbackId, replyId)}
             />
           )
         })}

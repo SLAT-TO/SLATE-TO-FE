@@ -224,7 +224,7 @@ export async function createReply(
 
 export async function updateReply(
   replyId: number,
-  body: { content?: string; deleted?: boolean },
+  body: { content: string; guestId?: number },
 ): Promise<FeedbackReply | null> {
   const result = await request<FeedbackReplyStatusRaw | null>({
     method: 'PATCH',
@@ -232,6 +232,14 @@ export async function updateReply(
     data: body,
   })
   return result ? normalizeFeedbackReply(result) : null
+}
+
+export async function deleteReply(replyId: number, options?: { guestId?: number }): Promise<null> {
+  return request({
+    method: 'DELETE',
+    url: paths.replies.byId(replyId),
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+  })
 }
 
 export async function updateReplyStatus(

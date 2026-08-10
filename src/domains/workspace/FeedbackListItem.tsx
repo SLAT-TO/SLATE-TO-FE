@@ -29,6 +29,17 @@ type FeedbackListItemProps = {
   newReply: string
   setNewReply: (value: string) => void
   onSubmitReply: () => void
+  meId: number | null
+  guestId?: number
+  editingReplyId: number | null
+  editingReplyContent: string
+  isSubmittingReply: boolean
+  pendingReplyActionId: number | null
+  onEditingReplyContentChange: (value: string) => void
+  onEditReply: (reply: FeedbackReply) => void
+  onCancelEditReply: () => void
+  onSaveEditReply: (replyId: number) => void
+  onRemoveReply: (replyId: number) => void
 }
 
 export default function FeedbackListItem({
@@ -50,6 +61,17 @@ export default function FeedbackListItem({
   newReply,
   setNewReply,
   onSubmitReply,
+  meId,
+  guestId,
+  editingReplyId,
+  editingReplyContent,
+  isSubmittingReply,
+  pendingReplyActionId,
+  onEditingReplyContentChange,
+  onEditReply,
+  onCancelEditReply,
+  onSaveEditReply,
+  onRemoveReply,
 }: FeedbackListItemProps) {
   const isResolved = feedback.status
 
@@ -136,6 +158,17 @@ export default function FeedbackListItem({
           newReply={newReply}
           setNewReply={setNewReply}
           onSubmitReply={onSubmitReply}
+          meId={meId}
+          guestId={guestId}
+          editingReplyId={editingReplyId}
+          editingReplyContent={editingReplyContent}
+          isSubmittingReply={isSubmittingReply}
+          pendingReplyActionId={pendingReplyActionId}
+          onEditingContentChange={onEditingReplyContentChange}
+          onEdit={onEditReply}
+          onCancelEdit={onCancelEditReply}
+          onSaveEdit={onSaveEditReply}
+          onRemove={onRemoveReply}
         />
       )}
     </li>
