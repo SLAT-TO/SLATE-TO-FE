@@ -5,20 +5,12 @@ import { roleLabel } from '../../constants/roles'
 import { regionLabel } from '../../constants/regions'
 import { videoCategoryLabel } from '../../constants/videoCategories'
 
-/** 지역이 여러 개면 앞의 2개만 노출하고 나머지는 +N */
-export function formatRegions(regions: (string | null)[]): string {
-  const labels = regions.filter(Boolean).map((r) => regionLabel(r as string))
-  if (labels.length === 0) return ''
-  if (labels.length <= 2) return labels.join(', ')
-  return `${labels.slice(0, 2).join(', ')} +${labels.length - 2}`
-}
-
 export function toProfileSummary(me: MeProfile): ProfileSummary {
   return {
     profileImageUrl: me.profileImageUrl ?? 'https://placehold.co/64x64',
     nickname: me.nickname,
-    role: me.primaryRole ? roleLabel(me.primaryRole) : '',
-    region: formatRegions(me.regions),
+    roles: me.roles.map((r) => roleLabel(r)),
+    regions: me.regions.map((r) => regionLabel(r as string)),
     email: me.email,
     introduction: me.bio ?? '',
   }
