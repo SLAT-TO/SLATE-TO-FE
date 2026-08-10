@@ -52,8 +52,6 @@ export type RecruitmentBookmarkResult = {
   isBookmarked: boolean
 }
 
-export type ApplicationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | string
-
 export type Application = {
   id: number
   recruitmentId: number
@@ -61,7 +59,7 @@ export type Application = {
   nickname: string
   profileImageUrl: string | null
   message: string | null
-  status: ApplicationStatus
+  status: ApplicationStatusValue
   createdAt: string
 }
 
@@ -71,7 +69,7 @@ export type CreateApplicationRequest = {
 }
 
 export type UpdateApplicationRequest = {
-  status: ApplicationStatus
+  status: ApplicationStatusValue
 }
 
 export type ApplicationStatusValue = 'PENDING' | 'ACCEPTED' | 'REJECTED'
@@ -102,4 +100,25 @@ export type ApplicationResult = {
   message: string
   referenceLink: string | null
   appliedAt: string
+}
+
+export interface ApplicantSummary {
+  id: number
+  nickname: string
+  profileImageUrl: string | null
+  /** 프로필 자기소개 (공고별 코멘트인 message와 다름) */
+  bio: string | null
+  primaryRole: UserRole | null
+  locations: UserRegion[]
+}
+
+export interface RecruitmentApplication {
+  applicationId: number
+  applicationStatus: ApplicationStatusValue
+  /** 지원 시 작성한 코멘트 — 목록 화면에는 표시하지 않음 */
+  message: string
+  referenceLink: string | null
+  /** ISO 8601 */
+  appliedAt: string
+  applicant: ApplicantSummary
 }

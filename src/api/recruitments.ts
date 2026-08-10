@@ -4,6 +4,7 @@ import type {
   AppliedRecruitment,
   Application,
   ApplicationResult,
+  ApplicationStatusValue,
   CreateApplicationRequest,
   CreateRecruitmentRequest,
   Recruitment,
@@ -11,6 +12,7 @@ import type {
   RecruitmentDetailResponse,
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
+  RecruitmentApplication,
 } from '../types/recruitment'
 import type { CursorPage } from '../types/project'
 
@@ -90,8 +92,21 @@ export async function applyRecruitment(
   })
 }
 
-export async function getApplications(recruitmentId: number): Promise<{ items: Application[] }> {
-  return request({ method: 'GET', url: paths.recruitments.applications(recruitmentId) })
+export type ApplicationListParams = {
+  status?: ApplicationStatusValue
+  cursor?: number
+  size?: number
+}
+
+export async function getApplications(
+  recruitmentId: number,
+  params: ApplicationListParams = {},
+): Promise<CursorPage<RecruitmentApplication>> {
+  return request({
+    method: 'GET',
+    url: paths.recruitments.applications(recruitmentId),
+    params,
+  })
 }
 
 export async function updateApplicationStatus(
