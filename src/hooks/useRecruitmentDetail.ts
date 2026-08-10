@@ -5,13 +5,14 @@ import type { RecruitmentDetailResponse } from '../types/recruitment'
 
 export function useRecruitmentDetail(recruitmentId: number) {
   const [detail, setDetail] = useState<RecruitmentDetailResponse | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(recruitmentId !== 0)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
 
     async function load() {
+      if (!recruitmentId) return
       setLoading(true)
       setError(null)
       try {
