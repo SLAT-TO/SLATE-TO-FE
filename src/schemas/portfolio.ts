@@ -17,7 +17,9 @@ export const portfolioSchema = z.object({
   youtubeUrl: z
     .string()
     .min(1, '프로젝트 링크를 입력해주세요.')
-    .url('올바른 링크 형식이 아니에요.'),
+    // https:// 없이 입력해도 통과하도록 보정
+    .transform((v) => (/^https?:\/\//.test(v) ? v : `https://${v}`))
+    .pipe(z.url('올바른 링크 형식이 아니에요.')),
   description: z
     .string()
     .min(1, '프로젝트 설명을 입력해주세요.')

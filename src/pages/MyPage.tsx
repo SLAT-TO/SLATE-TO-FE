@@ -5,7 +5,8 @@ import type { ProfileSummary, StatItem, ProjectHistoryItem } from '../types/MyPa
 import { navigate } from '../utils/navigation'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
-import { getMe, getMyActivityStats, getUserPortfolios } from '../api/users'
+import ConfirmModal from '../components/ConfirmModal'
+import { deletePortfolio, getMe, getMyActivityStats, getUserPortfolios } from '../api/users'
 import {
   toProfileSummary,
   toProjectTypeStats,
@@ -24,6 +25,7 @@ function MyPage() {
   const [projects, setProjects] = useState<ProjectHistoryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -64,9 +66,8 @@ function MyPage() {
     navigate(`/mypage/project/${id}`)
   }
 
-  // 삭제 확인 모달 연결 + deletePortfolio 연동 필요
   const handleProjectDelete = (id: string) => {
-    console.log('프로젝트 삭제:', id)
+    setDeleteTargetId(id)
   }
 
   const handleAddProject = () => {
@@ -75,6 +76,21 @@ function MyPage() {
 
   const handleProjectEdit = (id: string) => {
     navigate(`/mypage/project/${id}/edit`)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (deleteTargetId == null) return
+    const portfolioId = Number(deleteTargetId)
+    if (!Number.isFinite(portfolioId)) return
+
+    try {
+      await deletePortfolio(portfolioId)
+      setProjects((prev) => prev.filter((p) => p.id !== deleteTargetId))
+    } catch {
+      setError('삭제에 실패했습니다.')
+    } finally {
+      setDeleteTargetId(null)
+    }
   }
 
   if (isLoading) {
@@ -141,6 +157,13 @@ function MyPage() {
           </div>
         )}
       </section>
+      <ConfirmModal
+        isOpen={deleteTargetId !== null}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={() => void handleDeleteConfirm()}
+        title="정말 삭제하시겠습니까?"
+        description="삭제된 프로젝트 이력은 되돌릴 수 없어요."
+      />
     </div>
   )
 }
