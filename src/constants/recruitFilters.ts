@@ -8,6 +8,13 @@ export const SORT_OPTIONS = [
   { value: 'popular', label: '인기 순' },
 ] as const
 
+/** FE 정렬값 → BE sort 파라미터 */
+export const SORT_PARAM: Record<SortValue, string> = {
+  latest: 'LATEST',
+  deadline: 'DEADLINE',
+  popular: 'POPULAR',
+}
+
 export type SortValue = (typeof SORT_OPTIONS)[number]['value']
 
 // 필터에서는 '기타' 제외 (피그마 패널에 없음)

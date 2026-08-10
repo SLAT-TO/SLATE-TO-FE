@@ -1,16 +1,17 @@
-import { useState } from 'react'
 import Tag from '../../components/Tag'
 import ActionMenu from '../../components/ActionMenu'
 import type { ActionMenuItem } from '../../constants/actionMenu'
-import type { RecruitmentDetail } from '../../types/Recruit.types'
+import type { RecruitmentDetailResponse } from '../../types/recruitment'
+import { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
 
 interface JobDetailHeaderProps {
-  detail: RecruitmentDetail
-  isOwner: boolean
+  detail: RecruitmentDetailResponse
+  onBookmarkClick: () => void
 }
 
-function JobDetailHeader({ detail, isOwner }: JobDetailHeaderProps) {
-  const [isBookmarked, setIsBookmarked] = useState(false)
+function JobDetailHeader({ detail, onBookmarkClick }: JobDetailHeaderProps) {
+  const isOwner = detail.isMine
+  const isClosed = detail.status === 'CLOSED'
 
   // TODO: 공고 수정 페이지 연결 (별도 이슈), 삭제 확인 모달 연결
   const menuItems: ActionMenuItem[] = [
@@ -26,20 +27,22 @@ function JobDetailHeader({ detail, isOwner }: JobDetailHeaderProps) {
 
           {isOwner ? (
             <>
-              <span className="text-caption-sm text-neutral-6">{detail.createdAt}</span>
+              <span className="text-caption-sm text-neutral-6">
+                {detail.createdAt.slice(0, 10)}
+              </span>
               <span className="text-caption-sm text-neutral-6">조회 {detail.viewCount}</span>
             </>
           ) : (
             <button
               type="button"
-              onClick={() => setIsBookmarked((prev) => !prev)}
-              aria-pressed={isBookmarked}
-              aria-label={isBookmarked ? '북마크 해제' : '북마크 추가'}
-              className={isBookmarked ? 'text-primary' : 'text-neutral-11'}
+              onClick={onBookmarkClick}
+              aria-pressed={detail.isBookmarked}
+              aria-label={detail.isBookmarked ? '북마크 해제' : '북마크 추가'}
+              className={detail.isBookmarked ? 'text-primary' : 'text-neutral-11'}
             >
               <svg
                 viewBox="0 0 24 24"
-                fill={isBookmarked ? 'currentColor' : 'none'}
+                fill={detail.isBookmarked ? 'currentColor' : 'none'}
                 stroke="currentColor"
                 strokeWidth="2"
                 className="h-7 w-7"
@@ -56,14 +59,20 @@ function JobDetailHeader({ detail, isOwner }: JobDetailHeaderProps) {
       <div className="flex items-center gap-3">
         {isOwner ? (
           <>
-            <Tag variant="secondary">{detail.status}</Tag>
-            <Tag variant="secondary">{detail.dDay}</Tag>
+            <Tag variant="secondary">{isClosed ? '모집 완료' : '모집 중'}</Tag>
+            <Tag variant="secondary">{isClosed ? '마감' : `D-${detail.dday}`}</Tag>
           </>
         ) : (
           <>
-            <Tag>{detail.type}</Tag>
-            <Tag>{detail.category}</Tag>
-            <span className="text-caption-lg text-neutral-11 font-bold">{detail.dDay}</span>
+            <Tag variant="meta">{PROJECT_TYPE_LABEL[detail.category] ?? detail.category}</Tag>
+            <Tag variant="meta">
+              {detail.lengthType
+                ? (PROJECT_LENGTH_TYPE_LABEL[detail.lengthType] ?? detail.lengthType)
+                : '-'}
+            </Tag>
+            <span className="text-caption-lg text-neutral-11 font-bold">
+              {isClosed ? '마감' : `D-${detail.dday}`}
+            </span>
           </>
         )}
       </div>

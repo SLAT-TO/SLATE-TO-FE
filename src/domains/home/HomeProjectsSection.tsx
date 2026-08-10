@@ -19,7 +19,16 @@ function ProjectCardSkeleton() {
 export default function HomeProjectsSection({ projects, loading }: HomeProjectsSectionProps) {
   return (
     <section className="flex flex-col gap-5">
-      <h2 className="text-head-sm text-neutral-11 font-bold">진행 중인 프로젝트</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-head-sm text-neutral-11 font-bold">진행 중인 프로젝트</h2>
+        <button
+          type="button"
+          onClick={() => navigate('/workspace')}
+          className="text-body-sm text-neutral-11 font-semibold tracking-[-0.32px] capitalize"
+        >
+          전체 보기
+        </button>
+      </div>
 
       {loading && (
         <div

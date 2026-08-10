@@ -199,10 +199,14 @@ export async function updateFeedbackStatus(
   return { ...result, status: toFeedbackStatus(result.status) }
 }
 
-export async function getReplies(feedbackId: number): Promise<{ items: FeedbackReply[] }> {
+export async function getReplies(
+  feedbackId: number,
+  options?: { guestId?: number },
+): Promise<{ items: FeedbackReply[] }> {
   const result = await request<{ items: FeedbackReplyStatusRaw[] }>({
     method: 'GET',
     url: paths.feedbacks.replies(feedbackId),
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
   })
   return { items: result.items.map(normalizeFeedbackReply) }
 }
@@ -224,7 +228,7 @@ export async function createReply(
 
 export async function updateReply(
   replyId: number,
-  body: { content?: string; deleted?: boolean },
+  body: { content: string; guestId?: number },
 ): Promise<FeedbackReply | null> {
   const result = await request<FeedbackReplyStatusRaw | null>({
     method: 'PATCH',
@@ -232,6 +236,14 @@ export async function updateReply(
     data: body,
   })
   return result ? normalizeFeedbackReply(result) : null
+}
+
+export async function deleteReply(replyId: number, options?: { guestId?: number }): Promise<null> {
+  return request({
+    method: 'DELETE',
+    url: paths.replies.byId(replyId),
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+  })
 }
 
 export async function updateReplyStatus(
