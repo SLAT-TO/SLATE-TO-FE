@@ -63,16 +63,16 @@ export default function ProjectForm({
   const [saving, setSaving] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
+  const hasRequiredProjectValues = Boolean(
+    values.title.trim() &&
+    values.description.trim() &&
+    values.type &&
+    values.lengthType &&
+    values.endDate,
+  )
   const canSubmit = isCreate
-    ? Boolean(
-        values.title.trim() &&
-        values.description.trim() &&
-        values.type &&
-        values.lengthType &&
-        values.endDate &&
-        values.roleName,
-      )
-    : Boolean(values.title.trim())
+    ? hasRequiredProjectValues && Boolean(values.roleName)
+    : hasRequiredProjectValues
 
   const updateValue = (key: keyof ProjectFormValues) => (value: string) => {
     setValues((prev) => ({ ...prev, [key]: value }))
@@ -112,7 +112,7 @@ export default function ProjectForm({
       <div className="flex flex-col gap-1.5">
         <label className="text-caption-lg text-neutral-9 font-semibold">
           프로젝트 마감일
-          {isCreate && <span className="text-warning ml-0.5">*</span>}
+          <span className="text-warning ml-0.5">*</span>
         </label>
         <DateSingleField
           value={toDate(values.endDate)}
@@ -134,7 +134,7 @@ export default function ProjectForm({
         onChange={updateValue('lengthType')}
         label="영상 길이"
         placeholder="영상 길이를 선택해주세요."
-        required={isCreate}
+        required
       />
 
       <Select
@@ -143,7 +143,7 @@ export default function ProjectForm({
         onChange={updateValue('type')}
         label="프로젝트 유형"
         placeholder="프로젝트 유형을 선택해주세요."
-        required={isCreate}
+        required
       />
 
       <TextArea
@@ -152,7 +152,7 @@ export default function ProjectForm({
         label="프로젝트 설명"
         placeholder="프로젝트 설명을 입력해주세요."
         rows={4}
-        required={isCreate}
+        required
       />
 
       {isCreate && (
