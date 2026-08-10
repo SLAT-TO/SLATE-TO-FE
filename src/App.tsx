@@ -128,10 +128,15 @@ function LegacyAppRoutes() {
   if (path === '/mypage/edit') return <ProfileEditPage />
   if (path === '/mypage/project/new') return <ProjectFormPage mode="create" />
 
-  if (matchPath('/mypage/project/:id/edit', path)) {
-    return <ProjectFormPage mode="edit" />
-  }
+  const portfolioEditMatch = matchPath('/mypage/project/:id/edit', path)
 
+  if (portfolioEditMatch) {
+    const portfolioId = Number(portfolioEditMatch.id)
+    if (!Number.isFinite(portfolioId)) {
+      return <p className="text-body-sm text-warning">잘못된 프로젝트 경로입니다.</p>
+    }
+    return <ProjectFormPage key={portfolioId} mode="edit" portfolioId={portfolioId} />
+  }
   if (matchPath('/mypage/project/:id', path)) {
     return <ProjectOverviewPage />
   }
