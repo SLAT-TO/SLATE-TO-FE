@@ -77,13 +77,12 @@ export async function getPublicProfile(userId: number): Promise<PublicUser> {
 
 export async function getUserPortfolios(
   userId: number,
-  page = 1,
-  size = 12,
+  params: { cursor?: number; size?: number } = {},
 ): Promise<PageResult<Portfolio>> {
   return request<PageResult<Portfolio>>({
     method: 'GET',
     url: paths.users.portfolios(userId),
-    params: { page, size },
+    params,
   })
 }
 
