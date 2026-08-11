@@ -5,7 +5,7 @@ import { formatDateTime } from '../../utils/formatDate'
 
 interface ApplicantRowProps {
   application: RecruitmentApplication
-  onViewProfile: (applicantId: number) => void
+  onViewProfile: () => void
 }
 
 function ApplicantRow({ application, onViewProfile }: ApplicantRowProps) {
@@ -27,7 +27,7 @@ function ApplicantRow({ application, onViewProfile }: ApplicantRowProps) {
       <Button
         variant="secondary"
         size="sm"
-        onClick={() => onViewProfile(applicant.id)}
+        onClick={() => onViewProfile()}
         className="ml-auto w-[140px]"
       >
         프로필 보기

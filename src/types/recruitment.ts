@@ -123,3 +123,18 @@ export interface RecruitmentApplication {
   appliedAt: string
   applicant: ApplicantSummary
 }
+
+/** 지원 시 첨부한 파일 메타데이터 — 실제 다운로드는 별도 API */
+export interface ApplicationFile {
+  id: number
+  fileName: string
+  contentType: string
+  fileSize: number
+  createdAt: string
+}
+
+/** 지원 상세 조회 — 목록 응답에 recruitmentId, files가 추가된 형태 */
+export interface RecruitmentApplicationDetail extends RecruitmentApplication {
+  recruitmentId: number
+  files: ApplicationFile[]
+}

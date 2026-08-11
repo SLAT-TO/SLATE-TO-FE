@@ -7,6 +7,7 @@ import type {
   CreateRecruitmentRequest,
   Recruitment,
   RecruitmentApplication,
+  RecruitmentApplicationDetail,
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
 } from '../../types/recruitment'
@@ -201,6 +202,36 @@ export const recruitmentHandlers = [
     }
     db.applications.push(application)
     return HttpResponse.json(created(application), { status: 201 })
+  }),
+  http.get(paths.recruitments.application(':recruitmentId', ':applicationId'), ({ params }) => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+
+    const application = db.applications.find((a) => a.id === Number(params.applicationId))
+    if (!application) return notFound()
+
+    const applicant = db.users.find((u) => u.id === application.userId)
+
+    const detail: RecruitmentApplicationDetail = {
+      applicationId: application.id,
+      recruitmentId: application.recruitmentId,
+      applicationStatus: application.status,
+      message: application.message ?? '',
+      referenceLink: null,
+      appliedAt: application.createdAt,
+      applicant: {
+        id: application.userId,
+        nickname: application.nickname,
+        profileImageUrl: application.profileImageUrl,
+        bio: applicant?.bio ?? '자기소개 미리보기 멘트가 나오게 됩니다.',
+        primaryRole: applicant?.primaryRole ?? null,
+        locations: (applicant?.regions ?? []) as UserRegion[],
+      },
+      // 첨부 업로드 미구현 — 메타데이터만 빈 배열
+      files: [],
+    }
+
+    return HttpResponse.json(ok(detail), { status: 200 })
   }),
 
   http.get(paths.recruitments.applications(':recruitmentId'), ({ params }) => {

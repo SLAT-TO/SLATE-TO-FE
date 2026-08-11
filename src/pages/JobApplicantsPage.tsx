@@ -73,8 +73,8 @@ function JobApplicantsPage({ jobId }: JobApplicantsPageProps) {
                   <ApplicantRow
                     key={application.applicationId}
                     application={application}
-                    onViewProfile={(applicantId) =>
-                      navigate(`/matching/${jobId}/applicants/${applicantId}`)
+                    onViewProfile={() =>
+                      navigate(`/matching/${jobId}/applicants/${application.applicationId}`)
                     }
                   />
                 ))}

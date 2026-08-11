@@ -13,6 +13,7 @@ import type {
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
   RecruitmentApplication,
+  RecruitmentApplicationDetail,
 } from '../types/recruitment'
 import type { CursorPage } from '../types/project'
 
@@ -138,4 +139,14 @@ export async function getAllApplications(
   }
 
   return items
+}
+
+export async function getApplication(
+  recruitmentId: number,
+  applicationId: number,
+): Promise<RecruitmentApplicationDetail> {
+  return request({
+    method: 'GET',
+    url: paths.recruitments.application(recruitmentId, applicationId),
+  })
 }

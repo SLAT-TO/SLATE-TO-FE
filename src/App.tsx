@@ -78,14 +78,14 @@ function LegacyAppRoutes() {
     return <JobFormPage key={jobId} mode="edit" jobId={jobId} />
   }
 
-  const applicantProfileMatch = matchPath('/matching/:jobId/applicants/:applicantId', path)
+  const applicantProfileMatch = matchPath('/matching/:jobId/applicants/:applicationId', path)
   if (applicantProfileMatch) {
     const jobId = Number(applicantProfileMatch.jobId)
-    const applicantId = Number(applicantProfileMatch.applicantId)
-    if (!Number.isFinite(jobId) || !Number.isFinite(applicantId)) {
+    const applicationId = Number(applicantProfileMatch.applicationId)
+    if (!Number.isFinite(jobId) || !Number.isFinite(applicationId)) {
       return <p className="text-body-sm text-warning">잘못된 지원자 경로입니다.</p>
     }
-    return <ApplicantProfilePage key={applicantId} jobId={jobId} applicantId={applicantId} />
+    return <ApplicantProfilePage key={applicationId} jobId={jobId} applicationId={applicationId} />
   }
 
   const applicantsMatch = matchPath('/matching/:jobId/applicants', path)
