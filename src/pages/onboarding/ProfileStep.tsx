@@ -44,21 +44,20 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
     }
   }, [])
 
-  // 소셜 로그인 이메일 자동입력 — 최초 1회만 채우고, 그 뒤 사용자가 지워도 다시 덮어쓰지 않음
+  // 회원가입 시 사용한 이메일 자동입력 — 최초 1회만 채우고, 그 뒤 사용자가 지워도 다시 덮어쓰지 않음.
+  // ref 가드를 effect 본문에서 동기적으로 세워 StrictMode의 mount→cleanup→mount 재실행에도
+  // getMe()가 중복 호출되지 않는다. cleanup으로 취소하면 StrictMode에서 cleanup이 응답보다
+  // 먼저 실행돼 결과가 항상 버려지므로 취소 로직 없이 결과를 그대로 반영한다.
   const emailPrefillAttempted = useRef(false)
   useEffect(() => {
     if (emailPrefillAttempted.current || profile.email) return
     emailPrefillAttempted.current = true
 
-    let cancelled = false
     getMe()
       .then((me) => {
-        if (!cancelled && me.email) setProfileField('email', me.email)
+        if (me.email) setProfileField('email', me.email)
       })
       .catch(() => {})
-    return () => {
-      cancelled = true
-    }
   }, [profile.email, setProfileField])
 
   // 텍스트 필드 갱신 + 입력 중이면 해당 필드 에러 해제 (제출 시 전체 재검증)
