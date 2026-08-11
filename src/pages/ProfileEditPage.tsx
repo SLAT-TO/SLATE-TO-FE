@@ -1,20 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Input from '../components/Input'
 import TextArea from '../components/TextArea'
-import Select from '../components/Select'
+import MultiSelect from '../components/MultiSelect'
 import { Button } from '../components/Button'
 import { ROLE_OPTIONS } from '../constants/roles'
+import { ONBOARDING_REGION_OPTIONS } from '../constants/regions'
 import { profileSchema, type ProfileFormValues } from '../schemas/profile'
 import { validateField } from '../utils/validateField'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
+import { navigate } from '../utils/navigation'
+import { getMe, updateProfile } from '../api/users'
+import type { SocialType, UserCategory, UserRole, UserRegion } from '../types/user'
+import { useUserStore } from '../stores/userStore'
 
-// 수정 진입 시 GET /api/v1/users/me 응답으로 초기값 채우기.
-// 등록(온보딩 직후)은 빈 값, 수정은 기존 값. 지금은 빈 값 고정.
 const INITIAL_VALUES: ProfileFormValues = {
   nickname: '',
-  role: '연출',
-  region: '',
+  roles: [],
+  regions: [],
   email: '',
   bio: '',
 }
@@ -29,22 +32,58 @@ function ProfileEditPage() {
   const [errors, setErrors] = useState<FormErrors>({})
   // 프로필 이미지 업로드 API 연동 필요. 지금은 미리보기 URL만.
   const [imagePreview] = useState('https://placehold.co/80x80')
+  const [socialType, setSocialType] = useState<SocialType | null>(null)
+  // 화면에서 다루지 않는 값은 서버 값을 그대로 되돌려보내 삭제를 막는다
+  const [serverCategories, setServerCategories] = useState<UserCategory[]>([])
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
-  // 값 변경
+  const isSocialAccount = socialType !== null && socialType !== 'EMAIL'
+
+  useEffect(() => {
+    let cancelled = false
+
+    getMe()
+      .then((me) => {
+        if (cancelled) return
+        setSocialType(me.socialType)
+        setServerCategories(me.categories)
+        setValues({
+          nickname: me.nickname,
+          roles: me.roles,
+          regions: me.regions as string[],
+          email: me.email,
+          bio: me.bio ?? '',
+        })
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError('프로필 정보를 불러오지 못했습니다.')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const handleChange = (field: keyof ProfileFormValues) => (value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }))
   }
 
-  // onBlur 시 해당 필드만 검증 (메모리 패턴: onBlur + 제출 시 재검증)
+  const handleMultiChange = (field: 'roles' | 'regions') => (next: string[]) => {
+    setValues((prev) => ({ ...prev, [field]: next }))
+    setErrors((prev) => ({ ...prev, [field]: undefined }))
+  }
+
+  // onBlur 시 해당 필드만 검증
   const handleBlur = (field: keyof ProfileFormValues) => () => {
     const message = validateField(profileSchema.shape[field], values[field])
     setErrors((prev) => ({ ...prev, [field]: message }))
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const result = profileSchema.safeParse(values)
     if (!result.success) {
-      // 전체 재검증 후 에러 매핑
       const nextErrors: FormErrors = {}
       for (const issue of result.error.issues) {
         const key = issue.path[0] as keyof ProfileFormValues
@@ -53,13 +92,28 @@ function ProfileEditPage() {
       setErrors(nextErrors)
       return
     }
-    // PATCH /api/v1/users/me 로 저장. 성공 시 마이페이지로 이동.
-    console.log('프로필 저장:', result.data)
+
+    setIsSaving(true)
+    setSaveError(null)
+    try {
+      const updated = await updateProfile({
+        nickname: result.data.nickname,
+        bio: result.data.bio,
+        locations: result.data.regions as UserRegion[],
+        roles: result.data.roles as UserRole[],
+        categories: serverCategories.length > 0 ? serverCategories : undefined,
+      })
+      useUserStore.getState().setUser(updated)
+      navigate('/mypage')
+    } catch {
+      setSaveError('저장에 실패했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleCancel = () => {
-    // 마이페이지로 이동 (라우터 확정 후 navigate 연결)
-    console.log('취소')
+    navigate('/mypage')
   }
 
   return (
@@ -72,7 +126,6 @@ function ProfileEditPage() {
             alt="프로필 미리보기"
             className="h-20 w-20 rounded-full object-cover"
           />
-          {/* 이름 + 안내문구 수직 세트 & 우측 버튼 레이아웃 */}
           <div className="flex items-center gap-8">
             <div className="flex flex-col gap-1">
               <span className="text-neutral-11 text-lg font-semibold">
@@ -89,7 +142,6 @@ function ProfileEditPage() {
 
       {/* 입력 필드 */}
       <section className="flex flex-col gap-5">
-        {/* 이름 + 역할: 2열 */}
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
           <Input
             label="이름"
@@ -97,31 +149,30 @@ function ProfileEditPage() {
             placeholder="이름을 입력하세요."
             value={values.nickname}
             onChange={handleChange('nickname')}
+            onBlur={handleBlur('nickname')}
             error={errors.nickname}
           />
-          <Select
+          <MultiSelect
             label="역할"
             required
             options={ROLE_OPTIONS}
-            value={values.role}
-            onChange={handleChange('role')}
-            onBlur={handleBlur('role')}
-            error={errors.role}
+            selected={values.roles}
+            onChange={handleMultiChange('roles')}
+            error={errors.roles}
             placeholder="역할을 선택하세요."
           />
         </div>
 
-        {/* 지역: 전체 너비 */}
-        <Input
+        <MultiSelect
           label="지역"
           required
-          placeholder="주 활동지역을 입력하세요."
-          value={values.region}
-          onChange={handleChange('region')}
-          error={errors.region}
+          options={ONBOARDING_REGION_OPTIONS}
+          selected={values.regions}
+          onChange={handleMultiChange('regions')}
+          error={errors.regions}
+          placeholder="주 활동지역을 선택하세요."
         />
 
-        {/* 이메일: 전체 너비 */}
         <Input
           label="이메일"
           required
@@ -129,9 +180,10 @@ function ProfileEditPage() {
           value={values.email}
           onChange={handleChange('email')}
           error={errors.email}
+          disabled={isSocialAccount}
+          hint={isSocialAccount ? '소셜 로그인 계정은 이메일을 변경할 수 없습니다.' : undefined}
         />
 
-        {/* 자기소개: 전체 너비 */}
         <TextArea
           label="자기소개"
           placeholder="자기소개를 입력하세요."
@@ -145,10 +197,18 @@ function ProfileEditPage() {
         />
       </section>
 
-      {/* 저장 / 취소 */}
+      {(loadError || saveError) && (
+        <p className="text-caption-sm text-warning text-center">{loadError ?? saveError}</p>
+      )}
+
       <div className="flex justify-center gap-3">
-        <Button variant="primary" onClick={handleSubmit} className="px-24">
-          저장
+        <Button
+          variant="primary"
+          onClick={() => void handleSubmit()}
+          disabled={isSaving}
+          className="px-24"
+        >
+          {isSaving ? '저장 중...' : '저장'}
         </Button>
         <Button variant="secondary" onClick={handleCancel} className="px-24">
           취소

@@ -10,7 +10,7 @@ import {
   startOfWeek,
   subMonths,
 } from 'date-fns'
-import { getScheduleSummary } from '../../api/schedules'
+import { getSchedules } from '../../api/schedules'
 import { toDateKey } from '../../utils/calendarUtils'
 import { navigate } from '../../utils/navigation'
 
@@ -51,23 +51,35 @@ interface HomeMiniCalendarProps {
 export default function HomeMiniCalendar({ className = '' }: HomeMiniCalendarProps) {
   const [month, setMonth] = useState(new Date())
   const days = useMemo(() => getSundayStartGrid(month), [month])
-  const [scheduledDates, setScheduledDates] = useState<Set<string>>(new Set())
+  const [eventDateKeys, setEventDateKeys] = useState<Set<string>>(new Set())
 
+  // 통합 캘린더 일정 조회 — 현재 보고 있는 달에 일정이 있는 날짜만 점으로 표시
   useEffect(() => {
     let cancelled = false
 
-    getScheduleSummary()
-      .then((result) => {
-        if (!cancelled) setScheduledDates(new Set(result.items.map((item) => item.date)))
-      })
-      .catch(() => {
-        if (!cancelled) setScheduledDates(new Set())
-      })
+    async function loadMonthEvents() {
+      try {
+        const result = await getSchedules({ month })
+        if (cancelled) return
+        const keys = new Set<string>()
+        for (const schedule of result.items) {
+          const dayRange = eachDayOfInterval({
+            start: new Date(schedule.startAt),
+            end: new Date(schedule.endAt),
+          })
+          for (const day of dayRange) keys.add(toDateKey(day))
+        }
+        setEventDateKeys(keys)
+      } catch {
+        if (!cancelled) setEventDateKeys(new Set())
+      }
+    }
 
+    void loadMonthEvents()
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [month])
 
   return (
     <div
@@ -125,22 +137,16 @@ export default function HomeMiniCalendar({ className = '' }: HomeMiniCalendarPro
         {days.map((day) => {
           const inMonth = isSameMonth(day, month)
           const today = isToday(day)
-          const hasSchedule = inMonth && scheduledDates.has(toDateKey(day))
+          const hasEvent = inMonth && eventDateKeys.has(toDateKey(day))
           return (
             <span
               key={day.toISOString()}
-              className="relative flex h-7.5 w-7.5 items-center justify-center"
+              className={`relative flex h-7.5 w-7.5 items-center justify-center text-center text-[18px] leading-7.5 font-normal tracking-[-0.36px] capitalize ${
+                inMonth ? 'text-neutral-10' : 'text-neutral-4'
+              } ${today ? 'text-primary font-bold' : ''}`}
             >
-              {hasSchedule && (
-                <span className="bg-main-3 absolute size-5 rounded-full" aria-hidden />
-              )}
-              <span
-                className={`relative text-center text-[18px] leading-7.5 font-normal tracking-[-0.36px] capitalize ${
-                  inMonth ? 'text-neutral-10' : 'text-neutral-4'
-                } ${today ? 'text-primary font-bold' : ''}`}
-              >
-                {format(day, 'd')}
-              </span>
+              {hasEvent && <span className="bg-main-3 absolute size-5 rounded-full" />}
+              <span className="relative">{format(day, 'd')}</span>
             </span>
           )
         })}

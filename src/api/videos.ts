@@ -138,7 +138,7 @@ export async function getFeedbacks(
 }
 
 /** Swagger: guestId만 body에 실음. 멤버는 JWT */
-function feedbackGuestBody(body: { guestId?: number }): { guestId?: number } {
+function feedbackActorBody(body: { guestId?: number }): { guestId?: number } {
   return body.guestId != null ? { guestId: body.guestId } : {}
 }
 
@@ -153,7 +153,7 @@ export async function createFeedback(
       content: body.content,
       ...(body.startTime != null ? { startTime: body.startTime } : {}),
       ...(body.endTime != null ? { endTime: body.endTime } : {}),
-      ...feedbackGuestBody(body),
+      ...feedbackActorBody(body),
     },
   })
   return normalizeFeedback(result)
@@ -170,7 +170,7 @@ export async function updateFeedback(
       ...(body.content != null ? { content: body.content } : {}),
       ...(body.startTime != null ? { startTime: body.startTime } : {}),
       ...(body.endTime != null ? { endTime: body.endTime } : {}),
-      ...feedbackGuestBody(body),
+      ...feedbackActorBody(body),
     },
   })
   return normalizeFeedback(result)
@@ -199,10 +199,14 @@ export async function updateFeedbackStatus(
   return { ...result, status: toFeedbackStatus(result.status) }
 }
 
-export async function getReplies(feedbackId: number): Promise<{ items: FeedbackReply[] }> {
+export async function getReplies(
+  feedbackId: number,
+  options?: { guestId?: number },
+): Promise<{ items: FeedbackReply[] }> {
   const result = await request<{ items: FeedbackReplyStatusRaw[] }>({
     method: 'GET',
     url: paths.feedbacks.replies(feedbackId),
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
   })
   return { items: result.items.map(normalizeFeedbackReply) }
 }
@@ -216,7 +220,7 @@ export async function createReply(
     url: paths.feedbacks.replies(feedbackId),
     data: {
       content: body.content,
-      ...feedbackGuestBody(body),
+      ...feedbackActorBody(body),
     },
   })
   return normalizeFeedbackReply(result)
@@ -224,7 +228,7 @@ export async function createReply(
 
 export async function updateReply(
   replyId: number,
-  body: { content?: string; deleted?: boolean },
+  body: { content: string; guestId?: number },
 ): Promise<FeedbackReply | null> {
   const result = await request<FeedbackReplyStatusRaw | null>({
     method: 'PATCH',
@@ -232,6 +236,14 @@ export async function updateReply(
     data: body,
   })
   return result ? normalizeFeedbackReply(result) : null
+}
+
+export async function deleteReply(replyId: number, options?: { guestId?: number }): Promise<null> {
+  return request({
+    method: 'DELETE',
+    url: paths.replies.byId(replyId),
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+  })
 }
 
 export async function updateReplyStatus(

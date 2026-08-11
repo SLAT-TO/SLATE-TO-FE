@@ -26,10 +26,16 @@ export const userHandlers = [
     return HttpResponse.json(ok(toMeProfile(user)), { status: 200 })
   }),
 
-  // BE 미구현 — 활동 통계 API 없음
   http.get(paths.users.activityStats, () => {
     const user = safeUser()
     if (!user) return unauthorized()
+    return HttpResponse.json(ok(user.stats), { status: 200 })
+  }),
+
+  http.get(paths.users.stats(':userId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const user = db.users.find((u) => u.id === Number(params.userId))
+    if (!user) return notFound('존재하지 않는 유저')
     return HttpResponse.json(ok(user.stats), { status: 200 })
   }),
 
@@ -82,7 +88,11 @@ export const userHandlers = [
 
     if (body.nickname) user.nickname = body.nickname
     if (body.bio !== undefined) user.bio = body.bio
-    if (body.location) user.location = body.location
+    if (body.locations) {
+      user.regions = body.locations
+      user.location = body.locations[0] ?? null
+      user.region = body.locations[0] ?? null
+    }
     if (body.profileImageUrl !== undefined) user.profileImageUrl = body.profileImageUrl
     if (body.roles) {
       user.roles = body.roles

@@ -20,6 +20,7 @@ export function useProjectStatusMenu(
   }, [open, containerRef])
 
   const toggle = () => setOpen((v) => !v)
+  const close = () => setOpen(false)
 
   const changeStatus = async (status: ProjectStatus) => {
     setOpen(false)
@@ -55,5 +56,5 @@ export function useProjectStatusMenu(
     }
   }
 
-  return { open, toggle, changeStatus }
+  return { open, toggle, close, changeStatus }
 }

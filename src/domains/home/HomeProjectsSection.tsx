@@ -12,6 +12,15 @@ interface HomeProjectsSectionProps {
   onLeaveProject: (projectId: number) => Promise<void>
 }
 
+function ProjectCardSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="border-border-input bg-neutral-2 h-34 rounded-[10.242px] border-[0.749px]"
+    />
+  )
+}
+
 export default function HomeProjectsSection({
   projects,
   loading,
@@ -50,21 +59,41 @@ export default function HomeProjectsSection({
 
   return (
     <section className="flex flex-col gap-5">
-      <h2 className="text-head-sm text-neutral-11 font-bold">진행 중인 프로젝트</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-head-sm text-neutral-11 font-bold">진행 중인 프로젝트</h2>
+        <button
+          type="button"
+          onClick={() => navigate('/workspace')}
+          className="text-body-sm text-neutral-11 font-semibold tracking-[-0.32px] capitalize"
+        >
+          전체 보기
+        </button>
+      </div>
 
-      {loading && <p className="text-body-sm text-neutral-6">불러오는 중…</p>}
+      {loading && (
+        <div
+          className="grid grid-cols-1 gap-x-10.5 gap-y-10 sm:grid-cols-2"
+          role="status"
+          aria-busy="true"
+          aria-live="polite"
+          aria-label="프로젝트 목록 불러오는 중"
+        >
+          <ProjectCardSkeleton />
+          <ProjectCardSkeleton />
+        </div>
+      )}
       {deleteError && <p className="text-body-sm text-warning">{deleteError}</p>}
       {leaveError && <p className="text-body-sm text-warning">{leaveError}</p>}
 
       {!loading && projects.length === 0 && (
-        <div className="flex h-46 flex-col items-center justify-center gap-5 rounded-[10.242px] bg-white shadow-[0px_3.414px_12.461px_rgba(169,204,244,0.15)]">
+        <div className="flex h-46 flex-col items-center justify-center gap-5 rounded-[10.242px] bg-white shadow-[0px_3.414px_24.923px_4.268px_rgba(169,204,244,0.15)]">
           <p className="text-body-sm text-neutral-6">
             진행중인 프로젝트가 없어요. 프로젝트를 추가해보세요.
           </p>
           <a
             href="/mypage/project/new"
-            onClick={(e) => {
-              e.preventDefault()
+            onClick={(event) => {
+              event.preventDefault()
               navigate('/mypage/project/new')
             }}
             className="border-secondary text-secondary hover:border-secondary-hover hover:text-secondary-hover inline-flex h-10 w-50 items-center justify-center gap-2.5 rounded-lg border bg-white px-4 text-base font-semibold tracking-[-0.176px] transition-colors"

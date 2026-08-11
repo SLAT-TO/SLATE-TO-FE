@@ -22,8 +22,9 @@ export function normalizeFeedbackReply(raw: FeedbackReplyStatusRaw): FeedbackRep
   return { ...raw, status: toFeedbackStatus(raw.status) }
 }
 
-/** BE GET /users/me — region 필드, PATCH/공개프로필은 location */
-export type BeMe = Omit<MeProfile, 'location'> & {
+/** BE GET /users/me — regions 배열, PATCH/공개프로필은 location */
+export type BeMe = Omit<MeProfile, 'location' | 'regions'> & {
+  regions?: string[] | null
   region?: string | null
   location?: string | null
 }
@@ -41,9 +42,12 @@ export type BeVideoListRaw =
   | { videos: VideoListItem[]; nextCursor: number | null; hasNext: boolean }
 
 export function normalizeMe(raw: BeMe): MeProfile {
-  const location = raw.location ?? raw.region ?? null
+  // GET /users/me는 regions 배열로 내려옴. location/region은 대표(첫) 지역
+  const regions = raw.regions ?? []
+  const location = raw.location ?? raw.region ?? regions[0] ?? null
   return {
     ...raw,
+    regions,
     region: raw.region ?? location,
     location,
   }

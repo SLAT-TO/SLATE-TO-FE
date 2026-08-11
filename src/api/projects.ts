@@ -142,7 +142,16 @@ export async function getProjectActivities(
   projectId: number,
   options?: { cursor?: string; size?: number },
 ): Promise<ActivityLogListResult> {
-  return request({
+  const result = await request<
+    Omit<ActivityLogListResult, 'items'> & {
+      items: Array<
+        Omit<ActivityLogListResult['items'][number], 'isNew'> & {
+          isRead?: boolean
+          isNew?: boolean
+        }
+      >
+    }
+  >({
     method: 'GET',
     url: paths.projects.activities(projectId),
     params: {
@@ -150,6 +159,13 @@ export async function getProjectActivities(
       ...(options?.size != null ? { size: options.size } : {}),
     },
   })
+  return {
+    ...result,
+    items: result.items.map(({ isRead, isNew, ...item }) => ({
+      ...item,
+      isNew: isNew ?? !isRead,
+    })),
+  }
 }
 
 /** BE PATCH …/activities/{activityId}/read */

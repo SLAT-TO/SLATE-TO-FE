@@ -1,14 +1,17 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { Button } from '../../components/Button'
 import { markActivityRead, markAllActivitiesRead } from '../../api/projects'
 import { projectKeys } from '../../queries/keys'
-import type { ProjectActivity } from '../../types/project'
+import type { ActivityLogListResult, ProjectActivity } from '../../types/project'
 
 const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
 
 interface ActivityListViewProps {
   projectId: number
   activities: ProjectActivity[]
+  hasMore: boolean
+  isLoadingMore: boolean
+  onLoadMore: () => void
   onBack: () => void
   onNavigate: (activity: ProjectActivity) => void
 }
@@ -39,6 +42,9 @@ function canNavigate(activity: ProjectActivity): boolean {
 export default function ActivityListView({
   projectId,
   activities,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
   onBack,
   onNavigate,
 }: ActivityListViewProps) {
@@ -46,8 +52,15 @@ export default function ActivityListView({
   const hasNew = activities.some((item) => item.isNew)
 
   const patchActivities = (updater: (items: ProjectActivity[]) => ProjectActivity[]) => {
-    queryClient.setQueryData<ProjectActivity[]>(projectKeys.activities(projectId), (prev) =>
-      updater(prev ?? []),
+    queryClient.setQueryData<InfiniteData<ActivityLogListResult>>(
+      projectKeys.activities(projectId),
+      (prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          pages: prev.pages.map((page) => ({ ...page, items: updater(page.items) })),
+        }
+      },
     )
   }
 
@@ -59,6 +72,7 @@ export default function ActivityListView({
     )
     try {
       await markActivityRead(projectId, activityId)
+      void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
     } catch {
       void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
     }
@@ -69,6 +83,7 @@ export default function ActivityListView({
     patchActivities((items) => items.map((item) => ({ ...item, isNew: false })))
     try {
       await markAllActivitiesRead(projectId)
+      void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
     } catch {
       void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
     }
@@ -147,6 +162,19 @@ export default function ActivityListView({
             )
           })}
         </ul>
+      )}
+
+      {hasMore && (
+        <Button
+          variant="secondary"
+          size="md"
+          width={112}
+          onClick={onLoadMore}
+          disabled={isLoadingMore}
+          className="self-center"
+        >
+          {isLoadingMore ? '불러오는 중…' : '더 보기'}
+        </Button>
       )}
     </section>
   )

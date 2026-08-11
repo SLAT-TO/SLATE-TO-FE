@@ -28,6 +28,10 @@ export async function getMyActivityStats(): Promise<UserActivityStats> {
   return request<UserActivityStats>({ method: 'GET', url: paths.users.activityStats })
 }
 
+export async function getUserStats(userId: number): Promise<UserActivityStats> {
+  return request({ method: 'GET', url: paths.users.stats(userId) })
+}
+
 export async function submitOnboarding(body: OnboardingRequest): Promise<OnboardingResult> {
   return request<OnboardingResult>({
     method: 'POST',

@@ -1,33 +1,16 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import Tag from '../components/Tag'
 import type { Portfolio } from '../types/portfolio'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
+import { getMyPortfolio } from '../api/users'
+import { roleLabel } from '../constants/roles'
+import { videoCategoryLabel } from '../constants/videoCategories'
 
-// GET /api/v1/portfolios/:id 응답으로 교체. 지금은 목 데이터.
-const MOCK_PORTFOLIO: Portfolio = {
-  id: 1,
-  title: '연애혁명',
-  type: '영화 / 드라마',
-  kind: 'EXTERNAL',
-  clientName: '스튜디오 X',
-  roles: ['DIRECTOR', 'EDITOR'],
-  description: '고등학생들의 연애와 우정을 그린 웹드라마 연출 및 편집을 담당했습니다.',
-  comment: '감정선과 몰입감을 살리는 연출을 중점으로 작업했습니다.',
-  youtubeUrl: 'https://www.youtube.com/watch?v=hDBSEV7ZwZs',
-  thumbnailUrl: 'https://placehold.co/300x160',
+interface ProjectOverviewPageProps {
+  portfolioId: number
 }
 
-const ROLE_LABEL_MAP: Record<string, string> = {
-  DIRECTOR: '연출',
-  EDITOR: '편집',
-  CINEMATOGRAPHER: '촬영',
-  SOUND: '사운드',
-  PD: 'PD',
-  ART: '미술',
-}
-
-// 개요 항목 하나 (라벨 + 값)
 function OverviewField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
@@ -39,9 +22,42 @@ function OverviewField({ label, children }: { label: string; children: ReactNode
 
 const HEADER = <HeaderTitle>프로젝트 개요</HeaderTitle>
 
-function ProjectOverviewPage() {
+function ProjectOverviewPage({ portfolioId }: ProjectOverviewPageProps) {
   useHeaderSlot(HEADER)
-  const portfolio = MOCK_PORTFOLIO
+  const [portfolio, setPortfolio] = useState<Portfolio | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const load = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const result = await getMyPortfolio(portfolioId)
+        if (!cancelled) setPortfolio(result)
+      } catch {
+        if (!cancelled) setError('프로젝트 정보를 불러오지 못했습니다.')
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [portfolioId])
+
+  if (isLoading) {
+    return <p className="text-caption-sm text-neutral-6 p-6">불러오는 중…</p>
+  }
+
+  if (error || !portfolio) {
+    return <p className="text-caption-sm text-neutral-6 p-6">{error}</p>
+  }
+
   const { type, kind, clientName, roles, description, comment, youtubeUrl } = portfolio
 
   return (
@@ -53,7 +69,7 @@ function ProjectOverviewPage() {
           <OverviewField label="맡은 역할">
             <div className="flex flex-wrap gap-1.5">
               {roles.map((role) => (
-                <Tag key={role}>{ROLE_LABEL_MAP[role] ?? role}</Tag>
+                <Tag key={role}>{roleLabel(role)}</Tag>
               ))}
             </div>
           </OverviewField>
@@ -63,7 +79,7 @@ function ProjectOverviewPage() {
           <OverviewField label="프로젝트 설명">{description}</OverviewField>
 
           {/* 아랫줄: 프로젝트 유형 / 클라이언트 */}
-          <OverviewField label="프로젝트 유형">{type}</OverviewField>
+          <OverviewField label="프로젝트 유형">{videoCategoryLabel(type)}</OverviewField>
 
           <OverviewField label="클라이언트">
             {kind === 'EXTERNAL' ? (clientName ?? '-') : '개인 프로젝트'}

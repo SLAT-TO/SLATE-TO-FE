@@ -1,4 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+} from '@tanstack/react-query'
 import {
   createProject,
   deleteProject,
@@ -11,17 +18,34 @@ import {
   pinProject,
   unpinProject,
 } from '../api/projects'
-import type { CreateProjectRequest, ProjectDetailResponse, ProjectSummary } from '../types/project'
+import type {
+  CreateProjectRequest,
+  ProjectDetailResponse,
+  ProjectListResponse,
+  ProjectSummary,
+} from '../types/project'
 import { projectKeys } from './keys'
 
 export function useProjectsQuery() {
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: projectKeys.list(),
-    queryFn: async () => {
-      const result = await getProjects()
-      return sortProjectsByPin(result.items)
+    initialPageParam: null as number | null,
+    queryFn: ({ pageParam }) =>
+      getProjects({
+        cursor: pageParam ?? undefined,
+      }),
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasNext || lastPage.nextCursor == null) return undefined
+      return lastPage.nextCursor
     },
   })
+
+  const projects = useMemo(
+    () => sortProjectsByPin(query.data?.pages.flatMap((page) => page.items) ?? []),
+    [query.data],
+  )
+
+  return { ...query, projects }
 }
 
 export function useProjectQuery(projectId: number) {
@@ -54,14 +78,26 @@ export function useProjectNoticesQuery(projectId: number) {
 }
 
 export function useProjectActivitiesQuery(projectId: number) {
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: projectKeys.activities(projectId),
-    queryFn: async () => {
-      const result = await getProjectActivities(projectId)
-      return result.items
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      getProjectActivities(projectId, { cursor: pageParam ?? undefined, size: 5 }),
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasNext || lastPage.nextCursor == null) return undefined
+      return lastPage.nextCursor
     },
+
+    // 활동 목록은 첫 5건만 조회하고, 사용자가 더 보기를 선택할 때 다음 페이지를 불러온다.
     retry: false,
   })
+
+  const activities = useMemo(
+    () => query.data?.pages.flatMap((page) => page.items) ?? [],
+    [query.data],
+  )
+
+  return { ...query, activities }
 }
 
 /** 핀한 프로젝트를 목록 상단으로 (pinnedAt 최신 우선) */
@@ -76,12 +112,34 @@ function sortProjectsByPin(items: ProjectSummary[]): ProjectSummary[] {
 }
 
 function patchListItem(
-  items: ProjectSummary[] | undefined,
+  data: InfiniteData<ProjectListResponse> | undefined,
   projectId: number,
   patch: Partial<ProjectSummary>,
-): ProjectSummary[] | undefined {
-  if (!items) return items
-  return sortProjectsByPin(items.map((p) => (p.id === projectId ? { ...p, ...patch } : p)))
+): InfiniteData<ProjectListResponse> | undefined {
+  if (!data) return data
+  return {
+    ...data,
+    pages: data.pages.map((page) => ({
+      ...page,
+      items: page.items.map((project) =>
+        project.id === projectId ? { ...project, ...patch } : project,
+      ),
+    })),
+  }
+}
+
+function removeListItem(
+  data: InfiniteData<ProjectListResponse> | undefined,
+  projectId: number,
+): InfiniteData<ProjectListResponse> | undefined {
+  if (!data) return data
+  return {
+    ...data,
+    pages: data.pages.map((page) => ({
+      ...page,
+      items: page.items.filter((project) => project.id !== projectId),
+    })),
+  }
 }
 
 export function useToggleProjectPinMutation() {
@@ -96,13 +154,15 @@ export function useToggleProjectPinMutation() {
       await queryClient.cancelQueries({ queryKey: projectKeys.list() })
       await queryClient.cancelQueries({ queryKey: projectKeys.detail(projectId) })
 
-      const previousList = queryClient.getQueryData<ProjectSummary[]>(projectKeys.list())
+      const previousList = queryClient.getQueryData<InfiniteData<ProjectListResponse>>(
+        projectKeys.list(),
+      )
       const previousDetail = queryClient.getQueryData<ProjectDetailResponse>(
         projectKeys.detail(projectId),
       )
 
       const pinnedAt = next ? new Date().toISOString() : null
-      queryClient.setQueryData<ProjectSummary[]>(projectKeys.list(), (prev) =>
+      queryClient.setQueryData<InfiniteData<ProjectListResponse>>(projectKeys.list(), (prev) =>
         patchListItem(prev, projectId, { isPinned: next, pinnedAt }),
       )
       queryClient.setQueryData<ProjectDetailResponse>(projectKeys.detail(projectId), (prev) =>
@@ -121,7 +181,7 @@ export function useToggleProjectPinMutation() {
       }
     },
     onSuccess: (result) => {
-      queryClient.setQueryData<ProjectSummary[]>(projectKeys.list(), (prev) =>
+      queryClient.setQueryData<InfiniteData<ProjectListResponse>>(projectKeys.list(), (prev) =>
         patchListItem(prev, result.projectId, {
           isPinned: result.isPinned,
           pinnedAt: result.pinnedAt,
@@ -132,10 +192,6 @@ export function useToggleProjectPinMutation() {
         (prev) => (prev ? { ...prev, isPinned: result.isPinned, pinnedAt: result.pinnedAt } : prev),
       )
     },
-    onSettled: (_data, _err, vars) => {
-      void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
-      void queryClient.invalidateQueries({ queryKey: projectKeys.detail(vars.projectId) })
-    },
   })
 }
 
@@ -145,8 +201,8 @@ export function useDeleteProjectMutation() {
   return useMutation({
     mutationFn: (projectId: number) => deleteProject(projectId),
     onSuccess: (_data, projectId) => {
-      queryClient.setQueryData<ProjectSummary[]>(projectKeys.list(), (prev) =>
-        prev?.filter((p) => p.id !== projectId),
+      queryClient.setQueryData<InfiniteData<ProjectListResponse>>(projectKeys.list(), (prev) =>
+        removeListItem(prev, projectId),
       )
       void queryClient.removeQueries({ queryKey: projectKeys.detail(projectId) })
     },
@@ -159,8 +215,8 @@ export function useLeaveProjectMutation() {
   return useMutation({
     mutationFn: (projectId: number) => leaveProject(projectId),
     onSuccess: (_data, projectId) => {
-      queryClient.setQueryData<ProjectSummary[]>(projectKeys.list(), (prev) =>
-        prev?.filter((p) => p.id !== projectId),
+      queryClient.setQueryData<InfiniteData<ProjectListResponse>>(projectKeys.list(), (prev) =>
+        removeListItem(prev, projectId),
       )
       void queryClient.removeQueries({ queryKey: projectKeys.detail(projectId) })
     },

@@ -9,6 +9,7 @@ import type { VideoDetail } from '../../types/video'
 import type { MemberSummary } from '../../types/project'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
 import MemberListPanel from './MemberListPanel'
+import ShareLinkModal from './ShareLinkModal'
 
 type VideoDetailHeaderProps = {
   projectId: number
@@ -94,8 +95,6 @@ export default function VideoDetailHeader({
             meId={meId}
             avatarSize={40}
             onMembersChange={onMembersChange}
-            inviteOpen={inviteOpen}
-            onInviteOpenChange={setInviteOpen}
           />
         </div>
       </div>
@@ -112,7 +111,6 @@ export default function VideoDetailHeader({
     isAdmin,
     meId,
     onMembersChange,
-    inviteOpen,
   ])
 
   const headerRightContent = useMemo(() => {
@@ -129,9 +127,14 @@ export default function VideoDetailHeader({
         <Button variant="primary" size="sm" onClick={() => setInviteOpen(true)}>
           게스트 초대하기
         </Button>
+        <ShareLinkModal
+          isOpen={inviteOpen}
+          onClose={() => setInviteOpen(false)}
+          videoId={videoDetail.videoId}
+        />
       </div>
     )
-  }, [videoDetail, onEdit, onDelete])
+  }, [videoDetail, onEdit, onDelete, inviteOpen])
 
   useHeaderSlot(headerLeftContent, headerRightContent)
 

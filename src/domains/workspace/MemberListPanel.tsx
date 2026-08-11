@@ -23,9 +23,6 @@ interface MemberListPanelProps {
   /** 외부에서 참여 인원 패널을 열 때 */
   panelOpen?: boolean
   onPanelOpenChange?: (open: boolean) => void
-  /** 외부에서 초대 모달을 열 때 (영상 헤더 +초대) */
-  inviteOpen?: boolean
-  onInviteOpenChange?: (open: boolean) => void
 }
 
 export default function MemberListPanel({
@@ -38,8 +35,6 @@ export default function MemberListPanel({
   onMembersChange,
   panelOpen: panelOpenProp,
   onPanelOpenChange,
-  inviteOpen: inviteOpenProp,
-  onInviteOpenChange,
 }: MemberListPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [internalPanelOpen, setInternalPanelOpen] = useState(false)
@@ -48,10 +43,9 @@ export default function MemberListPanel({
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [savingRoles, setSavingRoles] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<MemberSummary | null>(null)
-  const [internalInviteOpen, setInternalInviteOpen] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
   const [actionError, setActionError] = useState('')
 
-  const inviteOpen = inviteOpenProp ?? internalInviteOpen
   const panelOpen = panelOpenProp ?? internalPanelOpen
   const setPanelOpen = useCallback(
     (next: boolean) => {
@@ -60,10 +54,6 @@ export default function MemberListPanel({
     },
     [onPanelOpenChange],
   )
-  const setInviteOpen = (next: boolean) => {
-    if (onInviteOpenChange) onInviteOpenChange(next)
-    else setInternalInviteOpen(next)
-  }
 
   useEffect(() => {
     if (!panelOpen) return
@@ -293,7 +283,7 @@ export default function MemberListPanel({
               setInviteOpen(true)
             }}
           >
-            게스트 초대하기
+            프로젝트 초대하기
           </Button>
         </div>
       )}

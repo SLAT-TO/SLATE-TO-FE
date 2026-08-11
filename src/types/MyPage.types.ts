@@ -4,8 +4,10 @@
 export interface ProfileSummary {
   profileImageUrl: string
   nickname: string
-  role: string // 예: '연출자'
-  region: string // 예: '서울'
+  /** 역할 라벨 목록 — 카드에서는 앞 2개만 태그로 노출 */
+  roles: string[]
+  /** 지역 라벨 목록 — 카드에서는 앞 2개만 노출 */
+  regions: string[]
   email: string
   introduction: string
 }
