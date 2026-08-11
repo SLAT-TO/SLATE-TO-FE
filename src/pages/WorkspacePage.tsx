@@ -10,6 +10,7 @@ import { projectStatusLabel } from '../constants/projectStatus'
 import type { ProjectSummary } from '../types/project'
 import { ApiError } from '../types/api'
 import { navigate } from '../utils/navigation'
+import { calculateProjectDeadlineProgress } from '../utils/projectDeadlineProgress'
 import {
   useDeleteProjectMutation,
   useLeaveProjectMutation,
@@ -111,7 +112,7 @@ export default function WorkspacePage() {
                 statusLabel={projectStatusLabel(project.status)}
                 statusVariant={project.status === 'COMPLETED' ? 'ghost' : 'secondary'}
                 tags={projectMetaTags(project)}
-                progress={project.deadlineProgressPercent ?? undefined}
+                progress={calculateProjectDeadlineProgress(project.createdAt, project.endDate)}
                 thumbnailUrl={project.previewImageUrl ?? undefined}
                 members={project.memberPreviewImageUrls.map((src) => ({ src }))}
                 isPinned={project.isPinned}
