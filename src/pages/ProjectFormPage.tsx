@@ -13,6 +13,7 @@ import HeaderTitle from '../components/HeaderTitle'
 import { navigate } from '../utils/navigation'
 import { createPortfolio, getMyPortfolio, updatePortfolio } from '../api/users'
 import type { UserRole } from '../types/user'
+import type { PortfolioKind } from '../types/portfolio'
 
 type ProjectFormMode = 'create' | 'edit'
 
@@ -48,6 +49,7 @@ function ProjectFormPage({ mode, portfolioId }: ProjectFormPageProps) {
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [originalKind, setOriginalKind] = useState<PortfolioKind | null>(null)
 
   // 수정 모드는 기존 값으로 프리필
   useEffect(() => {
@@ -66,6 +68,7 @@ function ProjectFormPage({ mode, portfolioId }: ProjectFormPageProps) {
           description: portfolio.description,
           comment: portfolio.comment ?? '',
         })
+        setOriginalKind(portfolio.kind)
       })
       .catch(() => {
         if (!cancelled) setSaveError('프로젝트 정보를 불러오지 못했습니다.')
@@ -107,8 +110,8 @@ function ProjectFormPage({ mode, portfolioId }: ProjectFormPageProps) {
       const body = {
         title: result.data.title,
         type: result.data.type,
-        // 화면에 개인/외주 구분이 없어 기본값 사용
-        kind: 'PERSONAL' as const,
+        // 화면에 개인/외주 선택 UI가 없어, 수정 시 기존 값 유지 / 신규는 PERSONAL
+        kind: originalKind ?? 'PERSONAL',
         clientName: result.data.clientName || undefined,
         roles: result.data.roles as UserRole[],
         description: result.data.description,
