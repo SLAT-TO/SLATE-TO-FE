@@ -287,7 +287,7 @@ npm run format:check  # 포맷 위반 여부만 확인 (CI와 동일)
 
 `/login`의 구글 로그인 버튼은 실 인증으로 연동되어 있습니다(과거엔 `mockUser=new`로 항상 신규 유저 취급하도록 하드코딩돼 있었으나, 실 인증 연동 완료 후 제거함). BE는 로그인 성공 후 `/auth/callback`으로 리다이렉트하며(refreshToken만 HttpOnly 쿠키로 전달), `AuthCallbackPage`가 `POST /auth/refresh`를 호출해 accessToken을 저장한 뒤 온보딩 완료 여부에 따라 약관동의(`/signup/terms`, 신규 유저) 또는 홈(`/`)으로 이동합니다. 라우팅 가드가 실어 보낸 `redirectTo`가 있으면 그 경로가 우선합니다.
 
-> ⚠️ `/signup/terms` 제출 버튼은 아직 실제 가입 처리·이동 로직이 연결되지 않았습니다(`e.preventDefault()`만 호출). 온보딩 미완료 상태로 새로 가입하는 유저는 이 화면에서 막히므로, 다음 작업으로 연결이 필요합니다.
+`/signup/terms`에서 동의하면 `useOnboardingStore.setAgreedTerms(true)`로 담아 `/onboarding`으로 넘어가고, 온보딩 마지막 단계(`ProfileStep`)가 역할·지역·카테고리·프로필과 함께 `agreedTerms`를 묶어 `POST /users/onboarding`으로 한 번에 제출합니다.
 
 `mocks/handlers/auth.ts`의 `mockUser` 분기(MSW 전용)와 `startGoogleLogin`의 `mockUser` 옵션 자체는 로컬에서 특정 온보딩 상태를 강제로 테스트하고 싶을 때를 위해 남겨뒀습니다 — 필요하면 `startGoogleLogin({ mockUser: 'new' | 'complete' })`로 직접 호출해 쓰세요.
 
