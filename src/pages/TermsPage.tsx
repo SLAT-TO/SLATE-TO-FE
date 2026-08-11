@@ -5,6 +5,8 @@ import { navigate } from '../utils/navigation'
 import { useOnboardingStore } from '../stores/onboardingStore'
 import termsBg from '../assets/images/terms-bg.png'
 import termsAvatar from '../assets/images/terms-avatar.png'
+import { useOnboardingStore } from '../stores/onboardingStore'
+import { navigate } from '../utils/navigation'
 
 const TERMS = [
   { key: 'service', label: '이용약관 동의(필수)' },
