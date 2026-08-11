@@ -86,9 +86,7 @@ export function SignupPage() {
       await confirmEmailVerificationCode({ email: fullEmail, code: verifyCode, purpose: 'SIGNUP' })
       setEmailVerified(true)
     } catch (err) {
-      setCodeConfirmError(
-        err instanceof ApiError ? err.message : '인증번호가 올바르지 않습니다.',
-      )
+      setCodeConfirmError(err instanceof ApiError ? err.message : '인증번호가 올바르지 않습니다.')
     } finally {
       setVerifying(false)
     }
@@ -161,10 +159,26 @@ export function SignupPage() {
                 <div className="flex-1">
                   <Input
                     id="signup-email"
-                    placeholder="이메일을 입력하세요."
+                    placeholder="이메일 아이디를 입력하세요. (예: gildong)"
                     value={email}
                     onChange={(v) => {
-                      setEmail(v)
+                      // 도메인은 오른쪽 드롭다운에서 따로 고르는 구조인데, 전체 이메일을
+                      // 붙여넣거나 실수로 입력하면 "아이디@도메인@도메인"처럼 잘못된 값이
+                      // 만들어지므로 "@" 뒤는 분리해 도메인 쪽으로 보낸다.
+                      const at = v.indexOf('@')
+                      if (at === -1) {
+                        setEmail(v)
+                      } else {
+                        setEmail(v.slice(0, at))
+                        const domainPart = v.slice(at + 1)
+                        const matched = EMAIL_DOMAIN_OPTIONS.find((o) => o.value === domainPart)
+                        if (matched) {
+                          setEmailDomain(matched.value)
+                        } else if (domainPart) {
+                          setEmailDomain('custom')
+                          setCustomDomain(domainPart)
+                        }
+                      }
                       invalidateEmailVerification()
                     }}
                     error={errors.email}
@@ -266,9 +280,7 @@ export function SignupPage() {
             </div>
           </div>
 
-          {submitError && (
-            <p className="text-body-sm text-warning text-center">{submitError}</p>
-          )}
+          {submitError && <p className="text-body-sm text-warning text-center">{submitError}</p>}
 
           <Button
             type="submit"
