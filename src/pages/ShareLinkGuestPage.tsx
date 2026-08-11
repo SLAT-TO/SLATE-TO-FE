@@ -79,6 +79,8 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     isCapturingRange,
     editingFeedbackId,
     editingFeedbackContent,
+    isSubmittingFeedback,
+    pendingFeedbackActionId,
     setEditingFeedbackContent,
     load: loadFeedbacks,
     clearPendingTime,
@@ -190,6 +192,8 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
           isCapturingRange={isCapturingRange}
           editingFeedbackId={editingFeedbackId}
           editingFeedbackContent={editingFeedbackContent}
+          isSubmittingFeedback={isSubmittingFeedback}
+          pendingFeedbackActionId={pendingFeedbackActionId}
           setEditingFeedbackContent={setEditingFeedbackContent}
           clearPendingTime={clearPendingTime}
           attachCurrentTime={attachCurrentTime}

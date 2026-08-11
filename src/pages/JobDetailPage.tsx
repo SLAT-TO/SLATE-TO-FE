@@ -2,6 +2,8 @@ import AuthorCard from '../domains/recruit/AuthorCard'
 import JobInfoCard from '../domains/recruit/JobInfoCard'
 import JobDetailHeader from '../domains/recruit/JobDetailHeader'
 import BookmarkModal from '../domains/recruit/BookmarkModal'
+import ConfirmModal from '../components/ConfirmModal'
+import { applyRecruitment, deleteRecruitment } from '../api/recruitments'
 import { Button } from '../components/Button'
 import { useState } from 'react'
 import { navigate } from '../utils/navigation'
@@ -9,7 +11,6 @@ import ApplyModal from '../domains/recruit/ApplyModal'
 import { useRecruitmentDetail } from '../hooks/useRecruitmentDetail'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { applyRecruitment } from '../api/recruitments'
 
 function JobDetailBackHeader() {
   const nav = useNavigate()
@@ -38,6 +39,8 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
   useHeaderSlot(HEADER)
   const [isApplyOpen, setIsApplyOpen] = useState(false)
   const [isBookmarkModalOpen, setIsBookmarkModalOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const { detail, toggleBookmark, loading, error } = useRecruitmentDetail(jobId)
 
   if (loading) {
@@ -54,9 +57,27 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
     if (nowBookmarked) setIsBookmarkModalOpen(true)
   }
 
+  const handleDelete = async () => {
+    if (deleting) return
+    setDeleting(true)
+    try {
+      await deleteRecruitment(jobId)
+      setIsDeleteOpen(false)
+      navigate('/matching/my')
+    } catch (err) {
+      console.error(err)
+      alert('공고 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      <JobDetailHeader detail={detail} onBookmarkClick={() => void handleBookmarkClick()} />
+      <JobDetailHeader
+        detail={detail}
+        onBookmarkClick={() => void handleBookmarkClick()}
+        onDeleteClick={() => setIsDeleteOpen(true)}
+      />
 
       <div className="flex flex-col gap-5.25 lg:flex-row">
         <JobInfoCard detail={detail} />
@@ -98,6 +119,13 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
         }}
       />
       <BookmarkModal isOpen={isBookmarkModalOpen} onClose={() => setIsBookmarkModalOpen(false)} />
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={() => void handleDelete()}
+        title="정말 삭제하시겠습니까?"
+        description="삭제된 공고는 되돌릴 수 없어요."
+      />
     </div>
   )
 }

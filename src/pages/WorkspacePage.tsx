@@ -27,7 +27,7 @@ export default function WorkspacePage() {
   const [leaveTarget, setLeaveTarget] = useState<ProjectSummary | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
-  const projects = projectsQuery.data ?? []
+  const projects = projectsQuery.projects
   const loading = projectsQuery.isPending && !projectsQuery.data
   const fatalError =
     projectsQuery.isError && !projectsQuery.data
@@ -102,43 +102,58 @@ export default function WorkspacePage() {
       )}
 
       {!loading && !fatalError && projects.length > 0 && (
-        <div className="flex flex-col gap-10">
-          {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              title={project.title}
-              statusLabel={projectStatusLabel(project.status)}
-              statusVariant={project.status === 'COMPLETED' ? 'ghost' : 'secondary'}
-              tags={projectMetaTags(project)}
-              progress={project.deadlineProgressPercent ?? undefined}
-              thumbnailUrl={project.previewImageUrl ?? undefined}
-              members={project.memberPreviewImageUrls.map((src) => ({ src }))}
-              isPinned={project.isPinned}
-              onTogglePin={() => handleTogglePin(project)}
-              relativeTime={
-                project.lastActivityAt
-                  ? formatDistanceToNow(new Date(project.lastActivityAt), {
-                      addSuffix: true,
-                      locale: ko,
-                    })
-                  : undefined
-              }
-              menuItems={
-                project.myPermission === 'ADMIN'
-                  ? [
-                      {
-                        action: 'edit',
-                        label: '설정',
-                        onClick: () => navigate(`/workspace/projects/${project.id}?view=settings`),
-                      },
-                      { action: 'delete', onClick: () => setDeleteTarget(project) },
-                    ]
-                  : [{ action: 'leave', onClick: () => setLeaveTarget(project) }]
-              }
-              onClick={() => navigate(`/workspace/projects/${project.id}`)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="flex flex-col gap-10">
+            {projects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                title={project.title}
+                statusLabel={projectStatusLabel(project.status)}
+                statusVariant={project.status === 'COMPLETED' ? 'ghost' : 'secondary'}
+                tags={projectMetaTags(project)}
+                progress={project.deadlineProgressPercent ?? undefined}
+                thumbnailUrl={project.previewImageUrl ?? undefined}
+                members={project.memberPreviewImageUrls.map((src) => ({ src }))}
+                isPinned={project.isPinned}
+                onTogglePin={() => handleTogglePin(project)}
+                relativeTime={
+                  project.lastActivityAt
+                    ? formatDistanceToNow(new Date(project.lastActivityAt), {
+                        addSuffix: true,
+                        locale: ko,
+                      })
+                    : undefined
+                }
+                menuItems={
+                  project.myPermission === 'ADMIN'
+                    ? [
+                        {
+                          action: 'edit',
+                          label: '설정',
+                          onClick: () =>
+                            navigate(`/workspace/projects/${project.id}?view=settings`),
+                        },
+                        { action: 'delete', onClick: () => setDeleteTarget(project) },
+                      ]
+                    : [{ action: 'leave', onClick: () => setLeaveTarget(project) }]
+                }
+                onClick={() => navigate(`/workspace/projects/${project.id}`)}
+              />
+            ))}
+          </div>
+          {projectsQuery.hasNextPage && (
+            <div className="flex justify-center">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => void projectsQuery.fetchNextPage()}
+                disabled={projectsQuery.isFetchingNextPage}
+              >
+                {projectsQuery.isFetchingNextPage ? '불러오는 중…' : '더 보기'}
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       <ConfirmModal

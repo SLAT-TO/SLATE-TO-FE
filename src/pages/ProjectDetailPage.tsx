@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getMe } from '../api/users'
 import {
@@ -27,7 +27,7 @@ import { ProjectScheduleTab } from '../domains/workspace/ProjectScheduleTab'
 import ProjectStatusMenu from '../domains/workspace/ProjectStatusMenu'
 import { useProjectDetail } from '../hooks/useProjectDetail'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
-import type { ProjectActivity, ProjectSummary } from '../types/project'
+import type { ProjectActivity, ProjectListResponse } from '../types/project'
 
 /** Strict Mode remount에서도 같은 키 alert가 두 번 뜨지 않도록 모듈 단위로 기록 */
 const alertedPartialErrorKeys = new Set<string>()
@@ -118,12 +118,15 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     members,
     setMembers,
     activities,
+    hasMoreActivities,
+    loadMoreActivities,
+    isLoadingMoreActivities,
     notices,
     setNotices,
     loading,
     error,
     partialErrors,
-  } = useProjectDetail(projectId, activityView === 'list' ? 100 : 5)
+  } = useProjectDetail(projectId)
   const pinMutation = useToggleProjectPinMutation()
   const deleteMutation = useDeleteProjectMutation()
   const leaveMutation = useLeaveProjectMutation()
@@ -312,20 +315,28 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         onCancel={leaveSettings}
         onSaved={(updated) => {
           setProject(updated)
-          queryClient.setQueryData<ProjectSummary[]>(projectKeys.list(), (prev) =>
-            prev?.map((item) =>
-              item.id === updated.id
-                ? {
-                    ...item,
-                    title: updated.title,
-                    endDate: updated.endDate,
-                    clientName: updated.clientName,
-                    type: updated.type,
-                    lengthType: updated.lengthType,
-                    status: updated.status,
-                  }
-                : item,
-            ),
+          queryClient.setQueryData<InfiniteData<ProjectListResponse>>(projectKeys.list(), (prev) =>
+            prev
+              ? {
+                  ...prev,
+                  pages: prev.pages.map((page) => ({
+                    ...page,
+                    items: page.items.map((item) =>
+                      item.id === updated.id
+                        ? {
+                            ...item,
+                            title: updated.title,
+                            endDate: updated.endDate,
+                            clientName: updated.clientName,
+                            type: updated.type,
+                            lengthType: updated.lengthType,
+                            status: updated.status,
+                          }
+                        : item,
+                    ),
+                  })),
+                }
+              : prev,
           )
           leaveSettings()
         }}
@@ -385,6 +396,9 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         <ActivityListView
           projectId={projectId}
           activities={activities}
+          hasMore={hasMoreActivities}
+          isLoadingMore={isLoadingMoreActivities}
+          onLoadMore={() => void loadMoreActivities()}
           onBack={() => setProjectSearch({})}
           onNavigate={handleActivityNavigate}
         />

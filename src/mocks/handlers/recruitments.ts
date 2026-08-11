@@ -2,9 +2,11 @@ import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
 import type { UserRegion } from '../../types/user'
 import type {
+  Application,
   CreateApplicationRequest,
   CreateRecruitmentRequest,
   Recruitment,
+  RecruitmentApplication,
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
 } from '../../types/recruitment'
@@ -81,12 +83,12 @@ export const recruitmentHandlers = [
     const recruitment: MockRecruitmentRecord = {
       id: allocId(),
       title: body.title,
-      category: body.category,
+      category: body.category ?? 'ETC',
       lengthType: body.lengthType ?? null,
       recruitPart: body.recruitPart,
-      location: body.location,
+      location: body.location ?? 'SEOUL',
       pay: body.pay ?? '협의',
-      deadline: body.deadline,
+      deadline: body.deadline ?? '',
       dday: 30,
       status: 'RECRUITING',
       viewCount: 0,
@@ -100,8 +102,8 @@ export const recruitmentHandlers = [
         locations: user.location ? ([user.location] as UserRegion[]) : [],
       },
       description: body.description,
-      shootingPeriod: '',
-      contact: '',
+      shootingPeriod: body.shootingPeriod ?? '',
+      contact: body.contact ?? '',
       createdAt: now,
       updatedAt: now,
     }
@@ -187,7 +189,7 @@ export const recruitmentHandlers = [
     const recruitment = db.recruitments.find((r) => r.id === recruitmentId)
     if (!recruitment) return notFound()
     const body = (await request.json()) as CreateApplicationRequest
-    const application = {
+    const application: Application = {
       id: allocId(),
       recruitmentId,
       userId: user.id,
@@ -202,9 +204,28 @@ export const recruitmentHandlers = [
   }),
 
   http.get(paths.recruitments.applications(':recruitmentId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
-    const items = db.applications.filter((a) => a.recruitmentId === Number(params.recruitmentId))
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const user = safeUser()
+    if (!user) return unauthorized()
+
+    const items: RecruitmentApplication[] = db.applications
+      .filter((a) => a.recruitmentId === Number(params.recruitmentId))
+      .map((a) => ({
+        applicationId: a.id,
+        applicationStatus: a.status,
+        message: a.message ?? '',
+        referenceLink: null,
+        appliedAt: a.createdAt,
+        applicant: {
+          id: a.userId,
+          nickname: a.nickname,
+          profileImageUrl: a.profileImageUrl,
+          bio: '자기소개 미리보기 멘트가 나오게 됩니다.',
+          primaryRole: user.primaryRole,
+          locations: [],
+        },
+      }))
+
+    return HttpResponse.json(ok({ items, nextCursor: null, hasNext: false }), { status: 200 })
   }),
 
   http.patch(
