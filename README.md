@@ -283,9 +283,13 @@ npm run format:check  # 포맷 위반 여부만 확인 (CI와 동일)
 - 실 서버 Swagger가 공개됐지만 BE 구조와 아직 완전히 정합되지 않아, 당분간 Vercel Preview·Production 모두 MSW mock을 유지합니다. 정합 완료 후 Production만 `VITE_ENABLE_MSW=false` + `VITE_API_BASE_URL`을 넣습니다.
 - BE 응답 shape 차이는 `src/api/normalize.ts`(#93)에서 FE 도메인 모델로 맞춥니다.
 
-### 로그인 → 온보딩 체험 플로우 (mock 하드코딩)
+### 로그인 → 온보딩 플로우
 
-`/login`의 "구글 로그인 / 회원가입" 버튼은 신규 유저(`mockUser=new`)로 로그인하도록 **체험용으로 하드코딩**되어 있습니다(실 인증 연동 전까지 임시). BE는 로그인 성공 후 `/auth/callback`으로 리다이렉트하며(refreshToken만 HttpOnly 쿠키로 전달), `AuthCallbackPage`가 `POST /auth/refresh`를 호출해 accessToken을 저장한 뒤 온보딩 완료 여부에 따라 온보딩(`/onboarding`) 또는 홈(`/`)으로 이동합니다. 라우팅 가드가 실어 보낸 `redirectTo`가 있으면 그 경로가 우선합니다.
+`/login`의 구글 로그인 버튼은 실 인증으로 연동되어 있습니다(과거엔 `mockUser=new`로 항상 신규 유저 취급하도록 하드코딩돼 있었으나, 실 인증 연동 완료 후 제거함). BE는 로그인 성공 후 `/auth/callback`으로 리다이렉트하며(refreshToken만 HttpOnly 쿠키로 전달), `AuthCallbackPage`가 `POST /auth/refresh`를 호출해 accessToken을 저장한 뒤 온보딩 완료 여부에 따라 약관동의(`/signup/terms`, 신규 유저) 또는 홈(`/`)으로 이동합니다. 라우팅 가드가 실어 보낸 `redirectTo`가 있으면 그 경로가 우선합니다.
+
+> ⚠️ `/signup/terms` 제출 버튼은 아직 실제 가입 처리·이동 로직이 연결되지 않았습니다(`e.preventDefault()`만 호출). 온보딩 미완료 상태로 새로 가입하는 유저는 이 화면에서 막히므로, 다음 작업으로 연결이 필요합니다.
+
+`mocks/handlers/auth.ts`의 `mockUser` 분기(MSW 전용)와 `startGoogleLogin`의 `mockUser` 옵션 자체는 로컬에서 특정 온보딩 상태를 강제로 테스트하고 싶을 때를 위해 남겨뒀습니다 — 필요하면 `startGoogleLogin({ mockUser: 'new' | 'complete' })`로 직접 호출해 쓰세요.
 
 > ⚠️ 온보딩에서 선택한 역할·지역·카테고리·프로필 값은 **아직 API로 전송되지 않습니다**(`ProfileStep`이 로컬 상태만 갖고 `onComplete`를 바로 호출). 즉 온보딩에서 무엇을 선택하든 이후 화면(홈·마이페이지 등)에는 mock 유저의 기존 고정 데이터가 그대로 표시됩니다 — UI 플로우 확인용이며, 실제 데이터 반영은 BE 연동 후 작업 예정입니다.
 

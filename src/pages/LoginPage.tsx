@@ -99,8 +99,7 @@ export function LoginPage() {
 
             <button
               type="button"
-              // mockUser: 'new' — 온보딩 플로우 체험용 하드코딩 (README 참고)
-              onClick={() => void startGoogleLogin({ redirectTo, mockUser: 'new' })}
+              onClick={() => void startGoogleLogin({ redirectTo })}
               className="bg-neutral-1 border-neutral-5 hover:bg-neutral-2 flex h-12 w-full max-w-[400px] items-center justify-center gap-2.5 rounded-[6.828px] border transition-colors"
             >
               <GoogleIcon />
