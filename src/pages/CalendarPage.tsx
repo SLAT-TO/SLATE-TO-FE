@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { addMonths, format, parse, subMonths } from 'date-fns'
+import { getProjects } from '../api/projects'
 import {
   createSchedule,
   deleteSchedule,
@@ -13,6 +14,7 @@ import { Calendar } from '../components/Calendar'
 import { CalendarLoading } from '../components/CalendarLoading'
 import InlineIcon from '../components/InlineIcon'
 import type { CalendarEvent } from '../schemas/calendarEvent'
+import type { ProjectSummary } from '../types/project'
 import type { Schedule, ScheduleDailyItem, ScheduleScope } from '../types/schedule'
 import { CalendarFilterMenu } from '../domains/calendar/CalendarFilterMenu'
 import { CalendarDaySchedulePanel } from '../domains/calendar/CalendarDaySchedulePanel'
@@ -20,7 +22,6 @@ import { EventFormModal, type EventFormValues } from '../domains/calendar/EventF
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons/ChevronIcons'
 import { pickEventColor, toDateKey } from '../utils/calendarUtils'
 import { scheduleToCalendarEvent } from '../utils/scheduleAdapter'
-import { useProjectsQuery } from '../queries/projects'
 import plusIcon from '../assets/icons/plus.svg?raw'
 
 // 저장된 CalendarEvent를 "수정하기" 폼의 초기값으로 되돌린다
@@ -63,21 +64,30 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [projectFilter, setProjectFilter] = useState<string | null>(null)
   const [formModal, setFormModal] = useState<FormModalState>(null)
+  const [projects, setProjects] = useState<ProjectSummary[]>([])
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [scheduleLoading, setScheduleLoading] = useState(true)
   const [daySchedules, setDaySchedules] = useState<ScheduleDailyItem[]>([])
   const [actionError, setActionError] = useState<string | null>(null)
 
   // 일정 필터·일정 추가 폼이 공유하는 실제 프로젝트 목록
-  const { projects, fetchNextPage, hasNextPage, isFetchNextPageError, isFetchingNextPage } =
-    useProjectsQuery()
-
   useEffect(() => {
-    if (!hasNextPage || isFetchingNextPage || isFetchNextPageError) {
-      return
+    let cancelled = false
+
+    async function loadProjects() {
+      try {
+        const result = await getProjects()
+        if (!cancelled) setProjects(result.items)
+      } catch {
+        if (!cancelled) setProjects([])
+      }
     }
-    void fetchNextPage()
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError])
+
+    void loadProjects()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const projectOptions = useMemo(
     () => projects.map((project) => ({ value: String(project.id), label: project.title })),
