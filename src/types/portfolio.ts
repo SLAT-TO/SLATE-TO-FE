@@ -30,9 +30,7 @@ export type CreatePortfolioRequest = {
 export type UpdatePortfolioRequest = Partial<CreatePortfolioRequest>
 
 export type PageResult<T> = {
-  content: T[]
-  page: number
-  size: number
-  totalElements: number
-  totalPages: number
+  items: T[]
+  nextCursor: number | null
+  hasNext: boolean
 }

@@ -6,8 +6,7 @@ import type { Portfolio } from '../types/portfolio'
 import type { Application, Recruitment } from '../types/recruitment'
 import type { Schedule } from '../types/schedule'
 import type { ProjectNotice } from '../types/notice'
-import type { MeUser, NotificationSettings, UserRegion } from '../types/user'
-import type { Inquiry } from '../types/inquiry'
+import type { MeUser, UserRegion } from '../types/user'
 import type { ReferenceFile, VideoDetail } from '../types/video'
 /* stats에 값을 업데이트해도 빈값 객체가 변질 되지 않도록 객체 생성 함수로 정의하여 사용용 */
 function emptyStats() {
@@ -111,6 +110,7 @@ export type MockProjectRecord = {
 
 export type MockMemberRecord = {
   memberId: number
+  projectId: number
   userId: number
   nickname: string
   email: string
@@ -139,10 +139,8 @@ export type MockDb = {
   currentUserId: number | null
   tokens: AuthTokens | null
   users: MeUser[]
-  notificationSettings: Record<number, NotificationSettings>
   /** FE mock 전용 — 비밀번호 변경/회원탈퇴 확인용. 실 BE엔 없는 필드라 MeProfile엔 포함하지 않음 */
   passwords: Record<number, string>
-  inquiries: Inquiry[]
   portfolios: Portfolio[]
   projects: MockProjectRecord[]
   members: MockMemberRecord[]
@@ -168,16 +166,6 @@ export type MockDb = {
 }
 
 /* 기본 알림 설정 객체 생성 함수 */
-function defaultNotificationSettings(): NotificationSettings {
-  return {
-    emailAllEnabled: true,
-    emailDeadlineReminder: true,
-    emailAssigned: true,
-    emailNewApplicant: true,
-    emailMissedSummary: true,
-  }
-}
-
 function toWriter(user: MeUser) {
   return {
     id: user.id,
@@ -196,18 +184,12 @@ export const db: MockDb = {
     refreshToken: 'mock-refresh-token',
   },
   users: [incompleteUser, completeUser, publicEditor],
-  notificationSettings: {
-    [incompleteUser.id]: defaultNotificationSettings(),
-    [completeUser.id]: defaultNotificationSettings(),
-    [publicEditor.id]: defaultNotificationSettings(),
-  },
   /** mock 기본 비밀번호 — 비밀번호 변경/회원탈퇴 확인 플로우 테스트용 */
   passwords: {
     [incompleteUser.id]: 'password123',
     [completeUser.id]: 'password123',
     [publicEditor.id]: 'password123',
   },
-  inquiries: [],
   portfolios: [
     {
       id: 10,
@@ -259,8 +241,10 @@ export const db: MockDb = {
     },
   ],
   members: [
+    /* 프로젝트 1 "위로, 또 위로" 팀 — 2명 */
     {
       memberId: 1,
+      projectId: 1,
       userId: completeUser.id,
       nickname: completeUser.nickname,
       profileImageUrl: completeUser.profileImageUrl,
@@ -272,6 +256,7 @@ export const db: MockDb = {
     },
     {
       memberId: 2,
+      projectId: 1,
       userId: publicEditor.id,
       nickname: publicEditor.nickname,
       profileImageUrl: publicEditor.profileImageUrl,
@@ -280,6 +265,55 @@ export const db: MockDb = {
       permission: 'MEMBER',
       roleNames: ['EDITOR'],
       joinedAt: '2026-06-02T09:00:00Z',
+    },
+    /* 프로젝트 2 "브랜드 필름 A" 팀 — 4명 (카드 "+N" 아바타 뱃지 확인용) */
+    {
+      memberId: 3,
+      projectId: 2,
+      userId: completeUser.id,
+      nickname: completeUser.nickname,
+      profileImageUrl: completeUser.profileImageUrl,
+      email: completeUser.email,
+      bio: completeUser.bio,
+      permission: 'ADMIN',
+      roleNames: ['DIRECTOR'],
+      joinedAt: '2026-05-01T09:00:00Z',
+    },
+    {
+      memberId: 4,
+      projectId: 2,
+      userId: 9004,
+      nickname: '테스트멤버4',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=14',
+      email: 'member4@example.com',
+      bio: null,
+      permission: 'MEMBER',
+      roleNames: ['CINEMATOGRAPHER'],
+      joinedAt: '2026-05-02T09:00:00Z',
+    },
+    {
+      memberId: 5,
+      projectId: 2,
+      userId: 9005,
+      nickname: '테스트멤버5',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=15',
+      email: 'member5@example.com',
+      bio: null,
+      permission: 'MEMBER',
+      roleNames: ['SOUND'],
+      joinedAt: '2026-05-03T09:00:00Z',
+    },
+    {
+      memberId: 6,
+      projectId: 2,
+      userId: 9006,
+      nickname: '테스트멤버6',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=16',
+      email: 'member6@example.com',
+      bio: null,
+      permission: 'MEMBER',
+      roleNames: ['LIGHTING'],
+      joinedAt: '2026-05-04T09:00:00Z',
     },
   ],
   files: [

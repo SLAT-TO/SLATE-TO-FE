@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import {
   bookmarkRecruitment,
+  getAllRecruitments,
   getRecommendedRecruitments,
-  getRecruitments,
   unbookmarkRecruitment,
 } from '../api/recruitments'
 import { ApiError } from '../types/api'
@@ -28,15 +28,15 @@ export function useRecruitments(sort: SortValue, filters: SelectedFilters) {
       setLoading(true)
       setError(null)
       try {
-        const [recommendedPage, jobPage] = await Promise.all([
+        const [recommendedPage, jobs] = await Promise.all([
           getRecommendedRecruitments(),
-          getRecruitments({ ...JSON.parse(paramsKey), sort: SORT_PARAM[sort] }),
+          getAllRecruitments({ ...JSON.parse(paramsKey), sort: SORT_PARAM[sort] }),
         ])
         if (cancelled) return
         setRecommended(recommendedPage.items)
-        setJobs(jobPage.items)
-        // 목록 응답의 isBookmarked로 초기 북마크 상태를 구성
-        const marked = [...recommendedPage.items, ...jobPage.items]
+        setJobs(jobs)
+
+        const marked = [...recommendedPage.items, ...jobs]
           .filter((r) => r.isBookmarked)
           .map((r) => r.id)
         setBookmarkedIds(new Set(marked))

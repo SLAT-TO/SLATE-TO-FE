@@ -44,7 +44,7 @@ function MyPage() {
         setProfile(toProfileSummary(me))
         setProjectTypeStats(toProjectTypeStats(stats))
         setRoleStats(toRoleStats(stats))
-        setProjects(portfolios.content.map(toProjectHistoryItem))
+        setProjects(portfolios.items.map(toProjectHistoryItem))
       } catch {
         if (!cancelled) setError('마이페이지 정보를 불러오지 못했습니다.')
       } finally {

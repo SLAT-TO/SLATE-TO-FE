@@ -5,22 +5,25 @@ export const API_PREFIX = '/api/v1'
 export const paths = {
   auth: {
     googleLogin: `${API_PREFIX}/auth/login/google`,
+    login: `${API_PREFIX}/auth/login`,
+    signup: `${API_PREFIX}/auth/signup`,
+    emailVerificationCodes: `${API_PREFIX}/auth/email/verification-codes`,
+    emailVerificationConfirm: `${API_PREFIX}/auth/email/verification-codes/confirm`,
+    passwordReset: `${API_PREFIX}/auth/password/reset`,
     logout: `${API_PREFIX}/auth/logout`,
     refresh: `${API_PREFIX}/auth/refresh`,
+    changePassword: `${API_PREFIX}/auth/password`,
   },
   users: {
-    /** GET/PATCH만 BE 구현. DELETE(회원탈퇴)는 BE 미구현 — FE mock 전용 */
     me: `${API_PREFIX}/users/me`,
-    /** Notion DB에 GET /users/me 중복 등록 — 통계는 임시 path 분리
-     * FE mock 전용 — BE에 활동 통계 API 미구현 (Swagger에 없음) */
+    /** 등록한 포트폴리오 기준 프로젝트 유형·역할 집계 */
     activityStats: `${API_PREFIX}/users/me/stats`,
     onboarding: `${API_PREFIX}/users/onboarding`,
     profileImage: `${API_PREFIX}/users/me/profile-image`,
     byId: (userId: number | string) => `${API_PREFIX}/users/${userId}`,
+    /** 다른 유저의 유형·역할 분포 (공개 프로필의 stats와 동일) */
+    stats: (userId: number | string) => `${API_PREFIX}/users/${userId}/stats`,
     portfolios: (userId: number | string) => `${API_PREFIX}/users/${userId}/portfolios`,
-    notificationSettings: `${API_PREFIX}/users/me/notification-settings`,
-    /** FE mock 전용 — BE 비밀번호 변경 API 미구현 */
-    changePassword: `${API_PREFIX}/users/me/password`,
     myPortfolios: `${API_PREFIX}/users/me/portfolios`,
     myPortfolio: (portfolioId: number | string) =>
       `${API_PREFIX}/users/me/portfolios/${portfolioId}`,
@@ -125,9 +128,5 @@ export const paths = {
     unreadCount: `${API_PREFIX}/notifications/unread-count`,
     read: (notificationId: number | string) => `${API_PREFIX}/notifications/${notificationId}/read`,
     readAll: `${API_PREFIX}/notifications/read-all`,
-  },
-  /** FE mock 전용 — BE 문의하기 API 미구현 */
-  inquiries: {
-    root: `${API_PREFIX}/inquiries`,
   },
 } as const

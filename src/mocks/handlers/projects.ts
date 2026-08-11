@@ -166,11 +166,12 @@ function calcDeadlineProgress(startDate: string | null, endDate: string | null):
 }
 
 function toProjectSummary(project: MockProjectRecord, currentUserId: number) {
-  const memberPreviewImageUrls = db.members
+  const projectMembers = db.members.filter((m) => m.projectId === project.id)
+  const memberPreviewImageUrls = projectMembers
     .map((m) => m.profileImageUrl)
     .filter((url): url is string => Boolean(url))
     .slice(0, 4)
-  const me = db.members.find((m) => m.userId === currentUserId)
+  const me = projectMembers.find((m) => m.userId === currentUserId)
 
   return {
     id: project.id,
@@ -185,7 +186,7 @@ function toProjectSummary(project: MockProjectRecord, currentUserId: number) {
     lastActivityAt: project.updatedAt,
     isPinned: project.isPinned,
     memberPreviewImageUrls,
-    memberCount: db.members.length,
+    memberCount: projectMembers.length,
     roleNames: me?.roleNames ?? [],
     myPermission: me?.permission ?? 'MEMBER',
     canEdit: me?.permission === 'ADMIN',
@@ -197,7 +198,8 @@ function toProjectSummary(project: MockProjectRecord, currentUserId: number) {
 
 function toProjectDetail(project: MockProjectRecord, currentUserId: number) {
   const owner = findProjectOwner(project)
-  const me = db.members.find((m) => m.userId === currentUserId)
+  const projectMembers = db.members.filter((m) => m.projectId === project.id)
+  const me = projectMembers.find((m) => m.userId === currentUserId)
 
   return {
     id: project.id,
@@ -217,7 +219,7 @@ function toProjectDetail(project: MockProjectRecord, currentUserId: number) {
     },
     myPermission: me?.permission ?? 'MEMBER',
     roleNames: me?.roleNames ?? [],
-    memberCount: db.members.length,
+    memberCount: projectMembers.length,
     canEdit: me?.permission === 'ADMIN',
     canDelete: me?.permission === 'ADMIN',
     isPinned: project.isPinned,
@@ -281,6 +283,7 @@ export const projectHandlers = [
 
     db.members.unshift({
       memberId: allocId(),
+      projectId: project.id,
       userId: user.id,
       nickname: user.nickname,
       profileImageUrl: user.profileImageUrl,
@@ -370,20 +373,26 @@ export const projectHandlers = [
     if (!db.projects.some((p) => p.id === Number(params.projectId))) {
       return domainError('PROJECT404', '프로젝트를 찾을 수 없습니다.')
     }
-    const items = db.members.map(toMemberSummary)
+    const items = db.members
+      .filter((m) => m.projectId === Number(params.projectId))
+      .map(toMemberSummary)
     return HttpResponse.json(ok({ items, memberCount: items.length }), { status: 200 })
   }),
 
   http.get(paths.projects.member(':projectId', ':memberId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
-    const member = db.members.find((m) => m.memberId === Number(params.memberId))
+    const member = db.members.find(
+      (m) => m.memberId === Number(params.memberId) && m.projectId === Number(params.projectId),
+    )
     if (!member) return domainError('PROJECT_MEMBER404', '프로젝트 멤버를 찾을 수 없습니다.')
     return HttpResponse.json(ok(toMemberDetail(member)), { status: 200 })
   }),
 
   http.patch(paths.projects.member(':projectId', ':memberId'), async ({ request, params }) => {
     if (!safeUser()) return unauthorized()
-    const member = db.members.find((m) => m.memberId === Number(params.memberId))
+    const member = db.members.find(
+      (m) => m.memberId === Number(params.memberId) && m.projectId === Number(params.projectId),
+    )
     if (!member) return domainError('PROJECT_MEMBER404', '프로젝트 멤버를 찾을 수 없습니다.')
     const body = (await request.json()) as { roleNames?: string[] }
     if (body.roleNames?.length) {
@@ -395,18 +404,20 @@ export const projectHandlers = [
   http.delete(paths.projects.member(':projectId', ':memberId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const id = Number(params.memberId)
-    if (!db.members.some((m) => m.memberId === id)) {
+    const projectId = Number(params.projectId)
+    if (!db.members.some((m) => m.memberId === id && m.projectId === projectId)) {
       return domainError('PROJECT_MEMBER404', '프로젝트 멤버를 찾을 수 없습니다.')
     }
-    db.members = db.members.filter((m) => m.memberId !== id)
+    db.members = db.members.filter((m) => !(m.memberId === id && m.projectId === projectId))
     return HttpResponse.json(ok(null), { status: 200 })
   }),
 
   http.delete(paths.projects.leave(':projectId'), ({ params }) => {
     const user = safeUser()
     if (!user) return unauthorized()
-    if (!db.projects.some((p) => p.id === Number(params.projectId))) return notFound()
-    db.members = db.members.filter((m) => m.userId !== user.id)
+    const projectId = Number(params.projectId)
+    if (!db.projects.some((p) => p.id === projectId)) return notFound()
+    db.members = db.members.filter((m) => !(m.userId === user.id && m.projectId === projectId))
     return HttpResponse.json(ok(null), { status: 200 })
   }),
 
@@ -460,7 +471,7 @@ export const projectHandlers = [
     if (isInvitationExpired(invitation.expiresAt)) {
       return domainError('PROJECT_INVITATION_EXPIRED400', '만료된 초대 링크입니다.')
     }
-    if (db.members.some((m) => m.userId === user.id)) {
+    if (db.members.some((m) => m.userId === user.id && m.projectId === invitation.projectId)) {
       return domainError('PROJECT_MEMBER409', '이미 프로젝트에 참여 중인 멤버입니다.')
     }
     const body = (await request.json()) as { roleNames?: string[] }
@@ -469,6 +480,7 @@ export const projectHandlers = [
     const joinedAt = new Date().toISOString()
     db.members.unshift({
       memberId,
+      projectId: invitation.projectId,
       userId: user.id,
       nickname: user.nickname,
       profileImageUrl: user.profileImageUrl,

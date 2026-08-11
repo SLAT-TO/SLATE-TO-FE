@@ -4,6 +4,8 @@ import { matchPath } from '../utils/navigation'
 const PUBLIC_PATHS = [
   '/login',
   '/auth/callback',
+  '/auth/error',
+  '/reset-password',
   '/landing',
   '/signup',
   '/signup/email-verification',
