@@ -1,13 +1,13 @@
-import { request } from './client'
+import { request, setAccessToken } from './client'
 import { normalizeMe, type BeMe } from './normalize'
 import { paths } from './paths'
 import type {
   ChangePasswordRequest,
   DeleteAccountRequest,
   MeProfile,
-  NotificationSettings,
   OnboardingRequest,
   OnboardingResult,
+  PasswordChangeResult,
   PublicUser,
   UpdateProfileRequest,
   UserActivityStats,
@@ -67,8 +67,14 @@ export async function deleteAccount(body: DeleteAccountRequest): Promise<null> {
   return request<null>({ method: 'DELETE', url: paths.users.me, data: body })
 }
 
-export async function changePassword(body: ChangePasswordRequest): Promise<null> {
-  return request<null>({ method: 'PATCH', url: paths.users.changePassword, data: body })
+export async function changePassword(body: ChangePasswordRequest): Promise<PasswordChangeResult> {
+  const result = await request<PasswordChangeResult>({
+    method: 'PATCH',
+    url: paths.auth.changePassword,
+    data: body,
+  })
+  setAccessToken(result.accessToken)
+  return result
 }
 
 export async function getPublicProfile(userId: number): Promise<PublicUser> {
@@ -84,23 +90,6 @@ export async function getUserPortfolios(
     method: 'GET',
     url: paths.users.portfolios(userId),
     params: { page, size },
-  })
-}
-
-export async function getNotificationSettings(): Promise<NotificationSettings> {
-  return request<NotificationSettings>({
-    method: 'GET',
-    url: paths.users.notificationSettings,
-  })
-}
-
-export async function updateNotificationSettings(
-  body: Partial<NotificationSettings>,
-): Promise<NotificationSettings> {
-  return request<NotificationSettings>({
-    method: 'PATCH',
-    url: paths.users.notificationSettings,
-    data: body,
   })
 }
 

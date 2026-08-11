@@ -12,9 +12,7 @@ import RecruitPage from './pages/RecruitPage'
 import JobDetailPage from './pages/JobDetailPage'
 import JobApplicantsPage from './pages/JobApplicantsPage'
 import SettingsPage from './pages/SettingsPage'
-import SettingsNotificationsPage from './pages/SettingsNotificationsPage'
 import SettingsPasswordPage from './pages/SettingsPasswordPage'
-import SettingsInquiryPage from './pages/SettingsInquiryPage'
 import HeaderTitle from './components/HeaderTitle'
 import MyRecruitPage from './pages/MyRecruitPage'
 import JobFormPage from './pages/JobFormPage'
@@ -121,9 +119,7 @@ function LegacyAppRoutes() {
   }
 
   if (path === '/settings') return <SettingsPage />
-  if (path === '/settings/notifications') return <SettingsNotificationsPage />
   if (path === '/settings/password') return <SettingsPasswordPage />
-  if (path === '/settings/inquiry') return <SettingsInquiryPage />
 
   if (path === '/mypage') return <MyPage />
   if (path === '/mypage/edit') return <ProfileEditPage />

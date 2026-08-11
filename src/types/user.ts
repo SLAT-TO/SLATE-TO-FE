@@ -107,22 +107,18 @@ export type UpdateProfileRequest = {
   categories?: UserCategory[]
 }
 
-export type NotificationSettings = {
-  emailAllEnabled: boolean
-  emailDeadlineReminder: boolean
-  emailAssigned: boolean
-  emailNewApplicant: boolean
-  emailMissedSummary: boolean
-}
-
-/** FE mock 전용 — BE 비밀번호 변경 API 미구현 */
 export type ChangePasswordRequest = {
   currentPassword: string
   newPassword: string
 }
 
-/** FE mock 전용 — 회원탈퇴 시 비밀번호 재확인 (BE 미구현) */
+export type PasswordChangeResult = {
+  userId: number
+  accessToken: string
+  onboardingCompleted: boolean
+}
+
 export type DeleteAccountRequest = {
   agreed: boolean
-  password: string
+  password?: string
 }
