@@ -52,6 +52,7 @@ export const FILTER_CONFIGS: FilterConfig[] = [
       {
         label: '영상 길이 선택',
         span: 'narrow',
+        single: true,
         options: [...FILM_LENGTH_LABELS],
       },
     ],

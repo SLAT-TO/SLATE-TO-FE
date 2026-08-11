@@ -10,7 +10,7 @@ interface JobFilterBarProps {
   sort: SortValue
   onSortChange: (value: SortValue) => void
   selectedFilters: SelectedFilters
-  onToggleFilter: (category: FilterCategory, value: string) => void
+  onToggleFilter: (category: FilterCategory, value: string, groupOptions?: string[]) => void
   openCategory: FilterCategory | null
   onOpenCategoryChange: (category: FilterCategory | null) => void
   chips: SelectedFilterChip[]
@@ -89,7 +89,7 @@ function JobFilterBar({
         <FilterPanel
           config={openConfig}
           selected={selectedFilters[openConfig.key]}
-          onToggle={(value) => onToggleFilter(openConfig.key, value)}
+          onToggle={(value, groupOptions) => onToggleFilter(openConfig.key, value, groupOptions)}
         />
       )}
 

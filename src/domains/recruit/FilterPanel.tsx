@@ -3,7 +3,7 @@ import type { FilterConfig } from '../../types/Recruit.types'
 interface FilterPanelProps {
   config: FilterConfig
   selected: string[]
-  onToggle: (value: string) => void
+  onToggle: (value: string, groupOptions?: string[]) => void
 }
 
 // Tailwind는 클래스 문자열을 정적으로 스캔하므로 동적 조합(`grid-cols-${n}`) 불가.
@@ -38,7 +38,7 @@ function FilterPanel({ config, selected, onToggle }: FilterPanelProps) {
                 <button
                   key={option}
                   type="button"
-                  onClick={() => onToggle(option)}
+                  onClick={() => onToggle(option, group.single ? group.options : undefined)}
                   aria-pressed={isSelected}
                   className={`text-caption-lg flex items-center gap-2 text-left ${
                     isSelected ? 'text-neutral-11 font-medium' : 'text-neutral-6'

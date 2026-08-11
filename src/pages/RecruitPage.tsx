@@ -19,17 +19,26 @@ function RecruitPage() {
   const [sort, setSort] = useState<SortValue>('latest')
   const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>(INITIAL_FILTERS)
   const [openCategory, setOpenCategory] = useState<FilterCategory | null>(null)
-  const { recommended, jobs, bookmarkedIds, toggleBookmark, loading, error } = useRecruitments(sort)
+  const { recommended, jobs, bookmarkedIds, toggleBookmark, loading, error } = useRecruitments(
+    sort,
+    selectedFilters,
+  )
   const [isBookmarkModalOpen, setIsBookmarkModalOpen] = useState(false)
 
-  const handleToggleFilter = (category: FilterCategory, value: string) => {
+  const handleToggleFilter = (category: FilterCategory, value: string, groupOptions?: string[]) => {
     setSelectedFilters((prev) => {
       const current = prev[category]
+      const isSelected = current.includes(value)
+
+      // 단일 선택 그룹: 같은 그룹의 다른 값은 해제하고 이 값만 남긴다
+      if (groupOptions) {
+        const others = current.filter((item) => !groupOptions.includes(item))
+        return { ...prev, [category]: isSelected ? others : [...others, value] }
+      }
+
       return {
         ...prev,
-        [category]: current.includes(value)
-          ? current.filter((item) => item !== value)
-          : [...current, value],
+        [category]: isSelected ? current.filter((item) => item !== value) : [...current, value],
       }
     })
   }
