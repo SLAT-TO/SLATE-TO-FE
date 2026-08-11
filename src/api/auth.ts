@@ -5,6 +5,8 @@ import type {
   AuthTokens,
   ConfirmEmailVerificationRequest,
   ConfirmEmailVerificationResult,
+  EmailLoginRequest,
+  EmailLoginResult,
   EmailSignupRequest,
   EmailSignupResult,
   PasswordResetRequest,
@@ -59,6 +61,17 @@ export async function confirmEmailVerificationCode(
     url: paths.auth.emailVerificationConfirm,
     data: body,
   })
+}
+
+/** POST /api/v1/auth/login — 이메일·비밀번호 로그인. 존재하지 않는 이메일/비밀번호 불일치/소셜 전용 계정 모두 동일한 401 */
+export async function loginWithEmail(body: EmailLoginRequest): Promise<EmailLoginResult> {
+  const result = await request<EmailLoginResult>({
+    method: 'POST',
+    url: paths.auth.login,
+    data: body,
+  })
+  setAccessToken(result.accessToken)
+  return result
 }
 
 /** POST /api/v1/auth/signup — 이메일 인증을 마친 사용자의 계정 생성, 성공 시 즉시 로그인 상태가 됨 */

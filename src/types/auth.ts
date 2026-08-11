@@ -37,6 +37,18 @@ export type EmailSignupResult = {
   onboardingCompleted: boolean
 }
 
+export type EmailLoginRequest = {
+  email: string
+  password: string
+}
+
+/** 이메일 미존재·비밀번호 불일치·소셜 전용 계정을 구분하지 않고 모두 같은 401을 반환함 */
+export type EmailLoginResult = {
+  userId: number
+  accessToken: string
+  onboardingCompleted: boolean
+}
+
 export type PasswordResetRequest = {
   email: string
   newPassword: string

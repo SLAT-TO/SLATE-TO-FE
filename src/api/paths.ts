@@ -5,6 +5,7 @@ export const API_PREFIX = '/api/v1'
 export const paths = {
   auth: {
     googleLogin: `${API_PREFIX}/auth/login/google`,
+    login: `${API_PREFIX}/auth/login`,
     signup: `${API_PREFIX}/auth/signup`,
     emailVerificationCodes: `${API_PREFIX}/auth/email/verification-codes`,
     emailVerificationConfirm: `${API_PREFIX}/auth/email/verification-codes/confirm`,
