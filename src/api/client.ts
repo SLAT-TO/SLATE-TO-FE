@@ -145,8 +145,13 @@ apiClient.interceptors.response.use(
       return apiClient.request(originalRequest)
     } catch {
       setAccessToken(null)
-      const redirectTo = encodeURIComponent(window.location.pathname + window.location.search)
-      navigate(`/login?redirectTo=${redirectTo}`)
+      // 이미 /login이면 redirectTo를 다시 씌우지 않는다 — 씌우면 같은 화면에서 뜬
+      // 요청 여러 개가 동시에 401을 맞을 때마다 서로의 redirectTo를 중첩 인코딩해
+      // URL이 무한히 길어지는 문제가 있었다.
+      if (window.location.pathname !== '/login') {
+        const redirectTo = encodeURIComponent(window.location.pathname + window.location.search)
+        navigate(`/login?redirectTo=${redirectTo}`)
+      }
       return Promise.reject(error)
     }
   },
