@@ -154,7 +154,6 @@ export default function FeedbackListItem({
       {isExpanded && (
         <FeedbackReplies
           replies={replies}
-          onSeek={onSeek}
           newReply={newReply}
           setNewReply={setNewReply}
           onSubmitReply={onSubmitReply}

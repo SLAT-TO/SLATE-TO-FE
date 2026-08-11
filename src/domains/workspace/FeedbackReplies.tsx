@@ -7,11 +7,9 @@ import InlineIcon from '../../components/InlineIcon'
 import TextArea from '../../components/TextArea'
 import type { FeedbackReply } from '../../types/feedback'
 import paperPlaneIcon from '../../assets/icons/paper-plane.svg?raw'
-import { FeedbackTimeLink } from './videoDetailShared'
 
 type FeedbackRepliesProps = {
   replies: FeedbackReply[]
-  onSeek: (seconds: number) => void
   newReply: string
   setNewReply: (value: string) => void
   onSubmitReply: () => void
@@ -30,7 +28,6 @@ type FeedbackRepliesProps = {
 
 export default function FeedbackReplies({
   replies,
-  onSeek,
   newReply,
   setNewReply,
   onSubmitReply,
@@ -66,11 +63,6 @@ export default function FeedbackReplies({
                   <span className="text-caption-lg text-neutral-9 font-semibold">
                     {reply.actor.name}
                   </span>
-                  <FeedbackTimeLink
-                    feedback={reply}
-                    onSeek={onSeek}
-                    className="text-caption-lg text-primary font-bold underline"
-                  />
                 </div>
                 {isMine && (
                   <ActionMenu
