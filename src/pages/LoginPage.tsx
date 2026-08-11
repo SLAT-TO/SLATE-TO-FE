@@ -6,7 +6,7 @@ import { navigate } from '../utils/navigation'
 import { loginWithEmail, startGoogleLogin } from '../api/auth'
 import { ApiError } from '../types/api'
 import loginBg from '../assets/images/login-bg.png'
-import loginAvatar from '../assets/images/login-avatar.png'
+import loginAvatar from '../assets/images/profile-avatar.png'
 
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   return (

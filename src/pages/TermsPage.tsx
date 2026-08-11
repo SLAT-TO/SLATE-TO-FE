@@ -4,7 +4,7 @@ import { Button } from '../components/Button'
 import { navigate } from '../utils/navigation'
 import { useOnboardingStore } from '../stores/onboardingStore'
 import termsBg from '../assets/images/terms-bg.png'
-import termsAvatar from '../assets/images/terms-avatar.png'
+import termsAvatar from '../assets/images/profile-avatar.png'
 
 const TERMS = [
   { key: 'service', label: '이용약관 동의(필수)' },
