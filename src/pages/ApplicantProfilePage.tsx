@@ -12,6 +12,7 @@ import { getUserStats, getUserPortfolios } from '../api/users'
 import { roleLabel } from '../constants/roles'
 import { regionLabel } from '../constants/regions'
 import { videoCategoryLabel } from '../constants/videoCategories'
+import { toProjectTypeStats, toRoleStats } from '../domains/mypage/myPageAdapter'
 
 interface ApplicantProfilePageProps {
   jobId: number
@@ -21,12 +22,6 @@ interface ApplicantProfilePageProps {
 const HEADER = <HeaderTitle>지원자 프로필</HeaderTitle>
 const PLACEHOLDER_THUMBNAIL = 'https://placehold.co/300x160'
 const PLACEHOLDER_AVATAR = 'https://placehold.co/64x64'
-
-/** count 최댓값을 max로 삼아 막대를 상대 비율로 표시 */
-function toStatItems(list: Array<{ label: string; count: number }>): StatItem[] {
-  const max = Math.max(...list.map((item) => item.count), 1)
-  return list.map((item) => ({ label: item.label, value: item.count, max }))
-}
 
 function ApplicantProfilePage({ jobId, applicationId }: ApplicantProfilePageProps) {
   useHeaderSlot(HEADER)
@@ -58,8 +53,8 @@ function ApplicantProfilePage({ jobId, applicationId }: ApplicantProfilePageProp
         ])
         if (cancelled) return
 
-        setProjectTypeStats(toStatItems(stats.projectTypes))
-        setRoleStats(toStatItems(stats.roles))
+        setProjectTypeStats(toProjectTypeStats(stats))
+        setRoleStats(toRoleStats(stats))
         setProjects(
           portfolios.items.map((portfolio) => ({
             id: String(portfolio.id),
