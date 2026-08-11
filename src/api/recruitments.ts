@@ -4,6 +4,7 @@ import type {
   AppliedRecruitment,
   Application,
   ApplicationResult,
+  ApplicationStatusValue,
   CreateApplicationRequest,
   CreateRecruitmentRequest,
   Recruitment,
@@ -11,6 +12,7 @@ import type {
   RecruitmentDetailResponse,
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
+  RecruitmentApplication,
 } from '../types/recruitment'
 import type { CursorPage } from '../types/project'
 
@@ -90,8 +92,21 @@ export async function applyRecruitment(
   })
 }
 
-export async function getApplications(recruitmentId: number): Promise<{ items: Application[] }> {
-  return request({ method: 'GET', url: paths.recruitments.applications(recruitmentId) })
+export type ApplicationListParams = {
+  status?: ApplicationStatusValue
+  cursor?: number
+  size?: number
+}
+
+export async function getApplications(
+  recruitmentId: number,
+  params: ApplicationListParams = {},
+): Promise<CursorPage<RecruitmentApplication>> {
+  return request({
+    method: 'GET',
+    url: paths.recruitments.applications(recruitmentId),
+    params,
+  })
 }
 
 export async function updateApplicationStatus(
@@ -104,4 +119,23 @@ export async function updateApplicationStatus(
     url: paths.recruitments.application(recruitmentId, applicationId),
     data: body,
   })
+}
+
+/** 지원자 전량 조회 — 디자인상 페이지네이션 UI가 없어 hasNext가 끝날 때까지 이어 받음 */
+export async function getAllApplications(
+  recruitmentId: number,
+  params: Omit<ApplicationListParams, 'cursor'> = {},
+): Promise<RecruitmentApplication[]> {
+  const items: RecruitmentApplication[] = []
+  let cursor: number | undefined
+
+  // 서버가 hasNext만 true로 주고 커서를 누락해도 멈추도록 반복 횟수에 상한을 둠
+  for (let i = 0; i < 20; i += 1) {
+    const page = await getApplications(recruitmentId, { ...params, cursor })
+    items.push(...page.items)
+    if (!page.hasNext || page.nextCursor == null) break
+    cursor = page.nextCursor
+  }
+
+  return items
 }
