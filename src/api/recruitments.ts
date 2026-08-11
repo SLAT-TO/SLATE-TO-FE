@@ -35,6 +35,22 @@ export async function getRecruitments(
   return request({ method: 'GET', url: paths.recruitments.root, params })
 }
 
+/** 목록 화면에 더보기 UI가 없어 hasNext가 끝날 때까지 전량 조회 */
+export async function getAllRecruitments(
+  params: Omit<RecruitmentListParams, 'cursor'> = {},
+): Promise<Recruitment[]> {
+  const items: Recruitment[] = []
+  let cursor: number | undefined
+  // 서버가 hasNext만 true로 주고 커서를 누락해도 멈추도록 반복 횟수에 상한을 둠
+  for (let i = 0; i < 20; i += 1) {
+    const page = await getRecruitments({ ...params, cursor })
+    items.push(...page.items)
+    if (!page.hasNext || page.nextCursor == null) break
+    cursor = page.nextCursor
+  }
+  return items
+}
+
 export async function getRecommendedRecruitments(): Promise<CursorPage<Recruitment>> {
   return request({ method: 'GET', url: paths.recruitments.recommended })
 }
