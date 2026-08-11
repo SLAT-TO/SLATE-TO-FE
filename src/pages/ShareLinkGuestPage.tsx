@@ -6,6 +6,7 @@ import FeedbackPanel from '../domains/workspace/FeedbackPanel'
 import Input from '../components/Input'
 import Select from '../components/Select'
 import { Button } from '../components/Button'
+import { InvitationCard, InvitationLayout } from '../components/InvitationLayout'
 import { ROLE_OPTIONS } from '../constants/roles'
 import { ApiError } from '../types/api'
 import type { ShareLinkAccess } from '../types/feedback'
@@ -120,71 +121,88 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
 
   if (loadError) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <p className="text-warning text-body-sm">{loadError}</p>
-      </div>
+      <InvitationLayout>
+        <InvitationCard>
+          <p className="text-warning text-head-sm text-center font-semibold">{loadError}</p>
+        </InvitationCard>
+      </InvitationLayout>
     )
   }
 
   if (!access) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <p className="text-body-sm text-neutral-6">불러오는 중...</p>
-      </div>
+      <InvitationLayout>
+        <InvitationCard>
+          <p className="text-body-sm text-neutral-6 text-center">불러오는 중...</p>
+        </InvitationCard>
+      </InvitationLayout>
     )
   }
 
   if (step === 'invitation') {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <section className="bg-neutral-1 flex w-full max-w-[480px] flex-col gap-8 rounded-xl p-8 text-center shadow-[0_3px_12px_rgba(169,204,244,0.15)]">
-          <div className="flex flex-col gap-3">
-            <p className="text-head-sm text-neutral-11 font-bold">영상 피드백에 초대되었어요</p>
-            <p className="text-body-lg text-neutral-10 font-semibold">{access.videoTitle}</p>
-            <p className="text-body-sm text-neutral-6">
-              이름과 역할을 등록한 뒤 영상 피드백에 참여할 수 있습니다.
-            </p>
-          </div>
-          <Button type="button" fullWidth onClick={() => setStep('registration')}>
-            확인
-          </Button>
-        </section>
-      </div>
+      <InvitationLayout>
+        <InvitationCard>
+          <section className="flex flex-1 flex-col items-center justify-center gap-8 text-center">
+            <div className="flex flex-col gap-3">
+              <p className="text-head-lg text-neutral-11 font-bold">영상 피드백에 초대되었어요</p>
+              <p className="text-head-sm text-neutral-10 font-semibold">{access.videoTitle}</p>
+              <p className="text-body-sm text-neutral-6">
+                이름과 역할을 등록한 뒤 영상 피드백에 참여할 수 있습니다.
+              </p>
+            </div>
+            <Button
+              type="button"
+              className="mt-auto"
+              fullWidth
+              onClick={() => setStep('registration')}
+            >
+              확인
+            </Button>
+          </section>
+        </InvitationCard>
+      </InvitationLayout>
     )
   }
 
   if (step === 'registration') {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <form
-          onSubmit={handleRegister}
-          className="bg-neutral-1 flex w-full max-w-[400px] flex-col gap-6 rounded-xl p-8 shadow-[0_3px_12px_rgba(169,204,244,0.15)]"
-        >
-          <div className="flex flex-col items-center gap-2 text-center">
-            <p className="text-head-sm text-neutral-11 font-bold">{access.videoTitle}</p>
-            <p className="text-body-sm text-neutral-6">참여 정보를 입력해 주세요.</p>
-          </div>
-          <div className="flex flex-col gap-4">
-            <Input
-              id="guest-name"
-              placeholder="이름을 입력하세요."
-              value={name}
-              onChange={setName}
-            />
-            <Select
-              id="guest-role"
-              options={ROLE_OPTIONS}
-              value={role}
-              onChange={setRole}
-              placeholder="역할을 선택하세요."
-            />
-          </div>
-          {registerError && <p className="text-warning text-caption-lg">{registerError}</p>}
-          <Button type="submit" fullWidth disabled={registering || !name.trim() || !role}>
-            {registering ? '등록 중...' : '입장하기'}
-          </Button>
-        </form>
-      </div>
+      <InvitationLayout>
+        <InvitationCard>
+          <form onSubmit={handleRegister} className="flex flex-1 flex-col gap-[60px]">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <p className="text-head-lg text-neutral-11 font-bold">{access.videoTitle}</p>
+              <p className="text-body-sm text-neutral-6">참여 정보를 입력해 주세요.</p>
+            </div>
+            <div className="flex flex-col gap-4">
+              <p className="text-head-sm text-neutral-10 font-semibold">이름</p>
+              <Input
+                id="guest-name"
+                placeholder="이름을 입력하세요."
+                value={name}
+                onChange={setName}
+              />
+              <p className="text-head-sm text-neutral-10 font-semibold">역할</p>
+              <Select
+                id="guest-role"
+                options={ROLE_OPTIONS}
+                value={role}
+                onChange={setRole}
+                placeholder="역할을 선택하세요."
+              />
+            </div>
+            {registerError && <p className="text-warning text-caption-lg">{registerError}</p>}
+            <Button
+              type="submit"
+              fullWidth
+              disabled={registering || !name.trim() || !role}
+              className="mt-auto"
+            >
+              {registering ? '등록 중...' : '입장하기'}
+            </Button>
+          </form>
+        </InvitationCard>
+      </InvitationLayout>
     )
   }
 
