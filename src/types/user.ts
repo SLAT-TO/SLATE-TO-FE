@@ -47,6 +47,9 @@ export type MeProfile = {
   nickname: string
   profileImageUrl: string | null
   bio: string | null
+  /** BE GET /users/me 응답 — 활동 지역 전체 */
+  regions: (UserRegion | string)[]
+  /** 대표 지역 (regions의 첫 값) — 기존 화면 호환용 */
   region: UserRegion | string | null
   location: UserRegion | string | null
   socialType: SocialType
@@ -96,10 +99,12 @@ export type OnboardingResult = {
 
 export type UpdateProfileRequest = {
   nickname?: string
-  bio?: string
-  location?: UserRegion | string
   profileImageUrl?: string
+  bio?: string
+  /** BE는 locations 배열 — 전달하면 기존 지역을 모두 지우고 교체 */
+  locations?: (UserRegion | string)[]
   roles?: UserRole[]
+  categories?: UserCategory[]
 }
 
 export type NotificationSettings = {

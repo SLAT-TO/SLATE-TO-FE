@@ -22,8 +22,8 @@ function toProfileSummary(user: PublicUser): ProfileSummary {
   return {
     profileImageUrl: user.profileImageUrl ?? '',
     nickname: user.nickname,
-    role: user.primaryRole ? roleLabel(user.primaryRole) : '',
-    region: user.location ? regionLabel(user.location) : '',
+    roles: user.roles.map((r) => roleLabel(r)),
+    regions: user.location ? [regionLabel(user.location)] : [],
     email: '',
     introduction: user.bio ?? '',
   }
