@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { getProjects } from '../api/projects'
 import { getDailySchedules, getTodayBriefing } from '../api/schedules'
+import { useProjectsQuery } from '../queries/projects'
 import { ApiError } from '../types/api'
 import type { ProjectSummary } from '../types/project'
 import type { ScheduleDailyItem, TodayBriefing } from '../types/schedule'
@@ -19,22 +19,21 @@ function sortByInProgressFirst(projects: ProjectSummary[]): ProjectSummary[] {
 }
 
 export function useHomeDashboard() {
-  const [projects, setProjects] = useState<ProjectSummary[]>([])
+  const projectsQuery = useProjectsQuery()
   const [briefing, setBriefing] = useState<TodayBriefing | null>(null)
   const [todaySchedules, setTodaySchedules] = useState<ScheduleDailyItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [dashboardLoading, setDashboardLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
 
     async function load() {
-      setLoading(true)
+      setDashboardLoading(true)
       setError(null)
       try {
         const todayKey = toDateKey(new Date())
-        const [projectList, briefingResult, dailyResult] = await Promise.all([
-          getProjects(),
+        const [briefingResult, dailyResult] = await Promise.all([
           getTodayBriefing().catch(() => null),
           getDailySchedules(todayKey).catch(() => ({
             date: todayKey,
@@ -43,7 +42,6 @@ export function useHomeDashboard() {
         ])
         if (cancelled) return
 
-        setProjects(sortByInProgressFirst(projectList.items).slice(0, HOME_PROJECT_LIMIT))
         setBriefing(briefingResult)
         setTodaySchedules(dailyResult.items)
       } catch (err) {
@@ -51,7 +49,7 @@ export function useHomeDashboard() {
           setError(err instanceof ApiError ? err.message : '홈 정보를 불러오지 못했습니다.')
         }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setDashboardLoading(false)
       }
     }
 
@@ -61,5 +59,19 @@ export function useHomeDashboard() {
     }
   }, [])
 
-  return { projects, briefing, todaySchedules, loading, error }
+  const projectError = projectsQuery.error
+  const projectsError =
+    projectsQuery.isError && !projectsQuery.data
+      ? projectError instanceof ApiError
+        ? projectError.message
+        : '프로젝트 목록을 불러오지 못했습니다.'
+      : null
+
+  return {
+    projects: sortByInProgressFirst(projectsQuery.projects).slice(0, HOME_PROJECT_LIMIT),
+    briefing,
+    todaySchedules,
+    loading: dashboardLoading || (projectsQuery.isPending && !projectsQuery.data),
+    error: error ?? projectsError,
+  }
 }

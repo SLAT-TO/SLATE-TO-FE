@@ -7,8 +7,5 @@ export const projectKeys = {
   detail: (projectId: number) => [...projectKeys.details(), projectId] as const,
   members: (projectId: number) => [...projectKeys.detail(projectId), 'members'] as const,
   notices: (projectId: number) => [...projectKeys.detail(projectId), 'notices'] as const,
-  activities: (projectId: number, size?: number) =>
-    size == null
-      ? ([...projectKeys.detail(projectId), 'activities'] as const)
-      : ([...projectKeys.detail(projectId), 'activities', { size }] as const),
+  activities: (projectId: number) => [...projectKeys.detail(projectId), 'activities'] as const,
 }
