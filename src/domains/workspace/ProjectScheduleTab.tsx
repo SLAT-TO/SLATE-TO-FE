@@ -307,6 +307,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     try {
       await deleteWorkspaceSchedule(scheduleId)
       setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
+      setDaySchedules((prev) => prev.filter((s) => s.id !== scheduleId))
     } catch {
       setActionError('일정을 삭제하지 못했습니다. 다시 시도해주세요.')
     }
