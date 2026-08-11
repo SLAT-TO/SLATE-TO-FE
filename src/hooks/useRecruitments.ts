@@ -9,14 +9,17 @@ import { ApiError } from '../types/api'
 import type { Recruitment } from '../types/recruitment'
 import { SORT_PARAM } from '../constants/recruitFilters'
 import type { SortValue } from '../constants'
+import { toRecruitmentListParams } from '../utils/recruitFilterParams'
+import type { SelectedFilters } from '../types/Recruit.types'
 
 /** 구인구직 목록 화면 — 추천 공고와 전체 공고를 함께 조회한다 */
-export function useRecruitments(sort: SortValue) {
+export function useRecruitments(sort: SortValue, filters: SelectedFilters) {
   const [recommended, setRecommended] = useState<Recruitment[]>([])
   const [jobs, setJobs] = useState<Recruitment[]>([])
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const paramsKey = JSON.stringify(toRecruitmentListParams(filters))
 
   useEffect(() => {
     let cancelled = false
@@ -27,7 +30,7 @@ export function useRecruitments(sort: SortValue) {
       try {
         const [recommendedPage, jobPage] = await Promise.all([
           getRecommendedRecruitments(),
-          getRecruitments({ sort: SORT_PARAM[sort] }),
+          getRecruitments({ ...JSON.parse(paramsKey), sort: SORT_PARAM[sort] }),
         ])
         if (cancelled) return
         setRecommended(recommendedPage.items)
@@ -50,7 +53,7 @@ export function useRecruitments(sort: SortValue) {
     return () => {
       cancelled = true
     }
-  }, [sort])
+  }, [sort, paramsKey])
 
   /** 낙관적 업데이트 — 실패 시 이전 상태로 되돌린다 */
   async function toggleBookmark(recruitmentId: number) {
