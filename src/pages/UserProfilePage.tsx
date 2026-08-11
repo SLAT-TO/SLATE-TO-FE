@@ -63,7 +63,7 @@ function UserProfilePage({ userId }: UserProfilePageProps) {
         ])
         if (cancelled) return
         setUser(profile)
-        setPortfolios(portfolioPage?.content ?? [])
+        setPortfolios(portfolioPage?.items ?? [])
       } catch {
         if (!cancelled) setError('프로필을 불러오지 못했습니다.')
       } finally {

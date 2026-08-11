@@ -61,7 +61,7 @@ function ApplicantProfilePage({ jobId, applicationId }: ApplicantProfilePageProp
         setProjectTypeStats(toStatItems(stats.projectTypes))
         setRoleStats(toStatItems(stats.roles))
         setProjects(
-          portfolios.content.map((portfolio) => ({
+          portfolios.items.map((portfolio) => ({
             id: String(portfolio.id),
             title: portfolio.title,
             thumbnailUrl: portfolio.thumbnailUrl ?? PLACEHOLDER_THUMBNAIL,
