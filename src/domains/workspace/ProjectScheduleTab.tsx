@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { addMonths, format, parse, subMonths } from 'date-fns'
 import {
   createWorkspaceSchedule,
@@ -190,6 +190,19 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
   const [formModal, setFormModal] = useState<FormModalState>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
+  const refreshSelectedDaySchedules = useCallback(async () => {
+    if (!selectedDate) return
+    try {
+      const result = await getWorkspaceDailySchedules(toDateKey(selectedDate), {
+        projectId,
+        scope: 'PROJECT',
+      })
+      setDaySchedules(result.items)
+    } catch {
+      setActionError('일정 상세 정보를 새로고침하지 못했습니다. 다시 시도해주세요.')
+    }
+  }, [projectId, selectedDate])
+
   useEffect(() => {
     let cancelled = false
 
@@ -272,6 +285,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
         participantIds: values.participantIds.map(Number),
       })
       setSchedules((prev) => [created, ...prev])
+      void refreshSelectedDaySchedules()
     } catch {
       setActionError('일정을 추가하지 못했습니다. 다시 시도해주세요.')
     }
@@ -296,7 +310,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
         current,
       )
       setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
-      setDaySchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+      void refreshSelectedDaySchedules()
     } catch {
       setActionError('일정을 수정하지 못했습니다. 다시 시도해주세요.')
     }
@@ -307,6 +321,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     try {
       await deleteWorkspaceSchedule(scheduleId)
       setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
+      setDaySchedules((prev) => prev.filter((s) => s.id !== scheduleId))
     } catch {
       setActionError('일정을 삭제하지 못했습니다. 다시 시도해주세요.')
     }

@@ -21,6 +21,8 @@ type FeedbackPanelProps = Pick<
   | 'isCapturingRange'
   | 'editingFeedbackId'
   | 'editingFeedbackContent'
+  | 'isSubmittingFeedback'
+  | 'pendingFeedbackActionId'
   | 'setEditingFeedbackContent'
   | 'clearPendingTime'
   | 'attachCurrentTime'
@@ -66,6 +68,8 @@ export default function FeedbackPanel({
   isCapturingRange,
   editingFeedbackId,
   editingFeedbackContent,
+  isSubmittingFeedback,
+  pendingFeedbackActionId,
   setEditingFeedbackContent,
   clearPendingTime,
   attachCurrentTime,
@@ -137,10 +141,11 @@ export default function FeedbackPanel({
               key={feedback.feedbackId}
               feedback={feedback}
               isMine={isMine}
+              isActionPending={pendingFeedbackActionId === feedback.feedbackId}
               canResolve={meId !== null}
               onSeek={onSeek}
               onEdit={() => startEditFeedback(feedback)}
-              onRemove={() => removeFeedback(feedback.feedbackId)}
+              onRemove={() => void removeFeedback(feedback.feedbackId)}
               onToggleResolved={() => {
                 if (meId == null) return
                 void toggleResolved(feedback)
@@ -230,7 +235,7 @@ export default function FeedbackPanel({
         <button
           type="button"
           onClick={submitFeedback}
-          disabled={!newFeedback.trim()}
+          disabled={!newFeedback.trim() || isSubmittingFeedback}
           className="bg-primary disabled:bg-neutral-3 flex size-9 items-center justify-center self-end rounded-full text-white"
           aria-label="전송"
         >
