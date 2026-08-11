@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import MainLayout from './layouts/MainLayout'
 import CalendarPage from './pages/CalendarPage'
@@ -26,11 +26,11 @@ import { workspaceRoutes } from './routes/workspace'
 import { matchPath } from './utils/navigation'
 import ApplicantProfilePage from './pages/ApplicantProfilePage'
 import UserProfilePage from './pages/UserProfilePage'
+import { useUserStore } from './stores/userStore'
 
-const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
-
-function getHeaderTitle(pathname: string): string | undefined {
-  if (pathname === '/' || pathname === '') return `안녕하세요 ${USER_NAME} 님`
+function getHeaderTitle(pathname: string, userName: string): string | undefined {
+  if (pathname === '/' || pathname === '')
+    return userName ? `안녕하세요 ${userName} 님` : '안녕하세요'
   if (pathname === '/calendar') return '통합 캘린더'
   if (pathname === '/matching') return '구인구직'
   if (pathname === '/mypage') return '마이페이지'
@@ -44,7 +44,8 @@ function getHeaderTitle(pathname: string): string | undefined {
 /** 아직 React Router로 옮기지 않은 화면 — 워크스페이스는 workspaceRoutes 담당 */
 function LegacyAppRoutes() {
   const pathname = useLocation().pathname
-  const headerTitle = useMemo(() => getHeaderTitle(pathname), [pathname])
+  const userName = useUserStore((s) => s.user?.nickname ?? '')
+  const headerTitle = useMemo(() => getHeaderTitle(pathname, userName), [pathname, userName])
   const headerContent = useMemo(
     () => (headerTitle === undefined ? undefined : <HeaderTitle>{headerTitle}</HeaderTitle>),
     [headerTitle],
@@ -164,11 +165,18 @@ function AppShell() {
   const pathname = useLocation().pathname
   useAuthGuard(pathname)
 
+  const userName = useUserStore((s) => s.user?.nickname ?? '')
+  const fetchUser = useUserStore((s) => s.fetchUser)
+
+  useEffect(() => {
+    void fetchUser()
+  }, [fetchUser])
+
   const fullscreen = renderFullscreenRoute(pathname)
   if (fullscreen) return fullscreen
 
   return (
-    <MainLayout userName={USER_NAME}>
+    <MainLayout userName={userName}>
       <Routes>
         {workspaceRoutes()}
         <Route path="*" element={<LegacyAppRoutes />} />
