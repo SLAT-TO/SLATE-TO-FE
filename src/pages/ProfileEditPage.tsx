@@ -101,7 +101,8 @@ function ProfileEditPage() {
         locations: result.data.regions as UserRegion[],
         roles: result.data.roles as UserRole[],
         // 화면에서 다루지 않지만 미전달 시 삭제될 수 있어 그대로 돌려보냄
-        categories: serverCategories,
+        // (BE가 빈 배열을 거부하므로 비어 있으면 아예 보내지 않음 → 기존 값 유지)
+        categories: serverCategories.length > 0 ? serverCategories : undefined,
       })
       navigate('/mypage')
     } catch {
