@@ -12,6 +12,7 @@ import { FeedbackTimeLink } from './videoDetailShared'
 type FeedbackListItemProps = {
   feedback: Feedback
   isMine: boolean
+  isActionPending: boolean
   /** false면 해결 토글 숨김 (게스트 등 getMe 불가 컨텍스트) */
   canResolve?: boolean
   onSeek: (seconds: number) => void
@@ -45,6 +46,7 @@ type FeedbackListItemProps = {
 export default function FeedbackListItem({
   feedback,
   isMine,
+  isActionPending,
   canResolve = true,
   onSeek,
   onEdit,
@@ -93,6 +95,7 @@ export default function FeedbackListItem({
         </div>
         {isMine && (
           <ActionMenu
+            disabled={isActionPending}
             items={[
               { action: 'edit', onClick: onEdit },
               { action: 'delete', onClick: onRemove },
@@ -105,10 +108,22 @@ export default function FeedbackListItem({
         <div className="flex flex-col gap-2">
           <TextArea value={editingContent} onChange={onEditingContentChange} rows={2} />
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" size="sm" onClick={onCancelEdit} className="w-20">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onCancelEdit}
+              className="w-20"
+              disabled={isActionPending}
+            >
               취소
             </Button>
-            <Button variant="primary" size="sm" onClick={onSaveEdit} className="w-20">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onSaveEdit}
+              className="w-20"
+              disabled={isActionPending || !editingContent.trim()}
+            >
               저장
             </Button>
           </div>
@@ -139,6 +154,7 @@ export default function FeedbackListItem({
               onToggleResolved()
             }}
             aria-pressed={isResolved}
+            disabled={isActionPending}
             aria-label={isResolved ? '미해결로 변경' : '해결 처리'}
             className={`inline-flex size-10 shrink-0 items-center justify-center rounded-md ${
               isResolved ? 'text-success' : 'text-neutral-5'
