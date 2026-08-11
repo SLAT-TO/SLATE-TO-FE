@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   createVideo,
   deleteVideo,
@@ -14,7 +15,8 @@ import VideoCard from './VideoCard'
 import AddVideoModal from './AddVideoModal'
 import EditVideoModal from './EditVideoModal'
 import type { VideoListItem } from '../../types/video'
-import type { CreateVideoValues, UpdateVideoValues } from '../../schemas/video'
+import type { CreateVideoValues } from '../../schemas/video'
+import { invalidateProjectActivityData } from '../../queries/projectInvalidation'
 
 /** 북마크한 영상을 목록 상단으로 */
 function sortVideosByBookmark(items: VideoListItem[]): VideoListItem[] {
@@ -36,6 +38,7 @@ type VideoFeedbackTabProps = {
 }
 
 export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
+  const queryClient = useQueryClient()
   const [videos, setVideos] = useState<VideoListItem[]>([])
   const [videosLoading, setVideosLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<VideoListItem | null>(null)
@@ -43,6 +46,10 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
   const [editError, setEditError] = useState<string | null>(null)
   const [addVideoOpen, setAddVideoOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
+
+  const refreshProjectData = () => {
+    void invalidateProjectActivityData(queryClient, projectId)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -70,6 +77,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
       await deleteVideo(projectId, deleteTarget.videoId)
       setVideos((prev) => prev.filter((v) => v.videoId !== deleteTarget.videoId))
       setDeleteTarget(null)
+      refreshProjectData()
     } catch {
       setDeleteError('영상을 삭제하지 못했습니다. 다시 시도해주세요.')
       setDeleteTarget(null)
@@ -93,6 +101,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
         ...prev,
       ]),
     )
+    refreshProjectData()
   }
 
   const handleToggleBookmark = async (video: VideoListItem) => {
@@ -128,7 +137,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
     }
   }
 
-  const handleUpdateVideo = async (values: UpdateVideoValues) => {
+  const handleUpdateVideo = async (values: { title: string; memo?: string }) => {
     if (!editTarget) return
     const result = await updateVideo(projectId, editTarget.videoId, values)
     setVideos((prev) =>
@@ -138,6 +147,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
           : v,
       ),
     )
+    refreshProjectData()
   }
 
   return (
@@ -208,7 +218,6 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
 
       <EditVideoModal
         key={editTarget ? `video-${editTarget.videoId}` : 'video-edit-closed'}
-        projectId={projectId}
         isOpen={editTarget !== null}
         initialTitle={editTarget?.title ?? ''}
         initialYoutubeUrl={editTarget?.youtubeUrl ?? ''}

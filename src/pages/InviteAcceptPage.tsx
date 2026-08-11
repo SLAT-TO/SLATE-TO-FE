@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import Input from '../components/Input'
+import { useEffect, useState, type ReactNode } from 'react'
 import Select from '../components/Select'
 import Choice from '../components/Choice'
 import { Button } from '../components/Button'
@@ -9,9 +8,9 @@ import { ROLE_OPTIONS } from '../constants/roles'
 import { navigate } from '../utils/navigation'
 import inviteBg from '../assets/images/invite-bg.png'
 
-type Step = 'role' | 'name' | 'terms'
+type Step = 'role' | 'terms'
 
-function Card({ children }: { children: React.ReactNode }) {
+function Card({ children }: { children: ReactNode }) {
   return (
     <div className="bg-neutral-1 flex min-h-[600px] w-full max-w-[1062px] flex-col gap-[60px] rounded-xl p-12 shadow-[0_3px_12px_rgba(169,204,244,0.15)]">
       {children}
@@ -21,17 +20,16 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function errorMessage(err: unknown): string {
   if (err instanceof ApiError) {
-    if (err.code === 'PROJECT_MEMBER409') return '이미 참여한 프로젝트예요.'
+    if (err.code === 'PROJECT_MEMBER409') return '이미 참여 중인 프로젝트입니다.'
     return err.message
   }
   return '요청 처리 중 오류가 발생했습니다.'
 }
 
-// 워크스페이스 초대 수락 플로우. 역할 선택 -> 이름 설정 -> 약관 동의.
+/** 프로젝트 초대 수락: 역할 선택 후 약관에 동의한다. */
 export function InviteAcceptPage({ token }: { token: string }) {
   const [step, setStep] = useState<Step>('role')
   const [role, setRole] = useState('')
-  const [name, setName] = useState('')
   const [allAgreed, setAllAgreed] = useState(false)
 
   const [projectTitle, setProjectTitle] = useState<string | null>(null)
@@ -41,6 +39,7 @@ export function InviteAcceptPage({ token }: { token: string }) {
 
   useEffect(() => {
     let cancelled = false
+
     getInvitation(token)
       .then((res) => {
         if (!cancelled) setProjectTitle(res.projectTitle)
@@ -48,6 +47,7 @@ export function InviteAcceptPage({ token }: { token: string }) {
       .catch((err) => {
         if (!cancelled) setLoadError(errorMessage(err))
       })
+
     return () => {
       cancelled = true
     }
@@ -92,9 +92,9 @@ export function InviteAcceptPage({ token }: { token: string }) {
         {!loadError && step === 'role' && (
           <Card>
             <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                setStep('name')
+              onSubmit={(event) => {
+                event.preventDefault()
+                setStep('terms')
               }}
               className="flex flex-1 flex-col gap-[60px]"
             >
@@ -115,40 +115,11 @@ export function InviteAcceptPage({ token }: { token: string }) {
           </Card>
         )}
 
-        {!loadError && step === 'name' && (
-          <Card>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                setStep('terms')
-              }}
-              className="flex flex-1 flex-col gap-[60px]"
-            >
-              <div className="text-neutral-10 flex flex-col items-center gap-3 text-center">
-                <p className="text-head-lg font-bold">{inviteTitle}</p>
-                <p className="text-body-lg">이름을 설정해주세요</p>
-              </div>
-              <div className="flex flex-col gap-4">
-                <p className="text-head-sm text-neutral-10 font-semibold">이름</p>
-                <Input
-                  id="invite-name"
-                  placeholder="댓글을 달 때 사용될 이름을 입력해주세요."
-                  value={name}
-                  onChange={setName}
-                />
-              </div>
-              <Button type="submit" fullWidth className="mt-auto">
-                입장하기
-              </Button>
-            </form>
-          </Card>
-        )}
-
         {!loadError && step === 'terms' && (
           <Card>
             <form
-              onSubmit={(e) => {
-                e.preventDefault()
+              onSubmit={(event) => {
+                event.preventDefault()
                 void handleAccept()
               }}
               className="flex flex-1 flex-col gap-[60px]"

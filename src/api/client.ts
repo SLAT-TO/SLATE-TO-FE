@@ -27,6 +27,7 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
   // refreshToken HttpOnly 쿠키 송수신 (path=/api/v1/auth)
   withCredentials: true,
+  paramsSerializer: { indexes: null },
 })
 
 apiClient.interceptors.request.use((config) => {

@@ -6,7 +6,7 @@ import type { Portfolio } from '../types/portfolio'
 import type { Application, Recruitment } from '../types/recruitment'
 import type { Schedule } from '../types/schedule'
 import type { ProjectNotice } from '../types/notice'
-import type { MeUser, NotificationSettings } from '../types/user'
+import type { MeUser, NotificationSettings, UserRegion } from '../types/user'
 import type { Inquiry } from '../types/inquiry'
 import type { ReferenceFile, VideoDetail } from '../types/video'
 /* stats에 값을 업데이트해도 빈값 객체가 변질 되지 않도록 객체 생성 함수로 정의하여 사용용 */
@@ -24,6 +24,7 @@ const incompleteUser: MeUser = {
   onboardingCompleted: false,
   primaryRole: null,
   roles: [],
+  regions: [],
   region: null,
   location: null,
   categories: [],
@@ -42,6 +43,7 @@ const completeUser: MeUser = {
   onboardingCompleted: true,
   primaryRole: 'DIRECTOR',
   roles: ['DIRECTOR', 'PD', 'EDITOR'],
+  regions: ['SEOUL'],
   region: 'SEOUL',
   location: 'SEOUL',
   categories: ['FILM_DRAMA', 'MUSIC_VIDEO'],
@@ -70,6 +72,7 @@ const publicEditor: MeUser = {
   onboardingCompleted: true,
   primaryRole: 'EDITOR',
   roles: ['EDITOR'],
+  regions: ['SEOUL'],
   region: 'SEOUL',
   location: 'SEOUL',
   categories: ['DOCUMENTARY'],
@@ -119,6 +122,13 @@ export type MockMemberRecord = {
   joinedAt: string
 }
 
+export type MockRecruitmentRecord = Recruitment & {
+  description: string
+  shootingPeriod: string
+  contact: string
+  updatedAt: string
+}
+
 export type MockProjectFileRecord = Omit<ProjectFile, 'uploader'> & {
   projectId: number
   storageKey: string
@@ -144,7 +154,7 @@ export type MockDb = {
   feedbacks: Feedback[]
   replies: FeedbackReply[]
   shareLinks: ShareLink[]
-  recruitments: Recruitment[]
+  recruitments: MockRecruitmentRecord[]
   applications: Application[]
   recruitmentBookmarks: Array<{ userId: number; recruitmentId: number }>
   schedules: Schedule[]
@@ -166,6 +176,16 @@ function defaultNotificationSettings(): NotificationSettings {
     emailAssigned: true,
     emailNewApplicant: true,
     emailMissedSummary: true,
+  }
+}
+
+function toWriter(user: MeUser) {
+  return {
+    id: user.id,
+    nickname: user.nickname,
+    profileImageUrl: user.profileImageUrl,
+    primaryRole: user.primaryRole,
+    locations: [user.location ?? 'SEOUL'] as UserRegion[],
   }
 }
 
@@ -442,102 +462,126 @@ export const db: MockDb = {
     {
       id: 1,
       title: '웹드라마 편집자 모집',
-      description: '감정선 살리는 편집 가능하신 분',
-      roles: ['EDITOR'],
-      categories: ['FILM_DRAMA'],
+      category: 'FILM_DRAMA',
       lengthType: 'SHORT_FORM',
-      regions: ['SEOUL'],
-      status: 'OPEN',
+      recruitPart: 'EDITOR',
+      location: 'SEOUL',
+      pay: '일 10만원',
+      deadline: '2026-08-20',
+      dday: 13,
+      status: 'RECRUITING',
       viewCount: 120,
-      bookmarkCount: 8,
-      applicationCount: 3,
-      authorId: completeUser.id,
-      authorNickname: completeUser.nickname,
+      isBookmarked: false,
+      isMine: true,
+      writer: toWriter(completeUser),
+      description: '감정선을 살리는 편집이 가능하신 분을 찾습니다.',
+      shootingPeriod: '2026.08.25 ~ 2026.09.10',
+      contact: 'slate@example.com',
       createdAt: '2026-06-15T00:00:00Z',
       updatedAt: '2026-06-15T00:00:00Z',
     },
     {
       id: 2,
       title: '다큐 촬영 크루',
-      description: '지방 촬영 가능',
-      roles: ['CINEMATOGRAPHER'],
-      categories: ['DOCUMENTARY'],
+      category: 'DOCUMENTARY',
       lengthType: 'LONG_FORM',
-      regions: ['NATIONWIDE'],
-      status: 'OPEN',
+      recruitPart: 'CINEMATOGRAPHER',
+      location: 'NATIONWIDE',
+      pay: '협의',
+      deadline: '2026-08-25',
+      dday: 18,
+      status: 'RECRUITING',
       viewCount: 45,
-      bookmarkCount: 2,
-      applicationCount: 1,
-      authorId: publicEditor.id,
-      authorNickname: publicEditor.nickname,
+      isBookmarked: false,
+      isMine: false,
+      writer: toWriter(publicEditor),
+      description: '지방 촬영이 가능하신 촬영 감독을 모십니다.',
+      shootingPeriod: '2026.09.01 ~ 2026.10.15',
+      contact: 'park@example.com',
       createdAt: '2026-07-01T00:00:00Z',
       updatedAt: '2026-07-01T00:00:00Z',
     },
     {
       id: 3,
       title: '뮤직비디오 연출 구합니다',
-      description: '아이돌 그룹 신곡 뮤비 연출',
-      roles: ['DIRECTOR'],
-      categories: ['MUSIC_VIDEO'],
+      category: 'MUSIC_VIDEO',
       lengthType: 'SHORT_FORM',
-      regions: ['SEOUL'],
-      status: 'OPEN',
+      recruitPart: 'DIRECTOR',
+      location: 'SEOUL',
+      pay: '건당 200만원',
+      deadline: '2026-08-15',
+      dday: 8,
+      status: 'RECRUITING',
       viewCount: 88,
-      bookmarkCount: 5,
-      applicationCount: 2,
-      authorId: completeUser.id,
-      authorNickname: completeUser.nickname,
+      isBookmarked: false,
+      isMine: true,
+      writer: toWriter(completeUser),
+      description: '아이돌 그룹 신곡 뮤직비디오 연출을 맡아주실 분을 찾습니다.',
+      shootingPeriod: '2026.08.20 ~ 2026.08.28',
+      contact: 'slate@example.com',
       createdAt: '2026-07-03T00:00:00Z',
       updatedAt: '2026-07-03T00:00:00Z',
     },
     {
       id: 4,
       title: '예능 사운드 믹싱 엔지니어',
-      description: '주말 스튜디오 작업 가능하신 분',
-      roles: ['SOUND'],
-      categories: ['ENTERTAINMENT'],
+      category: 'YOUTUBE_CONTENT',
       lengthType: 'SHORT_FORM',
-      regions: ['NATIONWIDE'],
-      status: 'OPEN',
+      recruitPart: 'SOUND',
+      location: 'NATIONWIDE',
+      pay: '일 15만원',
+      deadline: '2026-08-30',
+      dday: 23,
+      status: 'RECRUITING',
       viewCount: 33,
-      bookmarkCount: 1,
-      applicationCount: 0,
-      authorId: publicEditor.id,
-      authorNickname: publicEditor.nickname,
+      isBookmarked: false,
+      isMine: false,
+      writer: toWriter(publicEditor),
+      description: '주말 스튜디오 작업이 가능하신 분을 우대합니다.',
+      shootingPeriod: '2026.09.05 ~ 2026.09.20',
+      contact: 'park@example.com',
       createdAt: '2026-07-05T00:00:00Z',
       updatedAt: '2026-07-05T00:00:00Z',
     },
     {
       id: 5,
       title: '광고 영상 미술팀 모집',
-      description: '브랜드 광고 세트 디자인',
-      roles: ['ART'],
-      categories: ['COMMERCIAL'],
+      category: 'AD_BRAND',
       lengthType: 'SHORT_FORM',
-      regions: ['SEOUL'],
-      status: 'OPEN',
+      recruitPart: 'ART',
+      location: 'SEOUL',
+      pay: '일 12만원',
+      deadline: '2026-08-18',
+      dday: 11,
+      status: 'RECRUITING',
       viewCount: 61,
-      bookmarkCount: 4,
-      applicationCount: 1,
-      authorId: completeUser.id,
-      authorNickname: completeUser.nickname,
+      isBookmarked: false,
+      isMine: true,
+      writer: toWriter(completeUser),
+      description: '브랜드 광고 세트 디자인을 담당하실 미술팀을 모집합니다.',
+      shootingPeriod: '2026.08.22 ~ 2026.09.02',
+      contact: 'slate@example.com',
       createdAt: '2026-07-08T00:00:00Z',
       updatedAt: '2026-07-08T00:00:00Z',
     },
     {
       id: 6,
       title: '단편영화 PD 구합니다',
-      description: '독립영화 제작 경험자 우대',
-      roles: ['PD'],
-      categories: ['FILM'],
+      category: 'FILM_DRAMA',
       lengthType: 'SHORT_FORM',
-      regions: ['NATIONWIDE'],
-      status: 'OPEN',
+      recruitPart: 'PD',
+      location: 'NATIONWIDE',
+      pay: '협의',
+      deadline: '2026-09-01',
+      dday: 25,
+      status: 'RECRUITING',
       viewCount: 27,
-      bookmarkCount: 0,
-      applicationCount: 0,
-      authorId: publicEditor.id,
-      authorNickname: publicEditor.nickname,
+      isBookmarked: false,
+      isMine: false,
+      writer: toWriter(publicEditor),
+      description: '독립영화 제작 경험이 있으신 분을 우대합니다.',
+      shootingPeriod: '2026.09.10 ~ 2026.11.30',
+      contact: 'park@example.com',
       createdAt: '2026-07-10T00:00:00Z',
       updatedAt: '2026-07-10T00:00:00Z',
     },
@@ -646,6 +690,7 @@ export function toMeProfile(user: MeUser) {
     nickname: user.nickname,
     profileImageUrl: user.profileImageUrl,
     bio: user.bio,
+    regions: user.regions ?? (user.location ? [user.location] : []),
     region: user.region ?? user.location,
     location: user.location ?? user.region,
     socialType: user.socialType,

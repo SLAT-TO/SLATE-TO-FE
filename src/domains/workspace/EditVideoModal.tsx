@@ -3,22 +3,19 @@ import Modal from '../../components/Modal'
 import Input from '../../components/Input'
 import { Button } from '../../components/Button'
 import { validateField } from '../../utils/validateField'
-import { updateVideoSchema, type UpdateVideoValues } from '../../schemas/video'
-import { validateYoutubeUrl } from '../../api/videos'
+import { updateVideoSchema } from '../../schemas/video'
 import { ApiError } from '../../types/api'
 
 interface EditVideoModalProps {
-  projectId: number
   isOpen: boolean
   initialTitle: string
   initialYoutubeUrl: string
   initialMemo?: string | null
   onClose: () => void
-  onSubmit: (values: UpdateVideoValues) => Promise<void>
+  onSubmit: (values: { title: string; memo?: string }) => Promise<void>
 }
 
 function EditVideoModal({
-  projectId,
   isOpen,
   initialTitle,
   initialYoutubeUrl,
@@ -27,12 +24,8 @@ function EditVideoModal({
   onSubmit,
 }: EditVideoModalProps) {
   const [title, setTitle] = useState(initialTitle)
-  const [youtubeUrl, setYoutubeUrl] = useState(initialYoutubeUrl)
   const [memo, setMemo] = useState(initialMemo ?? '')
-  const [errors, setErrors] = useState<Record<'title' | 'youtubeUrl', string>>({
-    title: '',
-    youtubeUrl: '',
-  })
+  const [errors, setErrors] = useState<Record<'title', string>>({ title: '' })
   const [submitError, setSubmitError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -44,9 +37,8 @@ function EditVideoModal({
 
   const handleSubmit = async () => {
     const titleError = validateField(updateVideoSchema.shape.title, title)
-    const urlError = validateField(updateVideoSchema.shape.youtubeUrl, youtubeUrl)
-    if (titleError || urlError) {
-      setErrors({ title: titleError, youtubeUrl: urlError })
+    if (titleError) {
+      setErrors({ title: titleError })
       setSubmitError('')
       return
     }
@@ -54,27 +46,12 @@ function EditVideoModal({
     setSubmitting(true)
     setSubmitError('')
     try {
-      const validation = await validateYoutubeUrl({ youtubeUrl, projectId })
-      if (!validation.valid) {
-        setErrors((prev) => ({
-          ...prev,
-          youtubeUrl: validation.message || '재생할 수 없는 YouTube 링크입니다.',
-        }))
-        return
-      }
-      try {
-        await onSubmit({ title, youtubeUrl, memo })
-        handleClose()
-      } catch (err) {
-        setSubmitError(
-          err instanceof ApiError ? err.message : '영상을 수정하지 못했습니다. 다시 시도해주세요.',
-        )
-      }
-    } catch {
-      setErrors((prev) => ({
-        ...prev,
-        youtubeUrl: '영상을 확인하지 못했습니다. 다시 시도해주세요.',
-      }))
+      await onSubmit({ title, memo })
+      handleClose()
+    } catch (err) {
+      setSubmitError(
+        err instanceof ApiError ? err.message : '영상을 수정하지 못했습니다. 다시 시도해주세요.',
+      )
     } finally {
       setSubmitting(false)
     }
@@ -87,11 +64,10 @@ function EditVideoModal({
 
         <Input
           label="링크"
-          value={youtubeUrl}
-          onChange={setYoutubeUrl}
-          placeholder="링크를 입력해주세요."
-          error={errors.youtubeUrl}
-          required
+          value={initialYoutubeUrl}
+          onChange={() => {}}
+          disabled
+          hint="등록된 영상 링크는 수정할 수 없습니다."
         />
 
         <div className="flex flex-col gap-3">

@@ -94,6 +94,8 @@ export function VideoDetailView({
     isCapturingRange,
     editingFeedbackId,
     editingFeedbackContent,
+    isSubmittingFeedback,
+    pendingFeedbackActionId,
     setEditingFeedbackContent,
     load: loadFeedbacks,
     clearPendingTime,
@@ -105,16 +107,25 @@ export function VideoDetailView({
     startEditFeedback,
     cancelEditFeedback,
     saveEditFeedback,
-  } = useFeedbacks(videoId, getCurrentTime)
+  } = useFeedbacks(videoId, getCurrentTime, undefined, projectId)
 
   const {
     expandedFeedbackId,
     repliesByFeedback,
     newReply,
     setNewReply,
+    editingReplyId,
+    editingReplyContent,
+    setEditingReplyContent,
+    isSubmittingReply,
+    pendingReplyActionId,
     toggleReplies,
     submitReply,
-  } = useFeedbackReplies()
+    startEditReply,
+    cancelEditReply,
+    saveEditReply,
+    removeReply,
+  } = useFeedbackReplies(undefined, projectId)
 
   const { members, setMembers, load: loadMembers } = useProjectMembersInvite(projectId)
 
@@ -253,6 +264,8 @@ export function VideoDetailView({
           isCapturingRange={isCapturingRange}
           editingFeedbackId={editingFeedbackId}
           editingFeedbackContent={editingFeedbackContent}
+          isSubmittingFeedback={isSubmittingFeedback}
+          pendingFeedbackActionId={pendingFeedbackActionId}
           setEditingFeedbackContent={setEditingFeedbackContent}
           clearPendingTime={clearPendingTime}
           attachCurrentTime={attachCurrentTime}
@@ -267,8 +280,17 @@ export function VideoDetailView({
           repliesByFeedback={repliesByFeedback}
           newReply={newReply}
           setNewReply={setNewReply}
+          editingReplyId={editingReplyId}
+          editingReplyContent={editingReplyContent}
+          setEditingReplyContent={setEditingReplyContent}
+          isSubmittingReply={isSubmittingReply}
+          pendingReplyActionId={pendingReplyActionId}
           toggleReplies={toggleReplies}
           submitReply={submitReply}
+          startEditReply={startEditReply}
+          cancelEditReply={cancelEditReply}
+          saveEditReply={saveEditReply}
+          removeReply={removeReply}
           meId={meId}
           onSeek={seekTo}
         />
@@ -310,7 +332,6 @@ export function VideoDetailView({
 
       <EditVideoModal
         key={editOpen ? `video-${videoId}-open` : 'video-edit-closed'}
-        projectId={projectId}
         isOpen={editOpen}
         initialTitle={videoDetail?.title ?? ''}
         initialYoutubeUrl={videoDetail?.youtubeUrl ?? ''}

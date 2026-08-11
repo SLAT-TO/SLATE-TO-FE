@@ -10,7 +10,7 @@ import { applicationSchema, type ApplicationValues } from '../../schemas/jobAppl
 interface ApplyModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (values: ApplicationValues) => void
+  onSubmit: (values: ApplicationValues) => Promise<void>
 }
 
 const INITIAL_VALUES: ApplicationValues = {
@@ -26,11 +26,14 @@ function ApplyModal({ isOpen, onClose, onSubmit }: ApplyModalProps) {
     referenceLink: '',
   })
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const handleClose = () => {
     setValues(INITIAL_VALUES)
     setErrors({ comment: '', referenceLink: '' })
     setIsSubmitted(false)
+    setSubmitError(null)
     onClose()
   }
 
@@ -39,7 +42,7 @@ function ApplyModal({ isOpen, onClose, onSubmit }: ApplyModalProps) {
     setErrors((prev) => ({ ...prev, [field]: message }))
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const commentError = validateField(applicationSchema.shape.comment, values.comment)
     const linkError = validateField(applicationSchema.shape.referenceLink, values.referenceLink)
 
@@ -48,9 +51,16 @@ function ApplyModal({ isOpen, onClose, onSubmit }: ApplyModalProps) {
       return
     }
 
-    // TODO: API 연동 — POST /recruitments/:id/applications
-    onSubmit(values)
-    setIsSubmitted(true)
+    setSubmitting(true)
+    setSubmitError(null)
+    try {
+      await onSubmit(values)
+      setIsSubmitted(true)
+    } catch {
+      setSubmitError('지원에 실패했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (isSubmitted) {
@@ -98,9 +108,11 @@ function ApplyModal({ isOpen, onClose, onSubmit }: ApplyModalProps) {
           hint="첨부가능 파일 형식 (Png, Pdf, Word, Jpg) 최대 5GB"
         />
 
+        {submitError && <p className="text-caption-sm text-warning">{submitError}</p>}
+
         <div className="flex justify-center gap-3">
-          <Button onClick={handleSubmit} className="w-52">
-            지원하기
+          <Button onClick={() => void handleSubmit()} disabled={submitting} className="w-52">
+            {submitting ? '지원 중…' : '지원하기'}
           </Button>
           <Button variant="secondary" onClick={handleClose} className="w-52">
             취소

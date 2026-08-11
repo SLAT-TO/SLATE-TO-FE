@@ -1,15 +1,17 @@
-/** BE 미구현 — Recruitment 컨트롤러 자체가 없음 (엔티티만 존재, Swagger에 미노출).
- * BE 엔티티 필드(recruitPart/shootingPeriod/pay/contact/location/deadline)가 아래 FE 모델과
- * 구조가 많이 달라서, 컨트롤러가 실제로 나오기 전까지는 이 파일을 엔티티에 맞춰 미리 바꾸지 않음. */
 import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
+import type { UserRegion } from '../../types/user'
 import type {
+  Application,
   CreateApplicationRequest,
   CreateRecruitmentRequest,
+  Recruitment,
+  RecruitmentApplication,
+  RecruitmentApplicationDetail,
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
 } from '../../types/recruitment'
-import { allocId, db, requireUser } from '../db'
+import { allocId, db, requireUser, type MockRecruitmentRecord } from '../db'
 import { badRequest, notFound, unauthorized } from '../errors'
 import { created, ok } from '../response'
 
@@ -21,44 +23,88 @@ function safeUser() {
   }
 }
 
+/** 요청 유저 기준으로 isBookmarked / isMine을 계산해 응답 형태로 변환 */
+function toResponse(r: Recruitment, userId: number): Recruitment {
+  return {
+    ...r,
+    isBookmarked: db.recruitmentBookmarks.some(
+      (b) => b.userId === userId && b.recruitmentId === r.id,
+    ),
+    isMine: r.writer.id === userId,
+  }
+}
+
+/** 커서 페이지네이션 응답 (mock은 전량 반환) */
+function toPage(items: Recruitment[]) {
+  return { items, nextCursor: null, hasNext: false }
+}
+
 export const recruitmentHandlers = [
   http.get(paths.recruitments.root, () => {
-    if (!safeUser()) return unauthorized()
-    return HttpResponse.json(ok({ items: db.recruitments }), { status: 200 })
+    const user = safeUser()
+    if (!user) return unauthorized()
+    const items = db.recruitments.map((r) => toResponse(r, user.id))
+    return HttpResponse.json(ok(toPage(items)), { status: 200 })
   }),
 
   http.get(paths.recruitments.recommended, () => {
-    if (!safeUser()) return unauthorized()
-    return HttpResponse.json(ok({ items: db.recruitments.slice(0, 6) }), { status: 200 })
+    const user = safeUser()
+    if (!user) return unauthorized()
+    const items = db.recruitments.slice(0, 6).map((r) => toResponse(r, user.id))
+    return HttpResponse.json(ok(toPage(items)), { status: 200 })
   }),
 
   http.get(paths.recruitments.byId(':recruitmentId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
+    const user = safeUser()
+    if (!user) return unauthorized()
     const recruitment = db.recruitments.find((r) => r.id === Number(params.recruitmentId))
     if (!recruitment) return notFound()
     recruitment.viewCount += 1
-    return HttpResponse.json(ok(recruitment), { status: 200 })
+
+    const applications = db.applications.filter((a) => a.recruitmentId === recruitment.id)
+    const mine = applications.find((a) => a.userId === user.id)
+
+    return HttpResponse.json(
+      ok({
+        ...toResponse(recruitment, user.id),
+        applicantCount: applications.length,
+        hasApplied: Boolean(mine),
+        myApplicationStatus: mine?.status ?? null,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.post(paths.recruitments.root, async ({ request }) => {
     const user = safeUser()
     if (!user) return unauthorized()
     const body = (await request.json()) as CreateRecruitmentRequest
-    if (!body.title || !body.description) return badRequest()
+    if (!body.title) return badRequest()
     const now = new Date().toISOString()
-    const recruitment = {
+    const recruitment: MockRecruitmentRecord = {
       id: allocId(),
       title: body.title,
-      description: body.description,
-      roles: body.roles ?? [],
-      categories: body.categories ?? [],
-      regions: body.regions ?? [],
-      status: 'OPEN',
+      category: body.category ?? 'ETC',
+      lengthType: body.lengthType ?? null,
+      recruitPart: body.recruitPart,
+      location: body.location ?? 'SEOUL',
+      pay: body.pay ?? '협의',
+      deadline: body.deadline ?? '',
+      dday: 30,
+      status: 'RECRUITING',
       viewCount: 0,
-      bookmarkCount: 0,
-      applicationCount: 0,
-      authorId: user.id,
-      authorNickname: user.nickname,
+      isBookmarked: false,
+      isMine: true,
+      writer: {
+        id: user.id,
+        nickname: user.nickname,
+        profileImageUrl: user.profileImageUrl,
+        primaryRole: user.primaryRole,
+        locations: user.location ? ([user.location] as UserRegion[]) : [],
+      },
+      description: body.description,
+      shootingPeriod: body.shootingPeriod ?? '',
+      contact: body.contact ?? '',
       createdAt: now,
       updatedAt: now,
     }
@@ -67,12 +113,13 @@ export const recruitmentHandlers = [
   }),
 
   http.patch(paths.recruitments.byId(':recruitmentId'), async ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
+    const user = safeUser()
+    if (!user) return unauthorized()
     const recruitment = db.recruitments.find((r) => r.id === Number(params.recruitmentId))
     if (!recruitment) return notFound()
     const body = (await request.json()) as UpdateRecruitmentRequest
-    Object.assign(recruitment, body, { updatedAt: new Date().toISOString() })
-    return HttpResponse.json(ok(recruitment), { status: 200 })
+    Object.assign(recruitment, body)
+    return HttpResponse.json(ok(toResponse(recruitment, user.id)), { status: 200 })
   }),
 
   http.delete(paths.recruitments.byId(':recruitmentId'), ({ params }) => {
@@ -86,8 +133,10 @@ export const recruitmentHandlers = [
   http.get(paths.users.myRecruitments, () => {
     const user = safeUser()
     if (!user) return unauthorized()
-    const items = db.recruitments.filter((r) => r.authorId === user.id)
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const items = db.recruitments
+      .filter((r) => r.writer.id === user.id)
+      .map((r) => toResponse(r, user.id))
+    return HttpResponse.json(ok(toPage(items)), { status: 200 })
   }),
 
   http.get(paths.users.myApplications, () => {
@@ -103,8 +152,10 @@ export const recruitmentHandlers = [
     const ids = db.recruitmentBookmarks
       .filter((b) => b.userId === user.id)
       .map((b) => b.recruitmentId)
-    const items = db.recruitments.filter((r) => ids.includes(r.id))
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const items = db.recruitments
+      .filter((r) => ids.includes(r.id))
+      .map((r) => toResponse(r, user.id))
+    return HttpResponse.json(ok(toPage(items)), { status: 200 })
   }),
 
   http.post(paths.recruitments.bookmark(':recruitmentId'), ({ params }) => {
@@ -118,8 +169,6 @@ export const recruitmentHandlers = [
       )
     ) {
       db.recruitmentBookmarks.push({ userId: user.id, recruitmentId })
-      const recruitment = db.recruitments.find((r) => r.id === recruitmentId)
-      if (recruitment) recruitment.bookmarkCount += 1
     }
     return HttpResponse.json(ok({ bookmarked: true }), { status: 200 })
   }),
@@ -131,8 +180,6 @@ export const recruitmentHandlers = [
     db.recruitmentBookmarks = db.recruitmentBookmarks.filter(
       (b) => !(b.userId === user.id && b.recruitmentId === recruitmentId),
     )
-    const recruitment = db.recruitments.find((r) => r.id === recruitmentId)
-    if (recruitment && recruitment.bookmarkCount > 0) recruitment.bookmarkCount -= 1
     return HttpResponse.json(ok({ bookmarked: false }), { status: 200 })
   }),
 
@@ -143,7 +190,7 @@ export const recruitmentHandlers = [
     const recruitment = db.recruitments.find((r) => r.id === recruitmentId)
     if (!recruitment) return notFound()
     const body = (await request.json()) as CreateApplicationRequest
-    const application = {
+    const application: Application = {
       id: allocId(),
       recruitmentId,
       userId: user.id,
@@ -154,14 +201,62 @@ export const recruitmentHandlers = [
       createdAt: new Date().toISOString(),
     }
     db.applications.push(application)
-    recruitment.applicationCount += 1
     return HttpResponse.json(created(application), { status: 201 })
+  }),
+  http.get(paths.recruitments.application(':recruitmentId', ':applicationId'), ({ params }) => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+
+    const application = db.applications.find((a) => a.id === Number(params.applicationId))
+    if (!application) return notFound()
+
+    const applicant = db.users.find((u) => u.id === application.userId)
+
+    const detail: RecruitmentApplicationDetail = {
+      applicationId: application.id,
+      recruitmentId: application.recruitmentId,
+      applicationStatus: application.status,
+      message: application.message ?? '',
+      referenceLink: null,
+      appliedAt: application.createdAt,
+      applicant: {
+        id: application.userId,
+        nickname: application.nickname,
+        profileImageUrl: application.profileImageUrl,
+        bio: applicant?.bio ?? '자기소개 미리보기 멘트가 나오게 됩니다.',
+        primaryRole: applicant?.primaryRole ?? null,
+        locations: (applicant?.regions ?? []) as UserRegion[],
+      },
+      // 첨부 업로드 미구현 — 메타데이터만 빈 배열
+      files: [],
+    }
+
+    return HttpResponse.json(ok(detail), { status: 200 })
   }),
 
   http.get(paths.recruitments.applications(':recruitmentId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
-    const items = db.applications.filter((a) => a.recruitmentId === Number(params.recruitmentId))
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const user = safeUser()
+    if (!user) return unauthorized()
+
+    const items: RecruitmentApplication[] = db.applications
+      .filter((a) => a.recruitmentId === Number(params.recruitmentId))
+      .map((a) => ({
+        applicationId: a.id,
+        applicationStatus: a.status,
+        message: a.message ?? '',
+        referenceLink: null,
+        appliedAt: a.createdAt,
+        applicant: {
+          id: a.userId,
+          nickname: a.nickname,
+          profileImageUrl: a.profileImageUrl,
+          bio: '자기소개 미리보기 멘트가 나오게 됩니다.',
+          primaryRole: user.primaryRole,
+          locations: [],
+        },
+      }))
+
+    return HttpResponse.json(ok({ items, nextCursor: null, hasNext: false }), { status: 200 })
   }),
 
   http.patch(
