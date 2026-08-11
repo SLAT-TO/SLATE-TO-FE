@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { getProjects } from '../api/projects'
+import { useCallback, useEffect, useState } from 'react'
+import { deleteProject, getProjects, leaveProject, pinProject, unpinProject } from '../api/projects'
 import { getDailySchedules, getTodayBriefing } from '../api/schedules'
 import { ApiError } from '../types/api'
 import type { ProjectSummary } from '../types/project'
@@ -9,7 +9,7 @@ import { toDateKey } from '../utils/calendarUtils'
 /** 홈 화면에 카드로 보여줄 진행 중인 프로젝트 개수 */
 const HOME_PROJECT_LIMIT = 4
 
-/** 완료(COMPLETED) 프로젝트보다 진행 중인 프로젝트를 우선 노출 */
+/** 완료 프로젝트보다 진행 중인 프로젝트를 우선 노출한다. */
 function sortByInProgressFirst(projects: ProjectSummary[]): ProjectSummary[] {
   return [...projects].sort((a, b) => {
     const aDone = a.status === 'COMPLETED' ? 1 : 0
@@ -61,5 +61,43 @@ export function useHomeDashboard() {
     }
   }, [])
 
-  return { projects, briefing, todaySchedules, loading, error }
+  const togglePin = useCallback(async (project: ProjectSummary) => {
+    const next = !project.isPinned
+    setProjects((prev) =>
+      prev.map((item) => (item.id === project.id ? { ...item, isPinned: next } : item)),
+    )
+    try {
+      const result = next ? await pinProject(project.id) : await unpinProject(project.id)
+      setProjects((prev) =>
+        prev.map((item) =>
+          item.id === project.id ? { ...item, isPinned: result.isPinned } : item,
+        ),
+      )
+    } catch {
+      setProjects((prev) =>
+        prev.map((item) => (item.id === project.id ? { ...item, isPinned: !next } : item)),
+      )
+    }
+  }, [])
+
+  const removeProject = useCallback(async (projectId: number) => {
+    await deleteProject(projectId)
+    setProjects((prev) => prev.filter((project) => project.id !== projectId))
+  }, [])
+
+  const leaveCurrentProject = useCallback(async (projectId: number) => {
+    await leaveProject(projectId)
+    setProjects((prev) => prev.filter((project) => project.id !== projectId))
+  }, [])
+
+  return {
+    projects,
+    briefing,
+    todaySchedules,
+    loading,
+    error,
+    togglePin,
+    removeProject,
+    leaveProject: leaveCurrentProject,
+  }
 }

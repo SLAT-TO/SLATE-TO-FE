@@ -1,5 +1,7 @@
 import { LoginPage } from '../../pages/LoginPage'
 import { AuthCallbackPage } from '../../pages/AuthCallbackPage'
+import { AuthErrorPage } from '../../pages/AuthErrorPage'
+import { ResetPasswordPage } from '../../pages/ResetPasswordPage'
 import { EmailVerifyPage } from '../../pages/EmailVerifyPage'
 import { TermsPage } from '../../pages/TermsPage'
 import { InviteAcceptPage } from '../../pages/InviteAcceptPage'
@@ -14,6 +16,8 @@ import type { FullscreenRoute } from './types'
 export const fullscreenRoutes: FullscreenRoute[] = [
   { path: '/login', render: () => <LoginPage /> },
   { path: '/auth/callback', render: () => <AuthCallbackPage /> },
+  { path: '/auth/error', render: () => <AuthErrorPage /> },
+  { path: '/reset-password', render: () => <ResetPasswordPage /> },
   { path: '/signup/email-verification', render: () => <EmailVerifyPage /> },
   { path: '/signup/terms', render: () => <TermsPage /> },
   {

@@ -1,7 +1,16 @@
 import { request, setAccessToken, refreshAccessToken } from './client'
 import { paths } from './paths'
 import { navigate } from '../utils/navigation'
-import type { AuthTokens } from '../types/auth'
+import type {
+  AuthTokens,
+  ConfirmEmailVerificationRequest,
+  ConfirmEmailVerificationResult,
+  EmailSignupRequest,
+  EmailSignupResult,
+  PasswordResetRequest,
+  SendEmailVerificationRequest,
+  SendEmailVerificationResult,
+} from '../types/auth'
 
 const apiBase = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -28,6 +37,48 @@ export async function startGoogleLogin(options?: {
   }
 
   window.location.href = url
+}
+
+/** POST /api/v1/auth/email/verification-codes — 이메일로 6자리 인증번호 발송 (5분 유효) */
+export async function sendEmailVerificationCode(
+  body: SendEmailVerificationRequest,
+): Promise<SendEmailVerificationResult> {
+  return request<SendEmailVerificationResult>({
+    method: 'POST',
+    url: paths.auth.emailVerificationCodes,
+    data: body,
+  })
+}
+
+/** POST /api/v1/auth/email/verification-codes/confirm — 인증번호 확인, 성공 후 30분 안에 가입 완료해야 함 */
+export async function confirmEmailVerificationCode(
+  body: ConfirmEmailVerificationRequest,
+): Promise<ConfirmEmailVerificationResult> {
+  return request<ConfirmEmailVerificationResult>({
+    method: 'POST',
+    url: paths.auth.emailVerificationConfirm,
+    data: body,
+  })
+}
+
+/** POST /api/v1/auth/signup — 이메일 인증을 마친 사용자의 계정 생성, 성공 시 즉시 로그인 상태가 됨 */
+export async function signupWithEmail(body: EmailSignupRequest): Promise<EmailSignupResult> {
+  const result = await request<EmailSignupResult>({
+    method: 'POST',
+    url: paths.auth.signup,
+    data: body,
+  })
+  setAccessToken(result.accessToken)
+  return result
+}
+
+/** POST /api/v1/auth/password/reset — 이메일 인증 완료 후 새 비밀번호로 재설정 */
+export async function resetPassword(body: PasswordResetRequest): Promise<null> {
+  return request<null>({
+    method: 'POST',
+    url: paths.auth.passwordReset,
+    data: body,
+  })
 }
 
 export async function logout(): Promise<null> {
