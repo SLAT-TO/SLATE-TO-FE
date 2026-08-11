@@ -9,14 +9,14 @@ export const paths = {
     refresh: `${API_PREFIX}/auth/refresh`,
   },
   users: {
-    /** GET/PATCH만 BE 구현. DELETE(회원탈퇴)는 BE 미구현 — FE mock 전용 */
     me: `${API_PREFIX}/users/me`,
-    /** Notion DB에 GET /users/me 중복 등록 — 통계는 임시 path 분리
-     * FE mock 전용 — BE에 활동 통계 API 미구현 (Swagger에 없음) */
+    /** 등록한 포트폴리오 기준 프로젝트 유형·역할 집계 */
     activityStats: `${API_PREFIX}/users/me/stats`,
     onboarding: `${API_PREFIX}/users/onboarding`,
     profileImage: `${API_PREFIX}/users/me/profile-image`,
     byId: (userId: number | string) => `${API_PREFIX}/users/${userId}`,
+    /** 다른 유저의 유형·역할 분포 (공개 프로필의 stats와 동일) */
+    stats: (userId: number | string) => `${API_PREFIX}/users/${userId}/stats`,
     portfolios: (userId: number | string) => `${API_PREFIX}/users/${userId}/portfolios`,
     notificationSettings: `${API_PREFIX}/users/me/notification-settings`,
     /** FE mock 전용 — BE 비밀번호 변경 API 미구현 */
