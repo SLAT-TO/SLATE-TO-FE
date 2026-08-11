@@ -35,9 +35,10 @@ export type UserRegion =
   | 'JEJU'
   | 'NATIONWIDE'
 
+/** BE는 type/role 코드만 내려줌 — label은 화면에서 변환 */
 export type UserStats = {
-  projectTypes: Array<{ type: string; label: string; count: number }>
-  roles: Array<{ role: string; label: string; count: number }>
+  projectTypes: Array<{ type: string; label?: string; count: number }>
+  roles: Array<{ role: string; label?: string; count: number }>
 }
 
 /** GET /api/v1/users/me — BE는 region, FE 호환용 location 병행 */
@@ -73,7 +74,7 @@ export type PublicUser = {
   nickname: string
   profileImageUrl: string | null
   bio: string | null
-  location: UserRegion | string | null
+  locations: UserRegion[]
   primaryRole: UserRole | null
   roles: UserRole[]
   categories: UserCategory[]

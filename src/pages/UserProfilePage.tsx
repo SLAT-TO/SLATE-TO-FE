@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import ProfileOverviewCard from '../domains/mypage/ProfileOverviewCard'
 import ProjectHistoryCard from '../domains/mypage/ProjectHistoryCard'
-import type { ProfileSummary, StatItem, ProjectHistoryItem } from '../types/MyPage.types'
+import type { ProfileSummary, ProjectHistoryItem } from '../types/MyPage.types'
 import type { PublicUser } from '../types/user'
 import type { Portfolio } from '../types/portfolio'
 import { getPublicProfile, getUserPortfolios } from '../api/users'
@@ -10,6 +10,7 @@ import HeaderTitle from '../components/HeaderTitle'
 import { roleLabel } from '../constants/roles'
 import { regionLabel } from '../constants/regions'
 import { PROJECT_TYPE_LABEL } from '../constants/projectLabels'
+import { toProjectTypeStats, toRoleStats } from '../domains/mypage/myPageAdapter'
 
 interface UserProfilePageProps {
   userId: number
@@ -23,15 +24,10 @@ function toProfileSummary(user: PublicUser): ProfileSummary {
     profileImageUrl: user.profileImageUrl ?? '',
     nickname: user.nickname,
     roles: user.roles.map((r) => roleLabel(r)),
-    regions: user.location ? [regionLabel(user.location)] : [],
+    regions: user.locations.map((location) => regionLabel(location)),
     email: '',
     introduction: user.bio ?? '',
   }
-}
-
-function toStatItems(items: Array<{ label: string; count: number }>): StatItem[] {
-  const max = Math.max(...items.map((i) => i.count), 1)
-  return items.map((i) => ({ label: i.label, value: i.count, max }))
 }
 
 function toProjectHistory(portfolio: Portfolio): ProjectHistoryItem {
@@ -91,8 +87,8 @@ function UserProfilePage({ userId }: UserProfilePageProps) {
     <div className="flex flex-col gap-6 p-6">
       <ProfileOverviewCard
         profile={toProfileSummary(user)}
-        projectTypeStats={toStatItems(user.stats.projectTypes)}
-        roleStats={toStatItems(user.stats.roles)}
+        projectTypeStats={toProjectTypeStats(user.stats)}
+        roleStats={toRoleStats(user.stats)}
       />
 
       <section>
