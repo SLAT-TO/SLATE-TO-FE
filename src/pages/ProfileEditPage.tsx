@@ -12,6 +12,7 @@ import HeaderTitle from '../components/HeaderTitle'
 import { navigate } from '../utils/navigation'
 import { getMe, updateProfile } from '../api/users'
 import type { SocialType, UserCategory, UserRole, UserRegion } from '../types/user'
+import { useUserStore } from '../stores/userStore'
 
 const INITIAL_VALUES: ProfileFormValues = {
   nickname: '',
@@ -95,15 +96,14 @@ function ProfileEditPage() {
     setIsSaving(true)
     setSaveError(null)
     try {
-      await updateProfile({
+      const updated = await updateProfile({
         nickname: result.data.nickname,
         bio: result.data.bio,
         locations: result.data.regions as UserRegion[],
         roles: result.data.roles as UserRole[],
-        // 화면에서 다루지 않지만 미전달 시 삭제될 수 있어 그대로 돌려보냄
-        // (BE가 빈 배열을 거부하므로 비어 있으면 아예 보내지 않음 → 기존 값 유지)
         categories: serverCategories.length > 0 ? serverCategories : undefined,
       })
+      useUserStore.getState().setUser(updated)
       navigate('/mypage')
     } catch {
       setSaveError('저장에 실패했습니다. 잠시 후 다시 시도해주세요.')
