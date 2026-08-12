@@ -138,7 +138,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
             <p className="text-head-sm text-neutral-11 font-bold">영상 피드백에 초대되었어요</p>
             <p className="text-body-lg text-neutral-10 font-semibold">{access.videoTitle}</p>
             <p className="text-body-sm text-neutral-6">
-              이름과 역할을 등록한 뒤 영상 피드백에 참여할 수 있습니다.
+              이름을 등록한 뒤 영상 피드백에 참여할 수 있습니다.
             </p>
           </div>
           <Button type="button" fullWidth onClick={() => setStep('registration')}>
