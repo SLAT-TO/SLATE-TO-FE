@@ -11,10 +11,15 @@ import type {
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
 } from '../../types/recruitment'
-import { allocId, db, requireUser, type MockRecruitmentRecord } from '../db'
+import {
+  allocId,
+  db,
+  requireUser,
+  type MockRecruitmentRecord,
+  type MockApplicationFile,
+} from '../db'
 import { badRequest, notFound, unauthorized } from '../errors'
 import { created, ok } from '../response'
-
 function safeUser() {
   try {
     return requireUser()
@@ -201,8 +206,15 @@ export const recruitmentHandlers = [
       createdAt: new Date().toISOString(),
     }
     db.applications.push(application)
+
+    // fileIds로 넘어온 파일을 이 지원에 연결한다
+    for (const fileId of body.fileIds ?? []) {
+      const file = db.applicationFiles.find((f) => f.id === fileId)
+      if (file) file.applicationId = application.id
+    }
     return HttpResponse.json(created(application), { status: 201 })
   }),
+
   http.get(paths.recruitments.application(':recruitmentId', ':applicationId'), ({ params }) => {
     const user = safeUser()
     if (!user) return unauthorized()
@@ -227,8 +239,15 @@ export const recruitmentHandlers = [
         primaryRole: applicant?.primaryRole ?? null,
         locations: (applicant?.regions ?? []) as UserRegion[],
       },
-      // 첨부 업로드 미구현 — 메타데이터만 빈 배열
-      files: [],
+      files: db.applicationFiles
+        .filter((f) => f.applicationId === application.id)
+        .map(({ id, fileName, contentType, fileSize, createdAt }) => ({
+          id,
+          fileName,
+          contentType,
+          fileSize,
+          createdAt,
+        })),
     }
 
     return HttpResponse.json(ok(detail), { status: 200 })
@@ -258,6 +277,58 @@ export const recruitmentHandlers = [
 
     return HttpResponse.json(ok({ items, nextCursor: null, hasNext: false }), { status: 200 })
   }),
+
+  // 업로드 — 실제 파일은 저장하지 않고 메타데이터만 돌려준다
+  http.post(paths.recruitments.applicationFiles(':recruitmentId'), async ({ request, params }) => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+    const formData = await request.formData()
+    const file = formData.get('file')
+    if (!(file instanceof File)) return badRequest('파일이 없습니다.')
+
+    const record: MockApplicationFile = {
+      id: allocId(),
+      recruitmentId: Number(params.recruitmentId),
+      userId: user.id,
+      applicationId: null,
+      fileName: file.name,
+      contentType: file.type,
+      fileSize: file.size,
+      createdAt: new Date().toISOString(),
+    }
+    db.applicationFiles.push(record)
+
+    return HttpResponse.json(
+      created({
+        id: record.id,
+        fileName: record.fileName,
+        contentType: record.contentType,
+        fileSize: record.fileSize,
+        createdAt: record.createdAt,
+      }),
+      { status: 201 },
+    )
+  }),
+
+  // mock은 파일 본문을 저장하지 않아 더미 내용을 돌려준다
+  http.get(
+    paths.recruitments.applicationFileDownload(':recruitmentId', ':applicationId', ':fileId'),
+    ({ params }) => {
+      if (!safeUser()) return unauthorized()
+      const file = db.applicationFiles.find(
+        (f) =>
+          f.id === Number(params.fileId) &&
+          f.applicationId === Number(params.applicationId) &&
+          f.recruitmentId === Number(params.recruitmentId),
+      )
+      if (!file) return notFound()
+
+      return new HttpResponse(new Blob([`mock file: ${file.fileName}`]), {
+        status: 200,
+        headers: { 'Content-Type': file.contentType || 'application/octet-stream' },
+      })
+    },
+  ),
 
   http.patch(
     paths.recruitments.application(':recruitmentId', ':applicationId'),

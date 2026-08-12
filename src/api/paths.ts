@@ -109,6 +109,14 @@ export const paths = {
       `${API_PREFIX}/recruitments/${recruitmentId}/applications`,
     application: (recruitmentId: number | string, applicationId: number | string) =>
       `${API_PREFIX}/recruitments/${recruitmentId}/applications/${applicationId}`,
+    applicationFiles: (recruitmentId: number | string) =>
+      `/api/v1/recruitments/${recruitmentId}/application-files`,
+    applicationFileDownload: (
+      recruitmentId: number | string,
+      applicationId: number | string,
+      fileId: number | string,
+    ) =>
+      `/api/v1/recruitments/${recruitmentId}/applications/${applicationId}/files/${fileId}/download`,
   },
   schedules: {
     root: `${API_PREFIX}/schedules`,

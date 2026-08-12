@@ -134,6 +134,18 @@ export type MockProjectFileRecord = Omit<ProjectFile, 'uploader'> & {
   uploaderId: number
 }
 
+export type MockApplicationFile = {
+  id: number
+  recruitmentId: number
+  userId: number
+  /** 지원에 연결되기 전에는 null */
+  applicationId: number | null
+  fileName: string
+  contentType: string
+  fileSize: number
+  createdAt: string
+}
+
 /* 모의 데이터베이스 타입 정의 */
 export type MockDb = {
   currentUserId: number | null
@@ -153,6 +165,7 @@ export type MockDb = {
   shareLinks: ShareLink[]
   recruitments: MockRecruitmentRecord[]
   applications: Application[]
+  applicationFiles: MockApplicationFile[]
   recruitmentBookmarks: Array<{ userId: number; recruitmentId: number }>
   schedules: Schedule[]
   notifications: AppNotification[]
@@ -577,6 +590,28 @@ export const db: MockDb = {
       message: '관심 있습니다',
       status: 'PENDING',
       createdAt: '2026-06-16T00:00:00Z',
+    },
+  ],
+  applicationFiles: [
+    {
+      id: 9001,
+      recruitmentId: 1,
+      userId: 2,
+      applicationId: 1,
+      fileName: '포트폴리오.pdf',
+      contentType: 'application/pdf',
+      fileSize: 2048576,
+      createdAt: '2026-08-12T00:00:00.000Z',
+    },
+    {
+      id: 9002,
+      recruitmentId: 1,
+      userId: 2,
+      applicationId: 1,
+      fileName: '편집_샘플.mp4',
+      contentType: 'video/mp4',
+      fileSize: 52428800,
+      createdAt: '2026-08-12T00:00:00.000Z',
     },
   ],
   recruitmentBookmarks: [{ userId: completeUser.id, recruitmentId: 2 }],

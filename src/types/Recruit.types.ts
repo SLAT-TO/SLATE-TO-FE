@@ -1,3 +1,5 @@
+import type { ApplicationFile } from '../types/recruitment'
+
 export type FilterCategory = 'region' | 'videoType' | 'role'
 
 export type SelectedFilters = Record<FilterCategory, string[]>
@@ -84,6 +86,6 @@ export interface JobPostFormValues {
 export interface ApplicationInfo {
   comment: string
   referenceLink?: string
-  fileName?: string
-  fileUrl?: string
+  /** 메타데이터만 담긴다 — 실제 내려받기는 다운로드 API */
+  files?: ApplicationFile[]
 }

@@ -1,4 +1,4 @@
-import { request } from './client'
+import { request, requestBlob } from './client'
 import { paths } from './paths'
 import type {
   AppliedRecruitment,
@@ -14,6 +14,7 @@ import type {
   UpdateRecruitmentRequest,
   RecruitmentApplication,
   RecruitmentApplicationDetail,
+  ApplicationFile,
 } from '../types/recruitment'
 import type { CursorPage } from '../types/project'
 
@@ -164,5 +165,33 @@ export async function getApplication(
   return request({
     method: 'GET',
     url: paths.recruitments.application(recruitmentId, applicationId),
+  })
+}
+
+/** 파일 하나씩 업로드하고 받은 id를 지원 API의 fileIds로 넘긴다 */
+export async function uploadApplicationFile(
+  recruitmentId: number,
+  file: File,
+): Promise<ApplicationFile> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  return request({
+    method: 'POST',
+    url: paths.recruitments.applicationFiles(recruitmentId),
+    data: formData,
+    // 기본 헤더가 application/json이라 지우지 않으면 multipart boundary가 빠진다
+    headers: { 'Content-Type': undefined },
+  })
+}
+
+export async function downloadApplicationFile(
+  recruitmentId: number,
+  applicationId: number,
+  fileId: number,
+): Promise<Blob> {
+  return requestBlob({
+    method: 'GET',
+    url: paths.recruitments.applicationFileDownload(recruitmentId, applicationId, fileId),
   })
 }
