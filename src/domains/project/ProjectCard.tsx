@@ -134,7 +134,7 @@ const ProjectCard = ({
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag, index) => (
-                  <Tag key={`${tag}-${index}`} variant={index < metaTagCount ? 'ghost' : 'primary'}>
+                  <Tag key={`${tag}-${index}`} variant={index < metaTagCount ? 'meta' : 'primary'}>
                     {tag}
                   </Tag>
                 ))}

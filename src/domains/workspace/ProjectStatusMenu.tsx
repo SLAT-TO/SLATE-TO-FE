@@ -52,9 +52,7 @@ export default function ProjectStatusMenu({
         <span
           key={tag}
           className={`text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold ${
-            index < projectMetaTagCount
-              ? 'bg-tag-done-bg text-tag-done-text'
-              : 'bg-main-1 text-main-6'
+            index < projectMetaTagCount ? 'bg-neutral-2 text-neutral-7' : 'bg-main-1 text-main-6'
           }`}
         >
           {tag}

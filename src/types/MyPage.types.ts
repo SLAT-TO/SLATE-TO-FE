@@ -25,6 +25,4 @@ export interface ProjectHistoryItem {
   title: string
   thumbnailUrl: string
   tags: string[] // 예: ['단편', '촬영감독', '뮤직비디오']
-  /** tags 앞쪽에 배치된 프로젝트 유형·영상 길이 태그 수 */
-  metaTagCount?: number
 }

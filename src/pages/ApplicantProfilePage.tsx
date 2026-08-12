@@ -64,7 +64,6 @@ function ApplicantProfilePage({ jobId, applicationId }: ApplicantProfilePageProp
               videoCategoryLabel(portfolio.type),
               ...portfolio.roles.map((role) => roleLabel(role)),
             ],
-            metaTagCount: 1,
           })),
         )
       } catch {
