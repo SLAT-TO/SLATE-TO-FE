@@ -92,5 +92,7 @@ export type RegisterGuestResult = {
   guestId: number
   shareLinkId: number
   name: string
+  /** 게스트 요청의 X-Guest-Token 헤더에 전달하는 일회성 세션 토큰 */
+  sessionToken: string
   createdAt: string
 }

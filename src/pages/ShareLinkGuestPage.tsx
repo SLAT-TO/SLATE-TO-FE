@@ -7,6 +7,7 @@ import Input from '../components/Input'
 import { Button } from '../components/Button'
 import { ApiError } from '../types/api'
 import type { ShareLinkAccess } from '../types/feedback'
+import { getGuestSession, setGuestSession } from '../utils/guestSession'
 
 type ShareLinkGuestPageProps = {
   token: string
@@ -22,9 +23,9 @@ function errorMessage(err: unknown, fallback: string): string {
 export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
   const [access, setAccess] = useState<ShareLinkAccess | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [step, setStep] = useState<GuestShareStep>('invitation')
+  const [guestSession, setGuestSessionState] = useState(() => getGuestSession(token))
+  const [step, setStep] = useState<GuestShareStep>(() => (guestSession ? 'feedback' : 'invitation'))
   const [name, setName] = useState('')
-  const [guestId, setGuestId] = useState<number | null>(null)
   const [registering, setRegistering] = useState(false)
   const [registerError, setRegisterError] = useState<string | null>(null)
 
@@ -47,6 +48,8 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
   }, [token])
 
   const videoId = access?.videoId ?? 0
+  const guestId = guestSession?.guestId
+  const guestToken = guestSession?.sessionToken
 
   const {
     filteredFeedbacks,
@@ -72,7 +75,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     startEditFeedback,
     cancelEditFeedback,
     saveEditFeedback,
-  } = useFeedbacks(videoId, () => 0, guestId ?? undefined)
+  } = useFeedbacks(videoId, () => 0, guestId ?? undefined, undefined, guestToken ?? undefined)
 
   const {
     expandedFeedbackId,
@@ -90,7 +93,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     cancelEditReply,
     saveEditReply,
     removeReply,
-  } = useFeedbackReplies(guestId ?? undefined)
+  } = useFeedbackReplies(guestId ?? undefined, undefined, guestToken ?? undefined)
 
   useEffect(() => {
     if (!access || guestId === null) return
@@ -105,7 +108,9 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     setRegisterError(null)
     try {
       const result = await registerGuest(token, { name: name.trim() })
-      setGuestId(result.guestId)
+      const session = { guestId: result.guestId, sessionToken: result.sessionToken }
+      setGuestSession(token, session)
+      setGuestSessionState(session)
       setStep('feedback')
     } catch (err) {
       setRegisterError(errorMessage(err, '게스트 등록에 실패했습니다.'))

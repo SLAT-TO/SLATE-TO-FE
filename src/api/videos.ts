@@ -125,14 +125,23 @@ export async function unlinkReferenceFile(
   })
 }
 
+type GuestRequestOptions = { guestId?: number; guestToken?: string }
+
+function guestRequestConfig(options?: GuestRequestOptions) {
+  return {
+    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+    headers: options?.guestToken ? { 'X-Guest-Token': options.guestToken } : undefined,
+  }
+}
+
 export async function getFeedbacks(
   videoId: number,
-  options?: { guestId?: number },
+  options?: GuestRequestOptions,
 ): Promise<{ items: Feedback[] }> {
   const result = await request<{ items: FeedbackStatusRaw[] }>({
     method: 'GET',
     url: paths.videos.feedbacks(videoId),
-    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+    ...guestRequestConfig(options),
   })
   return { items: result.items.map(normalizeFeedback) }
 }
@@ -145,6 +154,7 @@ function feedbackActorBody(body: { guestId?: number }): { guestId?: number } {
 export async function createFeedback(
   videoId: number,
   body: CreateFeedbackRequest,
+  options?: GuestRequestOptions,
 ): Promise<Feedback> {
   const result = await request<FeedbackStatusRaw>({
     method: 'POST',
@@ -155,6 +165,7 @@ export async function createFeedback(
       ...(body.endTime != null ? { endTime: body.endTime } : {}),
       ...feedbackActorBody(body),
     },
+    headers: options?.guestToken ? { 'X-Guest-Token': options.guestToken } : undefined,
   })
   return normalizeFeedback(result)
 }
@@ -162,6 +173,7 @@ export async function createFeedback(
 export async function updateFeedback(
   feedbackId: number,
   body: UpdateFeedbackRequest,
+  options?: GuestRequestOptions,
 ): Promise<Feedback> {
   const result = await request<FeedbackStatusRaw>({
     method: 'PATCH',
@@ -172,18 +184,19 @@ export async function updateFeedback(
       ...(body.endTime != null ? { endTime: body.endTime } : {}),
       ...feedbackActorBody(body),
     },
+    headers: options?.guestToken ? { 'X-Guest-Token': options.guestToken } : undefined,
   })
   return normalizeFeedback(result)
 }
 
 export async function deleteFeedback(
   feedbackId: number,
-  options?: { guestId?: number },
+  options?: GuestRequestOptions,
 ): Promise<null> {
   return request({
     method: 'DELETE',
     url: paths.feedbacks.byId(feedbackId),
-    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+    ...guestRequestConfig(options),
   })
 }
 
@@ -201,12 +214,12 @@ export async function updateFeedbackStatus(
 
 export async function getReplies(
   feedbackId: number,
-  options?: { guestId?: number },
+  options?: GuestRequestOptions,
 ): Promise<{ items: FeedbackReply[] }> {
   const result = await request<{ items: FeedbackReplyStatusRaw[] }>({
     method: 'GET',
     url: paths.feedbacks.replies(feedbackId),
-    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+    ...guestRequestConfig(options),
   })
   return { items: result.items.map(normalizeFeedbackReply) }
 }
@@ -214,6 +227,7 @@ export async function getReplies(
 export async function createReply(
   feedbackId: number,
   body: CreateReplyRequest,
+  options?: GuestRequestOptions,
 ): Promise<FeedbackReply> {
   const result = await request<FeedbackReplyStatusRaw>({
     method: 'POST',
@@ -222,6 +236,7 @@ export async function createReply(
       content: body.content,
       ...feedbackActorBody(body),
     },
+    headers: options?.guestToken ? { 'X-Guest-Token': options.guestToken } : undefined,
   })
   return normalizeFeedbackReply(result)
 }
@@ -229,20 +244,22 @@ export async function createReply(
 export async function updateReply(
   replyId: number,
   body: { content: string; guestId?: number },
+  options?: GuestRequestOptions,
 ): Promise<FeedbackReply | null> {
   const result = await request<FeedbackReplyStatusRaw | null>({
     method: 'PATCH',
     url: paths.replies.byId(replyId),
     data: body,
+    headers: options?.guestToken ? { 'X-Guest-Token': options.guestToken } : undefined,
   })
   return result ? normalizeFeedbackReply(result) : null
 }
 
-export async function deleteReply(replyId: number, options?: { guestId?: number }): Promise<null> {
+export async function deleteReply(replyId: number, options?: GuestRequestOptions): Promise<null> {
   return request({
     method: 'DELETE',
     url: paths.replies.byId(replyId),
-    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
+    ...guestRequestConfig(options),
   })
 }
 
