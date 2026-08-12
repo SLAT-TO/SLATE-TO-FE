@@ -173,7 +173,7 @@ function AppShell() {
   const fullscreen = renderFullscreenRoute(pathname)
   if (fullscreen) {
     return (
-      <RouteLoadingBoundary>
+      <RouteLoadingBoundary key={pathname}>
         <Suspense fallback={<RouteLoadingFallback />}>{fullscreen}</Suspense>
       </RouteLoadingBoundary>
     )
@@ -181,7 +181,7 @@ function AppShell() {
 
   return (
     <MainLayout userName={userName}>
-      <RouteLoadingBoundary>
+      <RouteLoadingBoundary key={pathname}>
         <Suspense fallback={<RouteLoadingFallback />}>
           <Routes>
             {workspaceRoutes()}
