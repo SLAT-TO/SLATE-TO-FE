@@ -5,6 +5,7 @@ import HeaderProfileMenu from './HeaderProfileMenu'
 import { CONTENT_PX } from '../constants/layout'
 type HeaderProps = {
   userName?: string
+  profileImageUrl?: string | null
 }
 
 function BellIcon() {
@@ -16,7 +17,7 @@ function BellIcon() {
   )
 }
 
-export default function Header({ userName = '000' }: HeaderProps) {
+export default function Header({ userName = '000', profileImageUrl }: HeaderProps) {
   const slot = useContext(HeaderSlotContentContext)
   const headerLeft = slot?.headerLeft ?? null
   const headerRight = slot?.headerRight ?? null
@@ -43,7 +44,7 @@ export default function Header({ userName = '000' }: HeaderProps) {
             </button>
 
             {/* 아바타 (클릭 시 나의 구인구직/마이페이지/설정 드롭다운) */}
-            <HeaderProfileMenu userName={userName} />
+            <HeaderProfileMenu userName={userName} profileImageUrl={profileImageUrl} />
           </>
         )}
 

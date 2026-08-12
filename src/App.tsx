@@ -164,6 +164,7 @@ function AppShell() {
   useAuthGuard(pathname)
 
   const userName = useUserStore((s) => s.user?.nickname ?? '')
+  const profileImageUrl = useUserStore((s) => s.user?.profileImageUrl)
   const fetchUser = useUserStore((s) => s.fetchUser)
 
   useEffect(() => {
@@ -180,7 +181,7 @@ function AppShell() {
   }
 
   return (
-    <MainLayout userName={userName}>
+    <MainLayout userName={userName} profileImageUrl={profileImageUrl}>
       <RouteLoadingBoundary key={pathname}>
         <Suspense fallback={<RouteLoadingFallback />}>
           <Routes>

@@ -15,7 +15,7 @@ import { useFeedbacks } from '../../hooks/useFeedbacks'
 import { useFeedbackReplies } from '../../hooks/useFeedbackReplies'
 import { useProjectMembersInvite } from '../../hooks/useProjectMembersInvite'
 import { ApiError } from '../../types/api'
-import type { ProjectLengthType } from '../../types/project'
+import type { ProjectLengthType, ProjectStatus } from '../../types/project'
 
 export type VideoDetailViewProps = {
   projectId: number
@@ -23,6 +23,8 @@ export type VideoDetailViewProps = {
   meId: number | null
   isAdmin?: boolean
   lengthType: ProjectLengthType | null
+  projectStatus: ProjectStatus
+  onProjectStatusChange: (status: ProjectStatus) => void
   /** 이 프로젝트에서 내가 맡은 역할 — 프로젝트 소개글 태그 옆에 함께 표시 */
   myRoleNames?: string[]
   onBack: () => void
@@ -34,6 +36,8 @@ export function VideoDetailView({
   meId,
   isAdmin = false,
   lengthType,
+  projectStatus,
+  onProjectStatusChange,
   myRoleNames = [],
   onBack,
 }: VideoDetailViewProps) {
@@ -60,11 +64,7 @@ export function VideoDetailView({
   const {
     videoDetail,
     load: loadVideoDetail,
-    statusMenuOpen,
-    setStatusMenuOpen,
-    statusMenuRef,
     toggleBookmark,
-    changeVideoStatus,
     confirmDeleteVideo,
     handleUpdateVideo,
   } = useVideoDetail(projectId, videoId, onBack)
@@ -169,10 +169,8 @@ export function VideoDetailView({
       projectId={projectId}
       videoDetail={videoDetail}
       toggleBookmark={toggleBookmark}
-      statusMenuOpen={statusMenuOpen}
-      setStatusMenuOpen={setStatusMenuOpen}
-      statusMenuRef={statusMenuRef}
-      changeVideoStatus={changeVideoStatus}
+      projectStatus={projectStatus}
+      onProjectStatusChange={onProjectStatusChange}
       members={members}
       isAdmin={isAdmin}
       meId={meId}
