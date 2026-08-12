@@ -310,7 +310,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   }
 
   if (view === 'settings') {
-    // ?view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
+    // view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
     const leaveSettings = () => {
       setProjectSearch({}, { replace: true })
     }
