@@ -33,6 +33,7 @@ export function InviteAcceptPage({ token }: { token: string }) {
   const queryClient = useQueryClient()
   const [step, setStep] = useState<Step>('role')
   const [role, setRole] = useState('')
+  const [roleError, setRoleError] = useState<string | null>(null)
   const [allAgreed, setAllAgreed] = useState(false)
 
   const [projectTitle, setProjectTitle] = useState<string | null>(null)
@@ -98,6 +99,10 @@ export function InviteAcceptPage({ token }: { token: string }) {
             <form
               onSubmit={(event) => {
                 event.preventDefault()
+                if (!role) {
+                  setRoleError('역할을 선택해주세요.')
+                  return
+                }
                 setStep('terms')
               }}
               className="flex flex-1 flex-col gap-[60px]"
@@ -108,8 +113,13 @@ export function InviteAcceptPage({ token }: { token: string }) {
                 <Select
                   options={ROLE_OPTIONS}
                   value={role}
-                  onChange={setRole}
+                  onChange={(next) => {
+                    setRole(next)
+                    setRoleError(null)
+                  }}
                   placeholder="역할을 선택해주세요."
+                  required
+                  error={roleError ?? undefined}
                 />
               </div>
               <Button type="submit" fullWidth className="mt-auto">
