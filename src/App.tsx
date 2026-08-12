@@ -1,30 +1,32 @@
-import { useMemo, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import MainLayout from './layouts/MainLayout'
-import CalendarPage from './pages/CalendarPage'
-import HomePage from './pages/HomePage'
-import MyPage from './pages/MyPage'
-import NotificationPage from './pages/NotificationPage'
-import ProfileEditPage from './pages/ProfileEditPage'
-import ProjectFormPage from './pages/ProjectFormPage'
-import ProjectOverviewPage from './pages/ProjectOverviewPage'
-import RecruitPage from './pages/RecruitPage'
-import JobDetailPage from './pages/JobDetailPage'
-import JobApplicantsPage from './pages/JobApplicantsPage'
-import SettingsPage from './pages/SettingsPage'
-import SettingsPasswordPage from './pages/SettingsPasswordPage'
 import HeaderTitle from './components/HeaderTitle'
-import MyRecruitPage from './pages/MyRecruitPage'
-import JobFormPage from './pages/JobFormPage'
 import { useHeaderSlot } from './hooks/useHeaderSlot'
 import { useAuthGuard } from './hooks/useAuthGuard'
 import { renderFullscreenRoute } from './routes/fullscreen'
 import NavigateBridge from './routes/NavigateBridge'
 import { workspaceRoutes } from './routes/workspace'
 import { matchPath } from './utils/navigation'
-import ApplicantProfilePage from './pages/ApplicantProfilePage'
-import UserProfilePage from './pages/UserProfilePage'
 import { useUserStore } from './stores/userStore'
+import { RouteLoadingBoundary, RouteLoadingFallback } from './components/RouteLoadingBoundary'
+
+const CalendarPage = lazy(() => import('./pages/CalendarPage'))
+const HomePage = lazy(() => import('./pages/HomePage'))
+const MyPage = lazy(() => import('./pages/MyPage'))
+const NotificationPage = lazy(() => import('./pages/NotificationPage'))
+const ProfileEditPage = lazy(() => import('./pages/ProfileEditPage'))
+const ProjectFormPage = lazy(() => import('./pages/ProjectFormPage'))
+const ProjectOverviewPage = lazy(() => import('./pages/ProjectOverviewPage'))
+const RecruitPage = lazy(() => import('./pages/RecruitPage'))
+const JobDetailPage = lazy(() => import('./pages/JobDetailPage'))
+const JobApplicantsPage = lazy(() => import('./pages/JobApplicantsPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const SettingsPasswordPage = lazy(() => import('./pages/SettingsPasswordPage'))
+const MyRecruitPage = lazy(() => import('./pages/MyRecruitPage'))
+const JobFormPage = lazy(() => import('./pages/JobFormPage'))
+const ApplicantProfilePage = lazy(() => import('./pages/ApplicantProfilePage'))
+const UserProfilePage = lazy(() => import('./pages/UserProfilePage'))
 
 function getHeaderTitle(pathname: string, userName: string): string | undefined {
   if (pathname === '/' || pathname === '')
@@ -169,14 +171,24 @@ function AppShell() {
   }, [fetchUser])
 
   const fullscreen = renderFullscreenRoute(pathname)
-  if (fullscreen) return fullscreen
+  if (fullscreen) {
+    return (
+      <RouteLoadingBoundary>
+        <Suspense fallback={<RouteLoadingFallback />}>{fullscreen}</Suspense>
+      </RouteLoadingBoundary>
+    )
+  }
 
   return (
     <MainLayout userName={userName}>
-      <Routes>
-        {workspaceRoutes()}
-        <Route path="*" element={<LegacyAppRoutes />} />
-      </Routes>
+      <RouteLoadingBoundary>
+        <Suspense fallback={<RouteLoadingFallback />}>
+          <Routes>
+            {workspaceRoutes()}
+            <Route path="*" element={<LegacyAppRoutes />} />
+          </Routes>
+        </Suspense>
+      </RouteLoadingBoundary>
     </MainLayout>
   )
 }
