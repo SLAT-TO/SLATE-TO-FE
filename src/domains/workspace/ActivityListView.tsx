@@ -31,6 +31,7 @@ function canNavigate(activity: ProjectActivity): boolean {
     activity.targetType === 'NOTICE' ||
     activity.targetType === 'FILE' ||
     activity.targetType === 'SCHEDULE' ||
+    activity.targetType === 'VIDEO' ||
     activity.type === 'SCHEDULE_CREATED' ||
     activity.type === 'SCHEDULE_UPDATED' ||
     activity.type === 'PROJECT_MEMBER_JOINED' ||
