@@ -38,6 +38,9 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
           (page) => {
             setRepliesByFeedback((p) => ({ ...p, [feedbackId]: page.items }))
           },
+          () => {
+            window.alert('답글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+          },
         )
         return prev
       })
