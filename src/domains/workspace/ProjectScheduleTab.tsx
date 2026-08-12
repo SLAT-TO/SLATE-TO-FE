@@ -109,7 +109,6 @@ function ScheduleDetailCard({
             </p>
             <div className="text-caption-sm text-neutral-6 flex flex-wrap items-center gap-4 tracking-[-0.24px]">
               {schedule.location && <span>{schedule.location}</span>}
-              <span>{format(new Date(schedule.startAt), 'HH:mm')}</span>
               {formatTarget(participantNames) && <span>{formatTarget(participantNames)}</span>}
             </div>
           </div>
