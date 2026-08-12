@@ -16,13 +16,9 @@ interface ApplyModalProps {
   onSubmit: (values: ApplicationValues) => Promise<void>
 }
 
-/** 선택 즉시 업로드하므로 파일 자체가 아니라 업로드 결과를 들고 있는다 */
+/** 업로드는 제출 시점에 하므로 선택한 파일 자체를 들고 있는다 */
 type AttachedFile = {
-  name: string
-  size: number
-  /** 업로드 성공 시에만 채워진다 — 이 id만 fileIds로 보낸다 */
-  id: number | null
-  status: 'uploading' | 'done' | 'error'
+  file: File
   error?: string
 }
 
@@ -57,48 +53,14 @@ function ApplyModal({ isOpen, recruitmentId, onClose, onSubmit }: ApplyModalProp
     setErrors((prev) => ({ ...prev, [field]: message }))
   }
 
-  // 지원 API는 무효한 fileId가 하나라도 있으면 전체가 실패하므로,
-  // 업로드에 성공한 id만 values.fileIds에 담는다.
-  const handleFileSelect = async (file: File) => {
+  // 선택 시에는 검증만 한다 — 취소·교체 시 서버에 고아 파일이 남지 않도록 업로드는 제출 시점에
+  const handleFileSelect = (file: File) => {
     const invalidMessage = validateApplicationFile(file)
-    if (invalidMessage) {
-      setAttached({
-        name: file.name,
-        size: file.size,
-        id: null,
-        status: 'error',
-        error: invalidMessage,
-      })
-      setValues((prev) => ({ ...prev, fileIds: [] }))
-      return
-    }
-
-    setAttached({ name: file.name, size: file.size, id: null, status: 'uploading' })
-    setValues((prev) => ({ ...prev, fileIds: [] }))
-
-    try {
-      const uploaded = await uploadApplicationFile(recruitmentId, file)
-      setAttached({
-        name: uploaded.fileName,
-        size: uploaded.fileSize,
-        id: uploaded.id,
-        status: 'done',
-      })
-      setValues((prev) => ({ ...prev, fileIds: [uploaded.id] }))
-    } catch {
-      setAttached({
-        name: file.name,
-        size: file.size,
-        id: null,
-        status: 'error',
-        error: '업로드에 실패했습니다. 다시 시도해주세요.',
-      })
-    }
+    setAttached({ file, error: invalidMessage ?? undefined })
   }
 
   const handleFileRemove = () => {
     setAttached(null)
-    setValues((prev) => ({ ...prev, fileIds: [] }))
   }
 
   const handleSubmit = async () => {
@@ -113,7 +75,13 @@ function ApplyModal({ isOpen, recruitmentId, onClose, onSubmit }: ApplyModalProp
     setSubmitting(true)
     setSubmitError(null)
     try {
-      await onSubmit(values)
+      // 업로드 후 반환된 id를 지원 요청의 fileIds로 넘긴다
+      let fileIds: number[] = []
+      if (attached && !attached.error) {
+        const uploaded = await uploadApplicationFile(recruitmentId, attached.file)
+        fileIds = [uploaded.id]
+      }
+      await onSubmit({ ...values, fileIds })
       setIsSubmitted(true)
     } catch {
       setSubmitError('지원에 실패했습니다. 잠시 후 다시 시도해주세요.')
@@ -122,8 +90,8 @@ function ApplyModal({ isOpen, recruitmentId, onClose, onSubmit }: ApplyModalProp
     }
   }
 
-  // 첨부를 의도했는데 빠진 채로 접수되는 일이 없도록, 업로드 중이거나 실패한 파일이 있으면 막는다
-  const isFileBlocking = attached != null && attached.status !== 'done'
+  // 형식·용량이 맞지 않는 파일이 남아 있으면 제출을 막는다
+  const isFileBlocking = attached?.error != null
 
   if (isSubmitted) {
     return (
@@ -167,28 +135,22 @@ function ApplyModal({ isOpen, recruitmentId, onClose, onSubmit }: ApplyModalProp
             label="파일 첨부 (선택)"
             value={[]}
             onChange={(files) => {
-              if (files[0]) void handleFileSelect(files[0])
+              if (files[0]) handleFileSelect(files[0])
             }}
             accept=".pdf,.jpg,.jpeg,.png,.webp,.zip,.mp4"
             hint="pdf, jpg, png, webp, zip, mp4 · 최대 100MB"
-            disabled={attached?.status === 'uploading'}
+            disabled={submitting}
           />
 
           {attached && (
             <div className="bg-neutral-2 flex items-center gap-2 rounded-lg px-3 py-2">
               <span className="text-caption-lg text-neutral-9 flex-1 truncate">
-                {attached.name}
-                <span className="text-neutral-5"> · {formatFileSize(attached.size)}</span>
+                {attached.file.name}
+                <span className="text-neutral-5"> · {formatFileSize(attached.file.size)}</span>
               </span>
-              <span className="text-caption-sm shrink-0">
-                {attached.status === 'uploading' && (
-                  <span className="text-neutral-5">업로드 중…</span>
-                )}
-                {attached.status === 'done' && <span className="text-neutral-5">첨부됨</span>}
-                {attached.status === 'error' && (
-                  <span className="text-warning">{attached.error}</span>
-                )}
-              </span>
+              {attached.error && (
+                <span className="text-caption-sm text-warning shrink-0">{attached.error}</span>
+              )}
               <button
                 type="button"
                 onClick={handleFileRemove}
