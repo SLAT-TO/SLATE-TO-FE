@@ -160,6 +160,14 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
       .catch(() => setMeId(null))
   }, [])
 
+  // 설정 화면은 생성자(ADMIN)만 접근 가능 — 최근 활동 클릭이나 URL 직접 진입으로
+  // 비관리자가 view=settings로 들어와도 즉시 빠져나가게 한다.
+  useEffect(() => {
+    if (view === 'settings' && project && project.myPermission !== 'ADMIN') {
+      setProjectSearch({}, { replace: true })
+    }
+  }, [view, project, setProjectSearch])
+
   const partialErrorKey = partialErrors.join('|')
   useEffect(() => {
     if (!partialErrorKey) return
@@ -318,7 +326,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     })
   }
 
-  if (view === 'settings') {
+  if (view === 'settings' && project.myPermission === 'ADMIN') {
     // view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
     const leaveSettings = () => {
       setProjectSearch({}, { replace: true })
