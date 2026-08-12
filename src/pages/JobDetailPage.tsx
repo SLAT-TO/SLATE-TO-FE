@@ -110,11 +110,13 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
 
       <ApplyModal
         isOpen={isApplyOpen}
+        recruitmentId={jobId}
         onClose={() => setIsApplyOpen(false)}
         onSubmit={async (values) => {
           await applyRecruitment(jobId, {
             message: values.comment,
             referenceLink: values.referenceLink || undefined,
+            fileIds: values.fileIds.length > 0 ? values.fileIds : undefined,
           })
         }}
       />
