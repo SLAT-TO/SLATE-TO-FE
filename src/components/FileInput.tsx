@@ -15,6 +15,10 @@ interface FileInputProps {
   required?: boolean
   maxSizeBytes?: number
   onInvalidFiles?: (files: File[]) => void
+  /** multiple이 false인데 유효한 파일을 2개 이상 고르면(드래그앤드롭은 HTML multiple 속성의
+   * 영향을 안 받아 여러 개를 그대로 받는다) 첫 번째만 쓰고 나머지는 조용히 버려진다.
+   * 그 버려진 개수를 알려줘서 호출부가 사용자에게 안내할 수 있게 한다. */
+  onExtraFilesIgnored?: (ignoredCount: number) => void
   className?: string
   ref?: Ref<HTMLInputElement>
 }
@@ -33,6 +37,7 @@ const FileInput = ({
   required = false,
   maxSizeBytes,
   onInvalidFiles,
+  onExtraFilesIgnored,
   className = '',
   ref,
 }: FileInputProps) => {
@@ -76,8 +81,15 @@ const FileInput = ({
     if (invalidFiles.length > 0) onInvalidFiles?.(invalidFiles)
 
     let validFiles = files.filter(isValidFile)
-    if (!multiple && validFiles.length > 0) validFiles = [validFiles[0]!]
+    let ignoredCount = 0
+    if (!multiple && validFiles.length > 1) {
+      ignoredCount = validFiles.length - 1
+      validFiles = [validFiles[0]!]
+    }
     if (validFiles.length > 0) onChange(validFiles)
+    // onChange 다음에 호출 — 호출부가 onChange 안에서 에러/안내 상태를 지우는 경우가 많아서,
+    // 먼저 호출하면 이 안내가 그 자리에서 바로 덮어써진다.
+    if (ignoredCount > 0) onExtraFilesIgnored?.(ignoredCount)
   }
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {

@@ -81,6 +81,8 @@ export default function ProjectFileUploadModal({
 
   const removeFile = () => {
     setQueuedFile(null)
+    setFileName('')
+    setDescription('')
     setError('')
   }
 
@@ -179,6 +181,9 @@ export default function ProjectFileUploadModal({
             disabled={uploading}
             maxSizeBytes={MAX_FILE_SIZE_BYTES}
             onInvalidFiles={(files) => setError(getFileValidationError(files[0]!) ?? '')}
+            onExtraFilesIgnored={() =>
+              setError('파일은 한 번에 하나만 추가할 수 있어요. 첫 번째 파일만 추가됐습니다.')
+            }
             hint="PNG, PDF, Word, JPG 파일을 최대 100MB까지 추가할 수 있습니다."
             error={error || undefined}
           />
