@@ -18,6 +18,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
   const [pendingReplyActionId, setPendingReplyActionId] = useState<number | null>(null)
   const isSubmittingReplyRef = useRef(false)
   const pendingReplyActionIdsRef = useRef(new Set<number>())
+  const fetchingReplyIdsRef = useRef(new Set<number>())
 
   const resetReplyCompose = useCallback(() => {
     setNewReply('')
@@ -32,20 +33,22 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
       }
       setExpandedFeedbackId(feedbackId)
       resetReplyCompose()
-      setRepliesByFeedback((prev) => {
-        if (prev[feedbackId]) return prev
-        void getReplies(feedbackId, guestId != null ? { guestId, guestToken } : undefined).then(
-          (page) => {
-            setRepliesByFeedback((p) => ({ ...p, [feedbackId]: page.items }))
-          },
-          () => {
-            window.alert('답글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
-          },
+      if (repliesByFeedback[feedbackId] || fetchingReplyIdsRef.current.has(feedbackId)) return
+
+      fetchingReplyIdsRef.current.add(feedbackId)
+      try {
+        const page = await getReplies(
+          feedbackId,
+          guestId != null ? { guestId, guestToken } : undefined,
         )
-        return prev
-      })
+        setRepliesByFeedback((prev) => ({ ...prev, [feedbackId]: page.items }))
+      } catch {
+        window.alert('답글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+      } finally {
+        fetchingReplyIdsRef.current.delete(feedbackId)
+      }
     },
-    [expandedFeedbackId, guestId, guestToken, resetReplyCompose],
+    [expandedFeedbackId, guestId, guestToken, repliesByFeedback, resetReplyCompose],
   )
 
   const submitReply = useCallback(

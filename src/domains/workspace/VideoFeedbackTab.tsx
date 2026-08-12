@@ -1,5 +1,3 @@
-import { formatDistanceToNow } from 'date-fns'
-import { ko } from 'date-fns/locale'
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -165,10 +163,6 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
                 title={video.title}
                 thumbnailUrl={video.thumbnailUrl}
                 progressStatus={video.progressStatus}
-                relativeTime={formatDistanceToNow(new Date(video.updatedAt), {
-                  addSuffix: true,
-                  locale: ko,
-                })}
                 hasUnreadFeedback={video.hasUnreadFeedback}
                 bookmarked={video.bookmarked}
                 onToggleBookmark={() => void handleToggleBookmark(video)}

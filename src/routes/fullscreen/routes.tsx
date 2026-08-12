@@ -58,7 +58,8 @@ export const fullscreenRoutes: FullscreenRoute[] = [
   { path: '/signup/terms', render: () => createElement(termsPage) },
   {
     match: '/project-invitations/:token',
-    render: (params) => createElement(inviteAcceptPage, { token: params.token! }),
+    render: (params) =>
+      createElement(inviteAcceptPage, { key: params.token, token: params.token! }),
   },
   {
     match: '/share/:token',
