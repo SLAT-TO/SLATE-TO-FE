@@ -127,11 +127,14 @@ export async function unlinkReferenceFile(
 
 type GuestRequestOptions = { guestId?: number; guestToken?: string }
 
+/** 게스트 신원은 guestId·sessionToken 둘 다 X-Guest-Id·X-Guest-Token 헤더로 보낸다 (BE #181).
+ * 두 값을 독립적으로 다뤄서, 실제로는 안 쓰이는 조합(예: guestId 없이 guestToken만)이
+ * 와도 있는 값은 그대로 보낸다 — 헤더가 조용히 통째로 버려지지 않게. */
 function guestRequestConfig(options?: GuestRequestOptions) {
-  return {
-    params: options?.guestId != null ? { guestId: options.guestId } : undefined,
-    headers: options?.guestToken ? { 'X-Guest-Token': options.guestToken } : undefined,
-  }
+  const headers: Record<string, string> = {}
+  if (options?.guestId != null) headers['X-Guest-Id'] = String(options.guestId)
+  if (options?.guestToken) headers['X-Guest-Token'] = options.guestToken
+  return Object.keys(headers).length > 0 ? { headers } : {}
 }
 
 export async function getFeedbacks(
@@ -146,11 +149,6 @@ export async function getFeedbacks(
   return { items: result.items.map(normalizeFeedback) }
 }
 
-/** Swagger: guestId만 body에 실음. 멤버는 JWT */
-function feedbackActorBody(body: { guestId?: number }): { guestId?: number } {
-  return body.guestId != null ? { guestId: body.guestId } : {}
-}
-
 export async function createFeedback(
   videoId: number,
   body: CreateFeedbackRequest,
@@ -163,9 +161,8 @@ export async function createFeedback(
       content: body.content,
       ...(body.startTime != null ? { startTime: body.startTime } : {}),
       ...(body.endTime != null ? { endTime: body.endTime } : {}),
-      ...feedbackActorBody(body),
     },
-    headers: options?.guestToken ? { 'X-Guest-Token': options.guestToken } : undefined,
+    ...guestRequestConfig(options),
   })
   return normalizeFeedback(result)
 }
@@ -182,9 +179,8 @@ export async function updateFeedback(
       ...(body.content != null ? { content: body.content } : {}),
       ...(body.startTime != null ? { startTime: body.startTime } : {}),
       ...(body.endTime != null ? { endTime: body.endTime } : {}),
-      ...feedbackActorBody(body),
     },
-    headers: options?.guestToken ? { 'X-Guest-Token': options.guestToken } : undefined,
+    ...guestRequestConfig(options),
   })
   return normalizeFeedback(result)
 }
@@ -232,25 +228,22 @@ export async function createReply(
   const result = await request<FeedbackReplyStatusRaw>({
     method: 'POST',
     url: paths.feedbacks.replies(feedbackId),
-    data: {
-      content: body.content,
-      ...feedbackActorBody(body),
-    },
-    headers: options?.guestToken ? { 'X-Guest-Token': options.guestToken } : undefined,
+    data: { content: body.content },
+    ...guestRequestConfig(options),
   })
   return normalizeFeedbackReply(result)
 }
 
 export async function updateReply(
   replyId: number,
-  body: { content: string; guestId?: number },
+  body: { content: string },
   options?: GuestRequestOptions,
 ): Promise<FeedbackReply | null> {
   const result = await request<FeedbackReplyStatusRaw | null>({
     method: 'PATCH',
     url: paths.replies.byId(replyId),
     data: body,
-    headers: options?.guestToken ? { 'X-Guest-Token': options.guestToken } : undefined,
+    ...guestRequestConfig(options),
   })
   return result ? normalizeFeedbackReply(result) : null
 }

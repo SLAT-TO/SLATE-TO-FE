@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import {
   createFeedback,
   deleteFeedback,
@@ -80,14 +79,12 @@ export function useFeedbacks(
     isSubmittingFeedbackRef.current = true
     setIsSubmittingFeedback(true)
     try {
-      const actor = resolveFeedbackActor(guestId)
       const created = await createFeedback(
         videoId,
         {
           content: newFeedback.trim(),
           startTime: pendingStart ?? undefined,
           endTime: pendingEnd ?? undefined,
-          ...actor,
         },
         guestId != null ? { guestId, guestToken } : undefined,
       )
@@ -160,12 +157,8 @@ export function useFeedbacks(
   const removeFeedback = useCallback(
     async (feedbackId: number) => {
       if (!beginFeedbackAction(feedbackId)) return
-      const actor = resolveFeedbackActor(guestId)
       try {
-        await deleteFeedback(
-          feedbackId,
-          actor.guestId != null ? { ...actor, guestToken } : undefined,
-        )
+        await deleteFeedback(feedbackId, guestId != null ? { guestId, guestToken } : undefined)
         setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== feedbackId))
       } catch {
         window.alert('피드백을 삭제하지 못했습니다. 다시 시도해주세요.')
@@ -178,11 +171,10 @@ export function useFeedbacks(
 
   const editFeedback = useCallback(
     async (feedbackId: number, content: string) => {
-      const actor = resolveFeedbackActor(guestId)
       const updated = await updateFeedback(
         feedbackId,
-        { content, ...actor },
-        actor.guestId != null ? { ...actor, guestToken } : undefined,
+        { content },
+        guestId != null ? { guestId, guestToken } : undefined,
       )
       setFeedbacks((prev) =>
         prev.map((f) =>
