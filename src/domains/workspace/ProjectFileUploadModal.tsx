@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { pinProjectFile, uploadProjectFile } from '../../api/projects'
 import { Button } from '../../components/Button'
+import ActionMenu from '../../components/ActionMenu'
 import FileInput from '../../components/FileInput'
 import InlineIcon from '../../components/InlineIcon'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
+import { useUserStore } from '../../stores/userStore'
+import { formatDateTime } from '../../utils/formatDate'
 import documentIcon from '../../assets/icons/document.svg?raw'
 import starIcon from '../../assets/icons/star.svg?raw'
 
@@ -18,6 +21,15 @@ const ALLOWED_FILE_TYPES = new Set([
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
 
+/** 한 번에 파일 하나만 추가한다 — 파일마다 이름·설명·즐겨찾기를 따로 붙이는 구조라
+ * 여러 개를 동시에 받으면 그 값들을 어느 파일에 적용할지가 애매해진다. */
+type QueuedFile = {
+  file: File
+  pinned: boolean
+  /** 대기 상태에서 "최종 수정일"로 보여줄 값 — 아직 서버에 없으니 추가된 시각을 쓴다 */
+  addedAt: string
+}
+
 function getFileValidationError(file: File): string | null {
   const isAllowed = ALLOWED_FILE_EXTENSIONS.some((extension) =>
     file.name.toLowerCase().endsWith(extension),
@@ -27,15 +39,6 @@ function getFileValidationError(file: File): string | null {
   }
   if (file.size > MAX_FILE_SIZE_BYTES) return '파일은 최대 100MB까지 업로드할 수 있습니다.'
   return null
-}
-
-function getFileKey(file: File) {
-  return `${file.name}-${file.size}-${file.lastModified}`
-}
-
-function formatFileSize(size: number) {
-  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))}KB`
-  return `${(size / (1024 * 1024)).toFixed(1)}MB`
 }
 
 type ProjectFileUploadModalProps = {
@@ -51,77 +54,73 @@ export default function ProjectFileUploadModal({
   onClose,
   onUploaded,
 }: ProjectFileUploadModalProps) {
-  const [queuedFiles, setQueuedFiles] = useState<File[]>([])
+  const [queuedFile, setQueuedFile] = useState<QueuedFile | null>(null)
   const [fileName, setFileName] = useState('')
   const [description, setDescription] = useState('')
-  const [pinned, setPinned] = useState(false)
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
+  const uploaderName = useUserStore((state) => state.user?.nickname) ?? ''
 
   const resetAndClose = (force = false) => {
     if (uploading && !force) return
-    setQueuedFiles([])
+    setQueuedFile(null)
     setFileName('')
     setDescription('')
-    setPinned(false)
     setError('')
     onClose()
   }
 
   const addFiles = (files: File[]) => {
-    setQueuedFiles((previous) => {
-      const existingKeys = new Set(previous.map(getFileKey))
-      const nextFiles = files.filter((file) => !existingKeys.has(getFileKey(file)))
-      if (previous.length === 0 && nextFiles[0] && !fileName.trim()) {
-        setFileName(nextFiles[0].name)
-      }
-      return [...previous, ...nextFiles]
-    })
+    const file = files[0]
+    if (!file) return
+
+    setQueuedFile({ file, pinned: false, addedAt: new Date().toISOString() })
+    if (!fileName.trim()) setFileName(file.name)
     setError('')
   }
 
-  const removeFile = (file: File) => {
-    setQueuedFiles((previous) => previous.filter((item) => item !== file))
+  const removeFile = () => {
+    setQueuedFile(null)
+    setFileName('')
+    setDescription('')
     setError('')
+  }
+
+  const togglePinned = () => {
+    setQueuedFile((previous) => (previous ? { ...previous, pinned: !previous.pinned } : previous))
   }
 
   const handleUpload = async () => {
-    if (queuedFiles.length === 0) {
+    if (!queuedFile) {
       setError('업로드할 파일을 추가해 주세요.')
       return
     }
 
-    if (queuedFiles.length === 1 && !fileName.trim()) {
+    if (!fileName.trim()) {
       setError('파일명을 입력해 주세요.')
       return
     }
 
     setUploading(true)
     setError('')
-    let uploadedCount = 0
 
     try {
-      for (const file of queuedFiles) {
-        const uploaded = await uploadProjectFile(projectId, file, {
-          fileName: queuedFiles.length === 1 ? fileName.trim() : file.name,
-          description: description.trim() || undefined,
-        })
-        uploadedCount += 1
-        setQueuedFiles((previous) => previous.filter((item) => item !== file))
+      const uploaded = await uploadProjectFile(projectId, queuedFile.file, {
+        fileName: fileName.trim(),
+        description: description.trim() || undefined,
+      })
 
-        if (pinned) {
-          try {
-            await pinProjectFile(projectId, uploaded.id)
-          } catch {
-            window.alert('파일은 업로드됐지만 즐겨찾기를 적용하지 못했습니다.')
-          }
+      if (queuedFile.pinned) {
+        try {
+          await pinProjectFile(projectId, uploaded.id)
+        } catch {
+          window.alert('파일은 업로드됐지만 즐겨찾기를 적용하지 못했습니다.')
         }
       }
 
       await onUploaded()
       resetAndClose(true)
     } catch (uploadError) {
-      if (uploadedCount > 0) await onUploaded()
       setError(uploadError instanceof Error ? uploadError.message : '파일 업로드에 실패했습니다.')
     } finally {
       setUploading(false)
@@ -150,38 +149,16 @@ export default function ProjectFileUploadModal({
 
         <label className="flex flex-col gap-2">
           <span className="text-body-sm text-neutral-11 font-semibold">파일명</span>
-          <span className="relative">
-            <input
-              value={queuedFiles.length > 1 ? '' : fileName}
-              onChange={(event) => {
-                setFileName(event.target.value)
-                setError('')
-              }}
-              placeholder={
-                queuedFiles.length > 1
-                  ? '여러 파일은 각각 원본 파일명으로 저장됩니다.'
-                  : '파일명을 입력해 주세요.'
-              }
-              disabled={uploading || queuedFiles.length > 1}
-              className="bg-neutral-2 text-body-sm text-neutral-11 placeholder:text-neutral-5 border-neutral-3 h-12 w-full rounded-lg border px-4 pr-12 outline-none disabled:cursor-not-allowed disabled:opacity-60"
-            />
-            <button
-              type="button"
-              onClick={() => setPinned((value) => !value)}
-              disabled={uploading}
-              aria-label={pinned ? '즐겨찾기 해제' : '즐겨찾기'}
-              className={`absolute top-1/2 right-3 -translate-y-1/2 disabled:cursor-not-allowed ${
-                pinned ? 'text-caution' : 'text-neutral-5'
-              }`}
-            >
-              <InlineIcon svg={starIcon} className="size-5" />
-            </button>
-          </span>
-          {queuedFiles.length > 1 && (
-            <span className="text-caption-sm text-neutral-6">
-              여러 파일은 각각의 원본 파일명으로 저장됩니다.
-            </span>
-          )}
+          <input
+            value={fileName}
+            onChange={(event) => {
+              setFileName(event.target.value)
+              setError('')
+            }}
+            placeholder="파일명을 입력해 주세요."
+            disabled={uploading}
+            className="bg-neutral-2 text-body-sm text-neutral-11 placeholder:text-neutral-5 border-neutral-3 h-12 w-full rounded-lg border px-4 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          />
         </label>
 
         <TextArea
@@ -196,58 +173,73 @@ export default function ProjectFileUploadModal({
           label="파일 설명 (선택)"
         />
 
-        <FileInput
-          value={[]}
-          onChange={addFiles}
-          accept=".png,.pdf,.doc,.docx,.jpg,.jpeg"
-          multiple
-          disabled={uploading}
-          maxSizeBytes={MAX_FILE_SIZE_BYTES}
-          onInvalidFiles={(files) => setError(getFileValidationError(files[0]!) ?? '')}
-          hint="PNG, PDF, Word, JPG 파일을 최대 100MB까지 추가할 수 있습니다."
-          error={error || undefined}
-        />
-
-        <section
-          className="border-neutral-3 overflow-hidden rounded-lg border"
-          aria-label="업로드 대기 파일"
-        >
-          <div className="bg-neutral-2 grid grid-cols-[minmax(0,1fr)_64px_52px] gap-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_100px_80px] sm:gap-3">
-            <span className="text-caption-lg text-neutral-8 font-semibold">파일명</span>
-            <span className="text-caption-lg text-neutral-8 font-semibold">파일 크기</span>
-            <span className="text-caption-lg text-neutral-8 text-right font-semibold">관리</span>
-          </div>
-          {queuedFiles.length === 0 ? (
-            <p className="text-caption-lg text-neutral-6 px-4 py-8 text-center">
-              드래그 앤 드롭하거나 클릭해 파일을 추가해 주세요.
-            </p>
-          ) : (
+        {!queuedFile ? (
+          <FileInput
+            value={[]}
+            onChange={addFiles}
+            accept=".png,.pdf,.doc,.docx,.jpg,.jpeg"
+            disabled={uploading}
+            maxSizeBytes={MAX_FILE_SIZE_BYTES}
+            onInvalidFiles={(files) => setError(getFileValidationError(files[0]!) ?? '')}
+            onExtraFilesIgnored={() =>
+              setError('파일은 한 번에 하나만 추가할 수 있어요. 첫 번째 파일만 추가됐습니다.')
+            }
+            hint="PNG, PDF, Word, JPG 파일을 최대 100MB까지 추가할 수 있습니다."
+            error={error || undefined}
+          />
+        ) : (
+          <section
+            className="border-neutral-3 overflow-hidden rounded-lg border"
+            aria-label="업로드 대기 파일"
+          >
+            <div className="bg-neutral-2 flex items-center gap-4 px-4 py-3">
+              <span className="text-caption-lg text-neutral-8 min-w-0 flex-1 font-semibold">
+                파일명
+              </span>
+              <span className="text-caption-lg text-neutral-8 w-32 shrink-0 font-semibold">
+                최종 수정일
+              </span>
+              <span className="text-caption-lg text-neutral-8 w-16 shrink-0 font-semibold">
+                업로드
+              </span>
+              <span className="w-8 shrink-0" />
+              <span className="w-8 shrink-0" />
+            </div>
             <ul className="divide-neutral-3 divide-y">
-              {queuedFiles.map((file) => (
-                <li
-                  key={getFileKey(file)}
-                  className="grid grid-cols-[minmax(0,1fr)_64px_52px] items-center gap-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_100px_80px] sm:gap-3"
+              <li className="flex items-center gap-4 px-4 py-3">
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <InlineIcon svg={documentIcon} className="text-neutral-6 size-4 shrink-0" />
+                  <span className="text-body-sm text-neutral-10 truncate">
+                    {queuedFile.file.name}
+                  </span>
+                </span>
+                <span className="text-caption-lg text-neutral-6 w-32 shrink-0 truncate">
+                  {formatDateTime(queuedFile.addedAt)}
+                </span>
+                <span className="text-caption-lg text-neutral-6 w-16 shrink-0 truncate">
+                  {uploaderName}
+                </span>
+                <button
+                  type="button"
+                  onClick={togglePinned}
+                  disabled={uploading}
+                  aria-label={queuedFile.pinned ? '즐겨찾기 해제' : '즐겨찾기'}
+                  aria-pressed={queuedFile.pinned}
+                  className={`w-8 shrink-0 disabled:cursor-not-allowed disabled:opacity-50 ${
+                    queuedFile.pinned ? 'text-caution' : 'text-neutral-4 hover:text-neutral-6'
+                  }`}
                 >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <InlineIcon svg={documentIcon} className="text-neutral-6 size-4 shrink-0" />
-                    <span className="text-body-sm text-neutral-10 truncate">{file.name}</span>
-                  </span>
-                  <span className="text-caption-lg text-neutral-6">
-                    {formatFileSize(file.size)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeFile(file)}
-                    disabled={uploading}
-                    className="text-caption-lg text-neutral-7 hover:text-warning justify-self-end disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    제거
-                  </button>
-                </li>
-              ))}
+                  <InlineIcon svg={starIcon} className="size-4" />
+                </button>
+                <ActionMenu
+                  className="w-8 shrink-0"
+                  disabled={uploading}
+                  items={[{ action: 'delete', label: '제거', onClick: removeFile }]}
+                />
+              </li>
             </ul>
-          )}
-        </section>
+          </section>
+        )}
 
         <div className="mt-1 flex flex-col justify-center gap-3 sm:flex-row">
           <Button type="submit" variant="primary" className="w-full sm:w-40" disabled={uploading}>
