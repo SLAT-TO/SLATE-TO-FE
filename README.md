@@ -131,32 +131,85 @@ Vercel Preview·Production의 값은 저장소 파일이 아니라 Vercel 프로
 
 폰트와 색상 토큰은 `src/index.css`의 `@theme`에서 관리합니다. 화면에서는 semantic color token을 우선 사용하고, 도메인 전용 스타일 조합은 `src/styles`에 둡니다.
 
-| 구분         | 기준                                                                                           |
-| ------------ | ---------------------------------------------------------------------------------------------- |
-| 타이포그래피 | `text-head-*`, `text-body-*`, `text-caption-*`과 굵기 클래스를 조합합니다.                     |
-| 색상         | 용도를 표현하는 semantic token을 우선 사용하고, 필요할 때만 primitive token을 직접 사용합니다. |
-| 공용 UI      | 여러 도메인에서 쓰는 UI는 `src/components`, 도메인 전용 UI는 `src/domains`에 둡니다.           |
+**폰트**: Pretendard
+
+| 구분         | 기준                                                                                                                  |
+| ------------ | --------------------------------------------------------------------------------------------------------------------- |
+| 타이포그래피 | `text-head-*`, `text-body-*`, `text-caption-*`과 굵기 클래스(`font-bold`/`font-semibold`/`font-normal`)를 조합합니다. |
+| 색상         | Semantic token(`bg-primary`, `text-neutral-6` 등)을 우선 사용하고, 필요할 때만 primitive token을 직접 사용합니다.     |
+| 공용 UI      | 여러 도메인에서 쓰는 UI는 `src/components`, 도메인 전용 UI는 `src/domains`에 둡니다.                                  |
+
+> Input · TextArea · Select · Choice · Button 등 폼 컨트롤을 여러 명이 동시에 만들 때 props가 어긋나 폼 화면에서 충돌하는 것을 막기 위한 최소 규약입니다. 기준 템플릿은 `src/components/TextArea.tsx`.
 
 폼 컴포넌트는 다음 역할을 구분합니다.
 
-| 컴포넌트     | 용도                     |
-| ------------ | ------------------------ |
-| `Input`      | 문자열 입력              |
-| `TextArea`   | 여러 줄 텍스트 입력      |
-| `FileInput`  | 파일 선택·업로드         |
-| `Choice`     | checkbox·radio 선택      |
-| `Select`     | 값 선택 드롭다운         |
-| `Switch`     | boolean ON/OFF           |
-| `ActionMenu` | 값 입력이 아닌 액션 목록 |
+| 컴포넌트     | 용도                                                                                     |
+| ------------ | ---------------------------------------------------------------------------------------- |
+| `Input`      | 문자열 입력                                                                              |
+| `TextArea`   | 여러 줄 텍스트 입력                                                                      |
+| `FileInput`  | 파일 선택·업로드                                                                         |
+| `Choice`     | checkbox·radio 선택                                                                      |
+| `Select`     | 값 선택 드롭다운                                                                         |
+| `Switch`     | boolean ON/OFF                                                                           |
+| `ActionMenu` | 값 입력이 아닌 액션 목록 — 트리거 + `items[]` + 열림/닫기로 구성. 공통 props 규약 미적용 |
 
-공용 폼 컴포넌트는 controlled props를 사용하고, `label`, `required`, `hint`, `error`, `disabled`의 의미를 일관되게 유지합니다. 오류가 있으면 hint보다 오류 메시지를 우선 표시합니다.
+공용 폼 컴포넌트는 controlled props를 사용합니다.
+
+| prop                 | 타입       | 동작                                                         |
+| -------------------- | ---------- | ------------------------------------------------------------ |
+| `label`              | `string?`  | 라벨. input `id`와 `htmlFor`로 연결 (`id` 미전달 시 `useId`) |
+| `required`           | `boolean?` | `true`면 label 옆 `*` 표시 + input에 `aria-required`         |
+| `hint`               | `string?`  | 안내 문구. `error`가 없을 때만 회색 표시                     |
+| `error`              | `string?`  | 에러 메시지. 있으면 `hint`보다 우선, `text-warning` 색       |
+| `value` / `onChange` | controlled | 값은 부모가 보유                                             |
+| `disabled`           | `boolean?` | 비활성 상태                                                  |
+
+```tsx
+// 라벨 — input의 id와 htmlFor 연결, *는 필수 표시
+{
+  label && (
+    <label htmlFor={id}>
+      {label}
+      {required && <span className="text-warning">*</span>}
+    </label>
+  )
+}
+
+// 메시지 — error가 hint보다 우선
+{
+  ;(error || hint) && (
+    <span className={error ? 'text-warning' : 'text-neutral-5'}>{error ?? hint}</span>
+  )
+}
+```
+
+`variant`/`size`는 이름·값 종류만 통일하고 실제 Tailwind 매핑은 컴포넌트마다 자유입니다(`Button`의 `primary` ≠ `Tag`의 `primary` 생김새).
+
+```ts
+// src/types/ui.ts
+export type Variant = 'primary' | 'secondary' | 'ghost'
+export type Size = 'sm' | 'md' | 'lg'
+```
+
+이미 작업 중인 컴포넌트는 갈아엎지 않고 다음 작업분부터 적용합니다. 반대 의견은 PR 또는 팀 채널에 회신하고, 없으면 이대로 진행합니다.
 
 ### Zod 검증 흐름
 
 - 스키마와 제출 검증은 페이지 또는 상위 도메인이 소유합니다.
 - 공용 컴포넌트는 검증 규칙 대신 `error` 문자열을 받아 표시합니다.
 - 필드별 검증은 필요할 때 `onBlur`와 `validateField`로 처리하고, 제출 시에는 전체 schema를 다시 검증합니다.
-- 교차 필드 규칙은 base schema와 refine schema를 분리해, 필드 검증과 전체 제출 검증이 모두 가능하도록 합니다.
+- 교차 필드 규칙은 base schema와 refine schema를 분리해, 필드 검증과 전체 제출 검증이 모두 가능하도록 합니다. `.refine()`이 붙은 스키마는 `.shape`가 없으므로, 필드별 검증을 위해 base 객체와 refine을 분리해야 합니다.
+
+```ts
+// src/schemas/...
+const base = z.object({ password: /* ... */, passwordConfirm: /* ... */ })
+export const signupSchema = base.refine((v) => v.password === v.passwordConfirm, {
+  message: '비밀번호가 일치하지 않습니다',
+  path: ['passwordConfirm'],
+})
+// 필드별 blur 검증 → base.shape.password (.shape 살아있음)
+// 제출 검증        → signupSchema.safeParse(전체 값)
+```
 
 ## API 응답과 캐시
 
@@ -179,7 +232,16 @@ docs/{작성자}-{문서}
 
 ### 이슈와 커밋
 
-모든 변경은 먼저 GitHub 이슈로 기록합니다. 커밋 제목에는 이슈 번호를 포함하고, 별도의 trailer는 사용하지 않습니다.
+모든 변경은 먼저 GitHub 이슈로 기록합니다. 종류에 맞는 [이슈 템플릿](.github/ISSUE_TEMPLATE)을 사용합니다.
+
+| 종류        | 템플릿 구성                                                                      |
+| ----------- | -------------------------------------------------------------------------------- |
+| 기능 개발   | 작업 내용 · 상세 작업(체크리스트) · 완료 조건(체크리스트) · 참고(피그마 링크 등) |
+| 버그 리포트 | 재현 방법 · 예상/실제 동작 · 스크린샷 · 환경                                     |
+
+라벨은 템플릿 선택 시 `enhancement`/`bug`가 자동으로 붙습니다. 리포지토리에 커스텀 `feature` 라벨은 없습니다.
+
+커밋 제목에는 이슈 번호를 포함하고, 별도의 trailer는 사용하지 않습니다.
 
 ```text
 type: 작업 내용 (#이슈번호)
@@ -191,19 +253,32 @@ type: 작업 내용 (#이슈번호)
 fix: 파일 업로드 제한을 수정 (#307)
 ```
 
-`type`은 `feat`, `fix`, `refactor`, `style`, `chore`, `docs`를 사용합니다.
+| type       | 설명                                    |
+| ---------- | --------------------------------------- |
+| `feat`     | 새로운 기능                             |
+| `fix`      | 버그 수정                               |
+| `style`    | 코드 포맷, 세미콜론 등 (로직 변경 없음) |
+| `refactor` | 리팩토링                                |
+| `chore`    | 빌드 설정, 패키지 관리                  |
+| `docs`     | 문서 수정                               |
 
 ### Pull Request
 
 - 기능·화면·문서 등 검토 가능한 단위로 PR을 나눕니다.
 - 일반 작업 PR의 base는 `dev`입니다.
 - 제목은 커밋 규칙과 같은 `type: 작업 내용 (#이슈번호)` 형식으로 작성합니다.
-- 본문에는 PR 템플릿에 맞춰 `Closes #이슈번호`, 변경 사항, 스크린샷 필요 여부, 리뷰 포인트, 검증 항목을 작성합니다.
+- 본문은 [PR 템플릿](.github/PULL_REQUEST_TEMPLATE.md)에 맞춰 `Closes #이슈번호`, 변경 사항, 스크린샷, 리뷰 포인트, 체크리스트를 작성합니다. UI 변경이 있으면 스크린샷을 첨부하고, 문서-only PR은 «해당 없음»으로 표기합니다.
+- 팀장 리뷰 후 머지합니다.
 - `dev` 병합 뒤 통합 테스트를 진행하고, 배포 시점에만 `dev`를 `main`으로 병합합니다.
 
 ## 코드 작성 기준
 
-- 컴포넌트와 폴더는 PascalCase, 함수·변수·훅은 camelCase를 사용합니다.
+| 대상                    | 규칙       | 예시                                    |
+| ----------------------- | ---------- | --------------------------------------- |
+| 컴포넌트 파일/폴더      | PascalCase | `VideoPlayer.tsx`                       |
+| 함수 · 변수 · 커스텀 훅 | camelCase  | `isLoggedIn`, `useAuth.ts`              |
+| 레포지토리 · 브랜치     | kebab-case | `slate-to-fe`, `feature/kcleverp-login` |
+
 - 페이지는 라우팅·데이터 조립을 담당하고, 화면의 독립적인 상호작용은 도메인 컴포넌트 또는 훅으로 분리합니다.
 - 사용하지 않는 상태·임시 데이터·디버깅 코드는 PR 전에 제거합니다.
 - 비동기 요청의 로딩·오류·취소 또는 최신 요청 보장 방식을 명확히 처리합니다.
