@@ -152,13 +152,17 @@ export default function ProjectFileUploadModal({
           <span className="text-body-sm text-neutral-11 font-semibold">파일명</span>
           <span className="relative">
             <input
-              value={fileName}
+              value={queuedFiles.length > 1 ? '' : fileName}
               onChange={(event) => {
                 setFileName(event.target.value)
                 setError('')
               }}
-              placeholder="파일명을 입력해 주세요."
-              disabled={uploading}
+              placeholder={
+                queuedFiles.length > 1
+                  ? '여러 파일은 각각 원본 파일명으로 저장됩니다.'
+                  : '파일명을 입력해 주세요.'
+              }
+              disabled={uploading || queuedFiles.length > 1}
               className="bg-neutral-2 text-body-sm text-neutral-11 placeholder:text-neutral-5 border-neutral-3 h-12 w-full rounded-lg border px-4 pr-12 outline-none disabled:cursor-not-allowed disabled:opacity-60"
             />
             <button
