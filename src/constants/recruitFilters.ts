@@ -23,7 +23,7 @@ const ROLE_FILTER_OPTIONS = ROLE_LABELS.filter((label) => label !== '기타')
 
 export const REGION_LABELS = [
   '서울시',
-  '경기도',
+  '경기도 / 인천',
   '강원도',
   '충청남도',
   '충청북도',

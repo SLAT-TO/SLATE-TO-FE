@@ -67,7 +67,11 @@ export type Application = {
 export type CreateApplicationRequest = {
   message: string
   referenceLink?: string
+  fileIds?: number[]
 }
+
+/** POST /recruitments/{id}/application-files 응답 */
+export type ApplicationFileUploadResult = ApplicationFile
 
 export type UpdateApplicationRequest = {
   status: ApplicationStatusValue

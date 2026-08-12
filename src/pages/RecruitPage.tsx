@@ -4,20 +4,21 @@ import JobFilterBar from '../domains/recruit/JobFilterBar'
 import { FILTER_CONFIGS, type SortValue } from '../constants'
 import { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL } from '../constants/projectLabels'
 import { roleLabel } from '../constants/roles'
-import type { FilterCategory, SelectedFilterChip, SelectedFilters } from '../types/Recruit.types'
+import type { FilterCategory, SelectedFilterChip } from '../types/Recruit.types'
 import type { Recruitment } from '../types/recruitment'
 import { useRecruitments } from '../hooks/useRecruitments'
 import { navigate } from '../utils/navigation'
 import BookmarkModal from '../domains/recruit/BookmarkModal'
-
-const INITIAL_FILTERS: SelectedFilters = { region: [], videoType: [], role: [] }
+import { useSearchParams } from 'react-router-dom'
+import { parseFilters, parseSort, toSearchParams } from '../utils/recruitUrlState'
 
 /** 추천 공고는 2x2 그리드로 4개까지 노출 */
 const RECOMMENDED_LIMIT = 4
 
 function RecruitPage() {
-  const [sort, setSort] = useState<SortValue>('latest')
-  const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>(INITIAL_FILTERS)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const sort = parseSort(searchParams)
+  const selectedFilters = parseFilters(searchParams)
   const [openCategory, setOpenCategory] = useState<FilterCategory | null>(null)
   const { recommended, jobs, bookmarkedIds, toggleBookmark, loading, error } = useRecruitments(
     sort,
@@ -26,20 +27,20 @@ function RecruitPage() {
   const [isBookmarkModalOpen, setIsBookmarkModalOpen] = useState(false)
 
   const handleToggleFilter = (category: FilterCategory, value: string, groupOptions?: string[]) => {
-    setSelectedFilters((prev) => {
-      const current = prev[category]
-      const isSelected = current.includes(value)
+    const current = selectedFilters[category]
+    const isSelected = current.includes(value)
 
+    let next: string[]
+    if (groupOptions) {
       // 단일 선택 그룹: 같은 그룹의 다른 값은 해제하고 이 값만 남긴다
-      if (groupOptions) {
-        const others = current.filter((item) => !groupOptions.includes(item))
-        return { ...prev, [category]: isSelected ? others : [...others, value] }
-      }
+      const others = current.filter((item) => !groupOptions.includes(item))
+      next = isSelected ? others : [...others, value]
+    } else {
+      next = isSelected ? current.filter((item) => item !== value) : [...current, value]
+    }
 
-      return {
-        ...prev,
-        [category]: isSelected ? current.filter((item) => item !== value) : [...current, value],
-      }
+    setSearchParams(toSearchParams({ ...selectedFilters, [category]: next }, sort), {
+      replace: true,
     })
   }
 
@@ -49,6 +50,9 @@ function RecruitPage() {
     if (willBookmark) setIsBookmarkModalOpen(true)
   }
 
+  const handleSortChange = (next: SortValue) => {
+    setSearchParams(toSearchParams(selectedFilters, next), { replace: true })
+  }
   // 칩 순서는 필터 바 버튼 순서(지역 → 영상 → 역할)를 따름
   const chips: SelectedFilterChip[] = FILTER_CONFIGS.flatMap((config) =>
     selectedFilters[config.key].map((value) => ({ category: config.key, value })),
@@ -94,7 +98,7 @@ function RecruitPage() {
 
         <JobFilterBar
           sort={sort}
-          onSortChange={setSort}
+          onSortChange={handleSortChange}
           selectedFilters={selectedFilters}
           onToggleFilter={handleToggleFilter}
           openCategory={openCategory}

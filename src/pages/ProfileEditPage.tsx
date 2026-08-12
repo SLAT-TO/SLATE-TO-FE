@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, type ChangeEvent } from 'react'
 import Input from '../components/Input'
 import TextArea from '../components/TextArea'
 import MultiSelect from '../components/MultiSelect'
@@ -10,9 +10,10 @@ import { validateField } from '../utils/validateField'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
 import { navigate } from '../utils/navigation'
-import { getMe, updateProfile } from '../api/users'
+import { getMe, updateProfile, uploadProfileImage } from '../api/users'
 import type { SocialType, UserCategory, UserRole, UserRegion } from '../types/user'
 import { useUserStore } from '../stores/userStore'
+import { validateProfileImage } from '../utils/profileImage'
 
 const INITIAL_VALUES: ProfileFormValues = {
   nickname: '',
@@ -30,8 +31,11 @@ function ProfileEditPage() {
   useHeaderSlot(HEADER)
   const [values, setValues] = useState<ProfileFormValues>(INITIAL_VALUES)
   const [errors, setErrors] = useState<FormErrors>({})
-  // 프로필 이미지 업로드 API 연동 필요. 지금은 미리보기 URL만.
-  const [imagePreview] = useState('https://placehold.co/80x80')
+  const [imagePreview, setImagePreview] = useState('https://placehold.co/80x80')
+  // 저장 시점에 업로드하기 위해 선택한 파일을 들고 있는다
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imageError, setImageError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [socialType, setSocialType] = useState<SocialType | null>(null)
   // 화면에서 다루지 않는 값은 서버 값을 그대로 되돌려보내 삭제를 막는다
   const [serverCategories, setServerCategories] = useState<UserCategory[]>([])
@@ -56,6 +60,7 @@ function ProfileEditPage() {
           email: me.email,
           bio: me.bio ?? '',
         })
+        if (me.profileImageUrl) setImagePreview(me.profileImageUrl)
       })
       .catch(() => {
         if (!cancelled) setLoadError('프로필 정보를 불러오지 못했습니다.')
@@ -65,6 +70,13 @@ function ProfileEditPage() {
       cancelled = true
     }
   }, [])
+
+  // 언마운트 시 마지막 미리보기 blob URL 해제
+  useEffect(() => {
+    return () => {
+      if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview)
+    }
+  }, [imagePreview])
 
   const handleChange = (field: keyof ProfileFormValues) => (value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }))
@@ -79,6 +91,25 @@ function ProfileEditPage() {
   const handleBlur = (field: keyof ProfileFormValues) => () => {
     const message = validateField(profileSchema.shape[field], values[field])
     setErrors((prev) => ({ ...prev, [field]: message }))
+  }
+
+  const handleImageSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    const message = validateProfileImage(file)
+    if (message) {
+      setImageError(message)
+      return
+    }
+
+    setImageError(null)
+    setImageFile(file)
+    setImagePreview((prev) => {
+      if (prev.startsWith('blob:')) URL.revokeObjectURL(prev)
+      return URL.createObjectURL(file)
+    })
   }
 
   const handleSubmit = async () => {
@@ -103,7 +134,13 @@ function ProfileEditPage() {
         roles: result.data.roles as UserRole[],
         categories: serverCategories.length > 0 ? serverCategories : undefined,
       })
-      useUserStore.getState().setUser(updated)
+      // 프로필 저장이 성공한 뒤에 이미지를 올려, 저장 실패 시 사진만 바뀌는 상태를 막는다
+      if (imageFile) {
+        const { profileImageUrl } = await uploadProfileImage(imageFile)
+        useUserStore.getState().setUser({ ...updated, profileImageUrl })
+      } else {
+        useUserStore.getState().setUser(updated)
+      }
       navigate('/mypage')
     } catch {
       setSaveError('저장에 실패했습니다. 잠시 후 다시 시도해주세요.')
@@ -131,13 +168,21 @@ function ProfileEditPage() {
               <span className="text-neutral-11 text-lg font-semibold">
                 {values.nickname || '이름'}
               </span>
-              <span className="text-neutral-5 text-xs">Png, Jpg 파일 5MB 이하</span>
+              <span className="text-neutral-5 text-xs">Jpg, Png, Webp 파일 2MB 이하</span>
             </div>
-            <Button variant="secondary" size="sm">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp"
+              className="sr-only"
+              onChange={handleImageSelect}
+            />
+            <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
               변경하기
             </Button>
           </div>
         </div>
+        {imageError && <p className="text-caption-sm text-warning">{imageError}</p>}
       </section>
 
       {/* 입력 필드 */}

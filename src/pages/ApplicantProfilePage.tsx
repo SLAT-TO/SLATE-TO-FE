@@ -4,15 +4,16 @@ import ProjectHistoryCard from '../domains/mypage/ProjectHistoryCard'
 import ApplicationInfoCard from '../domains/recruit/ApplicationInfoCard'
 import type { ProfileSummary, StatItem, ProjectHistoryItem } from '../types/MyPage.types'
 import type { ApplicationInfo } from '../types/Recruit.types'
-import type { RecruitmentApplicationDetail } from '../types/recruitment'
+import type { RecruitmentApplicationDetail, ApplicationFile } from '../types/recruitment'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
-import { getApplication } from '../api/recruitments'
+import { getApplication, downloadApplicationFile } from '../api/recruitments'
 import { getUserStats, getUserPortfolios } from '../api/users'
 import { roleLabel } from '../constants/roles'
 import { regionLabel } from '../constants/regions'
 import { videoCategoryLabel } from '../constants/videoCategories'
 import { toProjectTypeStats, toRoleStats } from '../domains/mypage/myPageAdapter'
+import { downloadBlob } from '../utils/downloadBlob'
 
 interface ApplicantProfilePageProps {
   jobId: number
@@ -106,8 +107,16 @@ function ApplicantProfilePage({ jobId, applicationId }: ApplicantProfilePageProp
   const applicationInfo: ApplicationInfo = {
     comment: detail.message,
     referenceLink: detail.referenceLink ?? undefined,
-    // 파일 URL은 별도 다운로드 API — 지금은 이름만 표시
-    fileName: detail.files[0]?.fileName,
+    files: detail.files,
+  }
+
+  const handleDownload = async (file: ApplicationFile) => {
+    try {
+      const blob = await downloadApplicationFile(jobId, detail.applicationId, file.id)
+      downloadBlob(blob, file.fileName)
+    } catch {
+      alert('파일을 다운로드하지 못했습니다.')
+    }
   }
 
   return (
@@ -122,7 +131,10 @@ function ApplicantProfilePage({ jobId, applicationId }: ApplicantProfilePageProp
       {/* 지원 정보 — 마이페이지에 없는 공개 프로필 전용 영역 */}
       <section>
         <h3 className="text-neutral-11 mb-4 text-base font-semibold">지원 정보</h3>
-        <ApplicationInfoCard application={applicationInfo} />
+        <ApplicationInfoCard
+          application={applicationInfo}
+          onDownload={(file) => void handleDownload(file)}
+        />
       </section>
 
       <section>

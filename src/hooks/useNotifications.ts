@@ -1,58 +1,34 @@
-import { useEffect, useState } from 'react'
-import { getNotifications, readAllNotifications, readNotification } from '../api/notifications'
+import {
+  useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
+  useNotificationsQuery,
+} from '../queries/notifications'
 import { ApiError } from '../types/api'
-import type { AppNotification } from '../types/notification'
 
 export function useNotifications() {
-  const [notifications, setNotifications] = useState<AppNotification[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const notificationsQuery = useNotificationsQuery()
+  const markReadMutation = useMarkNotificationReadMutation()
+  const markAllReadMutation = useMarkAllNotificationsReadMutation()
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const result = await getNotifications()
-        if (!cancelled) setNotifications(result.items)
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : '알림을 불러오지 못했습니다.')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    void load()
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const error = notificationsQuery.isError
+    ? notificationsQuery.error instanceof ApiError
+      ? notificationsQuery.error.message
+      : '알림을 불러오지 못했습니다.'
+    : null
 
   async function markAsRead(notificationId: number) {
-    setNotifications((prev) =>
-      prev.map((item) =>
-        item.notificationId === notificationId ? { ...item, isRead: true } : item,
-      ),
-    )
-    try {
-      await readNotification(notificationId)
-    } catch {
-      // 낙관적 업데이트 유지 — 재조회 시 서버 상태로 정정됨
-    }
+    await markReadMutation.mutateAsync(notificationId)
   }
 
   async function markAllAsRead() {
-    setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })))
-    try {
-      await readAllNotifications()
-    } catch {
-      // 낙관적 업데이트 유지 — 재조회 시 서버 상태로 정정됨
-    }
+    await markAllReadMutation.mutateAsync()
   }
 
-  return { notifications, loading, error, markAsRead, markAllAsRead }
+  return {
+    notifications: notificationsQuery.data ?? [],
+    loading: notificationsQuery.isPending,
+    error,
+    markAsRead,
+    markAllAsRead,
+  }
 }

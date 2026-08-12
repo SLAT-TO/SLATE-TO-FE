@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { format, getDay, isSameDay, isSameMonth, isToday } from 'date-fns'
+import { memo, useCallback, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
+import { format, getDay, isSameDay, isSameMonth, isToday, parse } from 'date-fns'
 import { CALENDAR_HEADER_HEIGHT_PX, toDateKey } from '../utils/calendarUtils'
 
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
@@ -21,7 +21,9 @@ interface CalendarGridProps {
 // 날짜 그리드(틀) — 요일 헤더 + 날짜 셀 배경만 담당. events를 몰라도 단독으로 렌더링 가능.
 // 요일 헤더만 고정 높이(CALENDAR_HEADER_HEIGHT_PX)이고, 나머지 6주 행은 flex-1로 남은
 // 화면 높이를 균등 분배해 부모 높이에 맞춰 유동적으로 커지거나 줄어든다.
-export function CalendarGrid({
+// React.memo — month·weeks·onDateClick 등 props 참조가 그대로면 캘린더와 무관한 상위 상태
+// 변경에 42개 날짜 셀 전체가 리렌더되지 않는다.
+export const CalendarGrid = memo(function CalendarGrid({
   month,
   weeks,
   onDateClick,
@@ -30,6 +32,28 @@ export function CalendarGrid({
   renderWeekOverlay,
 }: CalendarGridProps) {
   const clickable = Boolean(onDateClick)
+
+  // 날짜 셀마다 새 클로저를 만드는 대신, data-date로 위임하는 핸들러 하나를 모든 셀이 공유한다
+  // (onDateClick 참조가 바뀌지 않는 한 이 핸들러도 재생성되지 않음)
+  const handleDayClick = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      const dateAttr = e.currentTarget.dataset.date
+      if (!dateAttr || !onDateClick) return
+      onDateClick(parse(dateAttr, 'yyyy-MM-dd', new Date()))
+    },
+    [onDateClick],
+  )
+
+  const handleDayKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return
+      const dateAttr = e.currentTarget.dataset.date
+      if (!dateAttr || !onDateClick) return
+      e.preventDefault()
+      onDateClick(parse(dateAttr, 'yyyy-MM-dd', new Date()))
+    },
+    [onDateClick],
+  )
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -68,19 +92,11 @@ export function CalendarGrid({
               return (
                 <div
                   key={key}
+                  data-date={key}
                   role={clickable ? 'button' : undefined}
                   tabIndex={clickable ? 0 : undefined}
-                  onClick={clickable ? () => onDateClick?.(day) : undefined}
-                  onKeyDown={
-                    clickable
-                      ? (e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            onDateClick?.(day)
-                          }
-                        }
-                      : undefined
-                  }
+                  onClick={clickable ? handleDayClick : undefined}
+                  onKeyDown={clickable ? handleDayKeyDown : undefined}
                   className={`border-neutral-3 flex flex-col items-start gap-2.5 border-r-[0.75px] border-b-[0.75px] p-2 ${
                     selected ? 'bg-main-1' : 'bg-white'
                   } ${clickable ? 'cursor-pointer' : ''}`}
@@ -111,4 +127,4 @@ export function CalendarGrid({
       ))}
     </div>
   )
-}
+})
