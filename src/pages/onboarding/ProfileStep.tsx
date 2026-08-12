@@ -121,8 +121,10 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
             ? profile.avatarUrl
             : undefined,
       })
-      useOnboardingStore.getState().reset()
+      // onComplete()가 유발하는 네비게이션이 언마운트되기 전에 reset()부터 하면
+      // 그 사이 폼이 빈 값으로 잠깐 리렌더될 수 있어, 네비게이션을 먼저 트리거한다.
       onComplete()
+      useOnboardingStore.getState().reset()
     } catch (err) {
       setSubmitError(err instanceof ApiError ? err.message : '온보딩 정보를 저장하지 못했습니다.')
     } finally {
