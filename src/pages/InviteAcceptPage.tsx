@@ -109,7 +109,9 @@ export function InviteAcceptPage({ token }: { token: string }) {
             >
               <p className="text-head-lg text-neutral-10 text-center font-bold">{inviteTitle}</p>
               <div className="flex flex-col gap-4">
-                <p className="text-head-sm text-neutral-10 font-semibold">역할</p>
+                <p className="text-head-sm text-neutral-10 font-semibold">
+                  역할<span className="text-warning ml-0.5">*</span>
+                </p>
                 <Select
                   options={ROLE_OPTIONS}
                   value={role}
