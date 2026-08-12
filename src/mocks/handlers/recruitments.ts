@@ -239,7 +239,6 @@ export const recruitmentHandlers = [
         primaryRole: applicant?.primaryRole ?? null,
         locations: (applicant?.regions ?? []) as UserRegion[],
       },
-      // 첨부 업로드 미구현 — 메타데이터만 빈 배열
       files: db.applicationFiles
         .filter((f) => f.applicationId === application.id)
         .map(({ id, fileName, contentType, fileSize, createdAt }) => ({
@@ -316,7 +315,12 @@ export const recruitmentHandlers = [
     paths.recruitments.applicationFileDownload(':recruitmentId', ':applicationId', ':fileId'),
     ({ params }) => {
       if (!safeUser()) return unauthorized()
-      const file = db.applicationFiles.find((f) => f.id === Number(params.fileId))
+      const file = db.applicationFiles.find(
+        (f) =>
+          f.id === Number(params.fileId) &&
+          f.applicationId === Number(params.applicationId) &&
+          f.recruitmentId === Number(params.recruitmentId),
+      )
       if (!file) return notFound()
 
       return new HttpResponse(new Blob([`mock file: ${file.fileName}`]), {
