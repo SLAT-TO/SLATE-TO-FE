@@ -29,6 +29,18 @@ function getGuestIdHeader(request: Request): number | null {
   return header ? Number(header) : null
 }
 
+/** 수정/삭제 요청이 실제 작성자 본인(로그인 회원 또는 그 게스트)인지 —
+ * 게스트 헤더가 왔으면 대상의 작성자 게스트와 일치해야 하고, 없으면 로그인 여부만 본다.
+ * (로그인 회원의 "본인만" 제약까지는 mock이 흉내내지 않음 — 기존 동작 그대로) */
+function isAuthorizedWriter(
+  target: { actor: { type: 'USER' | 'GUEST'; id: number } },
+  request: Request,
+): boolean {
+  const guestId = getGuestIdHeader(request)
+  if (guestId != null) return target.actor.type === 'GUEST' && target.actor.id === guestId
+  return Boolean(safeUser())
+}
+
 /** mock 전용 — registerGuest로 발급한 guestId → 이름 매핑 (실 BE 게스트 세션 대체) */
 const mockGuests = new Map<number, { name: string; shareLinkId: number }>()
 
@@ -292,9 +304,9 @@ export const videoHandlers = [
   }),
 
   http.patch(paths.feedbacks.byId(':feedbackId'), async ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
     const feedback = db.feedbacks.find((f) => f.feedbackId === Number(params.feedbackId))
     if (!feedback) return notFound()
+    if (!isAuthorizedWriter(feedback, request)) return unauthorized()
     const body = (await request.json()) as Partial<CreateFeedbackRequest>
     if (body.content !== undefined) feedback.content = body.content
     if (body.startTime !== undefined) feedback.startTime = body.startTime
@@ -303,10 +315,11 @@ export const videoHandlers = [
     return HttpResponse.json(ok(feedback), { status: 200 })
   }),
 
-  http.delete(paths.feedbacks.byId(':feedbackId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
+  http.delete(paths.feedbacks.byId(':feedbackId'), ({ request, params }) => {
     const id = Number(params.feedbackId)
-    if (!db.feedbacks.some((f) => f.feedbackId === id)) return notFound()
+    const feedback = db.feedbacks.find((f) => f.feedbackId === id)
+    if (!feedback) return notFound()
+    if (!isAuthorizedWriter(feedback, request)) return unauthorized()
     db.feedbacks = db.feedbacks.filter((f) => f.feedbackId !== id)
     return HttpResponse.json(ok(null), { status: 200 })
   }),
@@ -364,9 +377,9 @@ export const videoHandlers = [
   }),
 
   http.patch(paths.replies.byId(':replyId'), async ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
     const reply = db.replies.find((r) => r.replyId === Number(params.replyId))
     if (!reply) return notFound()
+    if (!isAuthorizedWriter(reply, request)) return unauthorized()
     const body = (await request.json()) as { content?: string; deleted?: boolean }
     if (body.deleted) {
       db.replies = db.replies.filter((r) => r.replyId !== reply.replyId)

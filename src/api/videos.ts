@@ -127,15 +127,14 @@ export async function unlinkReferenceFile(
 
 type GuestRequestOptions = { guestId?: number; guestToken?: string }
 
-/** 게스트 신원은 guestId·sessionToken 둘 다 X-Guest-Id·X-Guest-Token 헤더로 보낸다 (BE #181) */
+/** 게스트 신원은 guestId·sessionToken 둘 다 X-Guest-Id·X-Guest-Token 헤더로 보낸다 (BE #181).
+ * 두 값을 독립적으로 다뤄서, 실제로는 안 쓰이는 조합(예: guestId 없이 guestToken만)이
+ * 와도 있는 값은 그대로 보낸다 — 헤더가 조용히 통째로 버려지지 않게. */
 function guestRequestConfig(options?: GuestRequestOptions) {
-  if (options?.guestId == null) return {}
-  return {
-    headers: {
-      'X-Guest-Id': String(options.guestId),
-      ...(options.guestToken ? { 'X-Guest-Token': options.guestToken } : {}),
-    },
-  }
+  const headers: Record<string, string> = {}
+  if (options?.guestId != null) headers['X-Guest-Id'] = String(options.guestId)
+  if (options?.guestToken) headers['X-Guest-Token'] = options.guestToken
+  return Object.keys(headers).length > 0 ? { headers } : {}
 }
 
 export async function getFeedbacks(
