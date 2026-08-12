@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { createProjectNotice } from '../../api/projects'
 import { Button } from '../../components/Button'
 import Input from '../../components/Input'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import type { ProjectNoticeListItem } from '../../types/notice'
+import { invalidateProjectActivityData } from '../../queries/projectInvalidation'
 import { CARD_BASE } from '../../styles/card'
 
 interface NoticeListViewProps {
@@ -32,6 +34,7 @@ export default function NoticeListView({
   onOpenNotice,
   onCreated,
 }: NoticeListViewProps) {
+  const queryClient = useQueryClient()
   const [createOpen, setCreateOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -52,6 +55,7 @@ export default function NoticeListView({
         content: content.trim(),
       })
       onCreated(created)
+      void invalidateProjectActivityData(queryClient, projectId)
       setCreateOpen(false)
     } finally {
       setSubmitting(false)

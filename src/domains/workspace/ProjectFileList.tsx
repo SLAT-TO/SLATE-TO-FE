@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   deleteFile,
   downloadProjectFile,
@@ -17,6 +18,7 @@ import downloadIcon from '../../assets/icons/download.svg?raw'
 import searchIcon from '../../assets/icons/search.svg?raw'
 import starIcon from '../../assets/icons/star.svg?raw'
 import { CARD_BASE } from '../../styles/card'
+import { invalidateProjectActivityData } from '../../queries/projectInvalidation'
 import ProjectFileDetailView from './ProjectFileDetailView'
 import ProjectFileUploadModal from './ProjectFileUploadModal'
 
@@ -49,6 +51,7 @@ export default function ProjectFileList({
   initialFileId = null,
   onInitialFileConsumed,
 }: ProjectFileListProps) {
+  const queryClient = useQueryClient()
   const [files, setFiles] = useState<ProjectFileListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [keyword, setKeyword] = useState('')
@@ -224,7 +227,10 @@ export default function ProjectFileList({
         projectId={projectId}
         isOpen={uploadOpen}
         onClose={() => setUploadOpen(false)}
-        onUploaded={reloadFiles}
+        onUploaded={async () => {
+          await reloadFiles()
+          void invalidateProjectActivityData(queryClient, projectId)
+        }}
       />
 
       <ConfirmModal
