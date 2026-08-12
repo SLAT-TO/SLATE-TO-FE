@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import { createReply, deleteReply, getReplies, updateReply } from '../api/videos'
 import type { FeedbackReply } from '../types/feedback'
 import { invalidateProjectActivityData } from '../queries/projectInvalidation'
@@ -58,13 +57,9 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
       isSubmittingReplyRef.current = true
       setIsSubmittingReply(true)
       try {
-        const actor = resolveFeedbackActor(guestId)
         const created = await createReply(
           feedbackId,
-          {
-            content: newReply.trim(),
-            ...actor,
-          },
+          { content: newReply.trim() },
           guestId != null ? { guestId, guestToken } : undefined,
         )
         setRepliesByFeedback((prev) => ({
@@ -103,11 +98,10 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
       pendingReplyActionIdsRef.current.add(replyId)
       setPendingReplyActionId(replyId)
       try {
-        const actor = resolveFeedbackActor(guestId)
         const updated = await updateReply(
           replyId,
-          { content, ...actor },
-          actor.guestId != null ? { ...actor, guestToken } : undefined,
+          { content },
+          guestId != null ? { guestId, guestToken } : undefined,
         )
         if (!updated) throw new Error('답글 수정 응답이 없습니다.')
         setRepliesByFeedback((prev) => ({
@@ -134,8 +128,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
       pendingReplyActionIdsRef.current.add(replyId)
       setPendingReplyActionId(replyId)
       try {
-        const actor = resolveFeedbackActor(guestId)
-        await deleteReply(replyId, actor.guestId != null ? { ...actor, guestToken } : undefined)
+        await deleteReply(replyId, guestId != null ? { guestId, guestToken } : undefined)
         setRepliesByFeedback((prev) => ({
           ...prev,
           [feedbackId]: (prev[feedbackId] ?? []).filter((reply) => reply.replyId !== replyId),

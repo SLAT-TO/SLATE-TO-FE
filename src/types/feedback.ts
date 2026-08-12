@@ -42,15 +42,12 @@ export type CreateFeedbackRequest = {
   startTime?: number
   /** 타임코드 종료 시간(초). 단일 시점이면 생략 */
   endTime?: number
-  /** 공유링크 게스트 — 멤버는 JWT (FeedbackCreateReqDTO.guestId) */
-  guestId?: number
 }
 
 export type UpdateFeedbackRequest = {
   content?: string
   startTime?: number
   endTime?: number
-  guestId?: number
 }
 
 /** BE FeedbackStatusReqDTO */
@@ -60,8 +57,6 @@ export type UpdateFeedbackStatusRequest = {
 
 export type CreateReplyRequest = {
   content: string
-  /** 공유링크 게스트 — 멤버는 JWT (ReplyCreateReqDTO.guestId) */
-  guestId?: number
 }
 
 /** BE ReplyStatusReqDTO */

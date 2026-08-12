@@ -23,6 +23,12 @@ function safeUser() {
   }
 }
 
+/** BE #181 — 게스트 guestId는 X-Guest-Id 헤더로 온다 (본문/쿼리 아님) */
+function getGuestIdHeader(request: Request): number | null {
+  const header = request.headers.get('X-Guest-Id')
+  return header ? Number(header) : null
+}
+
 /** mock 전용 — registerGuest로 발급한 guestId → 이름 매핑 (실 BE 게스트 세션 대체) */
 const mockGuests = new Map<number, { name: string; shareLinkId: number }>()
 
@@ -262,12 +268,13 @@ export const videoHandlers = [
     if (body.endTime !== undefined && body.startTime === undefined) return badRequest()
 
     const user = safeUser()
-    const guest = body.guestId != null ? mockGuests.get(body.guestId) : undefined
+    const guestId = getGuestIdHeader(request)
+    const guest = guestId != null ? mockGuests.get(guestId) : undefined
     if (!user && !guest) return unauthorized()
 
     const now = new Date().toISOString()
     const actor = guest
-      ? { type: 'GUEST' as const, id: body.guestId!, name: guest.name }
+      ? { type: 'GUEST' as const, id: guestId!, name: guest.name }
       : { type: 'USER' as const, id: user!.id, name: user!.nickname }
     const feedback = {
       feedbackId: allocId(),
@@ -333,12 +340,13 @@ export const videoHandlers = [
     if (!body.content) return badRequest()
 
     const user = safeUser()
-    const guest = body.guestId != null ? mockGuests.get(body.guestId) : undefined
+    const guestId = getGuestIdHeader(request)
+    const guest = guestId != null ? mockGuests.get(guestId) : undefined
     if (!user && !guest) return unauthorized()
 
     const now = new Date().toISOString()
     const actor = guest
-      ? { type: 'GUEST' as const, id: body.guestId!, name: guest.name }
+      ? { type: 'GUEST' as const, id: guestId!, name: guest.name }
       : { type: 'USER' as const, id: user!.id, name: user!.nickname }
     const reply = {
       replyId: allocId(),
