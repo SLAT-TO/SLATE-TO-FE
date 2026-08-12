@@ -36,6 +36,7 @@ function toProjectHistory(portfolio: Portfolio): ProjectHistoryItem {
     title: portfolio.title,
     thumbnailUrl: portfolio.thumbnailUrl ?? '',
     tags: [PROJECT_TYPE_LABEL[portfolio.type] ?? portfolio.type, ...portfolio.roles.map(roleLabel)],
+    metaTagCount: 1,
   }
 }
 

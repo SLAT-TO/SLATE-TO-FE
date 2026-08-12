@@ -112,6 +112,9 @@ export default function WorkspacePage() {
                 statusLabel={projectStatusLabel(project.status)}
                 statusVariant={project.status === 'COMPLETED' ? 'ghost' : 'secondary'}
                 tags={projectMetaTags(project)}
+                metaTagCount={
+                  projectMetaTags({ type: project.type, lengthType: project.lengthType }).length
+                }
                 progress={calculateProjectDeadlineProgress(project.createdAt, project.endDate)}
                 thumbnailUrl={project.previewImageUrl ?? undefined}
                 members={project.memberPreviewImageUrls.map((src) => ({ src }))}
