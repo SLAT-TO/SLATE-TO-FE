@@ -210,7 +210,7 @@ export function VideoDetailView({
   return (
     <section className="flex flex-col gap-4">
       {headerSlot}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <span className="text-caption-lg text-neutral-6">
           생성일 {formatDate(videoDetail.createdAt)}
         </span>
@@ -297,7 +297,7 @@ export function VideoDetailView({
       </div>
 
       <Modal isOpen={pickerOpen} onClose={() => setPickerOpen(false)}>
-        <div className="bg-bg-primary flex w-[420px] flex-col gap-3 rounded-lg p-5">
+        <div className="bg-bg-primary flex w-[calc(100vw-32px)] max-w-[420px] flex-col gap-3 rounded-lg p-5">
           <h3 className="text-body-sm text-neutral-11 font-semibold">
             참고 파일로 연결할 파일 선택
           </h3>

@@ -61,7 +61,7 @@ export default function ProjectFileDetailView({
         </div>
 
         <div
-          className={`bg-neutral-2 flex items-center justify-between gap-3 ${CARD_BASE} px-4 py-3`}
+          className={`bg-neutral-2 flex flex-col gap-3 ${CARD_BASE} px-4 py-3 sm:flex-row sm:items-center sm:justify-between`}
         >
           <div className="flex min-w-0 items-center gap-3">
             <InlineIcon svg={documentIcon} className="text-neutral-5 size-6 shrink-0" />

@@ -171,7 +171,7 @@ export default function MemberListPanel({
 
       {panelOpen && (
         <div
-          className={`absolute top-full right-0 z-20 mt-2 flex w-[320px] flex-col gap-4 p-4 ${CARD_BASE}`}
+          className={`absolute top-full right-0 z-20 mt-2 flex w-[calc(100vw-32px)] max-w-[320px] flex-col gap-4 p-4 ${CARD_BASE}`}
           role="dialog"
           aria-label="참여 목록"
         >

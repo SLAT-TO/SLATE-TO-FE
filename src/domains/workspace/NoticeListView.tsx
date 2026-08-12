@@ -101,7 +101,7 @@ export default function NoticeListView({
       )}
 
       <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)}>
-        <div className="bg-bg-primary flex w-[420px] flex-col gap-3 rounded-lg p-5">
+        <div className="bg-bg-primary flex w-[calc(100vw-32px)] max-w-[420px] flex-col gap-3 rounded-lg p-5">
           <h3 className="text-body-sm text-neutral-11 font-semibold">공지 작성</h3>
           <Input value={title} onChange={setTitle} placeholder="제목" />
           <TextArea value={content} onChange={setContent} placeholder="내용" rows={5} />

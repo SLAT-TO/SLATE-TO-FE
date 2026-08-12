@@ -109,8 +109,8 @@ const ProjectCard = ({
       </div>
 
       {/* 영상 썸네일(좌) · 태그/진행률/멤버(우) — 가로 분할 */}
-      <div className="flex gap-10">
-        <div className="bg-neutral-2 flex aspect-23/8 w-2/5 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+      <div className="flex flex-col gap-5 sm:flex-row sm:gap-10">
+        <div className="bg-neutral-2 flex aspect-video w-full shrink-0 items-center justify-center overflow-hidden rounded-lg sm:aspect-23/8 sm:w-2/5">
           {thumbnailUrl && <img src={thumbnailUrl} alt="" className="h-full w-full object-cover" />}
           <p
             className={thumbnailUrl ? 'hidden' : 'text-caption-lg text-neutral-6 px-4 text-center'}
@@ -120,7 +120,7 @@ const ProjectCard = ({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag, index) => (
