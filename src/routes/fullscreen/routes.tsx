@@ -62,7 +62,8 @@ export const fullscreenRoutes: FullscreenRoute[] = [
   },
   {
     match: '/share/:token',
-    render: (params) => createElement(shareLinkGuestPage, { token: params.token! }),
+    render: (params) =>
+      createElement(shareLinkGuestPage, { key: params.token, token: params.token! }),
   },
   { path: '/signup', render: () => createElement(signupPage) },
   { path: '/landing', render: () => createElement(landingPage) },
