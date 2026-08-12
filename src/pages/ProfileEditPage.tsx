@@ -71,6 +71,13 @@ function ProfileEditPage() {
     }
   }, [])
 
+  // 언마운트 시 마지막 미리보기 blob URL 해제
+  useEffect(() => {
+    return () => {
+      if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview)
+    }
+  }, [imagePreview])
+
   const handleChange = (field: keyof ProfileFormValues) => (value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }))
   }
@@ -120,10 +127,6 @@ function ProfileEditPage() {
     setIsSaving(true)
     setSaveError(null)
     try {
-      // 이미지는 별도 API라 프로필 저장 전에 먼저 올린다
-      if (imageFile) {
-        await uploadProfileImage(imageFile)
-      }
       const updated = await updateProfile({
         nickname: result.data.nickname,
         bio: result.data.bio,
@@ -131,7 +134,13 @@ function ProfileEditPage() {
         roles: result.data.roles as UserRole[],
         categories: serverCategories.length > 0 ? serverCategories : undefined,
       })
-      useUserStore.getState().setUser(updated)
+      // 프로필 저장이 성공한 뒤에 이미지를 올려, 저장 실패 시 사진만 바뀌는 상태를 막는다
+      if (imageFile) {
+        const { profileImageUrl } = await uploadProfileImage(imageFile)
+        useUserStore.getState().setUser({ ...updated, profileImageUrl })
+      } else {
+        useUserStore.getState().setUser(updated)
+      }
       navigate('/mypage')
     } catch {
       setSaveError('저장에 실패했습니다. 잠시 후 다시 시도해주세요.')
