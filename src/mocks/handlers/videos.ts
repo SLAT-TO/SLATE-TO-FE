@@ -42,7 +42,9 @@ export const videoHandlers = [
       .sort((a, b) => b.videoId - a.videoId)
     const filtered = cursorId != null ? sorted.filter((v) => v.videoId < cursorId) : sorted
     const page = filtered.slice(0, size)
-    const hasNext = filtered.length > size
+    // size<=0이면 slice(0, size)가 빈 배열을 주는데 length 비교만으로 hasNext를 정하면
+    // page가 비어있는데도 true가 나올 수 있어, page.length>0도 같이 확인한다.
+    const hasNext = page.length > 0 && filtered.length > size
 
     const videos = page.map((v) => ({
       videoId: v.videoId,

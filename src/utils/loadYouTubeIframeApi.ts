@@ -14,12 +14,26 @@ export function loadYouTubeIframeApi(): Promise<void> {
       const previous = window.onYouTubeIframeAPIReady
       let settled = false
 
-      const timeoutId = window.setTimeout(() => {
+      // 기존에 실패한 태그가 남아있으면 재사용하지 않는다 — 이미 한 번 error가 난
+      // <script>는 다시 로드를 시도하지 않아 error 이벤트가 재발생하지 않으므로,
+      // 그대로 재사용하면 타임아웃까지 기다렸다가 또 실패하는 무의미한 재시도가 된다.
+      const existing = document.querySelector<HTMLScriptElement>(`script[src="${IFRAME_API_SRC}"]`)
+      existing?.remove()
+      const script = document.createElement('script')
+
+      const fail = (error: Error) => {
         if (settled) return
         settled = true
+        window.clearTimeout(timeoutId)
         loadPromise = null
-        reject(new Error('YouTube IFrame API 로드 시간이 초과되었습니다.'))
-      }, LOAD_TIMEOUT_MS)
+        script.remove()
+        reject(error)
+      }
+
+      const timeoutId = window.setTimeout(
+        () => fail(new Error('YouTube IFrame API 로드 시간이 초과되었습니다.')),
+        LOAD_TIMEOUT_MS,
+      )
 
       window.onYouTubeIframeAPIReady = () => {
         if (settled) return
@@ -29,21 +43,12 @@ export function loadYouTubeIframeApi(): Promise<void> {
         resolve()
       }
 
-      const existing = document.querySelector<HTMLScriptElement>(`script[src="${IFRAME_API_SRC}"]`)
-      const script = existing ?? document.createElement('script')
-      script.addEventListener('error', () => {
-        if (settled) return
-        settled = true
-        window.clearTimeout(timeoutId)
-        loadPromise = null
-        reject(new Error('YouTube IFrame API 스크립트를 불러오지 못했습니다.'))
-      })
-
-      if (!existing) {
-        script.src = IFRAME_API_SRC
-        script.async = true
-        document.head.appendChild(script)
-      }
+      script.addEventListener('error', () =>
+        fail(new Error('YouTube IFrame API 스크립트를 불러오지 못했습니다.')),
+      )
+      script.src = IFRAME_API_SRC
+      script.async = true
+      document.head.appendChild(script)
     })
   }
 
