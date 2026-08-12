@@ -1,13 +1,16 @@
-import { useMemo, useState } from 'react'
-import type { RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ActionMenu from '../../components/ActionMenu'
 import { Button } from '../../components/Button'
-import InlineIcon from '../../components/InlineIcon'
 import BookmarkStarIcon from '../../components/icons/BookmarkStarIcon'
 import { useHeaderSlot } from '../../hooks/useHeaderSlot'
 import type { VideoDetail } from '../../types/video'
 import type { MemberSummary } from '../../types/project'
-import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
+import {
+  PROJECT_STATUS_LABEL,
+  projectStatusColor,
+  projectStatusLabel,
+} from '../../constants/projectStatus'
+import type { ProjectStatus } from '../../types/project'
 import MemberListPanel from './MemberListPanel'
 import ShareLinkModal from './ShareLinkModal'
 
@@ -15,10 +18,8 @@ type VideoDetailHeaderProps = {
   projectId: number
   videoDetail: VideoDetail | null
   toggleBookmark: () => void
-  statusMenuOpen: boolean
-  setStatusMenuOpen: (updater: (v: boolean) => boolean) => void
-  statusMenuRef: RefObject<HTMLDivElement | null>
-  changeVideoStatus: (status: 'IN_PROGRESS' | 'DONE') => void
+  projectStatus: ProjectStatus
+  onProjectStatusChange: (status: ProjectStatus) => void
   members: MemberSummary[]
   isAdmin: boolean
   meId: number | null
@@ -32,10 +33,8 @@ export default function VideoDetailHeader({
   projectId,
   videoDetail,
   toggleBookmark,
-  statusMenuOpen,
-  setStatusMenuOpen,
-  statusMenuRef,
-  changeVideoStatus,
+  projectStatus,
+  onProjectStatusChange,
   members,
   isAdmin,
   meId,
@@ -44,6 +43,18 @@ export default function VideoDetailHeader({
   onDelete,
 }: VideoDetailHeaderProps) {
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false)
+  const statusMenuRef = useRef<HTMLDivElement>(null)
+  const isCompleted = projectStatus === 'COMPLETED'
+
+  useEffect(() => {
+    if (!statusMenuOpen) return
+    const closeMenu = (event: PointerEvent) => {
+      if (!statusMenuRef.current?.contains(event.target as Node)) setStatusMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', closeMenu)
+    return () => document.removeEventListener('pointerdown', closeMenu)
+  }, [statusMenuOpen])
 
   const headerLeftContent = useMemo(() => {
     if (!videoDetail) return null
@@ -59,26 +70,38 @@ export default function VideoDetailHeader({
           >
             <BookmarkStarIcon filled={videoDetail.bookmarked} className="size-4" />
           </button>
-          {/* 영상 진행 상태 변경 API가 없어 로컬 상태만 갱신 (changeVideoStatus 주석 참고) */}
           <div className="relative" ref={statusMenuRef}>
             <button
               type="button"
               onClick={() => setStatusMenuOpen((v) => !v)}
-              className={`text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold ${videoDetail.progressStatus === 'DONE' ? 'bg-tag-done-bg text-tag-done-text' : 'bg-tag-active-bg text-tag-active-text'}`}
+              disabled={isCompleted}
+              title={isCompleted ? '완료된 프로젝트는 진행 상황을 변경할 수 없습니다.' : undefined}
+              className={`text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold disabled:cursor-not-allowed ${projectStatusColor(projectStatus)}`}
             >
-              {videoDetail.progressStatus === 'DONE' ? '완료' : '진행중'}
-              <InlineIcon svg={chevronDownIcon} className="size-3" />
+              {projectStatusLabel(projectStatus)}
+              <svg viewBox="0 0 12 12" fill="none" className="size-3">
+                <path
+                  d="M2.5 4.5L6 8l3.5-3.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
-            {statusMenuOpen && (
+            {statusMenuOpen && !isCompleted && (
               <ul className="border-neutral-3 bg-bg-primary absolute top-full left-0 z-10 mt-1 w-24 rounded-lg border py-1 shadow-md">
-                {(['IN_PROGRESS', 'DONE'] as const).map((status) => (
+                {(Object.keys(PROJECT_STATUS_LABEL) as ProjectStatus[]).map((status) => (
                   <li key={status}>
                     <button
                       type="button"
-                      onClick={() => changeVideoStatus(status)}
+                      onClick={() => {
+                        setStatusMenuOpen(false)
+                        onProjectStatusChange(status)
+                      }}
                       className="hover:bg-neutral-2 text-caption-lg text-neutral-10 block w-full px-3 py-2 text-left"
                     >
-                      {status === 'DONE' ? '완료' : '진행중'}
+                      {projectStatusLabel(status)}
                     </button>
                   </li>
                 ))}
@@ -102,10 +125,10 @@ export default function VideoDetailHeader({
   }, [
     videoDetail,
     toggleBookmark,
+    projectStatus,
+    isCompleted,
     statusMenuOpen,
-    setStatusMenuOpen,
-    statusMenuRef,
-    changeVideoStatus,
+    onProjectStatusChange,
     members,
     projectId,
     isAdmin,

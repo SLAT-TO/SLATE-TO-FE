@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { navigate } from '../utils/navigation'
 import { actionMenuItemClass, actionMenuPanelClass } from '../styles/dropdown'
+import { Avatar } from './Avatar'
 
 interface HeaderProfileMenuProps {
   userName: string
+  profileImageUrl?: string | null
 }
 
 const MENU_ITEMS = [
@@ -12,7 +14,7 @@ const MENU_ITEMS = [
   { label: '설정', path: '/settings' },
 ] as const
 
-export default function HeaderProfileMenu({ userName }: HeaderProfileMenuProps) {
+export default function HeaderProfileMenu({ userName, profileImageUrl }: HeaderProfileMenuProps) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const triggerId = useId()
@@ -51,9 +53,17 @@ export default function HeaderProfileMenu({ userName }: HeaderProfileMenuProps) 
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         onClick={() => setOpen((v) => !v)}
-        className="bg-neutral-3 text-caption-sm text-neutral-7 hover:bg-neutral-4 flex h-10 w-10 items-center justify-center rounded-full font-medium"
+        className="hover:opacity-80"
       >
-        {userName.charAt(0)}
+        <Avatar
+          src={profileImageUrl ?? undefined}
+          size={40}
+          fallback={
+            <span className="bg-neutral-3 text-caption-sm text-neutral-7 flex h-full w-full items-center justify-center font-medium">
+              {userName.charAt(0)}
+            </span>
+          }
+        />
       </button>
 
       {open && (

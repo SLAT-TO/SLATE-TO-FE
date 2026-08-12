@@ -23,8 +23,10 @@ export default function ConfirmModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="w-80 text-center">
-        <h2 className="text-head-sm text-neutral-11 font-semibold">{title}</h2>
-        {description && <p className="text-body-sm text-neutral-6 mt-2">{description}</p>}
+        <h2 className="text-head-sm text-neutral-11 font-semibold break-keep">{title}</h2>
+        {description && (
+          <p className="text-body-sm text-neutral-6 mt-2 break-keep">{description}</p>
+        )}
         <div className="mt-6 flex gap-2">
           <Button variant="primary" size="md" className="flex-1" onClick={onConfirm}>
             {confirmText}

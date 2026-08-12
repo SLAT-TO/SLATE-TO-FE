@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getMe } from '../api/users'
@@ -26,6 +26,7 @@ import ProjectFileList from '../domains/workspace/ProjectFileList'
 import { ProjectScheduleTab } from '../domains/workspace/ProjectScheduleTab'
 import ProjectStatusMenu from '../domains/workspace/ProjectStatusMenu'
 import { useProjectDetail } from '../hooks/useProjectDetail'
+import { useProjectStatusMenu } from '../hooks/useProjectStatusMenu'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import type { ProjectActivity, ProjectListResponse } from '../types/project'
 
@@ -144,6 +145,14 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   )
   const [initialFileId, setInitialFileId] = useState<number | null>(null)
   const [membersPanelOpen, setMembersPanelOpen] = useState(false)
+  const [videoCompletionConfirmOpen, setVideoCompletionConfirmOpen] = useState(false)
+  const videoProjectStatusRef = useRef<HTMLDivElement>(null)
+  const videoProjectStatusMenu = useProjectStatusMenu(
+    projectId,
+    project,
+    setProject,
+    videoProjectStatusRef,
+  )
 
   useEffect(() => {
     getMe()
@@ -351,15 +360,37 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
 
   if (videoId != null) {
     return (
-      <VideoDetailView
-        projectId={projectId}
-        videoId={videoId}
-        meId={meId}
-        isAdmin={project.myPermission === 'ADMIN'}
-        lengthType={project.lengthType}
-        myRoleNames={project.roleNames}
-        onBack={closeVideo}
-      />
+      <>
+        <VideoDetailView
+          projectId={projectId}
+          videoId={videoId}
+          meId={meId}
+          isAdmin={project.myPermission === 'ADMIN'}
+          lengthType={project.lengthType}
+          projectStatus={project.status}
+          onProjectStatusChange={(status) => {
+            if (status === project.status) return
+            if (status === 'COMPLETED') {
+              setVideoCompletionConfirmOpen(true)
+              return
+            }
+            void videoProjectStatusMenu.changeStatus(status)
+          }}
+          myRoleNames={project.roleNames}
+          onBack={closeVideo}
+        />
+        <ConfirmModal
+          isOpen={videoCompletionConfirmOpen}
+          onClose={() => setVideoCompletionConfirmOpen(false)}
+          onConfirm={() => {
+            setVideoCompletionConfirmOpen(false)
+            void videoProjectStatusMenu.changeStatus('COMPLETED')
+          }}
+          title="완료로 전환하면 참여자들의 포트폴리오에 자동으로 추가됩니다."
+          description="각자의 프로필 페이지에서 수정 및 삭제가 가능합니다. 완료로 변경하면 진행 상황을 수정할 수 없습니다."
+          confirmText="확인"
+        />
+      </>
     )
   }
 
@@ -464,7 +495,9 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         />
       )}
 
-      {tab === 'feedback' && <VideoFeedbackTab projectId={projectId} />}
+      {tab === 'feedback' && (
+        <VideoFeedbackTab projectId={projectId} projectStatus={project.status} />
+      )}
 
       <ConfirmModal
         isOpen={deleteOpen}
