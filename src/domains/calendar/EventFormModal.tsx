@@ -143,7 +143,7 @@ export function EventFormModal({
               value={values.projectId}
               onChange={(projectId) =>
                 setValues((v) =>
-                  projectId ? { ...v, projectId } : { ...v, projectId, participantIds: [] },
+                  v.projectId === projectId ? v : { ...v, projectId, participantIds: [] },
                 )
               }
               placeholder="프로젝트를 선택해주세요."

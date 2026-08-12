@@ -184,6 +184,11 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
       return
     }
 
+    if (activity.targetType === 'VIDEO' && activity.targetId != null) {
+      routerNavigate(`/workspace/projects/${projectId}/videos/${activity.targetId}`)
+      return
+    }
+
     if (
       activity.targetType === 'SCHEDULE' ||
       activity.type === 'SCHEDULE_CREATED' ||
@@ -305,7 +310,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   }
 
   if (view === 'settings') {
-    // ?view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
+    // view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
     const leaveSettings = () => {
       setProjectSearch({}, { replace: true })
     }
@@ -368,7 +373,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         </p>
       </div>
 
-      <div className="[&_[role=tab][aria-selected=true]]:border-primary w-full [&_[role=tab]]:flex-1 [&_[role=tab]]:px-0 [&_[role=tab]]:text-center [&_[role=tab]]:text-[20px] [&_[role=tab][aria-selected=true]]:border-b-[3px] [&_[role=tablist]]:w-full">
+      <div className="[&_[role=tab][aria-selected=true]]:border-primary w-full overflow-x-auto [&_[role=tab]]:shrink-0 [&_[role=tab]]:px-4 [&_[role=tab]]:text-center [&_[role=tab]]:text-base sm:[&_[role=tab]]:flex-1 sm:[&_[role=tab]]:px-0 sm:[&_[role=tab]]:text-[20px] [&_[role=tab][aria-selected=true]]:border-b-[3px] [&_[role=tablist]]:min-w-max sm:[&_[role=tablist]]:w-full sm:[&_[role=tablist]]:min-w-0">
         <Tabs tabs={DETAIL_TABS} activeTab={tab} onChange={handleTabChange} />
       </div>
 

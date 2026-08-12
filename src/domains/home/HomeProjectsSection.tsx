@@ -91,10 +91,10 @@ export default function HomeProjectsSection({
             진행중인 프로젝트가 없어요. 프로젝트를 추가해보세요.
           </p>
           <a
-            href="/mypage/project/new"
+            href="/workspace/projects/new"
             onClick={(event) => {
               event.preventDefault()
-              navigate('/mypage/project/new')
+              navigate('/workspace/projects/new')
             }}
             className="border-secondary text-secondary hover:border-secondary-hover hover:text-secondary-hover inline-flex h-10 w-50 items-center justify-center gap-2.5 rounded-lg border bg-white px-4 text-base font-semibold tracking-[-0.176px] transition-colors"
           >

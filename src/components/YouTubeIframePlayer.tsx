@@ -51,29 +51,34 @@ const YouTubeIframePlayer = ({
     let player: YT.Player | undefined
     let cancelled = false
 
-    void loadYouTubeIframeApi().then(() => {
-      if (cancelled || !containerRef.current) return
+    void loadYouTubeIframeApi()
+      .then(() => {
+        if (cancelled || !containerRef.current) return
 
-      player = new YT.Player(containerRef.current, {
-        videoId,
-        playerVars: {
-          rel: 0,
-          modestbranding: 1,
-          controls: hideControls ? 0 : 1,
-        },
-        events: {
-          onReady: (event) => {
-            if (cancelled) return
-            setIsLoading(false)
-            onReadyRef.current?.(event.target)
+        player = new YT.Player(containerRef.current, {
+          videoId,
+          playerVars: {
+            rel: 0,
+            modestbranding: 1,
+            controls: hideControls ? 0 : 1,
           },
-          onStateChange: (event) => {
-            if (cancelled) return
-            onStateChangeRef.current?.(event)
+          events: {
+            onReady: (event) => {
+              if (cancelled) return
+              setIsLoading(false)
+              onReadyRef.current?.(event.target)
+            },
+            onStateChange: (event) => {
+              if (cancelled) return
+              onStateChangeRef.current?.(event)
+            },
           },
-        },
+        })
       })
-    })
+      .catch(() => {
+        // 스크립트 로드 실패(네트워크·차단)·타임아웃 — 로딩 상태만 해제하고 플레이어는 비워둔다
+        if (!cancelled) setIsLoading(false)
+      })
 
     return () => {
       cancelled = true

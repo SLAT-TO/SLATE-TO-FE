@@ -22,13 +22,13 @@ export default function ProjectIntroSection({
           {projectTags.map((tag) => (
             <span
               key={tag}
-              className="bg-tag-role-bg text-tag-role-text text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
+              className="bg-neutral-2 text-neutral-7 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
             >
               {tag}
             </span>
           ))}
           {lengthType && (
-            <span className="bg-tag-role-bg text-tag-role-text text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold">
+            <span className="bg-neutral-2 text-neutral-7 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold">
               {PROJECT_LENGTH_TYPE_LABEL[lengthType] ?? lengthType}
             </span>
           )}

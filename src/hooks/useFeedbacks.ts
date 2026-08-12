@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import {
@@ -21,6 +21,7 @@ export function useFeedbacks(
   getCurrentTime: () => number,
   guestId?: number,
   projectId?: number,
+  guestToken?: string,
 ) {
   const queryClient = useQueryClient()
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
@@ -38,10 +39,10 @@ export function useFeedbacks(
   const pendingFeedbackActionRef = useRef<number | null>(null)
 
   const load = useCallback(async () => {
-    const page = await getFeedbacks(videoId, guestId != null ? { guestId } : undefined)
+    const page = await getFeedbacks(videoId, guestId != null ? { guestId, guestToken } : undefined)
     setFeedbacks(page.items)
     return page.items
-  }, [videoId, guestId])
+  }, [videoId, guestId, guestToken])
 
   const clearPendingTime = useCallback(() => {
     setPendingStart(null)
@@ -78,14 +79,18 @@ export function useFeedbacks(
     if (!newFeedback.trim() || isSubmittingFeedbackRef.current) return
     isSubmittingFeedbackRef.current = true
     setIsSubmittingFeedback(true)
-    const actor = resolveFeedbackActor(guestId)
     try {
-      const created = await createFeedback(videoId, {
-        content: newFeedback.trim(),
-        startTime: pendingStart ?? undefined,
-        endTime: pendingEnd ?? undefined,
-        ...actor,
-      })
+      const actor = resolveFeedbackActor(guestId)
+      const created = await createFeedback(
+        videoId,
+        {
+          content: newFeedback.trim(),
+          startTime: pendingStart ?? undefined,
+          endTime: pendingEnd ?? undefined,
+          ...actor,
+        },
+        guestId != null ? { guestId, guestToken } : undefined,
+      )
       setFeedbacks((prev) => [created, ...prev])
       setNewFeedback('')
       clearPendingTime()
@@ -102,6 +107,7 @@ export function useFeedbacks(
     pendingStart,
     pendingEnd,
     guestId,
+    guestToken,
     clearPendingTime,
     refreshProjectActivity,
   ])
@@ -156,7 +162,10 @@ export function useFeedbacks(
       if (!beginFeedbackAction(feedbackId)) return
       const actor = resolveFeedbackActor(guestId)
       try {
-        await deleteFeedback(feedbackId, actor)
+        await deleteFeedback(
+          feedbackId,
+          actor.guestId != null ? { ...actor, guestToken } : undefined,
+        )
         setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== feedbackId))
       } catch {
         window.alert('피드백을 삭제하지 못했습니다. 다시 시도해주세요.')
@@ -164,13 +173,17 @@ export function useFeedbacks(
         endFeedbackAction()
       }
     },
-    [guestId, beginFeedbackAction, endFeedbackAction],
+    [guestId, guestToken, beginFeedbackAction, endFeedbackAction],
   )
 
   const editFeedback = useCallback(
     async (feedbackId: number, content: string) => {
       const actor = resolveFeedbackActor(guestId)
-      const updated = await updateFeedback(feedbackId, { content, ...actor })
+      const updated = await updateFeedback(
+        feedbackId,
+        { content, ...actor },
+        actor.guestId != null ? { ...actor, guestToken } : undefined,
+      )
       setFeedbacks((prev) =>
         prev.map((f) =>
           f.feedbackId === updated.feedbackId
@@ -179,7 +192,7 @@ export function useFeedbacks(
         ),
       )
     },
-    [guestId],
+    [guestId, guestToken],
   )
 
   const startEditFeedback = useCallback((feedback: Feedback) => {
@@ -214,7 +227,10 @@ export function useFeedbacks(
     ],
   )
 
-  const filteredFeedbacks = feedbacks.filter((f) => (filter === 'unresolved' ? !f.status : true))
+  const filteredFeedbacks = useMemo(
+    () => feedbacks.filter((f) => (filter === 'unresolved' ? !f.status : true)),
+    [feedbacks, filter],
+  )
 
   return {
     feedbacks,

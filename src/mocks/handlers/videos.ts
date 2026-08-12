@@ -34,25 +34,34 @@ export const videoHandlers = [
 
     const url = new URL(request.url)
     const size = Number(url.searchParams.get('size') ?? 20)
-    const videos = db.videos
+    const cursor = url.searchParams.get('cursor')
+    const cursorId = cursor ? Number(cursor) : null
+
+    const sorted = db.videos
       .filter((v) => v.projectId === projectId)
-      .slice(0, size)
-      .map((v) => ({
-        videoId: v.videoId,
-        title: v.title,
-        thumbnailUrl: v.thumbnailUrl,
-        bookmarked: v.bookmarked,
-        progressStatus: v.progressStatus,
-        hasUnreadFeedback: v.hasUnreadFeedback,
-        createdAt: v.createdAt,
-        updatedAt: v.updatedAt,
-      }))
+      .sort((a, b) => b.videoId - a.videoId)
+    const filtered = cursorId != null ? sorted.filter((v) => v.videoId < cursorId) : sorted
+    const page = filtered.slice(0, size)
+    // size<=0이면 slice(0, size)가 빈 배열을 주는데 length 비교만으로 hasNext를 정하면
+    // page가 비어있는데도 true가 나올 수 있어, page.length>0도 같이 확인한다.
+    const hasNext = page.length > 0 && filtered.length > size
+
+    const videos = page.map((v) => ({
+      videoId: v.videoId,
+      title: v.title,
+      thumbnailUrl: v.thumbnailUrl,
+      bookmarked: v.bookmarked,
+      progressStatus: v.progressStatus,
+      hasUnreadFeedback: v.hasUnreadFeedback,
+      createdAt: v.createdAt,
+      updatedAt: v.updatedAt,
+    }))
 
     return HttpResponse.json(
       ok({
         items: videos,
-        nextCursor: videos.length ? videos[videos.length - 1].videoId : null,
-        hasNext: false,
+        nextCursor: hasNext ? videos[videos.length - 1]!.videoId : null,
+        hasNext,
       }),
       { status: 200 },
     )

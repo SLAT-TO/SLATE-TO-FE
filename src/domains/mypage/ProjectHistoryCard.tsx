@@ -118,8 +118,8 @@ function ProjectHistoryCard({ project, onEdit, onDelete, onClick }: ProjectHisto
 
       {/* 태그 */}
       <div className="flex flex-wrap gap-1.5 p-3 pt-2">
-        {tags.map((tag) => (
-          <Tag key={tag}>{tag}</Tag>
+        {tags.map((tag, index) => (
+          <Tag key={`${tag}-${index}`}>{tag}</Tag>
         ))}
       </div>
     </article>

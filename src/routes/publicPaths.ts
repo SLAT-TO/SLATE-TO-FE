@@ -10,10 +10,11 @@ const PUBLIC_PATHS = [
   '/signup',
   '/signup/email-verification',
   '/signup/terms',
+  '/share',
   '/matching',
 ]
 
-const PUBLIC_MATCHERS = ['/project-invitations/:token']
+const PUBLIC_MATCHERS = ['/project-invitations/:token', '/share/:token']
 
 // /matching/:jobId(공고 상세)는 공개, 같은 위치의 /matching/my·/matching/new는
 // 로그인이 필요해 matchPath만으로는 구분이 안 되므로 먼저 제외한다.

@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import Select from '../components/Select'
 import Choice from '../components/Choice'
 import { Button } from '../components/Button'
@@ -6,6 +7,7 @@ import { getInvitation, acceptInvitation } from '../api/projects'
 import { ApiError } from '../types/api'
 import { ROLE_OPTIONS } from '../constants/roles'
 import { navigate } from '../utils/navigation'
+import { invalidateProjectActivityData } from '../queries/projectInvalidation'
 import inviteBg from '../assets/images/invite-bg.png'
 
 type Step = 'role' | 'terms'
@@ -28,6 +30,7 @@ function errorMessage(err: unknown): string {
 
 /** 프로젝트 초대 수락: 역할 선택 후 약관에 동의한다. */
 export function InviteAcceptPage({ token }: { token: string }) {
+  const queryClient = useQueryClient()
   const [step, setStep] = useState<Step>('role')
   const [role, setRole] = useState('')
   const [allAgreed, setAllAgreed] = useState(false)
@@ -57,7 +60,8 @@ export function InviteAcceptPage({ token }: { token: string }) {
     setSubmitting(true)
     setSubmitError(null)
     try {
-      await acceptInvitation(token, { roleNames: role ? [role] : [] })
+      const accepted = await acceptInvitation(token, { roleNames: role ? [role] : [] })
+      void invalidateProjectActivityData(queryClient, accepted.projectId)
       navigate('/workspace')
     } catch (err) {
       setSubmitError(errorMessage(err))

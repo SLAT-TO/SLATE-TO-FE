@@ -48,9 +48,9 @@ export default function VideoDetailHeader({
   const headerLeftContent = useMemo(() => {
     if (!videoDetail) return null
     return (
-      <div className="flex w-full items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-head-sm text-neutral-11 font-bold">{videoDetail.title}</h1>
+      <div className="flex w-full flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="text-head-sm text-neutral-11 truncate font-bold">{videoDetail.title}</h1>
           <button
             type="button"
             onClick={toggleBookmark}
@@ -87,7 +87,7 @@ export default function VideoDetailHeader({
           </div>
         </div>
 
-        <div className="mr-4">
+        <div className="ml-auto sm:mr-4">
           <MemberListPanel
             projectId={projectId}
             members={members}
@@ -116,15 +116,16 @@ export default function VideoDetailHeader({
   const headerRightContent = useMemo(() => {
     if (!videoDetail) return null
     return (
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <ActionMenu
           items={[
             { action: 'edit', onClick: onEdit },
             { action: 'delete', onClick: onDelete },
           ]}
+          className="order-2"
           ariaLabel="영상 메뉴"
         />
-        <Button variant="primary" size="sm" onClick={() => setInviteOpen(true)}>
+        <Button variant="primary" size="sm" className="order-1" onClick={() => setInviteOpen(true)}>
           게스트 초대하기
         </Button>
         <ShareLinkModal
@@ -136,7 +137,7 @@ export default function VideoDetailHeader({
     )
   }, [videoDetail, onEdit, onDelete, inviteOpen])
 
-  useHeaderSlot(headerLeftContent, headerRightContent)
+  useHeaderSlot(headerLeftContent, headerRightContent, { hideDefaultActions: true })
 
   return null
 }
