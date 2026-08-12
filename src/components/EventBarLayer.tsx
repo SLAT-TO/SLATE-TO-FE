@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { CalendarEvent } from '../schemas/calendarEvent'
 import type { PositionedEvent } from '../utils/calendarUtils'
 
@@ -9,7 +10,11 @@ interface WeekEventBarsProps {
 // 한 주(week)의 이벤트 바 오버레이. CalendarGrid가 그 주의 relative 래퍼(높이는 flex-1로 유동적) 안에
 // 겹쳐서 렌더링하므로, 이 컴포넌트는 부모 높이에 absolute inset-0로만 맞추면 된다 (픽셀 계산 불필요).
 // maxLanes를 넘는 이벤트는 여기서 안 그리고 CalendarGrid의 "+N" 배지로 표시됨.
-export function WeekEventBars({ positioned, onEventClick }: WeekEventBarsProps) {
+// React.memo — positioned·onEventClick 참조가 그대로면 캘린더와 무관한 상위 리렌더에 영향받지 않는다
+export const WeekEventBars = memo(function WeekEventBars({
+  positioned,
+  onEventClick,
+}: WeekEventBarsProps) {
   return (
     <div
       className="pointer-events-none absolute inset-0 grid grid-cols-7 gap-y-1.5 pt-8"
@@ -52,4 +57,4 @@ export function WeekEventBars({ positioned, onEventClick }: WeekEventBarsProps) 
       })}
     </div>
   )
-}
+})

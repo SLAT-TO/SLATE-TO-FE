@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { CalendarProps } from '../types/Calendar.types'
 import { assignEventLanes, chunkWeeks, getMonthGrid } from '../utils/calendarUtils'
 import { CalendarGrid } from './CalendarGrid'
@@ -34,6 +34,15 @@ export function Calendar({
     return counts
   }, [weekLanes])
 
+  // CalendarGrid가 React.memo로 감싸여 있어도, 인라인 함수를 그대로 넘기면 매 렌더 새 참조가
+  // 되어 memo가 무효화된다 — weekLanes·onEventClick이 그대로면 참조를 유지한다
+  const renderWeekOverlay = useCallback(
+    (_week: Date[], weekIndex: number) => (
+      <WeekEventBars positioned={weekLanes[weekIndex].positioned} onEventClick={onEventClick} />
+    ),
+    [weekLanes, onEventClick],
+  )
+
   return (
     <CalendarGrid
       month={month}
@@ -41,9 +50,7 @@ export function Calendar({
       selectedDate={selectedDate}
       onDateClick={onDateClick}
       overflowByDate={overflowByDate}
-      renderWeekOverlay={(_week, weekIndex) => (
-        <WeekEventBars positioned={weekLanes[weekIndex].positioned} onEventClick={onEventClick} />
-      )}
+      renderWeekOverlay={renderWeekOverlay}
     />
   )
 }

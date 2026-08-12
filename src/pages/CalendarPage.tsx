@@ -175,9 +175,11 @@ export default function CalendarPage() {
   )
 
   // 같은 날짜를 다시 클릭하면 패널을 닫는다
-  const handleDateClick = (date: Date) => {
+  // useCallback으로 참조를 고정 — 그렇지 않으면 캘린더와 무관한 상태 변경마다 CalendarGrid의
+  // React.memo가 무효화되어 전체 주간 그리드가 리렌더된다
+  const handleDateClick = useCallback((date: Date) => {
     setSelectedDate((prev) => (prev && toDateKey(prev) === toDateKey(date) ? null : date))
-  }
+  }, [])
 
   const handleCreateEvent = async (values: EventFormValues) => {
     setActionError(null)
