@@ -2,15 +2,14 @@ import type { KeyboardEvent, MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import ActionMenu from '../../components/ActionMenu'
 import BookmarkStarIcon from '../../components/icons/BookmarkStarIcon'
-import Tag from '../../components/Tag'
+import Tag, { type TagVariant } from '../../components/Tag'
 import { CARD_BASE } from '../../styles/card'
-
-export type VideoCardProgressStatus = 'IN_PROGRESS' | 'DONE' | string
 
 interface VideoCardProps {
   title: string
   thumbnailUrl?: string | null
-  progressStatus: VideoCardProgressStatus
+  statusLabel: string
+  statusVariant: TagVariant
   /** BE VideoItemResDTO.hasUnreadFeedback */
   hasUnreadFeedback?: boolean
   bookmarked?: boolean
@@ -26,7 +25,8 @@ interface VideoCardProps {
 export default function VideoCard({
   title,
   thumbnailUrl,
-  progressStatus,
+  statusLabel,
+  statusVariant,
   hasUnreadFeedback = false,
   bookmarked = false,
   onToggleBookmark,
@@ -99,9 +99,7 @@ export default function VideoCard({
 
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <Tag variant={progressStatus === 'DONE' ? 'ghost' : 'secondary'}>
-            {progressStatus === 'DONE' ? '완료' : '진행중'}
-          </Tag>
+          <Tag variant={statusVariant}>{statusLabel}</Tag>
         </div>
         {hasUnreadFeedback && (
           <span

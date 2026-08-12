@@ -99,10 +99,10 @@ export default function ProjectStatusMenu({
         className="w-[calc(100vw-32px)] max-w-[780px]"
       >
         <div className="flex flex-col items-center px-6 py-6 text-center sm:px-16 sm:py-8">
-          <h2 className="text-head-lg text-neutral-11 max-w-[560px] font-bold">
+          <h2 className="text-head-lg text-neutral-11 max-w-[560px] font-bold break-keep">
             완료로 전환하면 참여자들의 포트폴리오에 자동으로 추가됩니다.
           </h2>
-          <div className="text-body-sm text-neutral-6 mt-5 flex flex-col gap-1">
+          <div className="text-body-sm text-neutral-6 mt-5 flex flex-col gap-1 break-keep">
             <p>각자의 프로필 페이지에서 수정 삭제가 가능합니다.</p>
             <p>완료로 변경 시 진행 상황 변경이 불가합니다.</p>
           </div>
