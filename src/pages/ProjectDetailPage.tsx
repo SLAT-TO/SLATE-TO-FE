@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getMe } from '../api/users'
 import {
@@ -24,16 +24,11 @@ import NoticeListView from '../domains/workspace/NoticeListView'
 import NoticeDetailView from '../domains/workspace/NoticeDetailView'
 import ProjectFileList from '../domains/workspace/ProjectFileList'
 import { ProjectScheduleTab } from '../domains/workspace/ProjectScheduleTab'
+import ProjectStatusMenu from '../domains/workspace/ProjectStatusMenu'
 import { useProjectDetail } from '../hooks/useProjectDetail'
 import { useProjectStatusMenu } from '../hooks/useProjectStatusMenu'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
-import { projectMetaTags } from '../constants/projectLabels'
-import {
-  PROJECT_STATUS_LABEL,
-  projectStatusColor,
-  projectStatusLabel,
-} from '../constants/projectStatus'
-import type { ProjectActivity, ProjectStatus, ProjectSummary } from '../types/project'
+import type { ProjectActivity, ProjectListResponse } from '../types/project'
 
 /** Strict Mode remount에서도 같은 키 alert가 두 번 뜨지 않도록 모듈 단위로 기록 */
 const alertedPartialErrorKeys = new Set<string>()
@@ -124,17 +119,18 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     members,
     setMembers,
     activities,
+    hasMoreActivities,
+    loadMoreActivities,
+    isLoadingMoreActivities,
     notices,
     setNotices,
     loading,
     error,
     partialErrors,
-  } = useProjectDetail(projectId, activityView === 'list' ? 100 : 5)
+  } = useProjectDetail(projectId)
   const pinMutation = useToggleProjectPinMutation()
   const deleteMutation = useDeleteProjectMutation()
   const leaveMutation = useLeaveProjectMutation()
-  const statusMenuRef = useRef<HTMLDivElement>(null)
-  const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
   const [meId, setMeId] = useState<number | null>(null)
@@ -149,12 +145,28 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   )
   const [initialFileId, setInitialFileId] = useState<number | null>(null)
   const [membersPanelOpen, setMembersPanelOpen] = useState(false)
+  const [videoCompletionConfirmOpen, setVideoCompletionConfirmOpen] = useState(false)
+  const videoProjectStatusRef = useRef<HTMLDivElement>(null)
+  const videoProjectStatusMenu = useProjectStatusMenu(
+    projectId,
+    project,
+    setProject,
+    videoProjectStatusRef,
+  )
 
   useEffect(() => {
     getMe()
       .then((me) => setMeId(me.id))
       .catch(() => setMeId(null))
   }, [])
+
+  // 설정 화면은 생성자(ADMIN)만 접근 가능 — 최근 활동 클릭이나 URL 직접 진입으로
+  // 비관리자가 view=settings로 들어와도 즉시 빠져나가게 한다.
+  useEffect(() => {
+    if (view === 'settings' && project && project.myPermission !== 'ADMIN') {
+      setProjectSearch({}, { replace: true })
+    }
+  }, [view, project, setProjectSearch])
 
   const partialErrorKey = partialErrors.join('|')
   useEffect(() => {
@@ -186,6 +198,11 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     if (activity.targetType === 'FILE' && activity.targetId != null) {
       setInitialFileId(activity.targetId)
       setProjectSearch({ tab: 'files' })
+      return
+    }
+
+    if (activity.targetType === 'VIDEO' && activity.targetId != null) {
+      routerNavigate(`/workspace/projects/${projectId}/videos/${activity.targetId}`)
       return
     }
 
@@ -297,8 +314,6 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     )
   }
 
-  const metaTags = projectMetaTags(project)
-
   const confirmDeleteProject = () => {
     deleteMutation.mutate(projectId, {
       onSuccess: () => routerNavigate('/workspace'),
@@ -311,8 +326,8 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     })
   }
 
-  if (view === 'settings') {
-    // ?view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
+  if (view === 'settings' && project.myPermission === 'ADMIN') {
+    // view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
     const leaveSettings = () => {
       setProjectSearch({}, { replace: true })
     }
@@ -322,20 +337,28 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         onCancel={leaveSettings}
         onSaved={(updated) => {
           setProject(updated)
-          queryClient.setQueryData<ProjectSummary[]>(projectKeys.list(), (prev) =>
-            prev?.map((item) =>
-              item.id === updated.id
-                ? {
-                    ...item,
-                    title: updated.title,
-                    endDate: updated.endDate,
-                    clientName: updated.clientName,
-                    type: updated.type,
-                    lengthType: updated.lengthType,
-                    status: updated.status,
-                  }
-                : item,
-            ),
+          queryClient.setQueryData<InfiniteData<ProjectListResponse>>(projectKeys.list(), (prev) =>
+            prev
+              ? {
+                  ...prev,
+                  pages: prev.pages.map((page) => ({
+                    ...page,
+                    items: page.items.map((item) =>
+                      item.id === updated.id
+                        ? {
+                            ...item,
+                            title: updated.title,
+                            endDate: updated.endDate,
+                            clientName: updated.clientName,
+                            type: updated.type,
+                            lengthType: updated.lengthType,
+                            status: updated.status,
+                          }
+                        : item,
+                    ),
+                  })),
+                }
+              : prev,
           )
           leaveSettings()
         }}
@@ -345,71 +368,51 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
 
   if (videoId != null) {
     return (
-      <VideoDetailView
-        projectId={projectId}
-        videoId={videoId}
-        meId={meId}
-        isAdmin={project.myPermission === 'ADMIN'}
-        lengthType={project.lengthType}
-        myRoleNames={project.roleNames}
-        onBack={closeVideo}
-      />
+      <>
+        <VideoDetailView
+          projectId={projectId}
+          videoId={videoId}
+          meId={meId}
+          isAdmin={project.myPermission === 'ADMIN'}
+          lengthType={project.lengthType}
+          projectStatus={project.status}
+          onProjectStatusChange={(status) => {
+            if (status === project.status) return
+            if (status === 'COMPLETED') {
+              setVideoCompletionConfirmOpen(true)
+              return
+            }
+            void videoProjectStatusMenu.changeStatus(status)
+          }}
+          myRoleNames={project.roleNames}
+          onBack={closeVideo}
+        />
+        <ConfirmModal
+          isOpen={videoCompletionConfirmOpen}
+          onClose={() => setVideoCompletionConfirmOpen(false)}
+          onConfirm={() => {
+            setVideoCompletionConfirmOpen(false)
+            void videoProjectStatusMenu.changeStatus('COMPLETED')
+          }}
+          title="완료로 전환하면 참여자들의 포트폴리오에 자동으로 추가됩니다."
+          description="각자의 프로필 페이지에서 수정 및 삭제가 가능합니다. 완료로 변경하면 진행 상황을 수정할 수 없습니다."
+          confirmText="확인"
+        />
+      </>
     )
   }
 
   return (
     <section className="flex w-full flex-col gap-8">
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {metaTags.map((tag) => (
-            <span
-              key={tag}
-              className="bg-main-1 text-main-6 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
-            >
-              {tag}
-            </span>
-          ))}
-          <div className="relative" ref={statusMenuRef}>
-            <button
-              type="button"
-              onClick={statusMenu.toggle}
-              className={`text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold ${projectStatusColor(project.status)}`}
-            >
-              {projectStatusLabel(project.status)}
-              <svg viewBox="0 0 12 12" fill="none" className="size-3">
-                <path
-                  d="M2.5 4.5L6 8l3.5-3.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-            {statusMenu.open && (
-              <ul className="border-neutral-3 bg-bg-primary absolute top-full left-0 z-10 mt-1 w-32 rounded-lg border py-1 shadow-md">
-                {(Object.keys(PROJECT_STATUS_LABEL) as ProjectStatus[]).map((status) => (
-                  <li key={status}>
-                    <button
-                      type="button"
-                      onClick={() => statusMenu.changeStatus(status)}
-                      className="hover:bg-neutral-2 text-caption-lg text-neutral-10 block w-full px-3 py-2 text-left"
-                    >
-                      {PROJECT_STATUS_LABEL[status]}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+        <ProjectStatusMenu projectId={projectId} project={project} setProject={setProject} />
 
         <p className="text-body-sm text-neutral-10 tracking-[-0.32px]">
           {project.description ?? '설명 없음'}
         </p>
       </div>
 
-      <div className="[&_[role=tab][aria-selected=true]]:border-primary w-full [&_[role=tab]]:flex-1 [&_[role=tab]]:px-0 [&_[role=tab]]:text-center [&_[role=tab]]:text-[20px] [&_[role=tab][aria-selected=true]]:border-b-[3px] [&_[role=tablist]]:w-full">
+      <div className="[&_[role=tab][aria-selected=true]]:border-primary w-full overflow-x-auto [&_[role=tab]]:shrink-0 [&_[role=tab]]:px-4 [&_[role=tab]]:text-center [&_[role=tab]]:text-base sm:[&_[role=tab]]:flex-1 sm:[&_[role=tab]]:px-0 sm:[&_[role=tab]]:text-[20px] [&_[role=tab][aria-selected=true]]:border-b-[3px] [&_[role=tablist]]:min-w-max sm:[&_[role=tablist]]:w-full sm:[&_[role=tablist]]:min-w-0">
         <Tabs tabs={DETAIL_TABS} activeTab={tab} onChange={handleTabChange} />
       </div>
 
@@ -437,6 +440,9 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         <ActivityListView
           projectId={projectId}
           activities={activities}
+          hasMore={hasMoreActivities}
+          isLoadingMore={isLoadingMoreActivities}
+          onLoadMore={() => void loadMoreActivities()}
           onBack={() => setProjectSearch({})}
           onNavigate={handleActivityNavigate}
         />
@@ -497,7 +503,9 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         />
       )}
 
-      {tab === 'feedback' && <VideoFeedbackTab projectId={projectId} />}
+      {tab === 'feedback' && (
+        <VideoFeedbackTab projectId={projectId} projectStatus={project.status} />
+      )}
 
       <ConfirmModal
         isOpen={deleteOpen}

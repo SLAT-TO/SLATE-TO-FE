@@ -1,109 +1,75 @@
-// src/pages/MyPage.tsx
+import { useEffect, useState } from 'react'
 import ProfileOverviewCard from '../domains/mypage/ProfileOverviewCard'
 import ProjectHistoryCard from '../domains/mypage/ProjectHistoryCard'
 import type { ProfileSummary, StatItem, ProjectHistoryItem } from '../types/MyPage.types'
 import { navigate } from '../utils/navigation'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
-
-// 아래 하드코딩 데이터는 추후 API 연동 시 교체
-// GET /api/users/me, GET /api/users/me/stats, GET /api/users/me/projects 등으로 대체 예정
-// 라벨(브랜드 영상, 연출 등)은 constants/videoCategories.ts, constants/roles.ts의 상수 참조로 교체할 것
-
-// 빈 상태 / 일반 상태 전환용 테스트 플래그 (API 연동 시 제거)
-const IS_EMPTY_TEST = true
-
-const MOCK_PROFILE_FILLED: ProfileSummary = {
-  profileImageUrl: 'https://placehold.co/64x64',
-  nickname: '서정현',
-  role: '연출자',
-  region: '서울',
-  email: 'jseo0508@gmail.com',
-  introduction:
-    '사람의 이야기를 영상으로 담아내는 것을 좋아합니다.\n함께 좋은 작품 만들어갔으면 좋겠습니다!',
-}
-
-const MOCK_PROFILE_EMPTY: ProfileSummary = {
-  profileImageUrl: 'https://placehold.co/64x64',
-  nickname: '서정현',
-  role: '연출자',
-  region: '',
-  email: 'jseo0508@gmail.com',
-  introduction: '',
-}
-
-const MOCK_PROJECT_TYPE_STATS: StatItem[] = [
-  { label: '브랜드 영상', value: 8, max: 10 },
-  { label: '유튜브 콘텐츠', value: 6, max: 10 },
-  { label: '뮤직 비디오', value: 5, max: 10 },
-]
-
-const MOCK_ROLE_STATS: StatItem[] = [
-  { label: '연출', value: 7, max: 10 },
-  { label: 'PD', value: 6, max: 10 },
-  { label: '편집', value: 5, max: 10 },
-]
-
-const EMPTY_PROJECT_TYPE_STATS: StatItem[] = [
-  { label: '브랜드 영상', value: 0, max: 10 },
-  { label: '유튜브 콘텐츠', value: 0, max: 10 },
-  { label: '뮤직 비디오', value: 0, max: 10 },
-]
-
-const EMPTY_ROLE_STATS: StatItem[] = [
-  { label: '연출', value: 0, max: 10 },
-  { label: 'PD', value: 0, max: 10 },
-  { label: '편집', value: 0, max: 10 },
-]
-
-const MOCK_PROJECT_HISTORY: ProjectHistoryItem[] = [
-  {
-    id: '1',
-    title: '프로젝트 명',
-    thumbnailUrl: 'https://img.youtube.com/vi/hDBSEV7ZwZs/hqdefault.jpg',
-    tags: ['드라마', '프로젝트 길이', '촬영감독'],
-  },
-  {
-    id: '2',
-    title: '프로젝트 명',
-    thumbnailUrl: 'https://placehold.co/300x160',
-    tags: ['단편', '촬영감독', '프로젝트유형'],
-  },
-  {
-    id: '3',
-    title: '프로젝트 명',
-    thumbnailUrl: 'https://placehold.co/300x160',
-    tags: ['단편', '촬영감독', '프로젝트유형'],
-  },
-  {
-    id: '4',
-    title: '프로젝트 명',
-    thumbnailUrl: 'https://placehold.co/300x160',
-    tags: ['단편', '촬영감독', '프로젝트유형'],
-  },
-]
+import ConfirmModal from '../components/ConfirmModal'
+import { deletePortfolio, getMe, getMyActivityStats, getUserPortfolios } from '../api/users'
+import {
+  toProfileSummary,
+  toProjectTypeStats,
+  toRoleStats,
+  toProjectHistoryItem,
+} from '../domains/mypage/myPageAdapter'
 
 const HEADER = <HeaderTitle>마이페이지</HeaderTitle>
 
 function MyPage() {
   useHeaderSlot(HEADER)
 
-  // 프로필 수정 폼 라우트 확정되면 이동 로직 연결
+  const [profile, setProfile] = useState<ProfileSummary | null>(null)
+  const [projectTypeStats, setProjectTypeStats] = useState<StatItem[]>([])
+  const [roleStats, setRoleStats] = useState<StatItem[]>([])
+  const [projects, setProjects] = useState<ProjectHistoryItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const load = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const me = await getMe()
+        // 포트폴리오는 내 userId가 있어야 조회 가능해 프로필 이후에 요청
+        const [stats, portfolios] = await Promise.all([
+          getMyActivityStats(),
+          getUserPortfolios(me.id),
+        ])
+        if (cancelled) return
+        setProfile(toProfileSummary(me))
+        setProjectTypeStats(toProjectTypeStats(stats))
+        setRoleStats(toRoleStats(stats))
+        setProjects(portfolios.items.map(toProjectHistoryItem))
+      } catch {
+        if (!cancelled) setError('마이페이지 정보를 불러오지 못했습니다.')
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const handleEditClick = () => {
     navigate('/mypage/edit')
   }
 
-  // 카드 클릭->  프로젝트 개요
   const handleProjectClick = (id: string) => {
     navigate(`/mypage/project/${id}`)
   }
 
-  // 삭제 확인 모달 연결 + 실제 삭제 API 연동 필요
   const handleProjectDelete = (id: string) => {
-    console.log('프로젝트 삭제:', id)
+    setDeleteTargetId(id)
   }
 
-  // 프로젝트 추가 폼으로 이동하는 라우팅 연결 필요
   const handleAddProject = () => {
     navigate('/mypage/project/new')
   }
@@ -112,10 +78,29 @@ function MyPage() {
     navigate(`/mypage/project/${id}/edit`)
   }
 
-  const profile = IS_EMPTY_TEST ? MOCK_PROFILE_EMPTY : MOCK_PROFILE_FILLED
-  const projectTypeStats = IS_EMPTY_TEST ? EMPTY_PROJECT_TYPE_STATS : MOCK_PROJECT_TYPE_STATS
-  const roleStats = IS_EMPTY_TEST ? EMPTY_ROLE_STATS : MOCK_ROLE_STATS
-  const projects = IS_EMPTY_TEST ? [] : MOCK_PROJECT_HISTORY
+  const handleDeleteConfirm = async () => {
+    if (deleteTargetId == null) return
+    const portfolioId = Number(deleteTargetId)
+    if (!Number.isFinite(portfolioId)) return
+
+    try {
+      await deletePortfolio(portfolioId)
+      setProjects((prev) => prev.filter((p) => p.id !== deleteTargetId))
+    } catch {
+      setError('삭제에 실패했습니다.')
+    } finally {
+      setDeleteTargetId(null)
+    }
+  }
+
+  if (isLoading) {
+    return <p className="text-caption-sm text-neutral-6 p-6">불러오는 중…</p>
+  }
+
+  if (error || !profile) {
+    return <p className="text-caption-sm text-neutral-6 p-6">{error}</p>
+  }
+
   const isEmpty = projects.length === 0
 
   return (
@@ -172,6 +157,13 @@ function MyPage() {
           </div>
         )}
       </section>
+      <ConfirmModal
+        isOpen={deleteTargetId !== null}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={() => void handleDeleteConfirm()}
+        title="정말 삭제하시겠습니까?"
+        description="삭제된 프로젝트 이력은 되돌릴 수 없어요."
+      />
     </div>
   )
 }

@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { accessShareLink, registerGuest } from '../api/videos'
-import { getAccessToken } from '../api/client'
-import { getMe } from '../api/users'
 import { useFeedbacks } from '../hooks/useFeedbacks'
 import { useFeedbackReplies } from '../hooks/useFeedbackReplies'
 import FeedbackPanel from '../domains/workspace/FeedbackPanel'
@@ -9,64 +7,49 @@ import Input from '../components/Input'
 import { Button } from '../components/Button'
 import { ApiError } from '../types/api'
 import type { ShareLinkAccess } from '../types/feedback'
+import { getGuestSession, setGuestSession } from '../utils/guestSession'
 
 type ShareLinkGuestPageProps = {
   token: string
 }
 
+type GuestShareStep = 'invitation' | 'registration' | 'feedback'
+
 function errorMessage(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback
 }
 
-/** 공유링크로 들어온 비로그인 게스트가 닉네임 등록 후 피드백을 보고 남기는 화면.
- * 공유링크 진입 응답엔 영상 재생 정보(youtubeUrl)가 없어 플레이어 없이 피드백 패널만 노출한다.
- * BE가 아직 게스트 인증(guestId로 피드백 API 호출)을 지원하지 않아, 등록 이후 피드백
- * 조회/작성은 BE 보완 전까지 401이 날 수 있다 — 코드는 실 API 기준으로 맞춰둔 상태. */
+/** 공유 링크의 초대 안내와 게스트 등록을 거쳐 피드백 화면으로 진입한다. */
 export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
   const [access, setAccess] = useState<ShareLinkAccess | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [guestSession, setGuestSessionState] = useState(() => getGuestSession(token))
+  const [step, setStep] = useState<GuestShareStep>(() => (guestSession ? 'feedback' : 'invitation'))
   const [name, setName] = useState('')
-  const [guestId, setGuestId] = useState<number | null>(null)
-  const [meId, setMeId] = useState<number | null>(null)
-  const [authResolved, setAuthResolved] = useState(() => !getAccessToken())
   const [registering, setRegistering] = useState(false)
   const [registerError, setRegisterError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
+
     accessShareLink(token)
       .then((result) => {
         if (!cancelled) setAccess(result)
       })
       .catch((err) => {
-        if (!cancelled) setLoadError(errorMessage(err, '공유 링크를 확인할 수 없습니다.'))
+        if (!cancelled) {
+          setLoadError(errorMessage(err, '공유 링크를 확인할 수 없습니다.'))
+        }
       })
+
     return () => {
       cancelled = true
     }
   }, [token])
 
-  useEffect(() => {
-    if (!getAccessToken()) return
-
-    let cancelled = false
-    void getMe()
-      .then((me) => {
-        if (!cancelled) setMeId(me.id)
-      })
-      .catch(() => {
-        if (!cancelled) setMeId(null)
-      })
-      .finally(() => {
-        if (!cancelled) setAuthResolved(true)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
   const videoId = access?.videoId ?? 0
+  const guestId = guestSession?.guestId
+  const guestToken = guestSession?.sessionToken
 
   const {
     filteredFeedbacks,
@@ -79,6 +62,8 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     isCapturingRange,
     editingFeedbackId,
     editingFeedbackContent,
+    isSubmittingFeedback,
+    pendingFeedbackActionId,
     setEditingFeedbackContent,
     load: loadFeedbacks,
     clearPendingTime,
@@ -90,30 +75,43 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     startEditFeedback,
     cancelEditFeedback,
     saveEditFeedback,
-  } = useFeedbacks(videoId, () => 0, meId !== null ? undefined : (guestId ?? undefined))
+  } = useFeedbacks(videoId, () => 0, guestId ?? undefined, undefined, guestToken ?? undefined)
 
   const {
     expandedFeedbackId,
     repliesByFeedback,
     newReply,
     setNewReply,
+    editingReplyId,
+    editingReplyContent,
+    setEditingReplyContent,
+    isSubmittingReply,
+    pendingReplyActionId,
     toggleReplies,
     submitReply,
-  } = useFeedbackReplies(meId !== null ? undefined : (guestId ?? undefined))
+    startEditReply,
+    cancelEditReply,
+    saveEditReply,
+    removeReply,
+  } = useFeedbackReplies(guestId ?? undefined, undefined, guestToken ?? undefined)
 
   useEffect(() => {
-    if (!access || !authResolved || (meId === null && guestId === null)) return
+    if (!access || guestId === null) return
     void loadFeedbacks()
-  }, [guestId, access, authResolved, meId, loadFeedbacks])
+  }, [access, guestId, loadFeedbacks])
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleRegister = async (event: FormEvent) => {
+    event.preventDefault()
     if (!name.trim()) return
+
     setRegistering(true)
     setRegisterError(null)
     try {
       const result = await registerGuest(token, { name: name.trim() })
-      setGuestId(result.guestId)
+      const session = { guestId: result.guestId, sessionToken: result.sessionToken }
+      setGuestSession(token, session)
+      setGuestSessionState(session)
+      setStep('feedback')
     } catch (err) {
       setRegisterError(errorMessage(err, '게스트 등록에 실패했습니다.'))
     } finally {
@@ -132,20 +130,31 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
   if (!access) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
-        <p className="text-body-sm text-neutral-6">불러오는 중…</p>
+        <p className="text-body-sm text-neutral-6">불러오는 중...</p>
       </div>
     )
   }
 
-  if (!authResolved) {
+  if (step === 'invitation') {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
-        <p className="text-body-sm text-neutral-6">참여 정보를 확인하는 중입니다.</p>
+        <section className="bg-neutral-1 flex w-full max-w-[480px] flex-col gap-8 rounded-xl p-8 text-center shadow-[0_3px_12px_rgba(169,204,244,0.15)]">
+          <div className="flex flex-col gap-3">
+            <p className="text-head-sm text-neutral-11 font-bold">영상 피드백에 초대되었어요</p>
+            <p className="text-body-lg text-neutral-10 font-semibold">{access.videoTitle}</p>
+            <p className="text-body-sm text-neutral-6">
+              이름을 등록한 뒤 영상 피드백에 참여할 수 있습니다.
+            </p>
+          </div>
+          <Button type="button" fullWidth onClick={() => setStep('registration')}>
+            확인
+          </Button>
+        </section>
       </div>
     )
   }
 
-  if (meId === null && guestId === null) {
+  if (step === 'registration') {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <form
@@ -154,12 +163,12 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
         >
           <div className="flex flex-col items-center gap-2 text-center">
             <p className="text-head-sm text-neutral-11 font-bold">{access.videoTitle}</p>
-            <p className="text-body-sm text-neutral-6">피드백을 남기려면 이름을 입력해주세요</p>
+            <p className="text-body-sm text-neutral-6">참여 정보를 입력해 주세요.</p>
           </div>
-          <Input id="guest-name" placeholder="이름을 입력하세요" value={name} onChange={setName} />
+          <Input id="guest-name" placeholder="이름을 입력하세요." value={name} onChange={setName} />
           {registerError && <p className="text-warning text-caption-lg">{registerError}</p>}
-          <Button type="submit" fullWidth disabled={registering}>
-            {registering ? '등록 중…' : '입장하기'}
+          <Button type="submit" fullWidth disabled={registering || !name.trim()}>
+            {registering ? '등록 중...' : '입장하기'}
           </Button>
         </form>
       </div>
@@ -181,6 +190,8 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
           isCapturingRange={isCapturingRange}
           editingFeedbackId={editingFeedbackId}
           editingFeedbackContent={editingFeedbackContent}
+          isSubmittingFeedback={isSubmittingFeedback}
+          pendingFeedbackActionId={pendingFeedbackActionId}
           setEditingFeedbackContent={setEditingFeedbackContent}
           clearPendingTime={clearPendingTime}
           attachCurrentTime={attachCurrentTime}
@@ -195,9 +206,19 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
           repliesByFeedback={repliesByFeedback}
           newReply={newReply}
           setNewReply={setNewReply}
+          editingReplyId={editingReplyId}
+          editingReplyContent={editingReplyContent}
+          setEditingReplyContent={setEditingReplyContent}
+          isSubmittingReply={isSubmittingReply}
+          pendingReplyActionId={pendingReplyActionId}
           toggleReplies={toggleReplies}
           submitReply={submitReply}
-          meId={meId}
+          startEditReply={startEditReply}
+          cancelEditReply={cancelEditReply}
+          saveEditReply={saveEditReply}
+          removeReply={removeReply}
+          meId={null}
+          guestId={guestId ?? undefined}
           onSeek={() => {}}
         />
       </div>

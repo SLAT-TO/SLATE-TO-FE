@@ -8,7 +8,16 @@ import { useHomeDashboard } from '../hooks/useHomeDashboard'
 import { useRecommendedJobs } from '../hooks/useRecommendedJobs'
 
 export default function HomePage() {
-  const { projects, briefing, todaySchedules, loading, error } = useHomeDashboard()
+  const {
+    projects,
+    briefing,
+    todaySchedules,
+    loading,
+    error,
+    togglePin,
+    removeProject,
+    leaveProject,
+  } = useHomeDashboard()
   const {
     jobs,
     bookmarkedIds,
@@ -29,7 +38,13 @@ export default function HomePage() {
         <div className="flex min-w-0 flex-1 flex-col">
           <HomeBriefingCard briefing={briefing} loading={loading} />
           <div className="mt-10.75">
-            <HomeProjectsSection projects={projects} loading={loading} />
+            <HomeProjectsSection
+              projects={projects}
+              loading={loading}
+              onTogglePin={togglePin}
+              onDeleteProject={removeProject}
+              onLeaveProject={leaveProject}
+            />
           </div>
           <div className="mt-9.75">
             <HomeRecommendedJobsSection

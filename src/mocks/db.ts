@@ -6,8 +6,7 @@ import type { Portfolio } from '../types/portfolio'
 import type { Application, Recruitment } from '../types/recruitment'
 import type { Schedule } from '../types/schedule'
 import type { ProjectNotice } from '../types/notice'
-import type { MeUser, NotificationSettings, UserRegion } from '../types/user'
-import type { Inquiry } from '../types/inquiry'
+import type { MeUser, UserRegion } from '../types/user'
 import type { ReferenceFile, VideoDetail } from '../types/video'
 /* stats에 값을 업데이트해도 빈값 객체가 변질 되지 않도록 객체 생성 함수로 정의하여 사용용 */
 function emptyStats() {
@@ -24,6 +23,7 @@ const incompleteUser: MeUser = {
   onboardingCompleted: false,
   primaryRole: null,
   roles: [],
+  regions: [],
   region: null,
   location: null,
   categories: [],
@@ -42,6 +42,7 @@ const completeUser: MeUser = {
   onboardingCompleted: true,
   primaryRole: 'DIRECTOR',
   roles: ['DIRECTOR', 'PD', 'EDITOR'],
+  regions: ['SEOUL'],
   region: 'SEOUL',
   location: 'SEOUL',
   categories: ['FILM_DRAMA', 'MUSIC_VIDEO'],
@@ -70,6 +71,7 @@ const publicEditor: MeUser = {
   onboardingCompleted: true,
   primaryRole: 'EDITOR',
   roles: ['EDITOR'],
+  regions: ['SEOUL'],
   region: 'SEOUL',
   location: 'SEOUL',
   categories: ['DOCUMENTARY'],
@@ -108,6 +110,7 @@ export type MockProjectRecord = {
 
 export type MockMemberRecord = {
   memberId: number
+  projectId: number
   userId: number
   nickname: string
   email: string
@@ -118,10 +121,29 @@ export type MockMemberRecord = {
   joinedAt: string
 }
 
+export type MockRecruitmentRecord = Recruitment & {
+  description: string
+  shootingPeriod: string
+  contact: string
+  updatedAt: string
+}
+
 export type MockProjectFileRecord = Omit<ProjectFile, 'uploader'> & {
   projectId: number
   storageKey: string
   uploaderId: number
+}
+
+export type MockApplicationFile = {
+  id: number
+  recruitmentId: number
+  userId: number
+  /** 지원에 연결되기 전에는 null */
+  applicationId: number | null
+  fileName: string
+  contentType: string
+  fileSize: number
+  createdAt: string
 }
 
 /* 모의 데이터베이스 타입 정의 */
@@ -129,10 +151,8 @@ export type MockDb = {
   currentUserId: number | null
   tokens: AuthTokens | null
   users: MeUser[]
-  notificationSettings: Record<number, NotificationSettings>
   /** FE mock 전용 — 비밀번호 변경/회원탈퇴 확인용. 실 BE엔 없는 필드라 MeProfile엔 포함하지 않음 */
   passwords: Record<number, string>
-  inquiries: Inquiry[]
   portfolios: Portfolio[]
   projects: MockProjectRecord[]
   members: MockMemberRecord[]
@@ -143,8 +163,9 @@ export type MockDb = {
   feedbacks: Feedback[]
   replies: FeedbackReply[]
   shareLinks: ShareLink[]
-  recruitments: Recruitment[]
+  recruitments: MockRecruitmentRecord[]
   applications: Application[]
+  applicationFiles: MockApplicationFile[]
   recruitmentBookmarks: Array<{ userId: number; recruitmentId: number }>
   schedules: Schedule[]
   notifications: AppNotification[]
@@ -158,16 +179,6 @@ export type MockDb = {
 }
 
 /* 기본 알림 설정 객체 생성 함수 */
-function defaultNotificationSettings(): NotificationSettings {
-  return {
-    emailAllEnabled: true,
-    emailDeadlineReminder: true,
-    emailAssigned: true,
-    emailNewApplicant: true,
-    emailMissedSummary: true,
-  }
-}
-
 function toWriter(user: MeUser) {
   return {
     id: user.id,
@@ -186,18 +197,12 @@ export const db: MockDb = {
     refreshToken: 'mock-refresh-token',
   },
   users: [incompleteUser, completeUser, publicEditor],
-  notificationSettings: {
-    [incompleteUser.id]: defaultNotificationSettings(),
-    [completeUser.id]: defaultNotificationSettings(),
-    [publicEditor.id]: defaultNotificationSettings(),
-  },
   /** mock 기본 비밀번호 — 비밀번호 변경/회원탈퇴 확인 플로우 테스트용 */
   passwords: {
     [incompleteUser.id]: 'password123',
     [completeUser.id]: 'password123',
     [publicEditor.id]: 'password123',
   },
-  inquiries: [],
   portfolios: [
     {
       id: 10,
@@ -249,8 +254,10 @@ export const db: MockDb = {
     },
   ],
   members: [
+    /* 프로젝트 1 "위로, 또 위로" 팀 — 2명 */
     {
       memberId: 1,
+      projectId: 1,
       userId: completeUser.id,
       nickname: completeUser.nickname,
       profileImageUrl: completeUser.profileImageUrl,
@@ -262,6 +269,7 @@ export const db: MockDb = {
     },
     {
       memberId: 2,
+      projectId: 1,
       userId: publicEditor.id,
       nickname: publicEditor.nickname,
       profileImageUrl: publicEditor.profileImageUrl,
@@ -270,6 +278,55 @@ export const db: MockDb = {
       permission: 'MEMBER',
       roleNames: ['EDITOR'],
       joinedAt: '2026-06-02T09:00:00Z',
+    },
+    /* 프로젝트 2 "브랜드 필름 A" 팀 — 4명 (카드 "+N" 아바타 뱃지 확인용) */
+    {
+      memberId: 3,
+      projectId: 2,
+      userId: completeUser.id,
+      nickname: completeUser.nickname,
+      profileImageUrl: completeUser.profileImageUrl,
+      email: completeUser.email,
+      bio: completeUser.bio,
+      permission: 'ADMIN',
+      roleNames: ['DIRECTOR'],
+      joinedAt: '2026-05-01T09:00:00Z',
+    },
+    {
+      memberId: 4,
+      projectId: 2,
+      userId: 9004,
+      nickname: '테스트멤버4',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=14',
+      email: 'member4@example.com',
+      bio: null,
+      permission: 'MEMBER',
+      roleNames: ['CINEMATOGRAPHER'],
+      joinedAt: '2026-05-02T09:00:00Z',
+    },
+    {
+      memberId: 5,
+      projectId: 2,
+      userId: 9005,
+      nickname: '테스트멤버5',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=15',
+      email: 'member5@example.com',
+      bio: null,
+      permission: 'MEMBER',
+      roleNames: ['SOUND'],
+      joinedAt: '2026-05-03T09:00:00Z',
+    },
+    {
+      memberId: 6,
+      projectId: 2,
+      userId: 9006,
+      nickname: '테스트멤버6',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=16',
+      email: 'member6@example.com',
+      bio: null,
+      permission: 'MEMBER',
+      roleNames: ['LIGHTING'],
+      joinedAt: '2026-05-04T09:00:00Z',
     },
   ],
   files: [
@@ -411,7 +468,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: true,
       writer: toWriter(completeUser),
+      description: '감정선을 살리는 편집이 가능하신 분을 찾습니다.',
+      shootingPeriod: '2026.08.25 ~ 2026.09.10',
+      contact: 'slate@example.com',
       createdAt: '2026-06-15T00:00:00Z',
+      updatedAt: '2026-06-15T00:00:00Z',
     },
     {
       id: 2,
@@ -428,7 +489,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: false,
       writer: toWriter(publicEditor),
+      description: '지방 촬영이 가능하신 촬영 감독을 모십니다.',
+      shootingPeriod: '2026.09.01 ~ 2026.10.15',
+      contact: 'park@example.com',
       createdAt: '2026-07-01T00:00:00Z',
+      updatedAt: '2026-07-01T00:00:00Z',
     },
     {
       id: 3,
@@ -445,7 +510,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: true,
       writer: toWriter(completeUser),
+      description: '아이돌 그룹 신곡 뮤직비디오 연출을 맡아주실 분을 찾습니다.',
+      shootingPeriod: '2026.08.20 ~ 2026.08.28',
+      contact: 'slate@example.com',
       createdAt: '2026-07-03T00:00:00Z',
+      updatedAt: '2026-07-03T00:00:00Z',
     },
     {
       id: 4,
@@ -462,7 +531,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: false,
       writer: toWriter(publicEditor),
+      description: '주말 스튜디오 작업이 가능하신 분을 우대합니다.',
+      shootingPeriod: '2026.09.05 ~ 2026.09.20',
+      contact: 'park@example.com',
       createdAt: '2026-07-05T00:00:00Z',
+      updatedAt: '2026-07-05T00:00:00Z',
     },
     {
       id: 5,
@@ -479,7 +552,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: true,
       writer: toWriter(completeUser),
+      description: '브랜드 광고 세트 디자인을 담당하실 미술팀을 모집합니다.',
+      shootingPeriod: '2026.08.22 ~ 2026.09.02',
+      contact: 'slate@example.com',
       createdAt: '2026-07-08T00:00:00Z',
+      updatedAt: '2026-07-08T00:00:00Z',
     },
     {
       id: 6,
@@ -496,7 +573,11 @@ export const db: MockDb = {
       isBookmarked: false,
       isMine: false,
       writer: toWriter(publicEditor),
+      description: '독립영화 제작 경험이 있으신 분을 우대합니다.',
+      shootingPeriod: '2026.09.10 ~ 2026.11.30',
+      contact: 'park@example.com',
       createdAt: '2026-07-10T00:00:00Z',
+      updatedAt: '2026-07-10T00:00:00Z',
     },
   ],
   applications: [
@@ -509,6 +590,28 @@ export const db: MockDb = {
       message: '관심 있습니다',
       status: 'PENDING',
       createdAt: '2026-06-16T00:00:00Z',
+    },
+  ],
+  applicationFiles: [
+    {
+      id: 9001,
+      recruitmentId: 1,
+      userId: 2,
+      applicationId: 1,
+      fileName: '포트폴리오.pdf',
+      contentType: 'application/pdf',
+      fileSize: 2048576,
+      createdAt: '2026-08-12T00:00:00.000Z',
+    },
+    {
+      id: 9002,
+      recruitmentId: 1,
+      userId: 2,
+      applicationId: 1,
+      fileName: '편집_샘플.mp4',
+      contentType: 'video/mp4',
+      fileSize: 52428800,
+      createdAt: '2026-08-12T00:00:00.000Z',
     },
   ],
   recruitmentBookmarks: [{ userId: completeUser.id, recruitmentId: 2 }],
@@ -603,6 +706,7 @@ export function toMeProfile(user: MeUser) {
     nickname: user.nickname,
     profileImageUrl: user.profileImageUrl,
     bio: user.bio,
+    regions: user.regions ?? (user.location ? [user.location] : []),
     region: user.region ?? user.location,
     location: user.location ?? user.region,
     socialType: user.socialType,

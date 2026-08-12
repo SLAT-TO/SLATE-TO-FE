@@ -19,6 +19,8 @@ interface ProjectCardProps {
   statusVariant?: TagVariant
   /** 장르·분량 등 메타 태그 */
   tags?: string[]
+  /** tags 앞쪽에 배치된 프로젝트 유형·영상 길이 태그 수 */
+  metaTagCount?: number
   /** 0~100, 미전달 시 진행률 바 숨김 */
   progress?: number
   members?: ProjectCardMember[]
@@ -31,6 +33,7 @@ interface ProjectCardProps {
   menuItems?: ActionMenuItem[]
   onClick?: () => void
   className?: string
+  responsiveLayout?: boolean
 }
 
 const AVATAR_SIZE = 28
@@ -40,6 +43,7 @@ const ProjectCard = ({
   statusLabel,
   statusVariant = 'secondary',
   tags = [],
+  metaTagCount = 0,
   progress,
   members = [],
   isPinned = false,
@@ -49,6 +53,7 @@ const ProjectCard = ({
   menuItems = [],
   onClick,
   className = '',
+  responsiveLayout = false,
 }: ProjectCardProps) => {
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (!onClick) return
@@ -80,6 +85,7 @@ const ProjectCard = ({
                   e.stopPropagation() // 카드 클릭(상세 이동) 막기
                   onTogglePin()
                 }}
+                onKeyDown={(e) => e.stopPropagation()} // Enter/Space가 카드 handleKeyDown까지 버블링되는 것 방지
                 aria-pressed={isPinned}
                 aria-label={isPinned ? '즐겨찾기 해제' : '즐겨찾기 추가'}
                 className={`shrink-0 ${isPinned ? 'text-caution' : 'text-neutral-6'}`}
@@ -94,15 +100,23 @@ const ProjectCard = ({
         </div>
 
         {menuItems.length > 0 && (
-          <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            className="shrink-0"
+          >
             <ActionMenu items={menuItems} ariaLabel="프로젝트 메뉴" />
           </div>
         )}
       </div>
 
       {/* 영상 썸네일(좌) · 태그/진행률/멤버(우) — 가로 분할 */}
-      <div className="flex gap-10">
-        <div className="bg-neutral-2 flex aspect-23/8 w-2/5 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+      <div className={`flex gap-10 ${responsiveLayout ? 'flex-col sm:flex-row sm:gap-10' : ''}`}>
+        <div
+          className={`bg-neutral-2 flex shrink-0 items-center justify-center overflow-hidden rounded-lg ${
+            responsiveLayout ? 'aspect-video w-full sm:aspect-23/8 sm:w-2/5' : 'aspect-23/8 w-2/5'
+          }`}
+        >
           {thumbnailUrl && <img src={thumbnailUrl} alt="" className="h-full w-full object-cover" />}
           <p
             className={thumbnailUrl ? 'hidden' : 'text-caption-lg text-neutral-6 px-4 text-center'}
@@ -112,11 +126,15 @@ const ProjectCard = ({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
-          <div className="flex items-center justify-between gap-2">
+          <div
+            className={`flex items-center justify-between gap-2 ${
+              responsiveLayout ? 'flex-col sm:flex-row sm:gap-2' : ''
+            }`}
+          >
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag, index) => (
-                  <Tag key={`${tag}-${index}`} variant="primary">
+                  <Tag key={`${tag}-${index}`} variant={index < metaTagCount ? 'meta' : 'primary'}>
                     {tag}
                   </Tag>
                 ))}

@@ -1,17 +1,23 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
-import { createReply, getReplies } from '../api/videos'
+import { createReply, deleteReply, getReplies, updateReply } from '../api/videos'
 import type { FeedbackReply } from '../types/feedback'
-import { projectKeys } from '../queries/keys'
+import { invalidateProjectActivityData } from '../queries/projectInvalidation'
 
 /** 피드백 답글 펼침/목록/작성
  * @param guestId 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
-export function useFeedbackReplies(guestId?: number, projectId?: number) {
+export function useFeedbackReplies(guestId?: number, projectId?: number, guestToken?: string) {
   const queryClient = useQueryClient()
   const [expandedFeedbackId, setExpandedFeedbackId] = useState<number | null>(null)
   const [repliesByFeedback, setRepliesByFeedback] = useState<Record<number, FeedbackReply[]>>({})
   const [newReply, setNewReply] = useState('')
+  const [editingReplyId, setEditingReplyId] = useState<number | null>(null)
+  const [editingReplyContent, setEditingReplyContent] = useState('')
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false)
+  const [pendingReplyActionId, setPendingReplyActionId] = useState<number | null>(null)
+  const isSubmittingReplyRef = useRef(false)
+  const pendingReplyActionIdsRef = useRef(new Set<number>())
+  const fetchingReplyIdsRef = useRef(new Set<number>())
 
   const resetReplyCompose = useCallback(() => {
     setNewReply('')
@@ -26,37 +32,116 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
       }
       setExpandedFeedbackId(feedbackId)
       resetReplyCompose()
-      setRepliesByFeedback((prev) => {
-        if (prev[feedbackId]) return prev
-        void getReplies(feedbackId).then((page) => {
-          setRepliesByFeedback((p) => ({ ...p, [feedbackId]: page.items }))
-        })
-        return prev
-      })
+      if (repliesByFeedback[feedbackId] || fetchingReplyIdsRef.current.has(feedbackId)) return
+
+      fetchingReplyIdsRef.current.add(feedbackId)
+      try {
+        const page = await getReplies(
+          feedbackId,
+          guestId != null ? { guestId, guestToken } : undefined,
+        )
+        setRepliesByFeedback((prev) => ({ ...prev, [feedbackId]: page.items }))
+      } catch {
+        window.alert('답글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+      } finally {
+        fetchingReplyIdsRef.current.delete(feedbackId)
+      }
     },
-    [expandedFeedbackId, resetReplyCompose],
+    [expandedFeedbackId, guestId, guestToken, repliesByFeedback, resetReplyCompose],
   )
 
   const submitReply = useCallback(
     async (feedbackId: number) => {
-      if (!newReply.trim()) return
-      const actor = resolveFeedbackActor(guestId)
-      const created = await createReply(feedbackId, {
-        content: newReply.trim(),
-        ...actor,
-      })
-      setRepliesByFeedback((prev) => ({
-        ...prev,
-        [feedbackId]: [...(prev[feedbackId] ?? []), created],
-      }))
-      resetReplyCompose()
-      if (projectId != null) {
-        void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
-        void queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) })
-        void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
+      if (!newReply.trim() || isSubmittingReplyRef.current) return
+
+      isSubmittingReplyRef.current = true
+      setIsSubmittingReply(true)
+      try {
+        const created = await createReply(
+          feedbackId,
+          { content: newReply.trim() },
+          guestId != null ? { guestId, guestToken } : undefined,
+        )
+        setRepliesByFeedback((prev) => ({
+          ...prev,
+          [feedbackId]: [...(prev[feedbackId] ?? []), created],
+        }))
+        resetReplyCompose()
+        if (projectId != null) {
+          void invalidateProjectActivityData(queryClient, projectId)
+        }
+      } catch {
+        window.alert('답글 등록에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      } finally {
+        isSubmittingReplyRef.current = false
+        setIsSubmittingReply(false)
       }
     },
-    [newReply, guestId, projectId, queryClient, resetReplyCompose],
+    [newReply, guestId, guestToken, projectId, queryClient, resetReplyCompose],
+  )
+
+  const startEditReply = useCallback((reply: FeedbackReply) => {
+    setEditingReplyId(reply.replyId)
+    setEditingReplyContent(reply.content)
+  }, [])
+
+  const cancelEditReply = useCallback(() => {
+    setEditingReplyId(null)
+    setEditingReplyContent('')
+  }, [])
+
+  const saveEditReply = useCallback(
+    async (feedbackId: number, replyId: number) => {
+      const content = editingReplyContent.trim()
+      if (!content || pendingReplyActionIdsRef.current.has(replyId)) return
+
+      pendingReplyActionIdsRef.current.add(replyId)
+      setPendingReplyActionId(replyId)
+      try {
+        const updated = await updateReply(
+          replyId,
+          { content },
+          guestId != null ? { guestId, guestToken } : undefined,
+        )
+        if (!updated) throw new Error('답글 수정 응답이 없습니다.')
+        setRepliesByFeedback((prev) => ({
+          ...prev,
+          [feedbackId]: (prev[feedbackId] ?? []).map((reply) =>
+            reply.replyId === replyId ? updated : reply,
+          ),
+        }))
+        cancelEditReply()
+      } catch {
+        window.alert('답글 수정에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      } finally {
+        pendingReplyActionIdsRef.current.delete(replyId)
+        setPendingReplyActionId((current) => (current === replyId ? null : current))
+      }
+    },
+    [cancelEditReply, editingReplyContent, guestId, guestToken],
+  )
+
+  const removeReply = useCallback(
+    async (feedbackId: number, replyId: number) => {
+      if (pendingReplyActionIdsRef.current.has(replyId)) return
+
+      pendingReplyActionIdsRef.current.add(replyId)
+      setPendingReplyActionId(replyId)
+      try {
+        await deleteReply(replyId, guestId != null ? { guestId, guestToken } : undefined)
+        setRepliesByFeedback((prev) => ({
+          ...prev,
+          [feedbackId]: (prev[feedbackId] ?? []).filter((reply) => reply.replyId !== replyId),
+        }))
+        if (editingReplyId === replyId) cancelEditReply()
+      } catch {
+        window.alert('답글 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      } finally {
+        pendingReplyActionIdsRef.current.delete(replyId)
+        setPendingReplyActionId((current) => (current === replyId ? null : current))
+      }
+    },
+    [cancelEditReply, editingReplyId, guestId, guestToken],
   )
 
   return {
@@ -64,7 +149,16 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
     repliesByFeedback,
     newReply,
     setNewReply,
+    editingReplyId,
+    editingReplyContent,
+    setEditingReplyContent,
+    isSubmittingReply,
+    pendingReplyActionId,
     toggleReplies,
     submitReply,
+    startEditReply,
+    cancelEditReply,
+    saveEditReply,
+    removeReply,
   }
 }

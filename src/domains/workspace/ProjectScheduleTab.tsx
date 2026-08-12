@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { addMonths, format, parse, subMonths } from 'date-fns'
 import {
   createWorkspaceSchedule,
@@ -20,6 +21,7 @@ import type { MemberSummary } from '../../types/project'
 import type { Schedule } from '../../types/schedule'
 import { pickEventColor, toDateKey } from '../../utils/calendarUtils'
 import { formatTarget, scheduleToCalendarEvent } from '../../utils/scheduleAdapter'
+import { invalidateProjectActivityData } from '../../queries/projectInvalidation'
 import paperPlaneIcon from '../../assets/icons/paper-plane.svg?raw'
 
 type ProjectScheduleTabProps = {
@@ -107,7 +109,6 @@ function ScheduleDetailCard({
             </p>
             <div className="text-caption-sm text-neutral-6 flex flex-wrap items-center gap-4 tracking-[-0.24px]">
               {schedule.location && <span>{schedule.location}</span>}
-              <span>{format(new Date(schedule.startAt), 'HH:mm')}</span>
               {formatTarget(participantNames) && <span>{formatTarget(participantNames)}</span>}
             </div>
           </div>
@@ -182,6 +183,7 @@ function ScheduleDetailCard({
 // 워크스페이스 프로젝트 상세의 "일정" 탭. 캘린더 공용 컴포넌트를 그대로 쓰되,
 // 이 프로젝트의 실제 Schedule API에 연동한다 (독립 캘린더 페이지는 아직 로컬 store만 사용).
 export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabProps) {
+  const queryClient = useQueryClient()
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [daySchedules, setDaySchedules] = useState<Schedule[]>([])
   const [loading, setLoading] = useState(true)
@@ -189,6 +191,19 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [formModal, setFormModal] = useState<FormModalState>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+
+  const refreshSelectedDaySchedules = useCallback(async () => {
+    if (!selectedDate) return
+    try {
+      const result = await getWorkspaceDailySchedules(toDateKey(selectedDate), {
+        projectId,
+        scope: 'PROJECT',
+      })
+      setDaySchedules(result.items)
+    } catch {
+      setActionError('일정 상세 정보를 새로고침하지 못했습니다. 다시 시도해주세요.')
+    }
+  }, [projectId, selectedDate])
 
   useEffect(() => {
     let cancelled = false
@@ -272,6 +287,8 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
         participantIds: values.participantIds.map(Number),
       })
       setSchedules((prev) => [created, ...prev])
+      void refreshSelectedDaySchedules()
+      void invalidateProjectActivityData(queryClient, projectId)
     } catch {
       setActionError('일정을 추가하지 못했습니다. 다시 시도해주세요.')
     }
@@ -296,7 +313,8 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
         current,
       )
       setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
-      setDaySchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+      void refreshSelectedDaySchedules()
+      void invalidateProjectActivityData(queryClient, projectId)
     } catch {
       setActionError('일정을 수정하지 못했습니다. 다시 시도해주세요.')
     }
@@ -307,6 +325,8 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
     try {
       await deleteWorkspaceSchedule(scheduleId)
       setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
+      setDaySchedules((prev) => prev.filter((s) => s.id !== scheduleId))
+      void invalidateProjectActivityData(queryClient, projectId)
     } catch {
       setActionError('일정을 삭제하지 못했습니다. 다시 시도해주세요.')
     }
@@ -363,7 +383,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
       {loading ? (
         <p className="text-body-sm text-neutral-6">불러오는 중…</p>
       ) : (
-        <div style={{ height: 720 }}>
+        <div className="h-[520px] sm:h-[620px] lg:h-[720px]">
           <Calendar
             month={month}
             events={events}
@@ -380,7 +400,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
           {selectedDateSchedules.length === 0 ? (
             <p className="text-caption-lg text-neutral-6">등록된 일정이 없습니다</p>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {selectedDateSchedules.map((schedule) => (
                 <ScheduleDetailCard
                   key={schedule.id}

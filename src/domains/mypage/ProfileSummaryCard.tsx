@@ -6,8 +6,16 @@ interface ProfileSummaryCardProps {
   onEditClick?: () => void
 }
 
+/** 카드 공간이 좁아 앞의 2개만 노출하고 나머지는 개수로 표시 */
+const VISIBLE_COUNT = 2
+
 function ProfileSummaryCard({ profile, onEditClick }: ProfileSummaryCardProps) {
-  const { profileImageUrl, nickname, role, region, email, introduction } = profile
+  const { profileImageUrl, nickname, roles, regions, email, introduction } = profile
+
+  const visibleRoles = roles.slice(0, VISIBLE_COUNT)
+  const hiddenRoleCount = roles.length - visibleRoles.length
+  const visibleRegions = regions.slice(0, VISIBLE_COUNT)
+  const hiddenRegionCount = regions.length - visibleRegions.length
 
   return (
     <div className="flex items-start gap-4">
@@ -16,12 +24,16 @@ function ProfileSummaryCard({ profile, onEditClick }: ProfileSummaryCardProps) {
         alt={`${nickname}님의 프로필 사진`}
         className="h-16 w-16 shrink-0 rounded-full object-cover"
       />
-
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-neutral-11 text-lg font-semibold">{nickname}</span>
-            <Tag>{role}</Tag>
+            {visibleRoles.map((role) => (
+              <Tag key={role}>{role}</Tag>
+            ))}
+            {hiddenRoleCount > 0 && (
+              <span className="text-neutral-6 text-xs">+{hiddenRoleCount}</span>
+            )}
           </div>
           {onEditClick && (
             <button
@@ -34,7 +46,13 @@ function ProfileSummaryCard({ profile, onEditClick }: ProfileSummaryCardProps) {
           )}
         </div>
 
-        {region && <span className="text-neutral-7 text-sm">{region}</span>}
+        {visibleRegions.length > 0 && (
+          <span className="text-neutral-7 text-sm">
+            {visibleRegions.join(', ')}
+            {hiddenRegionCount > 0 && <span className="text-neutral-6"> +{hiddenRegionCount}</span>}
+          </span>
+        )}
+
         <span className="text-neutral-7 text-sm">{email}</span>
         <p className="text-neutral-8 mt-2 text-sm leading-relaxed whitespace-pre-line">
           {introduction?.trim() ? (

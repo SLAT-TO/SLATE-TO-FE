@@ -1,36 +1,36 @@
-import { useMemo } from 'react'
+import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import MainLayout from './layouts/MainLayout'
-import CalendarPage from './pages/CalendarPage'
-import HomePage from './pages/HomePage'
-import MyPage from './pages/MyPage'
-import NotificationPage from './pages/NotificationPage'
-import ProfileEditPage from './pages/ProfileEditPage'
-import ProjectFormPage from './pages/ProjectFormPage'
-import ProjectOverviewPage from './pages/ProjectOverviewPage'
-import RecruitPage from './pages/RecruitPage'
-import JobDetailPage from './pages/JobDetailPage'
-import JobApplicantsPage from './pages/JobApplicantsPage'
-import SettingsPage from './pages/SettingsPage'
-import SettingsNotificationsPage from './pages/SettingsNotificationsPage'
-import SettingsPasswordPage from './pages/SettingsPasswordPage'
-import SettingsInquiryPage from './pages/SettingsInquiryPage'
 import HeaderTitle from './components/HeaderTitle'
-import MyRecruitPage from './pages/MyRecruitPage'
-import JobFormPage from './pages/JobFormPage'
 import { useHeaderSlot } from './hooks/useHeaderSlot'
 import { useAuthGuard } from './hooks/useAuthGuard'
 import { renderFullscreenRoute } from './routes/fullscreen'
 import NavigateBridge from './routes/NavigateBridge'
 import { workspaceRoutes } from './routes/workspace'
 import { matchPath } from './utils/navigation'
-import ApplicantProfilePage from './pages/ApplicantProfilePage'
-import UserProfilePage from './pages/UserProfilePage'
+import { useUserStore } from './stores/userStore'
+import { RouteLoadingBoundary, RouteLoadingFallback } from './components/RouteLoadingBoundary'
 
-const USER_NAME = '서정현' // API 연동 시 유저 정보로 교체
+const CalendarPage = lazy(() => import('./pages/CalendarPage'))
+const HomePage = lazy(() => import('./pages/HomePage'))
+const MyPage = lazy(() => import('./pages/MyPage'))
+const NotificationPage = lazy(() => import('./pages/NotificationPage'))
+const ProfileEditPage = lazy(() => import('./pages/ProfileEditPage'))
+const ProjectFormPage = lazy(() => import('./pages/ProjectFormPage'))
+const ProjectOverviewPage = lazy(() => import('./pages/ProjectOverviewPage'))
+const RecruitPage = lazy(() => import('./pages/RecruitPage'))
+const JobDetailPage = lazy(() => import('./pages/JobDetailPage'))
+const JobApplicantsPage = lazy(() => import('./pages/JobApplicantsPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const SettingsPasswordPage = lazy(() => import('./pages/SettingsPasswordPage'))
+const MyRecruitPage = lazy(() => import('./pages/MyRecruitPage'))
+const JobFormPage = lazy(() => import('./pages/JobFormPage'))
+const ApplicantProfilePage = lazy(() => import('./pages/ApplicantProfilePage'))
+const UserProfilePage = lazy(() => import('./pages/UserProfilePage'))
 
-function getHeaderTitle(pathname: string): string | undefined {
-  if (pathname === '/' || pathname === '') return `안녕하세요 ${USER_NAME} 님`
+function getHeaderTitle(pathname: string, userName: string): string | undefined {
+  if (pathname === '/' || pathname === '')
+    return userName ? `안녕하세요 ${userName} 님` : '안녕하세요'
   if (pathname === '/calendar') return '통합 캘린더'
   if (pathname === '/matching') return '구인구직'
   if (pathname === '/mypage') return '마이페이지'
@@ -44,7 +44,8 @@ function getHeaderTitle(pathname: string): string | undefined {
 /** 아직 React Router로 옮기지 않은 화면 — 워크스페이스는 workspaceRoutes 담당 */
 function LegacyAppRoutes() {
   const pathname = useLocation().pathname
-  const headerTitle = useMemo(() => getHeaderTitle(pathname), [pathname])
+  const userName = useUserStore((s) => s.user?.nickname ?? '')
+  const headerTitle = useMemo(() => getHeaderTitle(pathname, userName), [pathname, userName])
   const headerContent = useMemo(
     () => (headerTitle === undefined ? undefined : <HeaderTitle>{headerTitle}</HeaderTitle>),
     [headerTitle],
@@ -66,17 +67,26 @@ function LegacyAppRoutes() {
   }
 
   if (path === '/matching/new') {
-    return <JobFormPage />
+    return <JobFormPage mode="create" />
   }
 
-  const applicantProfileMatch = matchPath('/matching/:jobId/applicants/:applicantId', path)
+  const jobEditMatch = matchPath('/matching/:jobId/edit', path)
+  if (jobEditMatch) {
+    const jobId = Number(jobEditMatch.jobId)
+    if (!Number.isFinite(jobId)) {
+      return <p className="text-body-sm text-warning">잘못된 공고 경로입니다.</p>
+    }
+    return <JobFormPage key={jobId} mode="edit" jobId={jobId} />
+  }
+
+  const applicantProfileMatch = matchPath('/matching/:jobId/applicants/:applicationId', path)
   if (applicantProfileMatch) {
     const jobId = Number(applicantProfileMatch.jobId)
-    const applicantId = Number(applicantProfileMatch.applicantId)
-    if (!Number.isFinite(jobId) || !Number.isFinite(applicantId)) {
+    const applicationId = Number(applicantProfileMatch.applicationId)
+    if (!Number.isFinite(jobId) || !Number.isFinite(applicationId)) {
       return <p className="text-body-sm text-warning">잘못된 지원자 경로입니다.</p>
     }
-    return <ApplicantProfilePage key={applicantId} jobId={jobId} applicantId={applicantId} />
+    return <ApplicantProfilePage key={applicationId} jobId={jobId} applicationId={applicationId} />
   }
 
   const applicantsMatch = matchPath('/matching/:jobId/applicants', path)
@@ -111,20 +121,28 @@ function LegacyAppRoutes() {
   }
 
   if (path === '/settings') return <SettingsPage />
-  if (path === '/settings/notifications') return <SettingsNotificationsPage />
   if (path === '/settings/password') return <SettingsPasswordPage />
-  if (path === '/settings/inquiry') return <SettingsInquiryPage />
 
   if (path === '/mypage') return <MyPage />
   if (path === '/mypage/edit') return <ProfileEditPage />
   if (path === '/mypage/project/new') return <ProjectFormPage mode="create" />
 
-  if (matchPath('/mypage/project/:id/edit', path)) {
-    return <ProjectFormPage mode="edit" />
+  const portfolioEditMatch = matchPath('/mypage/project/:id/edit', path)
+  if (portfolioEditMatch) {
+    const portfolioId = Number(portfolioEditMatch.id)
+    if (!Number.isFinite(portfolioId)) {
+      return <p className="text-body-sm text-warning">잘못된 프로젝트 경로입니다.</p>
+    }
+    return <ProjectFormPage key={portfolioId} mode="edit" portfolioId={portfolioId} />
   }
 
-  if (matchPath('/mypage/project/:id', path)) {
-    return <ProjectOverviewPage />
+  const portfolioMatch = matchPath('/mypage/project/:id', path)
+  if (portfolioMatch) {
+    const portfolioId = Number(portfolioMatch.id)
+    if (!Number.isFinite(portfolioId)) {
+      return <p className="text-body-sm text-warning">잘못된 프로젝트 경로입니다.</p>
+    }
+    return <ProjectOverviewPage key={portfolioId} portfolioId={portfolioId} />
   }
 
   if (path === '/') {
@@ -145,15 +163,33 @@ function AppShell() {
   const pathname = useLocation().pathname
   useAuthGuard(pathname)
 
+  const userName = useUserStore((s) => s.user?.nickname ?? '')
+  const profileImageUrl = useUserStore((s) => s.user?.profileImageUrl)
+  const fetchUser = useUserStore((s) => s.fetchUser)
+
+  useEffect(() => {
+    void fetchUser()
+  }, [fetchUser])
+
   const fullscreen = renderFullscreenRoute(pathname)
-  if (fullscreen) return fullscreen
+  if (fullscreen) {
+    return (
+      <RouteLoadingBoundary key={pathname}>
+        <Suspense fallback={<RouteLoadingFallback />}>{fullscreen}</Suspense>
+      </RouteLoadingBoundary>
+    )
+  }
 
   return (
-    <MainLayout userName={USER_NAME}>
-      <Routes>
-        {workspaceRoutes()}
-        <Route path="*" element={<LegacyAppRoutes />} />
-      </Routes>
+    <MainLayout userName={userName} profileImageUrl={profileImageUrl}>
+      <RouteLoadingBoundary key={pathname}>
+        <Suspense fallback={<RouteLoadingFallback />}>
+          <Routes>
+            {workspaceRoutes()}
+            <Route path="*" element={<LegacyAppRoutes />} />
+          </Routes>
+        </Suspense>
+      </RouteLoadingBoundary>
     </MainLayout>
   )
 }

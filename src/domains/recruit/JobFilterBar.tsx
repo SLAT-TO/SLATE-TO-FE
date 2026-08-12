@@ -10,7 +10,7 @@ interface JobFilterBarProps {
   sort: SortValue
   onSortChange: (value: SortValue) => void
   selectedFilters: SelectedFilters
-  onToggleFilter: (category: FilterCategory, value: string) => void
+  onToggleFilter: (category: FilterCategory, value: string, groupOptions?: string[]) => void
   openCategory: FilterCategory | null
   onOpenCategoryChange: (category: FilterCategory | null) => void
   chips: SelectedFilterChip[]
@@ -59,7 +59,7 @@ function JobFilterBar({
             type="button"
             onClick={() => onOpenCategoryChange(openCategory === config.key ? null : config.key)}
             aria-expanded={openCategory === config.key}
-            className="border-primary text-primary text-caption-lg bg-bg-primary flex items-center gap-1 rounded-lg border px-4 py-2"
+            className="border-primary text-primary text-caption-lg bg-bg-primary flex items-center gap-1 rounded-lg border px-4 py-1.5"
           >
             {config.buttonLabel}
             <svg
@@ -89,7 +89,7 @@ function JobFilterBar({
         <FilterPanel
           config={openConfig}
           selected={selectedFilters[openConfig.key]}
-          onToggle={(value) => onToggleFilter(openConfig.key, value)}
+          onToggle={(value, groupOptions) => onToggleFilter(openConfig.key, value, groupOptions)}
         />
       )}
 

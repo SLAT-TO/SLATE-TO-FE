@@ -21,6 +21,8 @@ type FeedbackPanelProps = Pick<
   | 'isCapturingRange'
   | 'editingFeedbackId'
   | 'editingFeedbackContent'
+  | 'isSubmittingFeedback'
+  | 'pendingFeedbackActionId'
   | 'setEditingFeedbackContent'
   | 'clearPendingTime'
   | 'attachCurrentTime'
@@ -38,10 +40,20 @@ type FeedbackPanelProps = Pick<
     | 'repliesByFeedback'
     | 'newReply'
     | 'setNewReply'
+    | 'editingReplyId'
+    | 'editingReplyContent'
+    | 'setEditingReplyContent'
+    | 'isSubmittingReply'
+    | 'pendingReplyActionId'
     | 'toggleReplies'
     | 'submitReply'
+    | 'startEditReply'
+    | 'cancelEditReply'
+    | 'saveEditReply'
+    | 'removeReply'
   > & {
     meId: number | null
+    guestId?: number
     onSeek: (seconds: number) => void
   }
 
@@ -56,6 +68,8 @@ export default function FeedbackPanel({
   isCapturingRange,
   editingFeedbackId,
   editingFeedbackContent,
+  isSubmittingFeedback,
+  pendingFeedbackActionId,
   setEditingFeedbackContent,
   clearPendingTime,
   attachCurrentTime,
@@ -70,9 +84,19 @@ export default function FeedbackPanel({
   repliesByFeedback,
   newReply,
   setNewReply,
+  editingReplyId,
+  editingReplyContent,
+  setEditingReplyContent,
+  isSubmittingReply,
+  pendingReplyActionId,
   toggleReplies,
   submitReply,
+  startEditReply,
+  cancelEditReply,
+  saveEditReply,
+  removeReply,
   meId,
+  guestId,
   onSeek,
 }: FeedbackPanelProps) {
   return (
@@ -110,16 +134,18 @@ export default function FeedbackPanel({
       <ul className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto">
         {filteredFeedbacks.map((feedback) => {
           const isMine =
-            meId !== null && feedback.actor.type === 'USER' && feedback.actor.id === meId
+            (feedback.actor.type === 'USER' && meId !== null && feedback.actor.id === meId) ||
+            (feedback.actor.type === 'GUEST' && guestId != null && feedback.actor.id === guestId)
           return (
             <FeedbackListItem
               key={feedback.feedbackId}
               feedback={feedback}
               isMine={isMine}
+              isActionPending={pendingFeedbackActionId === feedback.feedbackId}
               canResolve={meId !== null}
               onSeek={onSeek}
               onEdit={() => startEditFeedback(feedback)}
-              onRemove={() => removeFeedback(feedback.feedbackId)}
+              onRemove={() => void removeFeedback(feedback.feedbackId)}
               onToggleResolved={() => {
                 if (meId == null) return
                 void toggleResolved(feedback)
@@ -135,6 +161,17 @@ export default function FeedbackPanel({
               newReply={newReply}
               setNewReply={setNewReply}
               onSubmitReply={() => void submitReply(feedback.feedbackId)}
+              meId={meId}
+              guestId={guestId}
+              editingReplyId={editingReplyId}
+              editingReplyContent={editingReplyContent}
+              isSubmittingReply={isSubmittingReply}
+              pendingReplyActionId={pendingReplyActionId}
+              onEditingReplyContentChange={setEditingReplyContent}
+              onEditReply={startEditReply}
+              onCancelEditReply={cancelEditReply}
+              onSaveEditReply={(replyId) => void saveEditReply(feedback.feedbackId, replyId)}
+              onRemoveReply={(replyId) => void removeReply(feedback.feedbackId, replyId)}
             />
           )
         })}
@@ -198,7 +235,7 @@ export default function FeedbackPanel({
         <button
           type="button"
           onClick={submitFeedback}
-          disabled={!newFeedback.trim()}
+          disabled={!newFeedback.trim() || isSubmittingFeedback}
           className="bg-primary disabled:bg-neutral-3 flex size-9 items-center justify-center self-end rounded-full text-white"
           aria-label="전송"
         >

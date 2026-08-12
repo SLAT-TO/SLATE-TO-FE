@@ -1,26 +1,35 @@
 import Tag from '../../components/Tag'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
-import type { RecruitmentAuthor } from '../../types/Recruit.types'
+import type { RecruitmentWriter } from '../../types/recruitment'
+import { roleLabel } from '../../constants/roles'
+import { regionLabel } from '../../constants/regions'
 
 interface AuthorCardProps {
-  author: RecruitmentAuthor
+  writer: RecruitmentWriter
+  /** 공고 상세의 연락처 — 작성자 정보와 함께 노출 */
+  contact?: string
   onViewProfile?: () => void
 }
+
 /*작성자 시점*/
-function AuthorCard({ author, onViewProfile }: AuthorCardProps) {
+function AuthorCard({ writer, contact, onViewProfile }: AuthorCardProps) {
   return (
     <aside className="bg-bg-primary shadow-card flex w-full shrink-0 flex-col gap-4 rounded-xl p-6 lg:w-[35%]">
       <h3 className="text-body-sm text-neutral-11 font-bold">작성자</h3>
       <div className="flex items-start gap-4">
-        <Avatar src={author.profileImageUrl} alt={author.name} size={56} />
+        <Avatar src={writer.profileImageUrl ?? undefined} alt={writer.nickname} size={56} />
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <span className="text-caption-lg text-neutral-11 font-bold">{author.name}</span>
-            <Tag>{author.role}</Tag>
+            <span className="text-caption-lg text-neutral-11 font-bold">{writer.nickname}</span>
+            {writer.primaryRole && <Tag>{roleLabel(writer.primaryRole)}</Tag>}
           </div>
-          <span className="text-caption-sm text-neutral-6">{author.region}</span>
-          <span className="text-caption-sm text-neutral-6">{author.email}</span>
+          {writer.locations.length > 0 && (
+            <span className="text-caption-sm text-neutral-6">
+              {writer.locations.map(regionLabel).join(', ')}
+            </span>
+          )}
+          {contact && <span className="text-caption-sm text-neutral-6">{contact}</span>}
         </div>
       </div>
       <div className="px-4">

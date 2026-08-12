@@ -1,19 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   deleteFile,
   downloadProjectFile,
   getProjectFiles,
   pinProjectFile,
   unpinProjectFile,
-  uploadProjectFile,
 } from '../../api/projects'
 import ActionMenu from '../../components/ActionMenu'
 import { Button } from '../../components/Button'
 import ConfirmModal from '../../components/ConfirmModal'
-import FileInput from '../../components/FileInput'
 import InlineIcon from '../../components/InlineIcon'
-import Modal from '../../components/Modal'
-import TextArea from '../../components/TextArea'
 import type { ProjectFileListItem } from '../../types/file'
 import { downloadBlob } from '../../utils/downloadBlob'
 import documentIcon from '../../assets/icons/document.svg?raw'
@@ -21,28 +18,9 @@ import downloadIcon from '../../assets/icons/download.svg?raw'
 import searchIcon from '../../assets/icons/search.svg?raw'
 import starIcon from '../../assets/icons/star.svg?raw'
 import { CARD_BASE } from '../../styles/card'
+import { invalidateProjectActivityData } from '../../queries/projectInvalidation'
 import ProjectFileDetailView from './ProjectFileDetailView'
-
-const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024
-const ALLOWED_FILE_EXTENSIONS = ['.png', '.pdf', '.doc', '.docx', '.jpg', '.jpeg']
-const ALLOWED_FILE_TYPES = new Set([
-  'image/png',
-  'image/jpeg',
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-])
-
-function getFileValidationError(file: File): string | null {
-  const isAllowed = ALLOWED_FILE_EXTENSIONS.some((extension) =>
-    file.name.toLowerCase().endsWith(extension),
-  )
-  if (!isAllowed || (file.type && !ALLOWED_FILE_TYPES.has(file.type))) {
-    return '지원하지 않는 파일 형식입니다.'
-  }
-  if (file.size > MAX_FILE_SIZE_BYTES) return '파일은 최대 100MB까지 업로드할 수 있습니다.'
-  return null
-}
+import ProjectFileUploadModal from './ProjectFileUploadModal'
 
 interface ProjectFileListProps {
   projectId: number
@@ -73,86 +51,39 @@ export default function ProjectFileList({
   initialFileId = null,
   onInitialFileConsumed,
 }: ProjectFileListProps) {
+  const queryClient = useQueryClient()
   const [files, setFiles] = useState<ProjectFileListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [keyword, setKeyword] = useState('')
   const [searchKeyword, setSearchKeyword] = useState('')
   const [uploadOpen, setUploadOpen] = useState(false)
-  const [uploadFile, setUploadFile] = useState<File | null>(null)
-  const [uploadFileName, setUploadFileName] = useState('')
-  const [uploadPinned, setUploadPinned] = useState(false)
-  const [description, setDescription] = useState('')
-  const [uploadError, setUploadError] = useState('')
-  const [uploading, setUploading] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<ProjectFileListItem | null>(null)
   const [selectedFile, setSelectedFile] = useState<ProjectFileListItem | null>(null)
+  const latestLoadIdRef = useRef(0)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSearchKeyword(keyword), 400)
     return () => window.clearTimeout(timer)
   }, [keyword])
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function load() {
-      setLoading(true)
-      try {
-        const page = await getProjectFiles(projectId, searchKeyword.trim() || undefined)
-        if (!cancelled) setFiles(page.items)
-      } finally {
-        if (!cancelled) setLoading(false)
+  const reloadFiles = useCallback(async () => {
+    const loadId = ++latestLoadIdRef.current
+    setLoading(true)
+    try {
+      const page = await getProjectFiles(projectId, searchKeyword.trim() || undefined)
+      if (loadId === latestLoadIdRef.current) {
+        setFiles(page.items)
       }
-    }
-
-    void load()
-    return () => {
-      cancelled = true
+    } finally {
+      if (loadId === latestLoadIdRef.current) {
+        setLoading(false)
+      }
     }
   }, [projectId, searchKeyword])
 
-  const openUploadModal = () => {
-    setUploadFile(null)
-    setUploadFileName('')
-    setUploadPinned(false)
-    setDescription('')
-    setUploadError('')
-    setUploadOpen(true)
-  }
-
-  const submitUpload = async () => {
-    if (!uploadFile || !uploadFileName.trim()) {
-      setUploadError('파일명과 업로드할 파일을 모두 입력해주세요.')
-      return
-    }
-    const fileValidationError = getFileValidationError(uploadFile)
-    if (fileValidationError) {
-      setUploadError(fileValidationError)
-      return
-    }
-    setUploading(true)
-    setUploadError('')
-    try {
-      const uploaded = await uploadProjectFile(projectId, uploadFile, {
-        fileName: uploadFileName.trim(),
-        description: description.trim() || undefined,
-      })
-      if (uploadPinned) {
-        try {
-          await pinProjectFile(projectId, uploaded.id)
-        } catch {
-          window.alert('파일은 업로드됐지만 즐겨찾기를 적용하지 못했습니다.')
-        }
-      }
-      const page = await getProjectFiles(projectId, keyword.trim() || undefined)
-      setFiles(page.items)
-      setUploadOpen(false)
-    } catch (error) {
-      setUploadError(error instanceof Error ? error.message : '파일 업로드에 실패했습니다.')
-    } finally {
-      setUploading(false)
-    }
-  }
+  useEffect(() => {
+    void Promise.resolve().then(reloadFiles)
+  }, [reloadFiles])
 
   const downloadFile = async (fileId: number, fileName: string) => {
     const blob = await downloadProjectFile(projectId, fileId)
@@ -225,7 +156,7 @@ export default function ProjectFileList({
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">파일</h2>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <input
             type="text"
@@ -239,7 +170,11 @@ export default function ProjectFileList({
             className="text-neutral-6 pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2"
           />
         </div>
-        <Button variant="secondary" onClick={openUploadModal}>
+        <Button
+          variant="secondary"
+          onClick={() => setUploadOpen(true)}
+          className="w-full sm:w-auto"
+        >
           추가하기
         </Button>
       </div>
@@ -255,7 +190,7 @@ export default function ProjectFileList({
         {files.map((file) => (
           <div
             key={file.id}
-            className={`flex items-center justify-between gap-3 ${CARD_BASE} px-4 py-3`}
+            className={`flex flex-col gap-3 ${CARD_BASE} px-4 py-3 sm:flex-row sm:items-center sm:justify-between`}
           >
             <button
               type="button"
@@ -265,7 +200,7 @@ export default function ProjectFileList({
               <InlineIcon svg={documentIcon} className="text-neutral-5 size-6 shrink-0" />
               <span className="text-body-sm text-neutral-11 min-w-0 truncate">{file.fileName}</span>
             </button>
-            <div className="flex shrink-0 items-center gap-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:shrink-0">
               <span className="text-caption-lg text-neutral-6">
                 {formatDateTime(file.createdAt)}
               </span>
@@ -292,66 +227,15 @@ export default function ProjectFileList({
         ))}
       </div>
 
-      <Modal isOpen={uploadOpen} onClose={() => setUploadOpen(false)}>
-        <div className="bg-bg-primary flex w-[700px] max-w-[calc(100vw-32px)] flex-col gap-5 rounded-lg p-7">
-          <h3 className="text-head-sm text-neutral-11 font-bold">파일 추가</h3>
-          <label className="flex flex-col gap-2">
-            <span className="text-body-sm text-neutral-11 font-semibold">파일명</span>
-            <span className="relative">
-              <input
-                value={uploadFileName}
-                onChange={(event) => {
-                  setUploadFileName(event.target.value)
-                  setUploadError('')
-                }}
-                placeholder="파일명을 입력해주세요."
-                className="bg-neutral-2 text-body-sm text-neutral-11 placeholder:text-neutral-5 border-neutral-3 h-12 w-full rounded-lg border px-4 pr-12 outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setUploadPinned((value) => !value)}
-                aria-label={uploadPinned ? '즐겨찾기 해제' : '즐겨찾기'}
-                className={`absolute top-1/2 right-3 -translate-y-1/2 ${
-                  uploadPinned ? 'text-caution' : 'text-neutral-5'
-                }`}
-              >
-                <InlineIcon svg={starIcon} className="size-5" />
-              </button>
-            </span>
-          </label>
-          <TextArea
-            value={description}
-            onChange={(value) => {
-              setDescription(value)
-              setUploadError('')
-            }}
-            placeholder="파일 설명 (선택)"
-            rows={3}
-          />
-          <FileInput
-            value={uploadFile ? [uploadFile] : []}
-            onChange={(files) => {
-              const file = files[0] ?? null
-              setUploadFile(file)
-              if (file && !uploadFileName.trim()) setUploadFileName(file.name)
-              setUploadError('')
-            }}
-            accept=".png,.pdf,.doc,.docx,.jpg,.jpeg"
-            maxSizeBytes={MAX_FILE_SIZE_BYTES}
-            onInvalidFiles={(files) => setUploadError(getFileValidationError(files[0]!) ?? '')}
-            hint="첨부가능 파일 형식 (Png, Pdf, Word, Jpg) 최대 100MB"
-            error={uploadError || undefined}
-          />
-          <div className="mt-1 flex justify-center gap-3">
-            <Button variant="primary" className="w-40" disabled={uploading} onClick={submitUpload}>
-              {uploading ? '업로드 중…' : '업로드'}
-            </Button>
-            <Button variant="secondary" className="w-40" onClick={() => setUploadOpen(false)}>
-              취소
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <ProjectFileUploadModal
+        projectId={projectId}
+        isOpen={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onUploaded={async () => {
+          await reloadFiles()
+          void invalidateProjectActivityData(queryClient, projectId)
+        }}
+      />
 
       <ConfirmModal
         isOpen={deleteTarget !== null}

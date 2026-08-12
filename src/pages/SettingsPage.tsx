@@ -5,25 +5,27 @@ import HeaderTitle from '../components/HeaderTitle'
 import ConfirmModal from '../components/ConfirmModal'
 import WithdrawAccountModal from '../domains/settings/WithdrawAccountModal'
 import { logout } from '../api/auth'
+import { setAccessToken } from '../api/client'
 import { deleteAccount } from '../api/users'
 import { CARD_BASE } from '../styles/card'
+import { useUserStore } from '../stores/userStore'
+import { useOnboardingStore } from '../stores/onboardingStore'
 
 const HEADER = <HeaderTitle>설정</HeaderTitle>
 
 const ROW_CLASS =
   'w-fit text-left text-body-sm font-semibold text-neutral-11 transition-colors hover:text-primary'
 
-const LINK_ROWS = [
-  { label: '알림 설정', path: '/settings/notifications' },
-  { label: '비밀번호 변경', path: '/settings/password' },
-  { label: '문의 / 고객센터', path: '/settings/inquiry' },
-] as const
+const LINK_ROWS = [{ label: '비밀번호 변경', path: '/settings/password' }] as const
 
 function SettingsPage() {
   useHeaderSlot(HEADER)
   const [logoutOpen, setLogoutOpen] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
   const [withdrawError, setWithdrawError] = useState('')
+  const user = useUserStore((state) => state.user)
+  const clearUser = useUserStore((state) => state.clearUser)
+  const requirePassword = user?.socialType === 'EMAIL'
 
   const handleLogout = async () => {
     // logout()은 요청 성공 여부와 무관하게 finally에서 로컬 토큰을 지우므로,
@@ -33,12 +35,17 @@ function SettingsPage() {
     } catch {
       // 토큰은 이미 지워졌으므로 무시하고 진행
     }
+    clearUser()
+    useOnboardingStore.getState().reset()
     navigate('/login')
   }
 
-  const handleWithdraw = async (password: string) => {
+  const handleWithdraw = async (password?: string) => {
     try {
-      await deleteAccount({ agreed: true, password })
+      await deleteAccount({ agreed: true, ...(password ? { password } : {}) })
+      setAccessToken(null)
+      clearUser()
+      useOnboardingStore.getState().reset()
       navigate('/login')
     } catch {
       setWithdrawError('비밀번호가 일치하지 않습니다.')
@@ -81,6 +88,7 @@ function SettingsPage() {
           setWithdrawError('')
         }}
         onConfirm={handleWithdraw}
+        requirePassword={requirePassword}
         error={withdrawError || undefined}
       />
     </div>

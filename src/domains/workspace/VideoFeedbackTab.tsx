@@ -1,5 +1,3 @@
-import { formatDistanceToNow } from 'date-fns'
-import { ko } from 'date-fns/locale'
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -16,7 +14,9 @@ import AddVideoModal from './AddVideoModal'
 import EditVideoModal from './EditVideoModal'
 import type { VideoListItem } from '../../types/video'
 import type { CreateVideoValues } from '../../schemas/video'
-import { projectKeys } from '../../queries/keys'
+import { invalidateProjectActivityData } from '../../queries/projectInvalidation'
+import { projectStatusLabel } from '../../constants/projectStatus'
+import type { ProjectStatus } from '../../types/project'
 
 /** 북마크한 영상을 목록 상단으로 */
 function sortVideosByBookmark(items: VideoListItem[]): VideoListItem[] {
@@ -35,9 +35,10 @@ type EditTarget = {
 
 type VideoFeedbackTabProps = {
   projectId: number
+  projectStatus: ProjectStatus
 }
 
-export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
+export default function VideoFeedbackTab({ projectId, projectStatus }: VideoFeedbackTabProps) {
   const queryClient = useQueryClient()
   const [videos, setVideos] = useState<VideoListItem[]>([])
   const [videosLoading, setVideosLoading] = useState(true)
@@ -48,10 +49,7 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
 
   const refreshProjectData = () => {
-    void queryClient.invalidateQueries({ queryKey: projectKeys.activities(projectId) })
-    void queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) })
-    void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
-    void queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'latest-video'] })
+    void invalidateProjectActivityData(queryClient, projectId)
   }
 
   useEffect(() => {
@@ -167,11 +165,8 @@ export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
                 key={video.videoId}
                 title={video.title}
                 thumbnailUrl={video.thumbnailUrl}
-                progressStatus={video.progressStatus}
-                relativeTime={formatDistanceToNow(new Date(video.updatedAt), {
-                  addSuffix: true,
-                  locale: ko,
-                })}
+                statusLabel={projectStatusLabel(projectStatus)}
+                statusVariant={projectStatus === 'COMPLETED' ? 'ghost' : 'secondary'}
                 hasUnreadFeedback={video.hasUnreadFeedback}
                 bookmarked={video.bookmarked}
                 onToggleBookmark={() => void handleToggleBookmark(video)}

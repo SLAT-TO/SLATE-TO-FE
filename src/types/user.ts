@@ -35,9 +35,10 @@ export type UserRegion =
   | 'JEJU'
   | 'NATIONWIDE'
 
+/** BE는 type/role 코드만 내려줌 — label은 화면에서 변환 */
 export type UserStats = {
-  projectTypes: Array<{ type: string; label: string; count: number }>
-  roles: Array<{ role: string; label: string; count: number }>
+  projectTypes: Array<{ type: string; label?: string; count: number }>
+  roles: Array<{ role: string; label?: string; count: number }>
 }
 
 /** GET /api/v1/users/me — BE는 region, FE 호환용 location 병행 */
@@ -47,6 +48,9 @@ export type MeProfile = {
   nickname: string
   profileImageUrl: string | null
   bio: string | null
+  /** BE GET /users/me 응답 — 활동 지역 전체 */
+  regions: (UserRegion | string)[]
+  /** 대표 지역 (regions의 첫 값) — 기존 화면 호환용 */
   region: UserRegion | string | null
   location: UserRegion | string | null
   socialType: SocialType
@@ -70,7 +74,7 @@ export type PublicUser = {
   nickname: string
   profileImageUrl: string | null
   bio: string | null
-  location: UserRegion | string | null
+  locations: UserRegion[]
   primaryRole: UserRole | null
   roles: UserRole[]
   categories: UserCategory[]
@@ -96,28 +100,26 @@ export type OnboardingResult = {
 
 export type UpdateProfileRequest = {
   nickname?: string
-  bio?: string
-  location?: UserRegion | string
   profileImageUrl?: string
+  bio?: string
+  /** BE는 locations 배열 — 전달하면 기존 지역을 모두 지우고 교체 */
+  locations?: (UserRegion | string)[]
   roles?: UserRole[]
+  categories?: UserCategory[]
 }
 
-export type NotificationSettings = {
-  emailAllEnabled: boolean
-  emailDeadlineReminder: boolean
-  emailAssigned: boolean
-  emailNewApplicant: boolean
-  emailMissedSummary: boolean
-}
-
-/** FE mock 전용 — BE 비밀번호 변경 API 미구현 */
 export type ChangePasswordRequest = {
   currentPassword: string
   newPassword: string
 }
 
-/** FE mock 전용 — 회원탈퇴 시 비밀번호 재확인 (BE 미구현) */
+export type PasswordChangeResult = {
+  userId: number
+  accessToken: string
+  onboardingCompleted: boolean
+}
+
 export type DeleteAccountRequest = {
   agreed: boolean
-  password: string
+  password?: string
 }

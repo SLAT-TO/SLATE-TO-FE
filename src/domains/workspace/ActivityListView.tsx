@@ -1,14 +1,18 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { Button } from '../../components/Button'
 import { markActivityRead, markAllActivitiesRead } from '../../api/projects'
 import { projectKeys } from '../../queries/keys'
-import type { ProjectActivity } from '../../types/project'
+import type { ActivityLogListResult, ProjectActivity } from '../../types/project'
+import LayersCircleIcon from '../../components/icons/LayersCircleIcon'
 
 const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
 
 interface ActivityListViewProps {
   projectId: number
   activities: ProjectActivity[]
+  hasMore: boolean
+  isLoadingMore: boolean
+  onLoadMore: () => void
   onBack: () => void
   onNavigate: (activity: ProjectActivity) => void
 }
@@ -28,6 +32,7 @@ function canNavigate(activity: ProjectActivity): boolean {
     activity.targetType === 'NOTICE' ||
     activity.targetType === 'FILE' ||
     activity.targetType === 'SCHEDULE' ||
+    activity.targetType === 'VIDEO' ||
     activity.type === 'SCHEDULE_CREATED' ||
     activity.type === 'SCHEDULE_UPDATED' ||
     activity.type === 'PROJECT_MEMBER_JOINED' ||
@@ -39,6 +44,9 @@ function canNavigate(activity: ProjectActivity): boolean {
 export default function ActivityListView({
   projectId,
   activities,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
   onBack,
   onNavigate,
 }: ActivityListViewProps) {
@@ -46,8 +54,15 @@ export default function ActivityListView({
   const hasNew = activities.some((item) => item.isNew)
 
   const patchActivities = (updater: (items: ProjectActivity[]) => ProjectActivity[]) => {
-    queryClient.setQueryData<ProjectActivity[]>(projectKeys.activities(projectId, 100), (prev) =>
-      updater(prev ?? []),
+    queryClient.setQueryData<InfiniteData<ActivityLogListResult>>(
+      projectKeys.activities(projectId),
+      (prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          pages: prev.pages.map((page) => ({ ...page, items: updater(page.items) })),
+        }
+      },
     )
   }
 
@@ -131,9 +146,12 @@ export default function ActivityListView({
                   activity.isNew ? 'bg-neutral-1' : 'bg-neutral-3'
                 } ${navigable ? 'cursor-pointer' : ''}`}
               >
-                <span className="text-body-sm text-neutral-10 min-w-0 tracking-[-0.32px]">
-                  {activity.content}
-                </span>
+                <div className="flex min-w-0 items-center gap-3">
+                  <LayersCircleIcon />
+                  <span className="text-body-sm text-neutral-10 min-w-0 tracking-[-0.32px]">
+                    {activity.content}
+                  </span>
+                </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <span className="text-caption-sm text-neutral-6">
                     {formatActivityDate(activity.createdAt)}
@@ -149,6 +167,19 @@ export default function ActivityListView({
             )
           })}
         </ul>
+      )}
+
+      {hasMore && (
+        <Button
+          variant="secondary"
+          size="md"
+          width={112}
+          onClick={onLoadMore}
+          disabled={isLoadingMore}
+          className="self-center"
+        >
+          {isLoadingMore ? '불러오는 중…' : '더 보기'}
+        </Button>
       )}
     </section>
   )

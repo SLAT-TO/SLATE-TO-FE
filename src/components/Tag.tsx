@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import type { ReactNode } from 'react'
 
-/** primary=직무, secondary=진행·모집, ghost=완료·비활성, meta= 영상 유형·길이 */
+/** primary=직무, secondary=진행·모집, ghost=완료·비활성, meta=영상 메타 */
 export type TagVariant = 'primary' | 'secondary' | 'ghost' | 'meta'
 
 interface TagProps {

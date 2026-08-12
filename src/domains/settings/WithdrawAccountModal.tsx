@@ -6,7 +6,8 @@ import { Button } from '../../components/Button'
 interface WithdrawAccountModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: (password: string) => void | Promise<void>
+  onConfirm: (password?: string) => void | Promise<void>
+  requirePassword: boolean
   error?: string
 }
 
@@ -14,14 +15,15 @@ export default function WithdrawAccountModal({
   isOpen,
   onClose,
   onConfirm,
+  requirePassword,
   error,
 }: WithdrawAccountModalProps) {
   const [agreed, setAgreed] = useState(false)
   const [password, setPassword] = useState('')
 
   const handleConfirm = () => {
-    if (!agreed || !password) return
-    onConfirm(password)
+    if (!agreed || (requirePassword && !password)) return
+    onConfirm(requirePassword ? password : undefined)
   }
 
   return (
@@ -66,21 +68,23 @@ export default function WithdrawAccountModal({
           </label>
         </div>
 
-        <Input
-          label="비밀번호 입력"
-          type="password"
-          showPasswordToggle
-          placeholder="비밀번호를 입력하세요"
-          value={password}
-          onChange={setPassword}
-          error={error}
-        />
+        {requirePassword && (
+          <Input
+            label="비밀번호 입력"
+            type="password"
+            showPasswordToggle
+            placeholder="비밀번호를 입력하세요"
+            value={password}
+            onChange={setPassword}
+            error={error}
+          />
+        )}
 
         <div className="flex justify-center gap-4">
           <Button
             variant="primary"
             onClick={handleConfirm}
-            disabled={!agreed || !password}
+            disabled={!agreed || (requirePassword && !password)}
             className="px-24"
           >
             확인

@@ -5,6 +5,7 @@ import { DateRangeField } from '../../components/DateRangeField'
 import Input from '../../components/Input'
 import Modal from '../../components/Modal'
 import Select from '../../components/Select'
+import { calendarEventSchema } from '../../schemas/calendarEvent'
 import type { MemberSummary } from '../../types/project'
 import type { CalendarFilterOption } from './CalendarFilterMenu'
 import { ParticipantSelect } from './ParticipantSelect'
@@ -63,6 +64,7 @@ export function EventFormModal({
   const [values, setValues] = useState<EventFormValues>(
     () => initialValues ?? EMPTY_VALUES(initialDate, lockedProjectId),
   )
+  const [errors, setErrors] = useState<{ title?: string; place?: string; memo?: string }>({})
 
   // 선택된 프로젝트의 실제 멤버 목록 — "참여 인원"에서 고를 후보
   const [members, setMembers] = useState<MemberSummary[]>([])
@@ -94,6 +96,20 @@ export function EventFormModal({
   }, [values.projectId])
 
   const handleSubmit = () => {
+    const titleResult = calendarEventSchema.shape.title.safeParse(values.title)
+    const placeResult = calendarEventSchema.shape.place.safeParse(values.place)
+    const memoResult = calendarEventSchema.shape.memo.safeParse(values.memo)
+    const nextErrors = {
+      title: titleResult.success ? undefined : titleResult.error.issues[0]?.message,
+      place: placeResult.success ? undefined : placeResult.error.issues[0]?.message,
+      memo: memoResult.success ? undefined : memoResult.error.issues[0]?.message,
+    }
+    if (nextErrors.title || nextErrors.place || nextErrors.memo) {
+      setErrors(nextErrors)
+      return
+    }
+    setErrors({})
+
     const participantNames = members
       .filter((m) => values.participantIds.includes(String(m.userId)))
       .map((m) => m.nickname)
@@ -118,6 +134,7 @@ export function EventFormModal({
             value={values.title}
             onChange={(title) => setValues((v) => ({ ...v, title }))}
             placeholder="일정명을 입력해주세요."
+            error={errors.title}
           />
         </div>
 
@@ -143,7 +160,7 @@ export function EventFormModal({
               value={values.projectId}
               onChange={(projectId) =>
                 setValues((v) =>
-                  projectId ? { ...v, projectId } : { ...v, projectId, participantIds: [] },
+                  v.projectId === projectId ? v : { ...v, projectId, participantIds: [] },
                 )
               }
               placeholder="프로젝트를 선택해주세요."
@@ -169,6 +186,7 @@ export function EventFormModal({
             value={values.place}
             onChange={(place) => setValues((v) => ({ ...v, place }))}
             placeholder="장소를 입력하세요."
+            error={errors.place}
           />
         </div>
 
@@ -178,6 +196,7 @@ export function EventFormModal({
             value={values.memo}
             onChange={(memo) => setValues((v) => ({ ...v, memo }))}
             placeholder="메모를 입력하세요."
+            error={errors.memo}
           />
         </div>
       </div>

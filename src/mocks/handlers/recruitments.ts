@@ -2,16 +2,24 @@ import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
 import type { UserRegion } from '../../types/user'
 import type {
+  Application,
   CreateApplicationRequest,
   CreateRecruitmentRequest,
   Recruitment,
+  RecruitmentApplication,
+  RecruitmentApplicationDetail,
   UpdateApplicationRequest,
   UpdateRecruitmentRequest,
 } from '../../types/recruitment'
-import { allocId, db, requireUser } from '../db'
+import {
+  allocId,
+  db,
+  requireUser,
+  type MockRecruitmentRecord,
+  type MockApplicationFile,
+} from '../db'
 import { badRequest, notFound, unauthorized } from '../errors'
 import { created, ok } from '../response'
-
 function safeUser() {
   try {
     return requireUser()
@@ -57,7 +65,19 @@ export const recruitmentHandlers = [
     const recruitment = db.recruitments.find((r) => r.id === Number(params.recruitmentId))
     if (!recruitment) return notFound()
     recruitment.viewCount += 1
-    return HttpResponse.json(ok(toResponse(recruitment, user.id)), { status: 200 })
+
+    const applications = db.applications.filter((a) => a.recruitmentId === recruitment.id)
+    const mine = applications.find((a) => a.userId === user.id)
+
+    return HttpResponse.json(
+      ok({
+        ...toResponse(recruitment, user.id),
+        applicantCount: applications.length,
+        hasApplied: Boolean(mine),
+        myApplicationStatus: mine?.status ?? null,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.post(paths.recruitments.root, async ({ request }) => {
@@ -65,15 +85,16 @@ export const recruitmentHandlers = [
     if (!user) return unauthorized()
     const body = (await request.json()) as CreateRecruitmentRequest
     if (!body.title) return badRequest()
-    const recruitment: Recruitment = {
+    const now = new Date().toISOString()
+    const recruitment: MockRecruitmentRecord = {
       id: allocId(),
       title: body.title,
-      category: body.category,
+      category: body.category ?? 'ETC',
       lengthType: body.lengthType ?? null,
       recruitPart: body.recruitPart,
-      location: body.location,
+      location: body.location ?? 'SEOUL',
       pay: body.pay ?? '협의',
-      deadline: body.deadline,
+      deadline: body.deadline ?? '',
       dday: 30,
       status: 'RECRUITING',
       viewCount: 0,
@@ -86,7 +107,11 @@ export const recruitmentHandlers = [
         primaryRole: user.primaryRole,
         locations: user.location ? ([user.location] as UserRegion[]) : [],
       },
-      createdAt: new Date().toISOString(),
+      description: body.description,
+      shootingPeriod: body.shootingPeriod ?? '',
+      contact: body.contact ?? '',
+      createdAt: now,
+      updatedAt: now,
     }
     db.recruitments.unshift(recruitment)
     return HttpResponse.json(created(recruitment), { status: 201 })
@@ -170,7 +195,7 @@ export const recruitmentHandlers = [
     const recruitment = db.recruitments.find((r) => r.id === recruitmentId)
     if (!recruitment) return notFound()
     const body = (await request.json()) as CreateApplicationRequest
-    const application = {
+    const application: Application = {
       id: allocId(),
       recruitmentId,
       userId: user.id,
@@ -181,14 +206,129 @@ export const recruitmentHandlers = [
       createdAt: new Date().toISOString(),
     }
     db.applications.push(application)
+
+    // fileIds로 넘어온 파일을 이 지원에 연결한다
+    for (const fileId of body.fileIds ?? []) {
+      const file = db.applicationFiles.find((f) => f.id === fileId)
+      if (file) file.applicationId = application.id
+    }
     return HttpResponse.json(created(application), { status: 201 })
   }),
 
-  http.get(paths.recruitments.applications(':recruitmentId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
-    const items = db.applications.filter((a) => a.recruitmentId === Number(params.recruitmentId))
-    return HttpResponse.json(ok({ items }), { status: 200 })
+  http.get(paths.recruitments.application(':recruitmentId', ':applicationId'), ({ params }) => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+
+    const application = db.applications.find((a) => a.id === Number(params.applicationId))
+    if (!application) return notFound()
+
+    const applicant = db.users.find((u) => u.id === application.userId)
+
+    const detail: RecruitmentApplicationDetail = {
+      applicationId: application.id,
+      recruitmentId: application.recruitmentId,
+      applicationStatus: application.status,
+      message: application.message ?? '',
+      referenceLink: null,
+      appliedAt: application.createdAt,
+      applicant: {
+        id: application.userId,
+        nickname: application.nickname,
+        profileImageUrl: application.profileImageUrl,
+        bio: applicant?.bio ?? '자기소개 미리보기 멘트가 나오게 됩니다.',
+        primaryRole: applicant?.primaryRole ?? null,
+        locations: (applicant?.regions ?? []) as UserRegion[],
+      },
+      files: db.applicationFiles
+        .filter((f) => f.applicationId === application.id)
+        .map(({ id, fileName, contentType, fileSize, createdAt }) => ({
+          id,
+          fileName,
+          contentType,
+          fileSize,
+          createdAt,
+        })),
+    }
+
+    return HttpResponse.json(ok(detail), { status: 200 })
   }),
+
+  http.get(paths.recruitments.applications(':recruitmentId'), ({ params }) => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+
+    const items: RecruitmentApplication[] = db.applications
+      .filter((a) => a.recruitmentId === Number(params.recruitmentId))
+      .map((a) => ({
+        applicationId: a.id,
+        applicationStatus: a.status,
+        message: a.message ?? '',
+        referenceLink: null,
+        appliedAt: a.createdAt,
+        applicant: {
+          id: a.userId,
+          nickname: a.nickname,
+          profileImageUrl: a.profileImageUrl,
+          bio: '자기소개 미리보기 멘트가 나오게 됩니다.',
+          primaryRole: user.primaryRole,
+          locations: [],
+        },
+      }))
+
+    return HttpResponse.json(ok({ items, nextCursor: null, hasNext: false }), { status: 200 })
+  }),
+
+  // 업로드 — 실제 파일은 저장하지 않고 메타데이터만 돌려준다
+  http.post(paths.recruitments.applicationFiles(':recruitmentId'), async ({ request, params }) => {
+    const user = safeUser()
+    if (!user) return unauthorized()
+    const formData = await request.formData()
+    const file = formData.get('file')
+    if (!(file instanceof File)) return badRequest('파일이 없습니다.')
+
+    const record: MockApplicationFile = {
+      id: allocId(),
+      recruitmentId: Number(params.recruitmentId),
+      userId: user.id,
+      applicationId: null,
+      fileName: file.name,
+      contentType: file.type,
+      fileSize: file.size,
+      createdAt: new Date().toISOString(),
+    }
+    db.applicationFiles.push(record)
+
+    return HttpResponse.json(
+      created({
+        id: record.id,
+        fileName: record.fileName,
+        contentType: record.contentType,
+        fileSize: record.fileSize,
+        createdAt: record.createdAt,
+      }),
+      { status: 201 },
+    )
+  }),
+
+  // mock은 파일 본문을 저장하지 않아 더미 내용을 돌려준다
+  http.get(
+    paths.recruitments.applicationFileDownload(':recruitmentId', ':applicationId', ':fileId'),
+    ({ params }) => {
+      if (!safeUser()) return unauthorized()
+      const file = db.applicationFiles.find(
+        (f) =>
+          f.id === Number(params.fileId) &&
+          f.applicationId === Number(params.applicationId) &&
+          f.recruitmentId === Number(params.recruitmentId),
+      )
+      if (!file) return notFound()
+
+      return new HttpResponse(new Blob([`mock file: ${file.fileName}`]), {
+        status: 200,
+        headers: { 'Content-Type': file.contentType || 'application/octet-stream' },
+      })
+    },
+  ),
 
   http.patch(
     paths.recruitments.application(':recruitmentId', ':applicationId'),

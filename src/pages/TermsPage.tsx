@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import Choice from '../components/Choice'
 import { Button } from '../components/Button'
+import { navigate } from '../utils/navigation'
+import { useOnboardingStore } from '../stores/onboardingStore'
 import termsBg from '../assets/images/terms-bg.png'
 import termsAvatar from '../assets/images/terms-avatar.png'
 
@@ -11,8 +13,11 @@ const TERMS = [
   { key: 'collect', label: '개인정보 수집 및 이용 동의(필수)' },
 ] as const
 
-// 약관 동의 화면. 가입 처리 로직은 이후 작업에서 연결.
+// 약관 동의 화면 — 동의 여부는 온보딩 스토어에 담아 마지막 단계(ProfileStep)의
+// submitOnboarding 호출에 실려 BE로 전송된다.
 export function TermsPage() {
+  const setAgreedTerms = useOnboardingStore((s) => s.setAgreedTerms)
+
   const [agreed, setAgreed] = useState<Record<(typeof TERMS)[number]['key'], boolean>>({
     service: false,
     age: false,
@@ -24,6 +29,12 @@ export function TermsPage() {
 
   const toggleAll = (checked: boolean) => {
     setAgreed(TERMS.reduce((acc, t) => ({ ...acc, [t.key]: checked }), {} as typeof agreed))
+  }
+
+  const handleSubmit = () => {
+    if (!allAgreed) return
+    setAgreedTerms(true)
+    navigate('/onboarding')
   }
 
   return (
@@ -40,7 +51,10 @@ export function TermsPage() {
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
         <form
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleSubmit()
+          }}
           className="bg-neutral-1 flex w-full max-w-[1062px] flex-col gap-12 rounded-xl p-12 shadow-[0_3px_12px_rgba(169,204,244,0.15)]"
         >
           <div className="flex items-center gap-6">
@@ -71,7 +85,7 @@ export function TermsPage() {
             </div>
           </div>
 
-          <Button type="submit" fullWidth>
+          <Button type="submit" fullWidth disabled={!allAgreed}>
             동의하고 시작하기
           </Button>
         </form>

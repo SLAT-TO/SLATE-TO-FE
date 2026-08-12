@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useQueries } from '@tanstack/react-query'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import ProjectCard from '../domains/project/ProjectCard'
@@ -10,10 +9,8 @@ import { projectMetaTags } from '../constants/projectLabels'
 import { projectStatusLabel } from '../constants/projectStatus'
 import type { ProjectSummary } from '../types/project'
 import { ApiError } from '../types/api'
-import { getVideos } from '../api/videos'
-import { getProjectActivities } from '../api/projects'
-import { projectKeys } from '../queries/keys'
 import { navigate } from '../utils/navigation'
+import { calculateProjectDeadlineProgress } from '../utils/projectDeadlineProgress'
 import {
   useDeleteProjectMutation,
   useLeaveProjectMutation,
@@ -31,33 +28,7 @@ export default function WorkspacePage() {
   const [leaveTarget, setLeaveTarget] = useState<ProjectSummary | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
-  const projects = projectsQuery.data ?? []
-  const latestVideoQueries = useQueries({
-    queries: projects.map((project) => ({
-      queryKey: ['projects', project.id, 'latest-video'] as const,
-      queryFn: () => getVideos(project.id, undefined, 1),
-      staleTime: 60_000,
-    })),
-  })
-  const latestThumbnailByProjectId = new Map(
-    projects.map((project, index) => [
-      project.id,
-      latestVideoQueries[index]?.data?.items[0]?.thumbnailUrl,
-    ]),
-  )
-  const recentActivityQueries = useQueries({
-    queries: projects.map((project) => ({
-      queryKey: projectKeys.activities(project.id, 1),
-      queryFn: () => getProjectActivities(project.id, { size: 1 }),
-      staleTime: 60_000,
-    })),
-  })
-  const recentActivityTimeByProjectId = new Map(
-    projects.map((project, index) => [
-      project.id,
-      recentActivityQueries[index]?.data?.items[0]?.createdAt,
-    ]),
-  )
+  const projects = projectsQuery.projects
   const loading = projectsQuery.isPending && !projectsQuery.data
   const fatalError =
     projectsQuery.isError && !projectsQuery.data
@@ -132,43 +103,62 @@ export default function WorkspacePage() {
       )}
 
       {!loading && !fatalError && projects.length > 0 && (
-        <div className="flex flex-col gap-10">
-          {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              title={project.title}
-              statusLabel={projectStatusLabel(project.status)}
-              statusVariant={project.status === 'COMPLETED' ? 'ghost' : 'secondary'}
-              tags={projectMetaTags(project)}
-              progress={project.deadlineProgressPercent ?? undefined}
-              thumbnailUrl={latestThumbnailByProjectId.get(project.id)}
-              members={project.memberPreviewImageUrls.map((src) => ({ src }))}
-              isPinned={project.isPinned}
-              onTogglePin={() => handleTogglePin(project)}
-              relativeTime={
-                recentActivityTimeByProjectId.get(project.id)
-                  ? formatDistanceToNow(new Date(recentActivityTimeByProjectId.get(project.id)!), {
-                      addSuffix: true,
-                      locale: ko,
-                    })
-                  : undefined
-              }
-              menuItems={
-                project.myPermission === 'ADMIN'
-                  ? [
-                      {
-                        action: 'edit',
-                        label: '설정',
-                        onClick: () => navigate(`/workspace/projects/${project.id}?view=settings`),
-                      },
-                      { action: 'delete', onClick: () => setDeleteTarget(project) },
-                    ]
-                  : [{ action: 'leave', onClick: () => setLeaveTarget(project) }]
-              }
-              onClick={() => navigate(`/workspace/projects/${project.id}`)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="flex flex-col gap-10">
+            {projects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                title={project.title}
+                statusLabel={projectStatusLabel(project.status)}
+                statusVariant={project.status === 'COMPLETED' ? 'ghost' : 'secondary'}
+                tags={projectMetaTags(project)}
+                metaTagCount={
+                  projectMetaTags({ type: project.type, lengthType: project.lengthType }).length
+                }
+                progress={calculateProjectDeadlineProgress(project.createdAt, project.endDate)}
+                thumbnailUrl={project.previewImageUrl ?? undefined}
+                members={project.memberPreviewImageUrls.map((src) => ({ src }))}
+                isPinned={project.isPinned}
+                onTogglePin={() => handleTogglePin(project)}
+                relativeTime={
+                  project.lastActivityAt
+                    ? formatDistanceToNow(new Date(project.lastActivityAt), {
+                        addSuffix: true,
+                        locale: ko,
+                      })
+                    : undefined
+                }
+                menuItems={
+                  project.myPermission === 'ADMIN'
+                    ? [
+                        {
+                          action: 'edit',
+                          label: '설정',
+                          onClick: () =>
+                            navigate(`/workspace/projects/${project.id}?view=settings`),
+                        },
+                        { action: 'delete', onClick: () => setDeleteTarget(project) },
+                      ]
+                    : [{ action: 'leave', onClick: () => setLeaveTarget(project) }]
+                }
+                onClick={() => navigate(`/workspace/projects/${project.id}`)}
+                responsiveLayout
+              />
+            ))}
+          </div>
+          {projectsQuery.hasNextPage && (
+            <div className="flex justify-center">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => void projectsQuery.fetchNextPage()}
+                disabled={projectsQuery.isFetchingNextPage}
+              >
+                {projectsQuery.isFetchingNextPage ? '불러오는 중…' : '더 보기'}
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       <ConfirmModal

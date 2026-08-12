@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { createProjectNotice } from '../../api/projects'
 import { Button } from '../../components/Button'
 import Input from '../../components/Input'
 import Modal from '../../components/Modal'
 import TextArea from '../../components/TextArea'
 import type { ProjectNoticeListItem } from '../../types/notice'
+import { invalidateProjectActivityData } from '../../queries/projectInvalidation'
 import { CARD_BASE } from '../../styles/card'
 
 interface NoticeListViewProps {
@@ -32,6 +34,7 @@ export default function NoticeListView({
   onOpenNotice,
   onCreated,
 }: NoticeListViewProps) {
+  const queryClient = useQueryClient()
   const [createOpen, setCreateOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -52,6 +55,7 @@ export default function NoticeListView({
         content: content.trim(),
       })
       onCreated(created)
+      void invalidateProjectActivityData(queryClient, projectId)
       setCreateOpen(false)
     } finally {
       setSubmitting(false)
@@ -97,7 +101,7 @@ export default function NoticeListView({
       )}
 
       <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)}>
-        <div className="bg-bg-primary flex w-[420px] flex-col gap-3 rounded-lg p-5">
+        <div className="bg-bg-primary flex w-[calc(100vw-32px)] max-w-[420px] flex-col gap-3 rounded-lg p-5">
           <h3 className="text-body-sm text-neutral-11 font-semibold">공지 작성</h3>
           <Input value={title} onChange={setTitle} placeholder="제목" />
           <TextArea value={content} onChange={setContent} placeholder="내용" rows={5} />
