@@ -4,9 +4,7 @@ import { useFeedbacks } from '../hooks/useFeedbacks'
 import { useFeedbackReplies } from '../hooks/useFeedbackReplies'
 import FeedbackPanel from '../domains/workspace/FeedbackPanel'
 import Input from '../components/Input'
-import Select from '../components/Select'
 import { Button } from '../components/Button'
-import { ROLE_OPTIONS } from '../constants/roles'
 import { ApiError } from '../types/api'
 import type { ShareLinkAccess } from '../types/feedback'
 
@@ -26,7 +24,6 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [step, setStep] = useState<GuestShareStep>('invitation')
   const [name, setName] = useState('')
-  const [role, setRole] = useState('')
   const [guestId, setGuestId] = useState<number | null>(null)
   const [registering, setRegistering] = useState(false)
   const [registerError, setRegisterError] = useState<string | null>(null)
@@ -102,12 +99,11 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
 
   const handleRegister = async (event: FormEvent) => {
     event.preventDefault()
-    if (!name.trim() || !role) return
+    if (!name.trim()) return
 
     setRegistering(true)
     setRegisterError(null)
     try {
-      // 역할 저장은 BE 게스트 등록 계약에 추가되면 이 요청에 함께 전달한다.
       const result = await registerGuest(token, { name: name.trim() })
       setGuestId(result.guestId)
       setStep('feedback')
@@ -142,7 +138,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
             <p className="text-head-sm text-neutral-11 font-bold">영상 피드백에 초대되었어요</p>
             <p className="text-body-lg text-neutral-10 font-semibold">{access.videoTitle}</p>
             <p className="text-body-sm text-neutral-6">
-              이름과 역할을 등록한 뒤 영상 피드백에 참여할 수 있습니다.
+              이름을 등록한 뒤 영상 피드백에 참여할 수 있습니다.
             </p>
           </div>
           <Button type="button" fullWidth onClick={() => setStep('registration')}>
@@ -164,23 +160,9 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
             <p className="text-head-sm text-neutral-11 font-bold">{access.videoTitle}</p>
             <p className="text-body-sm text-neutral-6">참여 정보를 입력해 주세요.</p>
           </div>
-          <div className="flex flex-col gap-4">
-            <Input
-              id="guest-name"
-              placeholder="이름을 입력하세요."
-              value={name}
-              onChange={setName}
-            />
-            <Select
-              id="guest-role"
-              options={ROLE_OPTIONS}
-              value={role}
-              onChange={setRole}
-              placeholder="역할을 선택하세요."
-            />
-          </div>
+          <Input id="guest-name" placeholder="이름을 입력하세요." value={name} onChange={setName} />
           {registerError && <p className="text-warning text-caption-lg">{registerError}</p>}
-          <Button type="submit" fullWidth disabled={registering || !name.trim() || !role}>
+          <Button type="submit" fullWidth disabled={registering || !name.trim()}>
             {registering ? '등록 중...' : '입장하기'}
           </Button>
         </form>
