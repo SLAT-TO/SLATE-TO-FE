@@ -122,9 +122,10 @@ export default function VideoDetailHeader({
             { action: 'edit', onClick: onEdit },
             { action: 'delete', onClick: onDelete },
           ]}
+          className="order-2"
           ariaLabel="영상 메뉴"
         />
-        <Button variant="primary" size="sm" onClick={() => setInviteOpen(true)}>
+        <Button variant="primary" size="sm" className="order-1" onClick={() => setInviteOpen(true)}>
           게스트 초대하기
         </Button>
         <ShareLinkModal
@@ -136,7 +137,7 @@ export default function VideoDetailHeader({
     )
   }, [videoDetail, onEdit, onDelete, inviteOpen])
 
-  useHeaderSlot(headerLeftContent, headerRightContent)
+  useHeaderSlot(headerLeftContent, headerRightContent, { hideDefaultActions: true })
 
   return null
 }

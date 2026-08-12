@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 export interface HeaderSlotContentValue {
   headerLeft: ReactNode
   headerRight: ReactNode
+  hideDefaultActions: boolean
 }
 
 /** 페이지가 구독하는 setter (콘텐츠 변경과 분리해 무한 루프 방지) */
@@ -13,6 +14,8 @@ export interface HeaderSlotActionsValue {
   clearHeaderLeft: () => void
   setHeaderRight: (content: ReactNode) => void
   clearHeaderRight: () => void
+  setHideDefaultActions: (hide: boolean) => void
+  clearHideDefaultActions: () => void
 }
 
 export const HeaderSlotContentContext = createContext<HeaderSlotContentValue | null>(null)
