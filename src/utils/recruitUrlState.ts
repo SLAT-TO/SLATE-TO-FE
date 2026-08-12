@@ -1,14 +1,22 @@
-import type { SelectedFilters } from '../types/Recruit.types'
+import type { SelectedFilters, FilterCategory } from '../types/Recruit.types'
 import { FILTER_CONFIGS, SORT_OPTIONS, type SortValue } from '../constants'
 
 const DEFAULT_SORT: SortValue = 'latest'
 
-/** URL 쿼리 → 화면 필터. 알 수 없는 값은 무시한다 */
+/** URL 쿼리 → 화면 필터. FILTER_CONFIGS에 없는 값은 걸러낸다
+ *  (오래된 북마크·수동 편집 URL로 들어온 값이 칩에만 뜨고 목록엔 반영되지 않는 상태 방지) */
 export function parseFilters(params: URLSearchParams): SelectedFilters {
+  const allowed = (key: FilterCategory): string[] => {
+    const options = FILTER_CONFIGS.find((config) => config.key === key)?.groups.flatMap(
+      (group) => group.options,
+    )
+    return params.getAll(key).filter((value) => options?.includes(value) ?? false)
+  }
+
   return {
-    region: params.getAll('region'),
-    videoType: params.getAll('videoType'),
-    role: params.getAll('role'),
+    region: allowed('region'),
+    videoType: allowed('videoType'),
+    role: allowed('role'),
   }
 }
 
