@@ -46,5 +46,6 @@ export function toProjectHistoryItem(portfolio: Portfolio): ProjectHistoryItem {
     title: portfolio.title,
     thumbnailUrl: portfolio.thumbnailUrl ?? 'https://placehold.co/300x160',
     tags: [videoCategoryLabel(portfolio.type), ...portfolio.roles.map((r) => roleLabel(r))],
+    metaTagCount: 1,
   }
 }

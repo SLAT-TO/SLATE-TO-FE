@@ -25,6 +25,11 @@ export default function ProjectStatusMenu({
   const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false)
   const statusMenu = useProjectStatusMenu(projectId, project, setProject, statusMenuRef)
   const isCompleted = project.status === 'COMPLETED'
+  const projectTags = projectMetaTags(project)
+  const projectMetaTagCount = projectMetaTags({
+    type: project.type,
+    lengthType: project.lengthType,
+  }).length
 
   const handleStatusSelect = (status: ProjectStatus) => {
     statusMenu.close()
@@ -43,10 +48,14 @@ export default function ProjectStatusMenu({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {projectMetaTags(project).map((tag) => (
+      {projectTags.map((tag, index) => (
         <span
           key={tag}
-          className="bg-main-1 text-main-6 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
+          className={`text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold ${
+            index < projectMetaTagCount
+              ? 'bg-tag-done-bg text-tag-done-text'
+              : 'bg-main-1 text-main-6'
+          }`}
         >
           {tag}
         </span>

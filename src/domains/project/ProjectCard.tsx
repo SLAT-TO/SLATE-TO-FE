@@ -19,6 +19,8 @@ interface ProjectCardProps {
   statusVariant?: TagVariant
   /** 장르·분량 등 메타 태그 */
   tags?: string[]
+  /** tags 앞쪽에 배치된 프로젝트 유형·영상 길이 태그 수 */
+  metaTagCount?: number
   /** 0~100, 미전달 시 진행률 바 숨김 */
   progress?: number
   members?: ProjectCardMember[]
@@ -40,6 +42,7 @@ const ProjectCard = ({
   statusLabel,
   statusVariant = 'secondary',
   tags = [],
+  metaTagCount = 0,
   progress,
   members = [],
   isPinned = false,
@@ -121,7 +124,7 @@ const ProjectCard = ({
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag, index) => (
-                  <Tag key={`${tag}-${index}`} variant="primary">
+                  <Tag key={`${tag}-${index}`} variant={index < metaTagCount ? 'ghost' : 'primary'}>
                     {tag}
                   </Tag>
                 ))}
