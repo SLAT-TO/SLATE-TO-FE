@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { addMonths, format, parse, subMonths } from 'date-fns'
 import {
   createWorkspaceSchedule,
@@ -20,6 +21,7 @@ import type { MemberSummary } from '../../types/project'
 import type { Schedule } from '../../types/schedule'
 import { pickEventColor, toDateKey } from '../../utils/calendarUtils'
 import { formatTarget, scheduleToCalendarEvent } from '../../utils/scheduleAdapter'
+import { invalidateProjectActivityData } from '../../queries/projectInvalidation'
 import paperPlaneIcon from '../../assets/icons/paper-plane.svg?raw'
 
 type ProjectScheduleTabProps = {
@@ -182,6 +184,7 @@ function ScheduleDetailCard({
 // 워크스페이스 프로젝트 상세의 "일정" 탭. 캘린더 공용 컴포넌트를 그대로 쓰되,
 // 이 프로젝트의 실제 Schedule API에 연동한다 (독립 캘린더 페이지는 아직 로컬 store만 사용).
 export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabProps) {
+  const queryClient = useQueryClient()
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [daySchedules, setDaySchedules] = useState<Schedule[]>([])
   const [loading, setLoading] = useState(true)
@@ -286,6 +289,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
       })
       setSchedules((prev) => [created, ...prev])
       void refreshSelectedDaySchedules()
+      void invalidateProjectActivityData(queryClient, projectId)
     } catch {
       setActionError('일정을 추가하지 못했습니다. 다시 시도해주세요.')
     }
@@ -311,6 +315,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
       )
       setSchedules((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
       void refreshSelectedDaySchedules()
+      void invalidateProjectActivityData(queryClient, projectId)
     } catch {
       setActionError('일정을 수정하지 못했습니다. 다시 시도해주세요.')
     }
@@ -322,6 +327,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
       await deleteWorkspaceSchedule(scheduleId)
       setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
       setDaySchedules((prev) => prev.filter((s) => s.id !== scheduleId))
+      void invalidateProjectActivityData(queryClient, projectId)
     } catch {
       setActionError('일정을 삭제하지 못했습니다. 다시 시도해주세요.')
     }

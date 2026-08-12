@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../../api/projects'
 import ConfirmModal from '../../components/ConfirmModal'
 import ProjectForm, { type ProjectFormValues } from '../../components/ProjectForm'
 import { useCreateProjectMutation, useDeleteProjectMutation } from '../../queries/projects'
+import { invalidateProjectActivityData } from '../../queries/projectInvalidation'
 import { CARD_BASE } from '../../styles/card'
 import { navigate } from '../../utils/navigation'
 import type { ProjectDetailResponse, ProjectResponse } from '../../types/project'
@@ -21,6 +23,7 @@ type ProjectSettingsViewProps =
     }
 
 export default function ProjectSettingsView(props: ProjectSettingsViewProps) {
+  const queryClient = useQueryClient()
   const isCreate = props.mode === 'create'
   const project = isCreate ? null : props.project
   const { onCancel } = props
@@ -61,6 +64,7 @@ export default function ProjectSettingsView(props: ProjectSettingsViewProps) {
       lengthType: values.lengthType || undefined,
       description: values.description.trim() || undefined,
     })
+    void invalidateProjectActivityData(queryClient, props.project.id)
     props.onSaved({
       ...props.project,
       title: values.title.trim(),
