@@ -184,6 +184,11 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
       return
     }
 
+    if (activity.targetType === 'VIDEO' && activity.targetId != null) {
+      routerNavigate(`/workspace/projects/${projectId}/videos/${activity.targetId}`)
+      return
+    }
+
     if (
       activity.targetType === 'SCHEDULE' ||
       activity.type === 'SCHEDULE_CREATED' ||
