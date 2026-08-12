@@ -142,6 +142,7 @@ export default function WorkspacePage() {
                     : [{ action: 'leave', onClick: () => setLeaveTarget(project) }]
                 }
                 onClick={() => navigate(`/workspace/projects/${project.id}`)}
+                responsiveLayout
               />
             ))}
           </div>

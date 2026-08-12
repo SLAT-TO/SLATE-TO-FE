@@ -383,7 +383,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
       {loading ? (
         <p className="text-body-sm text-neutral-6">불러오는 중…</p>
       ) : (
-        <div style={{ height: 720 }}>
+        <div className="h-[520px] sm:h-[620px] lg:h-[720px]">
           <Calendar
             month={month}
             events={events}
@@ -400,7 +400,7 @@ export function ProjectScheduleTab({ projectId, members }: ProjectScheduleTabPro
           {selectedDateSchedules.length === 0 ? (
             <p className="text-caption-lg text-neutral-6">등록된 일정이 없습니다</p>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {selectedDateSchedules.map((schedule) => (
                 <ScheduleDetailCard
                   key={schedule.id}

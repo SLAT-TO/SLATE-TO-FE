@@ -156,7 +156,7 @@ export default function ProjectFileList({
     <section className="flex flex-col gap-5">
       <h2 className="text-head-sm text-neutral-11 font-bold">파일</h2>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <input
             type="text"
@@ -170,7 +170,11 @@ export default function ProjectFileList({
             className="text-neutral-6 pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2"
           />
         </div>
-        <Button variant="secondary" onClick={() => setUploadOpen(true)}>
+        <Button
+          variant="secondary"
+          onClick={() => setUploadOpen(true)}
+          className="w-full sm:w-auto"
+        >
           추가하기
         </Button>
       </div>
@@ -186,7 +190,7 @@ export default function ProjectFileList({
         {files.map((file) => (
           <div
             key={file.id}
-            className={`flex items-center justify-between gap-3 ${CARD_BASE} px-4 py-3`}
+            className={`flex flex-col gap-3 ${CARD_BASE} px-4 py-3 sm:flex-row sm:items-center sm:justify-between`}
           >
             <button
               type="button"
@@ -196,7 +200,7 @@ export default function ProjectFileList({
               <InlineIcon svg={documentIcon} className="text-neutral-5 size-6 shrink-0" />
               <span className="text-body-sm text-neutral-11 min-w-0 truncate">{file.fileName}</span>
             </button>
-            <div className="flex shrink-0 items-center gap-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:shrink-0">
               <span className="text-caption-lg text-neutral-6">
                 {formatDateTime(file.createdAt)}
               </span>

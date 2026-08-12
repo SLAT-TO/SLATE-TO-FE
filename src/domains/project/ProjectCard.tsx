@@ -33,6 +33,7 @@ interface ProjectCardProps {
   menuItems?: ActionMenuItem[]
   onClick?: () => void
   className?: string
+  responsiveLayout?: boolean
 }
 
 const AVATAR_SIZE = 28
@@ -52,6 +53,7 @@ const ProjectCard = ({
   menuItems = [],
   onClick,
   className = '',
+  responsiveLayout = false,
 }: ProjectCardProps) => {
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (!onClick) return
@@ -109,8 +111,12 @@ const ProjectCard = ({
       </div>
 
       {/* 영상 썸네일(좌) · 태그/진행률/멤버(우) — 가로 분할 */}
-      <div className="flex gap-10">
-        <div className="bg-neutral-2 flex aspect-23/8 w-2/5 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+      <div className={`flex gap-10 ${responsiveLayout ? 'flex-col sm:flex-row sm:gap-10' : ''}`}>
+        <div
+          className={`bg-neutral-2 flex shrink-0 items-center justify-center overflow-hidden rounded-lg ${
+            responsiveLayout ? 'aspect-video w-full sm:aspect-23/8 sm:w-2/5' : 'aspect-23/8 w-2/5'
+          }`}
+        >
           {thumbnailUrl && <img src={thumbnailUrl} alt="" className="h-full w-full object-cover" />}
           <p
             className={thumbnailUrl ? 'hidden' : 'text-caption-lg text-neutral-6 px-4 text-center'}
@@ -120,7 +126,11 @@ const ProjectCard = ({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
-          <div className="flex items-center justify-between gap-2">
+          <div
+            className={`flex items-center justify-between gap-2 ${
+              responsiveLayout ? 'flex-col sm:flex-row sm:gap-2' : ''
+            }`}
+          >
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag, index) => (

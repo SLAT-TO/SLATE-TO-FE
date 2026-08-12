@@ -212,7 +212,7 @@ export default function ProjectFileUploadModal({
           className="border-neutral-3 overflow-hidden rounded-lg border"
           aria-label="업로드 대기 파일"
         >
-          <div className="bg-neutral-2 grid grid-cols-[minmax(0,1fr)_100px_80px] gap-3 px-4 py-3">
+          <div className="bg-neutral-2 grid grid-cols-[minmax(0,1fr)_64px_52px] gap-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_100px_80px] sm:gap-3">
             <span className="text-caption-lg text-neutral-8 font-semibold">파일명</span>
             <span className="text-caption-lg text-neutral-8 font-semibold">파일 크기</span>
             <span className="text-caption-lg text-neutral-8 text-right font-semibold">관리</span>
@@ -226,7 +226,7 @@ export default function ProjectFileUploadModal({
               {queuedFiles.map((file) => (
                 <li
                   key={getFileKey(file)}
-                  className="grid grid-cols-[minmax(0,1fr)_100px_80px] items-center gap-3 px-4 py-3"
+                  className="grid grid-cols-[minmax(0,1fr)_64px_52px] items-center gap-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_100px_80px] sm:gap-3"
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <InlineIcon svg={documentIcon} className="text-neutral-6 size-4 shrink-0" />
@@ -249,13 +249,13 @@ export default function ProjectFileUploadModal({
           )}
         </section>
 
-        <div className="mt-1 flex justify-center gap-3">
-          <Button type="submit" variant="primary" className="w-40" disabled={uploading}>
+        <div className="mt-1 flex flex-col justify-center gap-3 sm:flex-row">
+          <Button type="submit" variant="primary" className="w-full sm:w-40" disabled={uploading}>
             {uploading ? '업로드 중…' : '저장'}
           </Button>
           <Button
             variant="secondary"
-            className="w-40"
+            className="w-full sm:w-40"
             disabled={uploading}
             onClick={() => resetAndClose()}
           >
