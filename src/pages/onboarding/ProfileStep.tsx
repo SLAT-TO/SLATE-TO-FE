@@ -121,6 +121,7 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
             ? profile.avatarUrl
             : undefined,
       })
+      useOnboardingStore.getState().reset()
       onComplete()
     } catch (err) {
       setSubmitError(err instanceof ApiError ? err.message : '온보딩 정보를 저장하지 못했습니다.')

@@ -34,25 +34,32 @@ export const videoHandlers = [
 
     const url = new URL(request.url)
     const size = Number(url.searchParams.get('size') ?? 20)
-    const videos = db.videos
+    const cursor = url.searchParams.get('cursor')
+    const cursorId = cursor ? Number(cursor) : null
+
+    const sorted = db.videos
       .filter((v) => v.projectId === projectId)
-      .slice(0, size)
-      .map((v) => ({
-        videoId: v.videoId,
-        title: v.title,
-        thumbnailUrl: v.thumbnailUrl,
-        bookmarked: v.bookmarked,
-        progressStatus: v.progressStatus,
-        hasUnreadFeedback: v.hasUnreadFeedback,
-        createdAt: v.createdAt,
-        updatedAt: v.updatedAt,
-      }))
+      .sort((a, b) => b.videoId - a.videoId)
+    const filtered = cursorId != null ? sorted.filter((v) => v.videoId < cursorId) : sorted
+    const page = filtered.slice(0, size)
+    const hasNext = filtered.length > size
+
+    const videos = page.map((v) => ({
+      videoId: v.videoId,
+      title: v.title,
+      thumbnailUrl: v.thumbnailUrl,
+      bookmarked: v.bookmarked,
+      progressStatus: v.progressStatus,
+      hasUnreadFeedback: v.hasUnreadFeedback,
+      createdAt: v.createdAt,
+      updatedAt: v.updatedAt,
+    }))
 
     return HttpResponse.json(
       ok({
         items: videos,
-        nextCursor: videos.length ? videos[videos.length - 1].videoId : null,
-        hasNext: false,
+        nextCursor: hasNext ? videos[videos.length - 1]!.videoId : null,
+        hasNext,
       }),
       { status: 200 },
     )

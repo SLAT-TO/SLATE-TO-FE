@@ -37,6 +37,14 @@ export function navigate(to: string, options?: NavigateOptions): void {
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
 
+/** ?redirectTo= 쿼리값 검증 — 앱 내부 상대경로("/"로 시작, "//"·"/\"로 시작하지 않음)만 허용한다.
+ * 절대/프로토콜-상대 URL을 그대로 신뢰하면 로그인 성공 후 외부 사이트로 리다이렉트되는
+ * open redirect(피싱)로 악용될 수 있다. */
+export function sanitizeRedirectTo(value: string | null | undefined): string | undefined {
+  if (!value) return undefined
+  return /^\/(?!\/|\\)/.test(value) ? value : undefined
+}
+
 export function matchPath(pattern: string, pathname: string): Record<string, string> | null {
   const patternParts = pattern.split('/').filter(Boolean)
   const pathParts = pathname.split('/').filter(Boolean)
@@ -47,7 +55,13 @@ export function matchPath(pattern: string, pathname: string): Record<string, str
     const patternPart = patternParts[i]!
     const pathPart = pathParts[i]!
     if (patternPart.startsWith(':')) {
-      params[patternPart.slice(1)] = decodeURIComponent(pathPart)
+      // 잘못된 %인코딩(예: 스트레이 "%")이 섞인 경로는 decodeURIComponent가 throw하므로
+      // 원본 문자열로 폴백해 라우트 매칭 자체가 죽지 않게 한다.
+      try {
+        params[patternPart.slice(1)] = decodeURIComponent(pathPart)
+      } catch {
+        params[patternPart.slice(1)] = pathPart
+      }
       continue
     }
     if (patternPart !== pathPart) return null

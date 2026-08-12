@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { refreshToken } from '../api/auth'
 import { getMe } from '../api/users'
-import { navigate } from '../utils/navigation'
+import { navigate, sanitizeRedirectTo } from '../utils/navigation'
 
 // 소셜 로그인 성공 후 BE가 리다이렉트하는 콜백 화면 (callback-path: /auth/callback).
 // BE는 refreshToken만 HttpOnly 쿠키로 내려주므로, 여기서 refresh를 한 번 호출해
@@ -27,7 +27,9 @@ export function AuthCallbackPage() {
             return
           }
 
-          const redirectTo = new URLSearchParams(window.location.search).get('redirectTo')
+          const redirectTo = sanitizeRedirectTo(
+            new URLSearchParams(window.location.search).get('redirectTo'),
+          )
           navigate(redirectTo || '/')
         } catch {
           if (!cancelled) navigate('/signup/terms')

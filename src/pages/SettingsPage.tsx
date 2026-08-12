@@ -9,6 +9,7 @@ import { setAccessToken } from '../api/client'
 import { deleteAccount } from '../api/users'
 import { CARD_BASE } from '../styles/card'
 import { useUserStore } from '../stores/userStore'
+import { useOnboardingStore } from '../stores/onboardingStore'
 
 const HEADER = <HeaderTitle>설정</HeaderTitle>
 
@@ -34,6 +35,8 @@ function SettingsPage() {
     } catch {
       // 토큰은 이미 지워졌으므로 무시하고 진행
     }
+    clearUser()
+    useOnboardingStore.getState().reset()
     navigate('/login')
   }
 
@@ -42,6 +45,7 @@ function SettingsPage() {
       await deleteAccount({ agreed: true, ...(password ? { password } : {}) })
       setAccessToken(null)
       clearUser()
+      useOnboardingStore.getState().reset()
       navigate('/login')
     } catch {
       setWithdrawError('비밀번호가 일치하지 않습니다.')

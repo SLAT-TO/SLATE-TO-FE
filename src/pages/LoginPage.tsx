@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Input from '../components/Input'
 import { Button } from '../components/Button'
 import GoogleIcon from '../components/icons/GoogleIcon'
-import { navigate } from '../utils/navigation'
+import { navigate, sanitizeRedirectTo } from '../utils/navigation'
 import { loginWithEmail, startGoogleLogin } from '../api/auth'
 import { ApiError } from '../types/api'
 import loginBg from '../assets/images/login-bg.png'
@@ -32,7 +32,9 @@ export function LoginPage() {
 
   // 라우팅 가드가 비로그인 상태로 보호된 경로 접근 시 ?redirectTo=로 원래 경로를 실어 보냄 —
   // 있으면 /auth/callback이 refresh 후 그 경로로 보내고, 없으면 온보딩 완료 여부로 알아서 분기
-  const redirectTo = new URLSearchParams(window.location.search).get('redirectTo') ?? undefined
+  const redirectTo = sanitizeRedirectTo(
+    new URLSearchParams(window.location.search).get('redirectTo'),
+  )
 
   // 온보딩 미완료 유저는 redirectTo가 있어도 약관동의부터 거치게 한다 — AuthCallbackPage와 동일한 분기
   const handleLogin = async () => {

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import {
@@ -227,7 +227,10 @@ export function useFeedbacks(
     ],
   )
 
-  const filteredFeedbacks = feedbacks.filter((f) => (filter === 'unresolved' ? !f.status : true))
+  const filteredFeedbacks = useMemo(
+    () => feedbacks.filter((f) => (filter === 'unresolved' ? !f.status : true)),
+    [feedbacks, filter],
+  )
 
   return {
     feedbacks,

@@ -141,11 +141,7 @@ export function EventFormModal({
             <Select
               options={projectOptions}
               value={values.projectId}
-              onChange={(projectId) =>
-                setValues((v) =>
-                  projectId ? { ...v, projectId } : { ...v, projectId, participantIds: [] },
-                )
-              }
+              onChange={(projectId) => setValues((v) => ({ ...v, projectId, participantIds: [] }))}
               placeholder="프로젝트를 선택해주세요."
             />
           </div>

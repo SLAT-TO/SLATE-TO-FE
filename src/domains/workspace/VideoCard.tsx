@@ -11,8 +11,6 @@ interface VideoCardProps {
   title: string
   thumbnailUrl?: string | null
   progressStatus: VideoCardProgressStatus
-  /** 상태 태그 옆에 보여줄 상대 시간 문구 (예: "2시간 전") — 계산은 호출부에서 */
-  relativeTime?: string
   /** BE VideoItemResDTO.hasUnreadFeedback */
   hasUnreadFeedback?: boolean
   bookmarked?: boolean
@@ -29,7 +27,6 @@ export default function VideoCard({
   title,
   thumbnailUrl,
   progressStatus,
-  relativeTime,
   hasUnreadFeedback = false,
   bookmarked = false,
   onToggleBookmark,
@@ -105,7 +102,6 @@ export default function VideoCard({
           <Tag variant={progressStatus === 'DONE' ? 'ghost' : 'secondary'}>
             {progressStatus === 'DONE' ? '완료' : '진행중'}
           </Tag>
-          {relativeTime && <span className="text-caption-sm text-neutral-6">{relativeTime}</span>}
         </div>
         {hasUnreadFeedback && (
           <span
