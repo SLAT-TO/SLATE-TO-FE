@@ -1,16 +1,18 @@
 import type { ProjectStatus } from '../types/project'
 
+// BE ProjectStatus enum 선언 순서(기획 중 → 편집 중 → 촬영 중[REVIEWING] → 완료)와 맞춘다.
+// 이 순서 그대로 드롭다운에 노출되므로(Object.keys 사용), 실제 진행 순서와 다르게 두면 안 된다.
 export const PROJECT_STATUS_LABEL: Record<string, string> = {
   PREPARING: '기획 중',
-  SHOOTING: '촬영 중',
   EDITING: '편집 중',
+  SHOOTING: '촬영 중',
   COMPLETED: '완료',
 }
 
 export const PROJECT_STATUS_COLOR: Record<string, string> = {
   PREPARING: 'bg-tag-active-bg text-tag-active-text',
-  SHOOTING: 'bg-tag-active-bg text-tag-active-text',
   EDITING: 'bg-tag-active-bg text-tag-active-text',
+  SHOOTING: 'bg-tag-active-bg text-tag-active-text',
   COMPLETED: 'bg-tag-done-bg text-tag-done-text',
 }
 
