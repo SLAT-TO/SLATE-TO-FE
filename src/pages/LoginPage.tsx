@@ -6,7 +6,7 @@ import { navigate, sanitizeRedirectTo } from '../utils/navigation'
 import { loginWithEmail, startGoogleLogin } from '../api/auth'
 import { ApiError } from '../types/api'
 import loginBg from '../assets/images/login-bg.png'
-import loginAvatar from '../assets/images/profile-avatar.png'
+import loginLogo from '../assets/images/login-logo.png'
 
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   return (
@@ -75,7 +75,9 @@ export function LoginPage() {
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-10 px-4 py-16">
         <div className="flex w-full max-w-[1062px] flex-col items-center gap-10">
           <div className="flex w-full max-w-[560px] flex-col items-center gap-10">
-            <img src={loginAvatar} alt="" className="size-[100px] rounded-full object-cover" />
+            <div className="flex size-[100px] items-center justify-center rounded-[7px] bg-white">
+              <img src={loginLogo} alt="SLATE - TO" className="w-[70%]" />
+            </div>
 
             <div className="text-head-md text-neutral-1 text-center font-bold">
               <p>영상 제작의 흐름을 하나로,</p>

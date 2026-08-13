@@ -167,9 +167,16 @@ function AppShell() {
   const profileImageUrl = useUserStore((s) => s.user?.profileImageUrl)
   const fetchUser = useUserStore((s) => s.fetchUser)
 
+  // AppShell은 앱 전체에서 한 번만 마운트되므로, 이 effect가 mount 시 한 번만 돌면
+  // 로그인/회원가입 직후(새로고침 없이 클라이언트 라우팅만 일어남)엔 유저 정보가
+  // 비어있는 채로 남아 있었다(새로고침해야만 안녕하세요 xxx님이 뜨던 문제).
+  // pathname이 바뀔 때마다 다시 확인하되, idle·error 상태일 때만 실제로 요청한다.
   useEffect(() => {
-    void fetchUser()
-  }, [fetchUser])
+    const status = useUserStore.getState().status
+    if (status === 'idle' || status === 'error') {
+      void fetchUser()
+    }
+  }, [pathname, fetchUser])
 
   const fullscreen = renderFullscreenRoute(pathname)
   if (fullscreen) {
