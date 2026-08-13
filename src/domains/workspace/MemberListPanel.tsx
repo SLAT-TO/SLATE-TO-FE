@@ -112,8 +112,12 @@ export default function MemberListPanel({
         setGuests(list.guests)
       } catch (err) {
         if (cancelled) return
-        // 공유 링크를 아직 한 번도 안 만들었으면(게스트 초대 이력 없음) 404 — 빈 목록으로 취급
-        if (!(err instanceof ApiError && err.code === 'COMMON404')) {
+        // 공유 링크를 아직 한 번도 안 만들었으면(게스트 초대 이력 없음) 빈 목록으로 취급.
+        // 현재 BE는 SHARELINK404, 구형 mock은 COMMON404를 반환하므로 둘 다 허용한다.
+        if (
+          !(err instanceof ApiError) ||
+          (err.code !== 'SHARELINK404' && err.code !== 'COMMON404')
+        ) {
           setActionError('게스트 목록을 불러오지 못했습니다.')
         }
         setGuests([])
