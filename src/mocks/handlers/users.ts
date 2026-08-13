@@ -232,15 +232,6 @@ export const userHandlers = [
     return HttpResponse.json(ok(null), { status: 200 })
   }),
 
-  http.delete(paths.users.myPortfolio(':portfolioId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
-    const id = Number(params.portfolioId)
-    const exists = db.portfolios.some((p) => p.id === id)
-    if (!exists) return notFound('포트폴리오가 없거나 내 것이 아님')
-    db.portfolios = db.portfolios.filter((p) => p.id !== id)
-    return HttpResponse.json(ok(null), { status: 200 })
-  }),
-
   // '/users/me/portfolios/:id'도 이 패턴에 매칭되므로 me 전용 핸들러보다 뒤에 둔다
   http.get(paths.users.portfolio(':userId', ':portfolioId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
