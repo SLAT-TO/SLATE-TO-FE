@@ -3,6 +3,8 @@ import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import Choice from '../components/Choice'
 import { Button } from '../components/Button'
+import Modal from '../components/Modal'
+import { ChevronRightIcon } from '../components/icons/ChevronIcons'
 import { navigate } from '../utils/navigation'
 import { useOnboardingStore } from '../stores/onboardingStore'
 import { termsOfServiceText } from '../constants/termsOfService'
@@ -29,6 +31,7 @@ export function TermsPage() {
     privacy: false,
     collect: false,
   })
+  const [showAllTerms, setShowAllTerms] = useState(false)
 
   // 시행일은 실제로 동의하는 시점(오늘)으로 고정 — 페이지를 여는 시점 기준 한 번만 계산
   const effectiveDateLabel = useMemo(() => format(new Date(), 'yyyy년 M월 d일', { locale: ko }), [])
@@ -77,12 +80,22 @@ export function TermsPage() {
           </div>
 
           <div className="flex flex-col gap-5">
-            <Choice
-              type="checkbox"
-              checked={allAgreed}
-              onChange={toggleAll}
-              label="모두 동의합니다."
-            />
+            <div className="flex items-center justify-between">
+              <Choice
+                type="checkbox"
+                checked={allAgreed}
+                onChange={toggleAll}
+                label="모두 동의합니다."
+              />
+              <button
+                type="button"
+                onClick={() => setShowAllTerms(true)}
+                className="text-caption-lg text-neutral-6 hover:text-neutral-10 flex items-center gap-1"
+              >
+                이용약관 전체보기
+                <ChevronRightIcon className="size-4" />
+              </button>
+            </div>
             <div className="border-neutral-5 flex flex-col gap-3 border-t pt-5">
               {TERMS.map((t) => (
                 <div key={t.key} className="flex flex-col gap-2">
@@ -117,6 +130,44 @@ export function TermsPage() {
           </Button>
         </form>
       </div>
+
+      <Modal
+        isOpen={showAllTerms}
+        onClose={() => setShowAllTerms(false)}
+        className="flex max-h-[80vh] w-full max-w-[720px] flex-col gap-6"
+      >
+        <div className="flex items-center justify-between">
+          <p className="text-head-sm text-neutral-10 font-bold">이용약관 전체보기</p>
+          <button
+            type="button"
+            onClick={() => setShowAllTerms(false)}
+            aria-label="닫기"
+            className="text-neutral-5 hover:text-neutral-10"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="flex flex-col gap-8 overflow-y-auto">
+          <section className="flex flex-col gap-2">
+            <p className="text-body-sm text-neutral-10 font-semibold">이용약관</p>
+            <div className="bg-neutral-2 text-neutral-6 text-caption-sm rounded-lg p-4 whitespace-pre-line">
+              {termsText}
+            </div>
+          </section>
+          <section className="flex flex-col gap-2">
+            <p className="text-body-sm text-neutral-10 font-semibold">개인정보 처리방침</p>
+            <div className="bg-neutral-2 text-neutral-6 text-caption-sm rounded-lg p-4 whitespace-pre-line">
+              {privacyText}
+            </div>
+          </section>
+          <section className="flex flex-col gap-2">
+            <p className="text-body-sm text-neutral-10 font-semibold">개인정보 수집 및 이용 동의</p>
+            <div className="bg-neutral-2 text-neutral-6 text-caption-sm rounded-lg p-4 whitespace-pre-line">
+              {collectText}
+            </div>
+          </section>
+        </div>
+      </Modal>
     </div>
   )
 }
