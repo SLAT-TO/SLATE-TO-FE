@@ -100,9 +100,14 @@ export function useProjectActivitiesQuery(projectId: number) {
   return { ...query, activities }
 }
 
-/** 핀한 프로젝트를 목록 상단으로 (pinnedAt 최신 우선) */
+/** 완료된 프로젝트는 핀 여부와 무관하게 맨 아래로, 나머지는 핀한 프로젝트를 상단으로
+ * (pinnedAt 최신 우선) — 북마크가 위로 올라오는 것의 반대로 완료는 아래로 내려간다. */
 function sortProjectsByPin(items: ProjectSummary[]): ProjectSummary[] {
   return [...items].sort((a, b) => {
+    const aCompleted = a.status === 'COMPLETED'
+    const bCompleted = b.status === 'COMPLETED'
+    if (aCompleted !== bCompleted) return aCompleted ? 1 : -1
+
     if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1
     const aPinned = a.pinnedAt ? Date.parse(a.pinnedAt) : 0
     const bPinned = b.pinnedAt ? Date.parse(b.pinnedAt) : 0
