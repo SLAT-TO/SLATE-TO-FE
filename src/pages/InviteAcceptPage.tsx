@@ -1,7 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import Select from '../components/Select'
-import Choice from '../components/Choice'
 import { Button } from '../components/Button'
 import { getInvitation, acceptInvitation } from '../api/projects'
 import { ApiError } from '../types/api'
@@ -10,7 +9,9 @@ import { navigate } from '../utils/navigation'
 import { invalidateProjectActivityData } from '../queries/projectInvalidation'
 import inviteBg from '../assets/images/invite-bg.png'
 
-type Step = 'role' | 'terms'
+/** 초대 링크는 1회용이라, 이미 수락된 뒤 같은 링크로 다시 들어오면 이 코드로 실패한다.
+ * 그 경우 새로 가입시키는 대신 이미 속한 프로젝트로 그냥 들여보낸다. */
+const ALREADY_JOINED_CODES = new Set(['PROJECT_INVITATION409', 'PROJECT_MEMBER409'])
 
 function Card({ children }: { children: ReactNode }) {
   return (
@@ -21,21 +22,17 @@ function Card({ children }: { children: ReactNode }) {
 }
 
 function errorMessage(err: unknown): string {
-  if (err instanceof ApiError) {
-    if (err.code === 'PROJECT_MEMBER409') return '이미 참여 중인 프로젝트입니다.'
-    return err.message
-  }
+  if (err instanceof ApiError) return err.message
   return '요청 처리 중 오류가 발생했습니다.'
 }
 
-/** 프로젝트 초대 수락: 역할 선택 후 약관에 동의한다. */
+/** 프로젝트 초대 수락: 역할을 선택하면 바로 참여한다. */
 export function InviteAcceptPage({ token }: { token: string }) {
   const queryClient = useQueryClient()
-  const [step, setStep] = useState<Step>('role')
   const [role, setRole] = useState('')
   const [roleError, setRoleError] = useState<string | null>(null)
-  const [allAgreed, setAllAgreed] = useState(false)
 
+  const [projectId, setProjectId] = useState<number | null>(null)
   const [projectTitle, setProjectTitle] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -46,7 +43,10 @@ export function InviteAcceptPage({ token }: { token: string }) {
 
     getInvitation(token)
       .then((res) => {
-        if (!cancelled) setProjectTitle(res.projectTitle)
+        if (!cancelled) {
+          setProjectId(res.projectId)
+          setProjectTitle(res.projectTitle)
+        }
       })
       .catch((err) => {
         if (!cancelled) setLoadError(errorMessage(err))
@@ -58,13 +58,25 @@ export function InviteAcceptPage({ token }: { token: string }) {
   }, [token])
 
   const handleAccept = async () => {
+    if (!role) {
+      setRoleError('역할을 선택해주세요.')
+      return
+    }
+
     setSubmitting(true)
     setSubmitError(null)
     try {
-      const accepted = await acceptInvitation(token, { roleNames: role ? [role] : [] })
+      const accepted = await acceptInvitation(token, { roleNames: [role] })
       void invalidateProjectActivityData(queryClient, accepted.projectId)
       navigate('/workspace')
     } catch (err) {
+      // 이미 이 프로젝트 멤버라 초대 수락만 실패한 것이면, 에러 대신 해당
+      // 프로젝트로 들여보낸다 — 관리 페이지에서 내보내거나 스스로 나가지 않는 한
+      // 같은 링크를 다시 타도 참여 상태가 유지되어야 한다.
+      if (err instanceof ApiError && ALREADY_JOINED_CODES.has(err.code) && projectId != null) {
+        navigate(`/workspace/projects/${projectId}`)
+        return
+      }
       setSubmitError(errorMessage(err))
     } finally {
       setSubmitting(false)
@@ -94,16 +106,12 @@ export function InviteAcceptPage({ token }: { token: string }) {
           </Card>
         )}
 
-        {!loadError && step === 'role' && (
+        {!loadError && (
           <Card>
             <form
               onSubmit={(event) => {
                 event.preventDefault()
-                if (!role) {
-                  setRoleError('역할을 선택해주세요.')
-                  return
-                }
-                setStep('terms')
+                void handleAccept()
               }}
               className="flex flex-1 flex-col gap-[60px]"
             >
@@ -124,45 +132,9 @@ export function InviteAcceptPage({ token }: { token: string }) {
                   error={roleError ?? undefined}
                 />
               </div>
-              <Button type="submit" fullWidth className="mt-auto">
-                입장하기
-              </Button>
-            </form>
-          </Card>
-        )}
-
-        {!loadError && step === 'terms' && (
-          <Card>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault()
-                void handleAccept()
-              }}
-              className="flex flex-1 flex-col gap-[60px]"
-            >
-              <div className="flex flex-col items-center gap-3">
-                <p className="text-head-lg text-neutral-10 font-bold">이용 약관 동의</p>
-                <Choice
-                  type="checkbox"
-                  checked={allAgreed}
-                  onChange={setAllAgreed}
-                  label="모두 동의합니다."
-                />
-              </div>
-              <div className="flex flex-col gap-4">
-                <Choice
-                  type="checkbox"
-                  checked={allAgreed}
-                  onChange={setAllAgreed}
-                  label="이용약관 (필수)"
-                />
-                <div className="bg-neutral-2 border-neutral-3 text-neutral-5 text-body-sm h-60 overflow-y-auto rounded-lg border p-4">
-                  이용약관 내용이 여기에 표시됩니다.
-                </div>
-              </div>
               {submitError && <p className="text-warning text-caption-lg">{submitError}</p>}
               <Button type="submit" fullWidth disabled={submitting} className="mt-auto">
-                동의합니다.
+                {submitting ? '입장 중...' : '입장하기'}
               </Button>
             </form>
           </Card>
