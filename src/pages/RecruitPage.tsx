@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import JobCard from '../components/JobCard'
 import JobFilterBar from '../domains/recruit/JobFilterBar'
 import { FILTER_CONFIGS, type SortValue } from '../constants'
@@ -45,11 +45,19 @@ function RecruitPage() {
     })
   }
 
-  const handleBookmarkClick = (job: Recruitment) => {
-    const willBookmark = !bookmarkedIds.has(job.id)
-    void toggleBookmark(job.id)
-    if (willBookmark) setIsBookmarkModalOpen(true)
-  }
+  // JobCard가 React.memo로 감싸져 있어 — id 기반의 안정된 참조여야 카드별 리렌더가 줄어든다
+  const handleBookmarkClick = useCallback(
+    (jobId: number) => {
+      const willBookmark = !bookmarkedIds.has(jobId)
+      void toggleBookmark(jobId)
+      if (willBookmark) setIsBookmarkModalOpen(true)
+    },
+    [bookmarkedIds, toggleBookmark],
+  )
+
+  const handleCardClick = useCallback((jobId: number) => {
+    navigate(`/matching/${jobId}`)
+  }, [])
 
   const handleSortChange = (next: SortValue) => {
     setSearchParams(toSearchParams(selectedFilters, next), { replace: true })
@@ -62,6 +70,7 @@ function RecruitPage() {
   const renderCard = (job: Recruitment) => (
     <JobCard
       key={job.id}
+      id={job.id}
       category={PROJECT_TYPE_LABEL[job.category] ?? job.category}
       length={
         job.lengthType ? (PROJECT_LENGTH_TYPE_LABEL[job.lengthType] ?? job.lengthType) : undefined
@@ -70,8 +79,8 @@ function RecruitPage() {
       role={roleLabel(job.recruitPart)}
       dDay={job.status === 'CLOSED' ? '마감' : `D-${job.dday}`}
       isBookmarked={bookmarkedIds.has(job.id)}
-      onBookmarkClick={() => handleBookmarkClick(job)}
-      onClick={() => navigate(`/matching/${job.id}`)}
+      onBookmarkClick={handleBookmarkClick}
+      onClick={handleCardClick}
     />
   )
 

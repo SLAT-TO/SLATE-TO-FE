@@ -64,7 +64,7 @@ export async function uploadProfileImage(file: File): Promise<{
   })
 }
 
-/** FE mock 전용 — BE에 DELETE /users/me(회원탈퇴) 미구현. BE 연동 시 API 존재 여부 재확인 필요 */
+/** DELETE /api/v1/users/me — 회원탈퇴. body는 UserWithdrawRequest{agreed, password} */
 export async function deleteAccount(body: DeleteAccountRequest): Promise<null> {
   return request<null>({ method: 'DELETE', url: paths.users.me, data: body })
 }

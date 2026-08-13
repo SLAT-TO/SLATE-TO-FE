@@ -29,7 +29,7 @@ export const paths = {
     myPortfolios: `${API_PREFIX}/users/me/portfolios`,
     myPortfolio: (portfolioId: number | string) =>
       `${API_PREFIX}/users/me/portfolios/${portfolioId}`,
-    /** FE mock 전용 — BE에 Recruitment 컨트롤러 자체가 없음 (엔티티만 존재, Swagger에 미노출) */
+    /** BE MyRecruitmentController 구현됨 */
     myRecruitments: `${API_PREFIX}/users/me/recruitments`,
     myApplications: `${API_PREFIX}/users/me/applications`,
     myRecruitmentBookmarks: `${API_PREFIX}/users/me/recruitment-bookmarks`,
@@ -104,9 +104,8 @@ export const paths = {
       `${API_PREFIX}/share-links/${token}/files/${referenceFileId}/download`,
     byId: (shareLinkId: number | string) => `${API_PREFIX}/share-links/${shareLinkId}`,
   },
-  /** FE mock 전용 — BE에 Recruitment 컨트롤러 자체가 없음 (엔티티만 존재, Swagger에 미노출)
-   * BE 엔티티 필드(recruitPart/shootingPeriod/pay/contact/location/deadline)가 FE 모델과 구조가
-   * 많이 달라서, 컨트롤러가 실제로 나오기 전까지는 아래 타입/mock을 엔티티에 맞춰 미리 바꾸지 않음 */
+  /** BE RecruitmentController/RecruitmentApplicationController/RecruitmentBookmarkController 구현됨,
+   * FE 경로와 일치 확인 완료 */
   recruitments: {
     root: `${API_PREFIX}/recruitments`,
     recommended: `${API_PREFIX}/recruitments/recommended`,

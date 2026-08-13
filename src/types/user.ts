@@ -61,7 +61,7 @@ export type MeProfile = {
   createdAt: string
 }
 
-/** GET /api/v1/users/me/activity-stats — BE 미구현, mock 전용 */
+/** GET /api/v1/users/me/stats — BE 구현됨 (UserStatsResponse) */
 export type UserActivityStats = UserStats
 
 /** mock DB 내부 저장용 */
