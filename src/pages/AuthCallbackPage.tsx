@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { refreshToken } from '../api/auth'
+import { refreshToken, startGoogleLogin } from '../api/auth'
 import { getMe } from '../api/users'
 import { navigate, sanitizeRedirectTo } from '../utils/navigation'
 
@@ -17,6 +17,13 @@ async function refreshTokenWithRetry(retriesLeft = 1): Promise<void> {
   }
 }
 
+// 구글 로그인은 최초 한 번은 실패하고 다시 시도하면 바로 되는 경우가 있다 —
+// 크로스 도메인 쿠키(refreshToken)를 그 도메인에 처음 받는 시점엔 브라우저가
+// 거부했다가, 한 번 거친 뒤부터는 정상적으로 받아들이는 브라우저 특성으로 보인다.
+// 같은 페이지 안에서의 재시도(refreshTokenWithRetry)로는 못 넘는 케이스라,
+// 구글 로그인 자체를 자동으로 한 번 더 태워 사용자가 직접 두 번 누르지 않게 한다.
+const GOOGLE_AUTO_RETRY_KEY = 'slate_google_auth_auto_retry'
+
 // 소셜 로그인 성공 후 BE가 리다이렉트하는 콜백 화면 (callback-path: /auth/callback).
 // BE는 refreshToken만 HttpOnly 쿠키로 내려주므로, 여기서 refresh를 한 번 호출해
 // accessToken을 발급받아 저장한다. 온보딩 미완료(신규 유저)면 redirectTo가 있어도
@@ -28,9 +35,14 @@ export function AuthCallbackPage() {
   useEffect(() => {
     let cancelled = false
 
+    const redirectTo = sanitizeRedirectTo(
+      new URLSearchParams(window.location.search).get('redirectTo'),
+    )
+
     refreshTokenWithRetry()
       .then(async () => {
         if (cancelled) return
+        sessionStorage.removeItem(GOOGLE_AUTO_RETRY_KEY)
 
         try {
           const me = await getMe()
@@ -41,16 +53,22 @@ export function AuthCallbackPage() {
             return
           }
 
-          const redirectTo = sanitizeRedirectTo(
-            new URLSearchParams(window.location.search).get('redirectTo'),
-          )
           navigate(redirectTo || '/')
         } catch {
           if (!cancelled) navigate('/signup/terms')
         }
       })
       .catch(() => {
-        if (!cancelled) navigate('/login')
+        if (cancelled) return
+
+        if (!sessionStorage.getItem(GOOGLE_AUTO_RETRY_KEY)) {
+          sessionStorage.setItem(GOOGLE_AUTO_RETRY_KEY, '1')
+          void startGoogleLogin({ redirectTo })
+          return
+        }
+
+        sessionStorage.removeItem(GOOGLE_AUTO_RETRY_KEY)
+        navigate('/login')
       })
 
     return () => {
