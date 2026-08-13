@@ -13,7 +13,26 @@ import type {
 } from '../../types/feedback'
 import { allocId, db, requireUser } from '../db'
 import { badRequest, notFound, unauthorized } from '../errors'
+import { paginateByCursor } from '../pagination'
 import { created, ok } from '../response'
+
+/** db.referenceFiles는 id가 아니라 referenceFileId를 식별자로 쓰므로
+ * paginateByCursor(T extends { id: number })에 맞춰 잠깐 id로 별칭한 뒤 되돌린다 */
+function paginateReferenceFiles<T extends { referenceFileId: number }>(
+  items: T[],
+  cursor: number | null,
+  size: number,
+) {
+  const aliased = items.map((item) => ({ ...item, id: item.referenceFileId }))
+  const page = paginateByCursor(aliased, cursor, size)
+  return {
+    ...page,
+    items: page.items.map(({ id: _id, ...rest }) => {
+      void _id
+      return rest as unknown as T
+    }),
+  }
+}
 
 function safeUser() {
   try {
@@ -212,10 +231,22 @@ export const videoHandlers = [
     )
   }),
 
-  http.get(paths.projects.referenceFiles(':projectId', ':videoId'), ({ params }) => {
+  http.get(paths.projects.referenceFiles(':projectId', ':videoId'), ({ request, params }) => {
     if (!safeUser()) return unauthorized()
     if (!db.videos.some((v) => v.videoId === Number(params.videoId))) return notFound()
-    return HttpResponse.json(ok({ items: db.referenceFiles }), { status: 200 })
+
+    const url = new URL(request.url)
+    const keyword = url.searchParams.get('keyword')?.toLowerCase()
+    const cursor = url.searchParams.get('cursor')
+    const size = Number(url.searchParams.get('size') ?? 20)
+
+    let items = db.referenceFiles
+    if (keyword) {
+      items = items.filter((f) => f.fileName.toLowerCase().includes(keyword))
+    }
+
+    const page = paginateReferenceFiles(items, cursor ? Number(cursor) : null, size)
+    return HttpResponse.json(ok(page), { status: 200 })
   }),
 
   http.post(
@@ -577,13 +608,23 @@ export const videoHandlers = [
     const guest = guestId != null ? mockGuests.get(guestId) : undefined
     if (!guest || guest.shareLinkId !== link.shareLinkId) return unauthorized()
 
+    const url = new URL(request.url)
+    const keyword = url.searchParams.get('keyword')?.toLowerCase()
+    const cursor = url.searchParams.get('cursor')
+    const size = Number(url.searchParams.get('size') ?? 20)
+
     // 게스트 응답에는 projectFileId·uploader를 넣지 않는다 (내부 파일 식별자·팀원 신원 비노출)
-    const items = db.referenceFiles.map(({ referenceFileId, fileName, createdAt }) => ({
+    let items = db.referenceFiles.map(({ referenceFileId, fileName, createdAt }) => ({
       referenceFileId,
       fileName,
       createdAt,
     }))
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    if (keyword) {
+      items = items.filter((f) => f.fileName.toLowerCase().includes(keyword))
+    }
+
+    const page = paginateReferenceFiles(items, cursor ? Number(cursor) : null, size)
+    return HttpResponse.json(ok(page), { status: 200 })
   }),
 
   http.get(paths.shareLinks.fileDownload(':token', ':referenceFileId'), ({ request, params }) => {

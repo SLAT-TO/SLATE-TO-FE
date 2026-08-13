@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   deleteFile,
   downloadProjectFile,
+  getProjectFile,
   getProjectFiles,
   pinProjectFile,
   unpinProjectFile,
@@ -64,6 +65,9 @@ export default function ProjectFileList({
   const [uploadOpen, setUploadOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<ProjectFileListItem | null>(null)
   const [selectedFile, setSelectedFile] = useState<ProjectFileListItem | null>(null)
+  const [nextFileCursor, setNextFileCursor] = useState<number | null>(null)
+  const [hasMoreFiles, setHasMoreFiles] = useState(false)
+  const [isLoadingMoreFiles, setIsLoadingMoreFiles] = useState(false)
   const latestLoadIdRef = useRef(0)
 
   useEffect(() => {
@@ -78,6 +82,8 @@ export default function ProjectFileList({
       const page = await getProjectFiles(projectId, searchKeyword.trim() || undefined)
       if (loadId === latestLoadIdRef.current) {
         setFiles(page.items)
+        setNextFileCursor(page.nextCursor)
+        setHasMoreFiles(page.hasNext)
       }
     } finally {
       if (loadId === latestLoadIdRef.current) {
@@ -89,6 +95,36 @@ export default function ProjectFileList({
   useEffect(() => {
     void Promise.resolve().then(reloadFiles)
   }, [reloadFiles])
+
+  useEffect(() => {
+    if (initialFileId == null || files.some((file) => file.id === initialFileId)) return
+    let cancelled = false
+    void getProjectFile(projectId, initialFileId)
+      .then((file) => {
+        if (!cancelled) setSelectedFile(file)
+      })
+      .catch(() => {
+        if (!cancelled) onInitialFileConsumed?.()
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, initialFileId, files, onInitialFileConsumed])
+
+  const loadMoreFiles = useCallback(async () => {
+    if (!hasMoreFiles || nextFileCursor == null) return
+    setIsLoadingMoreFiles(true)
+    try {
+      const page = await getProjectFiles(projectId, searchKeyword.trim() || undefined, {
+        cursor: nextFileCursor,
+      })
+      setFiles((prev) => [...prev, ...page.items])
+      setNextFileCursor(page.nextCursor)
+      setHasMoreFiles(page.hasNext)
+    } finally {
+      setIsLoadingMoreFiles(false)
+    }
+  }, [projectId, searchKeyword, hasMoreFiles, nextFileCursor])
 
   const downloadFile = async (fileId: number, fileName: string) => {
     const blob = await downloadProjectFile(projectId, fileId)
@@ -234,6 +270,19 @@ export default function ProjectFileList({
           </div>
         ))}
       </div>
+
+      {hasMoreFiles && (
+        <div className="flex justify-center">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void loadMoreFiles()}
+            disabled={isLoadingMoreFiles}
+          >
+            {isLoadingMoreFiles ? '불러오는 중…' : '더 보기'}
+          </Button>
+        </div>
+      )}
 
       <ProjectFileUploadModal
         projectId={projectId}

@@ -1,8 +1,8 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { getProjectMembers } from '../api/projects'
 import { ApiError } from '../types/api'
-import type { MemberSummary, ProjectDetailResponse } from '../types/project'
+import type { CursorPage, MemberSummary, ProjectDetailResponse } from '../types/project'
 import type { ProjectNoticeListItem } from '../types/notice'
 import { projectKeys } from '../queries/keys'
 import {
@@ -40,12 +40,37 @@ export function useProjectDetail(projectId: number) {
     [projectId, queryClient],
   )
 
+  // notices는 useInfiniteQuery 캐시(페이지 배열)라, 평평한 배열을 기대하는 기존 setNotices 시그니처를
+  // 유지하려고 페이지 경계는 그대로 두고 내용물만 첫 페이지에 몰아 넣는다 — 다음 페이지의
+  // nextCursor/hasNext는 건드리지 않으므로 이후 loadMoreNotices는 계속 정상 동작한다.
   const setNotices: Dispatch<SetStateAction<ProjectNoticeListItem[]>> = useCallback(
     (update) => {
-      queryClient.setQueryData<ProjectNoticeListItem[]>(projectKeys.notices(projectId), (prev) => {
-        const current = prev ?? []
-        return typeof update === 'function' ? update(current) : update
-      })
+      queryClient.setQueryData<InfiniteData<CursorPage<ProjectNoticeListItem>>>(
+        projectKeys.notices(projectId),
+        (prev) => {
+          if (!prev) return prev
+          const current = prev.pages.flatMap((page) => page.items)
+          const next = typeof update === 'function' ? update(current) : update
+          // Keep all cached items. A prepend can make the first page temporarily
+          // larger than the server page size; its existing cursor still points to
+          // the first unseen server item, so fetching the next page remains safe.
+          const firstPageSize = prev.pages[0]?.items.length ?? 0
+          const firstPageExtra = Math.max(0, next.length - current.length)
+          let offset = 0
+          return {
+            ...prev,
+            pages: prev.pages.map((page, index) => {
+              const size = index === 0 ? firstPageSize + firstPageExtra : page.items.length
+              const items = next.slice(offset, offset + size)
+              offset += size
+              return {
+                ...page,
+                items,
+              }
+            }),
+          }
+        },
+      )
     },
     [projectId, queryClient],
   )
@@ -86,8 +111,11 @@ export function useProjectDetail(projectId: number) {
     hasMoreActivities: activitiesQuery.hasNextPage,
     loadMoreActivities: activitiesQuery.fetchNextPage,
     isLoadingMoreActivities: activitiesQuery.isFetchingNextPage,
-    notices: noticesQuery.data ?? [],
+    notices: noticesQuery.notices,
     setNotices,
+    hasMoreNotices: noticesQuery.hasNextPage,
+    loadMoreNotices: noticesQuery.fetchNextPage,
+    isLoadingMoreNotices: noticesQuery.isFetchingNextPage,
     loading: projectQuery.isPending && !projectQuery.data,
     error,
     partialErrors,

@@ -178,12 +178,20 @@ export async function markAllActivitiesRead(projectId: number): Promise<null> {
 export async function getProjectFiles(
   projectId: number,
   keyword?: string,
+  params?: { cursor?: number; size?: number },
 ): Promise<CursorPage<ProjectFileListItem>> {
   return request({
     method: 'GET',
     url: paths.projects.files(projectId),
-    params: keyword ? { keyword } : undefined,
+    params: { ...(keyword ? { keyword } : undefined), ...params },
   })
+}
+
+export async function getProjectFile(
+  projectId: number,
+  fileId: number,
+): Promise<ProjectFileListItem> {
+  return request({ method: 'GET', url: paths.projects.file(projectId, fileId) })
 }
 
 /** multipart/form-data 직접 업로드 — file(바이너리) + request(JSON 메타데이터) 두 파트로 전송 */
@@ -243,8 +251,16 @@ export async function unpinProjectFile(
 
 export async function getProjectNotices(
   projectId: number,
+  params?: { cursor?: number; size?: number },
 ): Promise<CursorPage<ProjectNoticeListItem>> {
-  return request({ method: 'GET', url: paths.projects.notices(projectId) })
+  return request({ method: 'GET', url: paths.projects.notices(projectId), params })
+}
+
+export async function getProjectNotice(
+  projectId: number,
+  noticeId: number,
+): Promise<ProjectNoticeListItem> {
+  return request({ method: 'GET', url: paths.projects.notice(projectId, noticeId) })
 }
 
 export async function createProjectNotice(

@@ -623,6 +623,14 @@ export const projectHandlers = [
     return HttpResponse.json(ok(toProjectFile(file)), { status: 200 })
   }),
 
+  http.get(paths.projects.file(':projectId', ':fileId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const file = db.files.find(
+      (item) => item.id === Number(params.fileId) && item.projectId === Number(params.projectId),
+    )
+    return file ? HttpResponse.json(ok(toProjectFile(file)), { status: 200 }) : notFound()
+  }),
+
   http.delete(paths.projects.file(':projectId', ':fileId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const id = Number(params.fileId)
@@ -703,6 +711,14 @@ export const projectHandlers = [
     notice.updatedAt = new Date().toISOString()
 
     return HttpResponse.json(ok(toNoticeListItem(notice)), { status: 200 })
+  }),
+
+  http.get(paths.projects.notice(':projectId', ':noticeId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const notice = db.notices.find(
+      (item) => item.id === Number(params.noticeId) && item.projectId === Number(params.projectId),
+    )
+    return notice ? HttpResponse.json(ok(toNoticeListItem(notice)), { status: 200 }) : notFound()
   }),
 
   http.delete(paths.projects.notice(':projectId', ':noticeId'), ({ params }) => {

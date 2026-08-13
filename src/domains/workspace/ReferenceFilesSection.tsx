@@ -1,4 +1,5 @@
 import ActionMenu from '../../components/ActionMenu'
+import { Button } from '../../components/Button'
 import InlineIcon from '../../components/InlineIcon'
 import type { useReferenceFiles } from '../../hooks/useReferenceFiles'
 import documentIcon from '../../assets/icons/document.svg?raw'
@@ -14,6 +15,9 @@ type ReferenceFilesSectionProps = Pick<
   | 'downloadReferenceFile'
   | 'removeReferenceFile'
   | 'openPicker'
+  | 'hasMoreReferenceFiles'
+  | 'isLoadingMoreReferenceFiles'
+  | 'loadMoreReferenceFiles'
 > & {
   /** 게스트 등 조회만 가능한 경우 — 추가/삭제 컨트롤을 숨긴다. 다운로드는 계속 허용 */
   readOnly?: boolean
@@ -26,6 +30,9 @@ export default function ReferenceFilesSection({
   downloadReferenceFile,
   removeReferenceFile,
   openPicker,
+  hasMoreReferenceFiles,
+  isLoadingMoreReferenceFiles,
+  loadMoreReferenceFiles,
   readOnly = false,
 }: ReferenceFilesSectionProps) {
   return (
@@ -82,6 +89,18 @@ export default function ReferenceFilesSection({
           </div>
         </div>
       ))}
+      {hasMoreReferenceFiles && (
+        <div className="flex justify-center">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void loadMoreReferenceFiles()}
+            disabled={isLoadingMoreReferenceFiles}
+          >
+            {isLoadingMoreReferenceFiles ? '불러오는 중…' : '더 보기'}
+          </Button>
+        </div>
+      )}
       {!readOnly && (
         <button
           type="button"

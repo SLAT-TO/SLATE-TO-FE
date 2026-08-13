@@ -92,6 +92,9 @@ export function VideoDetailView({
     attachFile,
     removeReferenceFile,
     downloadReferenceFile,
+    hasMoreReferenceFiles,
+    isLoadingMoreReferenceFiles,
+    loadMoreReferenceFiles,
   } = useReferenceFiles(
     projectId ?? 0,
     videoId,
@@ -309,6 +312,9 @@ export function VideoDetailView({
             downloadReferenceFile={downloadReferenceFile}
             removeReferenceFile={removeReferenceFile}
             openPicker={openPicker}
+            hasMoreReferenceFiles={hasMoreReferenceFiles}
+            isLoadingMoreReferenceFiles={isLoadingMoreReferenceFiles}
+            loadMoreReferenceFiles={loadMoreReferenceFiles}
             readOnly={isGuest}
           />
         </div>

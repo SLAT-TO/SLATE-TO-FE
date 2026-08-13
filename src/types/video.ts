@@ -134,3 +134,10 @@ export type LinkReferenceFileResult = {
   projectFileId: number
   createdAt: string
 }
+
+/** BE 참고 파일 목록 — 커서 페이지네이션 (팀원·게스트 공용) */
+export type ReferenceFileListResult = {
+  items: ReferenceFile[]
+  nextCursor: number | null
+  hasNext: boolean
+}
