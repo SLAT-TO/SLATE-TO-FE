@@ -30,6 +30,7 @@ import { useProjectDetail } from '../hooks/useProjectDetail'
 import { useProjectStatusMenu } from '../hooks/useProjectStatusMenu'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import type { ProjectActivity, ProjectListResponse } from '../types/project'
+import type { ProjectNoticeListItem } from '../types/notice'
 
 /** Strict Mode remount에서도 같은 키 alert가 두 번 뜨지 않도록 모듈 단위로 기록 */
 const alertedPartialErrorKeys = new Set<string>()
@@ -148,6 +149,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     [projectId, routerNavigate],
   )
   const [initialFileId, setInitialFileId] = useState<number | null>(null)
+  const [deepLinkedNotice, setDeepLinkedNotice] = useState<ProjectNoticeListItem | null>(null)
   const [unavailableNoticeId, setUnavailableNoticeId] = useState<number | null>(null)
   const [membersPanelOpen, setMembersPanelOpen] = useState(false)
   const [videoCompletionConfirmOpen, setVideoCompletionConfirmOpen] = useState(false)
@@ -166,12 +168,18 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   }, [])
 
   useEffect(() => {
-    if (typeof noticeView !== 'number' || notices.some((notice) => notice.id === noticeView)) return
+    if (typeof noticeView !== 'number') return
+    const cachedNotice = notices.find((notice) => notice.id === noticeView)
+    if (cachedNotice) {
+      setDeepLinkedNotice(null)
+      return
+    }
     let cancelled = false
+    setDeepLinkedNotice(null)
     setUnavailableNoticeId(null)
     void getProjectNotice(projectId, noticeView)
       .then((notice) => {
-        if (!cancelled) setNotices((prev) => [notice, ...prev])
+        if (!cancelled) setDeepLinkedNotice(notice)
       })
       .catch(() => {
         if (!cancelled) setUnavailableNoticeId(noticeView)
@@ -179,7 +187,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     return () => {
       cancelled = true
     }
-  }, [projectId, noticeView, notices, setNotices])
+  }, [projectId, noticeView, notices])
 
   // 설정 화면은 생성자(ADMIN)만 접근 가능 — 최근 활동 클릭이나 URL 직접 진입으로
   // 비관리자가 view=settings로 들어와도 즉시 빠져나가게 한다.
@@ -485,7 +493,9 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
       {tab === 'dashboard' &&
         typeof noticeView === 'number' &&
         (() => {
-          const selectedNotice = notices.find((n) => n.id === noticeView)
+          const selectedNotice =
+            notices.find((notice) => notice.id === noticeView) ??
+            (deepLinkedNotice?.id === noticeView ? deepLinkedNotice : null)
           if (!selectedNotice) {
             if (unavailableNoticeId !== noticeView) {
               return <p className="text-body-sm text-neutral-6">공지를 불러오는 중입니다.</p>
@@ -511,9 +521,11 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
               onBack={() => setProjectSearch({ panel: 'notices' })}
               onUpdated={(updated) => {
                 setNotices((prev) => prev.map((n) => (n.id === updated.id ? updated : n)))
+                setDeepLinkedNotice((current) => (current?.id === updated.id ? updated : current))
               }}
               onDeleted={(noticeId) => {
                 setNotices((prev) => prev.filter((n) => n.id !== noticeId))
+                setDeepLinkedNotice((current) => (current?.id === noticeId ? null : current))
                 setProjectSearch({ panel: 'notices' })
               }}
             />
