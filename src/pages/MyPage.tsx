@@ -31,6 +31,7 @@ function MyPage() {
   const [portfolioCursor, setPortfolioCursor] = useState<number | null>(null)
   const [hasMorePortfolios, setHasMorePortfolios] = useState(false)
   const [isLoadingMorePortfolios, setIsLoadingMorePortfolios] = useState(false)
+  const [portfolioLoadError, setPortfolioLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -69,13 +70,14 @@ function MyPage() {
   const handleLoadMorePortfolios = async () => {
     if (userId == null || portfolioCursor == null || isLoadingMorePortfolios) return
     setIsLoadingMorePortfolios(true)
+    setPortfolioLoadError(null)
     try {
       const page = await getUserPortfolios(userId, { cursor: portfolioCursor })
       setProjects((prev) => [...prev, ...page.items.map(toProjectHistoryItem)])
       setPortfolioCursor(page.nextCursor)
       setHasMorePortfolios(page.hasNext)
     } catch {
-      setError('프로젝트 이력을 더 불러오지 못했습니다.')
+      setPortfolioLoadError('프로젝트 이력을 더 불러오지 못했습니다.')
     } finally {
       setIsLoadingMorePortfolios(false)
     }
@@ -188,6 +190,19 @@ function MyPage() {
                   disabled={isLoadingMorePortfolios}
                 >
                   {isLoadingMorePortfolios ? '불러오는 중…' : '더 보기'}
+                </Button>
+              </div>
+            )}
+            {portfolioLoadError && (
+              <div className="mt-3 flex items-center justify-center gap-2">
+                <p className="text-caption-lg text-warning">{portfolioLoadError}</p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => void handleLoadMorePortfolios()}
+                  disabled={isLoadingMorePortfolios}
+                >
+                  다시 시도
                 </Button>
               </div>
             )}
