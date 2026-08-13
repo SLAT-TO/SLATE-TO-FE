@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
 import Choice from '../components/Choice'
 import { Button } from '../components/Button'
 import { navigate } from '../utils/navigation'
 import { useOnboardingStore } from '../stores/onboardingStore'
+import { termsOfServiceText } from '../constants/termsOfService'
 import termsBg from '../assets/images/terms-bg.png'
 import termsAvatar from '../assets/images/terms-avatar.png'
 
@@ -24,6 +27,12 @@ export function TermsPage() {
     privacy: false,
     collect: false,
   })
+
+  // 부칙의 시행일은 실제로 동의하는 시점(오늘)으로 고정 — 페이지를 여는 시점 기준 한 번만 계산
+  const termsText = useMemo(
+    () => termsOfServiceText(format(new Date(), 'yyyy년 M월 d일', { locale: ko })),
+    [],
+  )
 
   const allAgreed = TERMS.every((t) => agreed[t.key])
 
@@ -74,13 +83,25 @@ export function TermsPage() {
             />
             <div className="border-neutral-5 flex flex-col gap-3 border-t pt-5">
               {TERMS.map((t) => (
-                <Choice
-                  key={t.key}
-                  type="checkbox"
-                  checked={agreed[t.key]}
-                  onChange={(checked) => setAgreed((prev) => ({ ...prev, [t.key]: checked }))}
-                  label={t.label}
-                />
+                <div key={t.key} className="flex flex-col gap-2">
+                  <Choice
+                    type="checkbox"
+                    checked={agreed[t.key]}
+                    onChange={(checked) => setAgreed((prev) => ({ ...prev, [t.key]: checked }))}
+                    label={t.label}
+                  />
+                  {t.key === 'service' && (
+                    <div className="bg-neutral-2 border-neutral-3 text-neutral-6 text-caption-sm h-60 overflow-y-auto rounded-lg border p-4 whitespace-pre-line">
+                      {termsText}
+                    </div>
+                  )}
+                  {/* 아직 원문이 없는 문서 — 자리만 남겨두고 준비되는 대로 termsOfServiceText처럼 채운다 */}
+                  {(t.key === 'privacy' || t.key === 'collect') && (
+                    <div className="bg-neutral-2 border-neutral-3 text-neutral-5 text-caption-sm flex h-60 items-center justify-center rounded-lg border p-4">
+                      문서 준비 중입니다.
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
