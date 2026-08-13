@@ -90,6 +90,11 @@ export type RecruitmentDetailResponse = Recruitment & {
   updatedAt: string
 }
 
+/** GET /users/me/recruitments — 목록 필드 + 내 공고 전용 지원자 수 */
+export type MyRecruitment = Recruitment & {
+  applicantCount: number
+}
+
 /** GET /users/me/applications — 공고 정보 + 내 지원 정보 */
 export type AppliedRecruitment = Recruitment & {
   applicationId: number

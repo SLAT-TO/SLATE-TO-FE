@@ -15,6 +15,7 @@ import type {
   RecruitmentApplication,
   RecruitmentApplicationDetail,
   ApplicationFile,
+  MyRecruitment,
 } from '../types/recruitment'
 import type { CursorPage } from '../types/project'
 
@@ -79,10 +80,9 @@ export async function getMyApplications(): Promise<CursorPage<AppliedRecruitment
   return request({ method: 'GET', url: paths.users.myApplications })
 }
 
-export async function getMyRecruitments(): Promise<CursorPage<Recruitment>> {
+export async function getMyRecruitments(): Promise<CursorPage<MyRecruitment>> {
   return request({ method: 'GET', url: paths.users.myRecruitments })
 }
-
 export async function getMyRecruitmentBookmarks(): Promise<CursorPage<Recruitment>> {
   return request({ method: 'GET', url: paths.users.myRecruitmentBookmarks })
 }
