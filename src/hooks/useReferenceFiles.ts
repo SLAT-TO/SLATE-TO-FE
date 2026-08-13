@@ -11,18 +11,16 @@ import { downloadBlob } from '../utils/downloadBlob'
 import type { ReferenceFile } from '../types/video'
 import type { ProjectFileListItem } from '../types/file'
 
-type ReferenceFilesGuestContext = {
-  shareToken: string
-  guestId: number
-  guestToken: string
-}
-
 /** 영상 상세의 참고 파일 목록 · 검색 · 첨부/제거/다운로드를 다루는 훅
- * @param guest 공유링크로 들어온 게스트인 경우 — 조회·다운로드만 게스트 전용 엔드포인트로 분기 */
+ * @param guestShareToken 공유링크로 들어온 게스트인 경우 — 조회·다운로드만 게스트 전용 엔드포인트로 분기
+ * (다른 훅들과 마찬가지로 객체가 아닌 개별 값으로 받는다 — 호출부에서 매 렌더 새로
+ * 만들어지는 객체를 넘기면 useCallback 의존성이 매번 바뀌어 load 이펙트가 계속 재실행된다) */
 export function useReferenceFiles(
   projectId: number,
   videoId: number,
-  guest?: ReferenceFilesGuestContext,
+  guestShareToken?: string,
+  guestId?: number,
+  guestToken?: string,
 ) {
   const [referenceFiles, setReferenceFiles] = useState<ReferenceFile[]>([])
   const [fileSearch, setFileSearch] = useState('')
@@ -30,15 +28,13 @@ export function useReferenceFiles(
   const [projectFiles, setProjectFiles] = useState<ProjectFileListItem[]>([])
 
   const load = useCallback(async () => {
-    const refFiles = guest
-      ? await getGuestReferenceFiles(guest.shareToken, {
-          guestId: guest.guestId,
-          guestToken: guest.guestToken,
-        })
-      : await getReferenceFiles(projectId, videoId)
+    const refFiles =
+      guestShareToken != null
+        ? await getGuestReferenceFiles(guestShareToken, { guestId, guestToken })
+        : await getReferenceFiles(projectId, videoId)
     setReferenceFiles(refFiles.items)
     return refFiles.items
-  }, [projectId, videoId, guest])
+  }, [projectId, videoId, guestShareToken, guestId, guestToken])
 
   const openPicker = useCallback(async () => {
     setPickerOpen(true)
@@ -67,10 +63,10 @@ export function useReferenceFiles(
 
   const downloadReferenceFile = useCallback(
     async (referenceFileId: number, fileName: string) => {
-      if (guest) {
-        const blob = await downloadGuestReferenceFile(guest.shareToken, referenceFileId, {
-          guestId: guest.guestId,
-          guestToken: guest.guestToken,
+      if (guestShareToken != null) {
+        const blob = await downloadGuestReferenceFile(guestShareToken, referenceFileId, {
+          guestId,
+          guestToken,
         })
         downloadBlob(blob, fileName)
         return
@@ -80,7 +76,7 @@ export function useReferenceFiles(
       const blob = await downloadProjectFile(projectId, file.projectFileId)
       downloadBlob(blob, fileName)
     },
-    [guest, projectId, referenceFiles],
+    [guestShareToken, guestId, guestToken, projectId, referenceFiles],
   )
 
   const filteredFiles = referenceFiles.filter((f) =>

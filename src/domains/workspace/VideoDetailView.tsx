@@ -96,9 +96,9 @@ export function VideoDetailView({
   } = useReferenceFiles(
     projectId ?? 0,
     videoId,
-    guest
-      ? { shareToken: guest.shareToken, guestId: guest.guestId, guestToken: guest.guestToken }
-      : undefined,
+    guest?.shareToken,
+    guest?.guestId,
+    guest?.guestToken,
   )
 
   const {
