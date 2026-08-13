@@ -6,6 +6,8 @@ import { Button } from '../components/Button'
 import { navigate } from '../utils/navigation'
 import { useOnboardingStore } from '../stores/onboardingStore'
 import { termsOfServiceText } from '../constants/termsOfService'
+import { privacyPolicyText } from '../constants/privacyPolicy'
+import { collectionConsentText } from '../constants/collectionConsent'
 import termsBg from '../assets/images/terms-bg.png'
 import termsAvatar from '../assets/images/terms-avatar.png'
 
@@ -28,11 +30,11 @@ export function TermsPage() {
     collect: false,
   })
 
-  // 부칙의 시행일은 실제로 동의하는 시점(오늘)으로 고정 — 페이지를 여는 시점 기준 한 번만 계산
-  const termsText = useMemo(
-    () => termsOfServiceText(format(new Date(), 'yyyy년 M월 d일', { locale: ko })),
-    [],
-  )
+  // 시행일은 실제로 동의하는 시점(오늘)으로 고정 — 페이지를 여는 시점 기준 한 번만 계산
+  const effectiveDateLabel = useMemo(() => format(new Date(), 'yyyy년 M월 d일', { locale: ko }), [])
+  const termsText = useMemo(() => termsOfServiceText(effectiveDateLabel), [effectiveDateLabel])
+  const privacyText = useMemo(() => privacyPolicyText(effectiveDateLabel), [effectiveDateLabel])
+  const collectText = useMemo(() => collectionConsentText(), [])
 
   const allAgreed = TERMS.every((t) => agreed[t.key])
 
@@ -95,10 +97,14 @@ export function TermsPage() {
                       {termsText}
                     </div>
                   )}
-                  {/* 아직 원문이 없는 문서 — 자리만 남겨두고 준비되는 대로 termsOfServiceText처럼 채운다 */}
-                  {(t.key === 'privacy' || t.key === 'collect') && (
-                    <div className="bg-neutral-2 border-neutral-3 text-neutral-5 text-caption-sm flex h-60 items-center justify-center rounded-lg border p-4">
-                      문서 준비 중입니다.
+                  {t.key === 'privacy' && (
+                    <div className="bg-neutral-2 border-neutral-3 text-neutral-6 text-caption-sm h-60 overflow-y-auto rounded-lg border p-4 whitespace-pre-line">
+                      {privacyText}
+                    </div>
+                  )}
+                  {t.key === 'collect' && (
+                    <div className="bg-neutral-2 border-neutral-3 text-neutral-6 text-caption-sm h-60 overflow-y-auto rounded-lg border p-4 whitespace-pre-line">
+                      {collectText}
                     </div>
                   )}
                 </div>
