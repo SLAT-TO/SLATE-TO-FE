@@ -29,15 +29,20 @@ function ApplicantRow({
 }: ApplicantRowProps) {
   const { applicant, applicationStatus } = application
   const [pendingAction, setPendingAction] = useState<DecidedStatus | null>(null)
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false)
 
   // BE는 PENDING 지원만 상태 변경을 허용하므로 이 액션은 되돌릴 수 없다
   const handleConfirm = () => {
-    if (!pendingAction) return
+    if (!pendingAction || isStatusUpdating) return
     const nextStatus = pendingAction
-    setPendingAction(null)
+    setIsStatusUpdating(true)
     updateApplicationStatus(recruitmentId, application.applicationId, { status: nextStatus })
-      .then(() => onStatusChange(application.applicationId, nextStatus))
+      .then(() => {
+        onStatusChange(application.applicationId, nextStatus)
+        setPendingAction(null)
+      })
       .catch(() => window.alert('지원 상태를 변경하지 못했습니다. 다시 시도해주세요.'))
+      .finally(() => setIsStatusUpdating(false))
   }
 
   return (
@@ -61,6 +66,7 @@ function ApplicantRow({
               size="sm"
               width={72}
               onClick={() => setPendingAction('REJECTED')}
+              disabled={isStatusUpdating}
             >
               거절
             </Button>
@@ -69,6 +75,7 @@ function ApplicantRow({
               size="sm"
               width={72}
               onClick={() => setPendingAction('ACCEPTED')}
+              disabled={isStatusUpdating}
             >
               수락
             </Button>
@@ -89,8 +96,9 @@ function ApplicantRow({
 
       <ConfirmModal
         isOpen={pendingAction != null}
-        onClose={() => setPendingAction(null)}
+        onClose={() => !isStatusUpdating && setPendingAction(null)}
         onConfirm={handleConfirm}
+        isPending={isStatusUpdating}
         title={pendingAction === 'ACCEPTED' ? '지원자를 수락할까요?' : '지원자를 거절할까요?'}
         description="상태 변경 후에는 되돌릴 수 없어요."
         confirmText={pendingAction === 'ACCEPTED' ? '수락하기' : '거절하기'}
