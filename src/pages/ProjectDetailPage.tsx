@@ -174,6 +174,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
       setDeepLinkedNotice(null)
       return
     }
+    if (deepLinkedNotice?.id === noticeView) return
     let cancelled = false
     setDeepLinkedNotice(null)
     setUnavailableNoticeId(null)
@@ -187,7 +188,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     return () => {
       cancelled = true
     }
-  }, [projectId, noticeView, notices])
+  }, [projectId, noticeView, notices, deepLinkedNotice])
 
   // 설정 화면은 생성자(ADMIN)만 접근 가능 — 최근 활동 클릭이나 URL 직접 진입으로
   // 비관리자가 view=settings로 들어와도 즉시 빠져나가게 한다.
