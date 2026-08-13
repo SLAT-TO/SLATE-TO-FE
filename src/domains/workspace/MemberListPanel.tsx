@@ -60,11 +60,15 @@ export default function MemberListPanel({
     const handlePointerDown = (e: PointerEvent) => {
       // ConfirmModal은 portal이라 패널 밖 — 제거 확인 중에는 닫지 않음
       if (removeTarget != null) return
-      if (!containerRef.current?.contains(e.target as Node)) {
-        setPanelOpen(false)
-        setEditingMemberId(null)
-        setActionError('')
-      }
+      const target = e.target as Node
+      if (containerRef.current?.contains(target)) return
+      // ActionMenu의 드롭다운(수정·제거)도 document.body에 포탈로 뜨기 때문에 containerRef
+      // 밖에 있다 — 그 클릭까지 "패널 바깥 클릭"으로 잡으면 항목을 누르는 순간 패널 전체가
+      // 먼저 닫혀버려 수정 UI가 뜨지 않는다.
+      if (target instanceof Element && target.closest('[role="menu"]')) return
+      setPanelOpen(false)
+      setEditingMemberId(null)
+      setActionError('')
     }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
