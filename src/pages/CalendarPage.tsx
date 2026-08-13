@@ -53,6 +53,7 @@ function dailyItemToCalendarEvent(item: ScheduleDailyItem): CalendarEvent {
     participantIds: item.participants.map((p) => String(p.userId)),
     memo: item.publicMemo ?? undefined,
     note: item.privateMemo ?? undefined,
+    canEdit: item.canEdit,
   }
 }
 

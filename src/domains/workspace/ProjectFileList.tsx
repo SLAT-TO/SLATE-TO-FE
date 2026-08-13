@@ -26,6 +26,9 @@ interface ProjectFileListProps {
   projectId: number
   initialFileId?: number | null
   onInitialFileConsumed?: () => void
+  meId: number | null
+  /** 프로젝트 ADMIN — 업로더가 아니어도 삭제 가능 (BE 규칙) */
+  isAdmin: boolean
 }
 
 function formatDateTime(iso: string): string {
@@ -50,6 +53,8 @@ export default function ProjectFileList({
   projectId,
   initialFileId = null,
   onInitialFileConsumed,
+  meId,
+  isAdmin,
 }: ProjectFileListProps) {
   const queryClient = useQueryClient()
   const [files, setFiles] = useState<ProjectFileListItem[]>([])
@@ -140,6 +145,7 @@ export default function ProjectFileList({
               createdAt: activeFile.createdAt,
             })
           }
+          canDelete={activeFile.uploader.id === meId || isAdmin}
         />
         <ConfirmModal
           isOpen={deleteTarget !== null}
@@ -221,7 +227,9 @@ export default function ProjectFileList({
               >
                 <InlineIcon svg={downloadIcon} className="size-4" />
               </button>
-              <ActionMenu items={[{ action: 'delete', onClick: () => setDeleteTarget(file) }]} />
+              {(file.uploader.id === meId || isAdmin) && (
+                <ActionMenu items={[{ action: 'delete', onClick: () => setDeleteTarget(file) }]} />
+              )}
             </div>
           </div>
         ))}

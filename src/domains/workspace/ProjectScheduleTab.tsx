@@ -118,13 +118,15 @@ function ScheduleDetailCard({
             </p>
           )}
         </div>
-        <ActionMenu
-          ariaLabel="일정 관리"
-          items={[
-            { action: 'edit', onClick: onEdit },
-            { action: 'delete', onClick: () => setConfirmOpen(true) },
-          ]}
-        />
+        {schedule.canEdit === true && (
+          <ActionMenu
+            ariaLabel="일정 관리"
+            items={[
+              { action: 'edit', onClick: onEdit },
+              { action: 'delete', onClick: () => setConfirmOpen(true) },
+            ]}
+          />
+        )}
       </div>
 
       <div className="border-border-input flex h-full flex-col justify-between gap-2 rounded-[10.242px] border bg-white p-4 shadow-[0_3.414px_12.461px_rgba(169,204,244,0.15)]">

@@ -16,6 +16,7 @@ export type BeScheduleLike = {
   participants?: Array<{ userId: number }>
   createdAt?: string
   updatedAt?: string
+  canEdit?: boolean
 }
 
 export function normalizeSchedule(raw: BeScheduleLike, fallback?: Partial<Schedule>): Schedule {
@@ -38,5 +39,6 @@ export function normalizeSchedule(raw: BeScheduleLike, fallback?: Partial<Schedu
     participantIds,
     createdAt: raw.createdAt ?? fallback?.createdAt ?? raw.startAt,
     updatedAt: raw.updatedAt ?? fallback?.updatedAt ?? raw.endAt,
+    canEdit: raw.canEdit ?? fallback?.canEdit,
   }
 }
