@@ -481,6 +481,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
               projectId={projectId}
               notice={selectedNotice}
               meId={meId}
+              isAdmin={project.myPermission === 'ADMIN'}
               onBack={() => setProjectSearch({ panel: 'notices' })}
               onUpdated={(updated) => {
                 setNotices((prev) => prev.map((n) => (n.id === updated.id ? updated : n)))
@@ -498,6 +499,8 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
           projectId={projectId}
           initialFileId={initialFileId}
           onInitialFileConsumed={() => setInitialFileId(null)}
+          meId={meId}
+          isAdmin={project.myPermission === 'ADMIN'}
         />
       )}
 

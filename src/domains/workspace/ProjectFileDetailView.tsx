@@ -10,6 +10,8 @@ type ProjectFileDetailViewProps = {
   onBack: () => void
   onDownload: () => void
   onDelete: () => void
+  /** 업로더 본인 또는 프로젝트 ADMIN만 true — BE 규칙 */
+  canDelete: boolean
 }
 
 function formatDateTime(iso: string): string {
@@ -33,6 +35,7 @@ export default function ProjectFileDetailView({
   onBack,
   onDownload,
   onDelete,
+  canDelete,
 }: ProjectFileDetailViewProps) {
   return (
     <section className="bg-neutral-2 flex flex-col gap-5 rounded-xl p-5">
@@ -76,7 +79,7 @@ export default function ProjectFileDetailView({
             >
               <InlineIcon svg={downloadIcon} className="size-4" />
             </button>
-            <ActionMenu items={[{ action: 'delete', onClick: onDelete }]} />
+            {canDelete && <ActionMenu items={[{ action: 'delete', onClick: onDelete }]} />}
           </div>
         </div>
       </div>

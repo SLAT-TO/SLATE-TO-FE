@@ -19,6 +19,8 @@ export const calendarEventSchema = z.object({
   memo: z.string().max(500, '메모는 500자 이하로 입력해주세요.').optional(),
   // 나에게만 보이는 개인 참고 메모
   note: z.string().optional(),
+  // 수정 가능 여부 (작성자 본인만 true) — /schedules/daily 기반 이벤트에만 실제 값이 채워짐
+  canEdit: z.boolean().optional(),
 })
 
 export type CalendarEvent = z.infer<typeof calendarEventSchema>
