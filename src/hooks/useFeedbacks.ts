@@ -24,6 +24,9 @@ export function useFeedbacks(
 ) {
   const queryClient = useQueryClient()
   const [feedbacks, setFeedbacks] = useState<FeedbackListEntry[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [hasMoreFeedbacks, setHasMoreFeedbacks] = useState(false)
+  const [isLoadingMoreFeedbacks, setIsLoadingMoreFeedbacks] = useState(false)
   const [filter, setFilter] = useState<FeedbackFilter>('all')
   const [newFeedback, setNewFeedback] = useState('')
   const [pendingStart, setPendingStart] = useState<number | null>(null)
@@ -40,8 +43,29 @@ export function useFeedbacks(
   const load = useCallback(async () => {
     const page = await getFeedbacks(videoId, guestId != null ? { guestId, guestToken } : undefined)
     setFeedbacks(page.items)
+    setNextCursor(page.nextCursor)
+    setHasMoreFeedbacks(page.hasNext)
     return page.items
   }, [videoId, guestId, guestToken])
+
+  /** "더 보기" — 저장해둔 nextCursor로 다음 페이지를 불러와 기존 목록 뒤에 이어붙인다 */
+  const loadMoreFeedbacks = useCallback(async () => {
+    if (!hasMoreFeedbacks || nextCursor == null || isLoadingMoreFeedbacks) return
+    setIsLoadingMoreFeedbacks(true)
+    try {
+      const page = await getFeedbacks(videoId, {
+        cursor: nextCursor,
+        ...(guestId != null ? { guestId, guestToken } : {}),
+      })
+      setFeedbacks((prev) => [...prev, ...page.items])
+      setNextCursor(page.nextCursor)
+      setHasMoreFeedbacks(page.hasNext)
+    } catch {
+      window.alert('피드백을 더 불러오지 못했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsLoadingMoreFeedbacks(false)
+    }
+  }, [videoId, guestId, guestToken, hasMoreFeedbacks, nextCursor, isLoadingMoreFeedbacks])
 
   const clearPendingTime = useCallback(() => {
     setPendingStart(null)
@@ -53,6 +77,16 @@ export function useFeedbacks(
     if (projectId == null) return
     void invalidateProjectActivityData(queryClient, projectId)
   }, [projectId, queryClient])
+
+  const changeReplyCount = useCallback((feedbackId: number, delta: number) => {
+    setFeedbacks((prev) =>
+      prev.map((feedback) =>
+        feedback.feedbackId === feedbackId
+          ? { ...feedback, replyCount: Math.max(0, feedback.replyCount + delta) }
+          : feedback,
+      ),
+    )
+  }, [])
 
   const attachCurrentTime = useCallback(() => {
     setPendingStart(Math.floor(getCurrentTime()))
@@ -227,6 +261,8 @@ export function useFeedbacks(
 
   return {
     feedbacks,
+    hasMoreFeedbacks,
+    isLoadingMoreFeedbacks,
     filteredFeedbacks,
     filter,
     setFilter,
@@ -241,6 +277,7 @@ export function useFeedbacks(
     pendingFeedbackActionId,
     setEditingFeedbackContent,
     load,
+    loadMoreFeedbacks,
     clearPendingTime,
     attachCurrentTime,
     toggleRangeCapture,
@@ -250,5 +287,6 @@ export function useFeedbacks(
     startEditFeedback,
     cancelEditFeedback,
     saveEditFeedback,
+    changeReplyCount,
   }
 }

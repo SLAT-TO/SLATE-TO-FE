@@ -265,6 +265,10 @@ export const videoHandlers = [
     // 공유링크 게스트도 목록 조회 가능 (로컬 mock AC — 실 BE는 게스트 인증 보완 필요)
     const url = new URL(request.url)
     const statusParam = url.searchParams.get('status')
+    const sizeParam = Number(url.searchParams.get('size') ?? 10)
+    const size = Math.min(sizeParam > 0 ? sizeParam : 10, 50)
+    // 실 BE cursor는 불투명 문자열 — mock에서는 마지막으로 받은 feedbackId를 그대로 쓴다
+    const cursor = url.searchParams.get('cursor')
 
     let items = db.feedbacks.filter((f) => f.videoId === Number(params.videoId))
     if (statusParam !== null) {
@@ -279,13 +283,26 @@ export const videoHandlers = [
       return a.startTime - b.startTime
     })
 
+    const startIndex = cursor
+      ? items.findIndex((f) => String(f.feedbackId) === cursor) + 1
+      : 0
+    const page = items.slice(startIndex, startIndex + size)
+    const hasNext = startIndex + size < items.length
+
     // 실 BE FeedbackListItemDTO처럼 답글 개수는 저장값이 아니라 그때그때 세어서 내려준다
-    const itemsWithReplyCount = items.map((f) => ({
+    const itemsWithReplyCount = page.map((f) => ({
       ...f,
       replyCount: db.replies.filter((r) => r.feedbackId === f.feedbackId).length,
     }))
 
-    return HttpResponse.json(ok({ items: itemsWithReplyCount }), { status: 200 })
+    return HttpResponse.json(
+      ok({
+        items: itemsWithReplyCount,
+        nextCursor: hasNext ? String(page[page.length - 1]!.feedbackId) : null,
+        hasNext,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.post(paths.videos.feedbacks(':videoId'), async ({ request, params }) => {
@@ -356,10 +373,26 @@ export const videoHandlers = [
     )
   }),
 
-  http.get(paths.feedbacks.replies(':feedbackId'), ({ params }) => {
+  http.get(paths.feedbacks.replies(':feedbackId'), ({ request, params }) => {
     // 공유링크 게스트도 답글 조회 가능
+    const url = new URL(request.url)
+    const sizeParam = Number(url.searchParams.get('size') ?? 10)
+    const size = Math.min(sizeParam > 0 ? sizeParam : 10, 50)
+    const cursor = url.searchParams.get('cursor')
+
     const items = db.replies.filter((r) => r.feedbackId === Number(params.feedbackId))
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const startIndex = cursor ? items.findIndex((r) => String(r.replyId) === cursor) + 1 : 0
+    const page = items.slice(startIndex, startIndex + size)
+    const hasNext = startIndex + size < items.length
+
+    return HttpResponse.json(
+      ok({
+        items: page,
+        nextCursor: hasNext ? String(page[page.length - 1]!.replyId) : null,
+        hasNext,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.post(paths.feedbacks.replies(':feedbackId'), async ({ request, params }) => {

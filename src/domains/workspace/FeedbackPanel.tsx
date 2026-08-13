@@ -1,3 +1,4 @@
+import { Button } from '../../components/Button'
 import InlineIcon from '../../components/InlineIcon'
 import TextArea from '../../components/TextArea'
 import type { useFeedbacks } from '../../hooks/useFeedbacks'
@@ -12,6 +13,9 @@ import { formatPendingTime } from './videoDetailFormat'
 type FeedbackPanelProps = Pick<
   ReturnType<typeof useFeedbacks>,
   | 'filteredFeedbacks'
+  | 'hasMoreFeedbacks'
+  | 'isLoadingMoreFeedbacks'
+  | 'loadMoreFeedbacks'
   | 'filter'
   | 'setFilter'
   | 'newFeedback'
@@ -38,6 +42,8 @@ type FeedbackPanelProps = Pick<
     ReturnType<typeof useFeedbackReplies>,
     | 'expandedFeedbackId'
     | 'repliesByFeedback'
+    | 'hasMoreRepliesByFeedback'
+    | 'isLoadingMoreRepliesByFeedback'
     | 'newReply'
     | 'setNewReply'
     | 'editingReplyId'
@@ -46,6 +52,7 @@ type FeedbackPanelProps = Pick<
     | 'isSubmittingReply'
     | 'pendingReplyActionId'
     | 'toggleReplies'
+    | 'loadMoreReplies'
     | 'submitReply'
     | 'startEditReply'
     | 'cancelEditReply'
@@ -59,6 +66,9 @@ type FeedbackPanelProps = Pick<
 
 export default function FeedbackPanel({
   filteredFeedbacks,
+  hasMoreFeedbacks,
+  isLoadingMoreFeedbacks,
+  loadMoreFeedbacks,
   filter,
   setFilter,
   newFeedback,
@@ -82,6 +92,8 @@ export default function FeedbackPanel({
   saveEditFeedback,
   expandedFeedbackId,
   repliesByFeedback,
+  hasMoreRepliesByFeedback,
+  isLoadingMoreRepliesByFeedback,
   newReply,
   setNewReply,
   editingReplyId,
@@ -90,6 +102,7 @@ export default function FeedbackPanel({
   isSubmittingReply,
   pendingReplyActionId,
   toggleReplies,
+  loadMoreReplies,
   submitReply,
   startEditReply,
   cancelEditReply,
@@ -158,6 +171,9 @@ export default function FeedbackPanel({
               isExpanded={expandedFeedbackId === feedback.feedbackId}
               onToggleReplies={() => toggleReplies(feedback.feedbackId)}
               replies={repliesByFeedback[feedback.feedbackId]}
+              hasMoreReplies={hasMoreRepliesByFeedback[feedback.feedbackId] ?? false}
+              isLoadingMoreReplies={isLoadingMoreRepliesByFeedback[feedback.feedbackId] ?? false}
+              onLoadMoreReplies={() => void loadMoreReplies(feedback.feedbackId)}
               newReply={newReply}
               setNewReply={setNewReply}
               onSubmitReply={() => void submitReply(feedback.feedbackId)}
@@ -176,6 +192,19 @@ export default function FeedbackPanel({
           )
         })}
       </ul>
+
+      {hasMoreFeedbacks && (
+        <div className="flex shrink-0 justify-center">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void loadMoreFeedbacks()}
+            disabled={isLoadingMoreFeedbacks}
+          >
+            {isLoadingMoreFeedbacks ? '불러오는 중…' : '더 보기'}
+          </Button>
+        </div>
+      )}
 
       <div className="border-neutral-5 flex shrink-0 flex-col gap-2 rounded-lg border p-3">
         <div className="flex items-center gap-2">
