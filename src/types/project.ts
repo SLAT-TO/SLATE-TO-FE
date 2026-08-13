@@ -1,6 +1,6 @@
 import type { UserCategory } from './user'
 
-export type ProjectStatus = 'PREPARING' | 'SHOOTING' | 'EDITING' | 'COMPLETED' | string
+export type ProjectStatus = 'PREPARING' | 'EDITING' | 'REVIEWING' | 'COMPLETED' | string
 export type ProjectLengthType = 'LONG_FORM' | 'SHORT_FORM' | string
 export type ProjectPermission = 'ADMIN' | 'MEMBER' | string
 export type ProjectKind = 'PERSONAL' | 'EXTERNAL' | string
