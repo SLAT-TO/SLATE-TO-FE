@@ -3,6 +3,7 @@ import Choice from '../components/Choice'
 import { Button } from '../components/Button'
 import { navigate } from '../utils/navigation'
 import { useOnboardingStore } from '../stores/onboardingStore'
+import { TERMS_OF_SERVICE_CONTENT } from '../constants/termsContent'
 import termsBg from '../assets/images/terms-bg.png'
 import termsAvatar from '../assets/images/profile-avatar.png'
 
@@ -74,13 +75,19 @@ export function TermsPage() {
             />
             <div className="border-neutral-5 flex flex-col gap-3 border-t pt-5">
               {TERMS.map((t) => (
-                <Choice
-                  key={t.key}
-                  type="checkbox"
-                  checked={agreed[t.key]}
-                  onChange={(checked) => setAgreed((prev) => ({ ...prev, [t.key]: checked }))}
-                  label={t.label}
-                />
+                <div key={t.key} className="flex flex-col gap-3">
+                  <Choice
+                    type="checkbox"
+                    checked={agreed[t.key]}
+                    onChange={(checked) => setAgreed((prev) => ({ ...prev, [t.key]: checked }))}
+                    label={t.label}
+                  />
+                  {t.key === 'service' && (
+                    <pre className="bg-neutral-2 border-neutral-3 text-neutral-6 text-caption-lg h-60 overflow-y-auto rounded-lg border p-4 font-sans whitespace-pre-wrap">
+                      {TERMS_OF_SERVICE_CONTENT}
+                    </pre>
+                  )}
+                </div>
               ))}
             </div>
           </div>

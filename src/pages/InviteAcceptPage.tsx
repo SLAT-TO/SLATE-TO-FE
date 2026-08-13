@@ -5,6 +5,7 @@ import { Button } from '../components/Button'
 import { getInvitation, acceptInvitation } from '../api/projects'
 import { ApiError } from '../types/api'
 import { ROLE_OPTIONS } from '../constants/roles'
+import { TERMS_OF_SERVICE_CONTENT } from '../constants/termsContent'
 import { navigate } from '../utils/navigation'
 import inviteBg from '../assets/images/invite-bg.png'
 
@@ -140,9 +141,9 @@ export function InviteAcceptPage({ token }: { token: string }) {
                   onChange={setAllAgreed}
                   label="이용약관 (필수)"
                 />
-                <div className="bg-neutral-2 border-neutral-3 text-neutral-5 text-body-sm h-60 overflow-y-auto rounded-lg border p-4">
-                  이용약관 내용이 여기에 표시됩니다.
-                </div>
+                <pre className="bg-neutral-2 border-neutral-3 text-neutral-5 text-body-sm h-60 overflow-y-auto rounded-lg border p-4 font-sans whitespace-pre-wrap">
+                  {TERMS_OF_SERVICE_CONTENT}
+                </pre>
               </div>
               {submitError && <p className="text-warning text-caption-lg">{submitError}</p>}
               <Button type="submit" fullWidth disabled={submitting} className="mt-auto">
