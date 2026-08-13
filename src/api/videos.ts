@@ -1,4 +1,4 @@
-import { request } from './client'
+import { request, requestBlob } from './client'
 import { ApiError } from '../types/api'
 import {
   normalizeFeedback,
@@ -29,6 +29,7 @@ import type {
   CreateFeedbackRequest,
   CreateReplyRequest,
   Feedback,
+  FeedbackListEntry,
   FeedbackReply,
   RegisterGuestRequest,
   RegisterGuestResult,
@@ -141,13 +142,15 @@ function guestRequestConfig(options?: GuestRequestOptions) {
 export async function getFeedbacks(
   videoId: number,
   options?: GuestRequestOptions,
-): Promise<{ items: Feedback[] }> {
-  const result = await request<{ items: FeedbackStatusRaw[] }>({
+): Promise<{ items: FeedbackListEntry[] }> {
+  const result = await request<{ items: (FeedbackStatusRaw & { replyCount: number })[] }>({
     method: 'GET',
     url: paths.videos.feedbacks(videoId),
     ...guestRequestConfig(options),
   })
-  return { items: result.items.map(normalizeFeedback) }
+  return {
+    items: result.items.map((raw) => ({ ...normalizeFeedback(raw), replyCount: raw.replyCount })),
+  }
 }
 
 export async function createFeedback(
@@ -314,6 +317,30 @@ export async function getGuestVideoDetail(
   return request({
     method: 'GET',
     url: paths.shareLinks.video(token),
+    ...guestRequestConfig(options),
+  })
+}
+
+export async function getGuestReferenceFiles(
+  token: string,
+  options: GuestRequestOptions,
+): Promise<{ items: ReferenceFile[] }> {
+  return request({
+    method: 'GET',
+    url: paths.shareLinks.files(token),
+    ...guestRequestConfig(options),
+  })
+}
+
+/** 게스트 다운로드는 projectFileId가 아니라 목록 응답의 referenceFileId로 받는다 (BE가 내부 파일 식별자를 노출하지 않음) */
+export async function downloadGuestReferenceFile(
+  token: string,
+  referenceFileId: number,
+  options: GuestRequestOptions,
+): Promise<Blob> {
+  return requestBlob({
+    method: 'GET',
+    url: paths.shareLinks.fileDownload(token, referenceFileId),
     ...guestRequestConfig(options),
   })
 }

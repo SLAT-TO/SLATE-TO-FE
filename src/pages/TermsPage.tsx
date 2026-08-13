@@ -1,8 +1,13 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
 import Choice from '../components/Choice'
 import { Button } from '../components/Button'
 import { navigate } from '../utils/navigation'
 import { useOnboardingStore } from '../stores/onboardingStore'
+import { termsOfServiceText } from '../constants/termsOfService'
+import { privacyPolicyText } from '../constants/privacyPolicy'
+import { collectionConsentText } from '../constants/collectionConsent'
 import termsBg from '../assets/images/terms-bg.png'
 import termsAvatar from '../assets/images/terms-avatar.png'
 
@@ -24,6 +29,12 @@ export function TermsPage() {
     privacy: false,
     collect: false,
   })
+
+  // 시행일은 실제로 동의하는 시점(오늘)으로 고정 — 페이지를 여는 시점 기준 한 번만 계산
+  const effectiveDateLabel = useMemo(() => format(new Date(), 'yyyy년 M월 d일', { locale: ko }), [])
+  const termsText = useMemo(() => termsOfServiceText(effectiveDateLabel), [effectiveDateLabel])
+  const privacyText = useMemo(() => privacyPolicyText(effectiveDateLabel), [effectiveDateLabel])
+  const collectText = useMemo(() => collectionConsentText(), [])
 
   const allAgreed = TERMS.every((t) => agreed[t.key])
 
@@ -74,13 +85,29 @@ export function TermsPage() {
             />
             <div className="border-neutral-5 flex flex-col gap-3 border-t pt-5">
               {TERMS.map((t) => (
-                <Choice
-                  key={t.key}
-                  type="checkbox"
-                  checked={agreed[t.key]}
-                  onChange={(checked) => setAgreed((prev) => ({ ...prev, [t.key]: checked }))}
-                  label={t.label}
-                />
+                <div key={t.key} className="flex flex-col gap-2">
+                  <Choice
+                    type="checkbox"
+                    checked={agreed[t.key]}
+                    onChange={(checked) => setAgreed((prev) => ({ ...prev, [t.key]: checked }))}
+                    label={t.label}
+                  />
+                  {t.key === 'service' && (
+                    <div className="bg-neutral-2 border-neutral-3 text-neutral-6 text-caption-sm h-60 overflow-y-auto rounded-lg border p-4 whitespace-pre-line">
+                      {termsText}
+                    </div>
+                  )}
+                  {t.key === 'privacy' && (
+                    <div className="bg-neutral-2 border-neutral-3 text-neutral-6 text-caption-sm h-60 overflow-y-auto rounded-lg border p-4 whitespace-pre-line">
+                      {privacyText}
+                    </div>
+                  )}
+                  {t.key === 'collect' && (
+                    <div className="bg-neutral-2 border-neutral-3 text-neutral-6 text-caption-sm h-60 overflow-y-auto rounded-lg border p-4 whitespace-pre-line">
+                      {collectText}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>

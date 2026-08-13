@@ -21,6 +21,12 @@ export type Feedback = {
   updatedAt: string
 }
 
+/** BE FeedbackListItemDTO — 목록 조회에서만 답글 개수를 함께 준다.
+ * 작성/수정/상태변경 응답(Feedback)에는 없다. */
+export type FeedbackListEntry = Feedback & {
+  replyCount: number
+}
+
 export type FeedbackReply = {
   replyId: number
   feedbackId: number

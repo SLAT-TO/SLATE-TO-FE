@@ -271,7 +271,13 @@ export const videoHandlers = [
       return a.startTime - b.startTime
     })
 
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    // 실 BE FeedbackListItemDTO처럼 답글 개수는 저장값이 아니라 그때그때 세어서 내려준다
+    const itemsWithReplyCount = items.map((f) => ({
+      ...f,
+      replyCount: db.replies.filter((r) => r.feedbackId === f.feedbackId).length,
+    }))
+
+    return HttpResponse.json(ok({ items: itemsWithReplyCount }), { status: 200 })
   }),
 
   http.post(paths.videos.feedbacks(':videoId'), async ({ request, params }) => {
@@ -504,6 +510,44 @@ export const videoHandlers = [
       }),
       { status: 200 },
     )
+  }),
+
+  http.get(paths.shareLinks.files(':token'), ({ request, params }) => {
+    const link = db.shareLinks.find((s) => s.token === params.token && s.isActive)
+    if (!link) return notFound()
+
+    const guestId = getGuestIdHeader(request)
+    const guest = guestId != null ? mockGuests.get(guestId) : undefined
+    if (!guest || guest.shareLinkId !== link.shareLinkId) return unauthorized()
+
+    // 게스트 응답에는 projectFileId·uploader를 넣지 않는다 (내부 파일 식별자·팀원 신원 비노출)
+    const items = db.referenceFiles.map(({ referenceFileId, fileName, createdAt }) => ({
+      referenceFileId,
+      fileName,
+      createdAt,
+    }))
+    return HttpResponse.json(ok({ items }), { status: 200 })
+  }),
+
+  http.get(paths.shareLinks.fileDownload(':token', ':referenceFileId'), ({ request, params }) => {
+    const link = db.shareLinks.find((s) => s.token === params.token && s.isActive)
+    if (!link) return notFound()
+
+    const guestId = getGuestIdHeader(request)
+    const guest = guestId != null ? mockGuests.get(guestId) : undefined
+    if (!guest || guest.shareLinkId !== link.shareLinkId) return unauthorized()
+
+    const ref = db.referenceFiles.find((r) => r.referenceFileId === Number(params.referenceFileId))
+    if (!ref) return notFound()
+    /** mock 환경엔 실제 업로드 바이트가 없어 파일명을 담은 텍스트로 대체 */
+    const body = `mock file content: ${ref.fileName}`
+    return new HttpResponse(body, {
+      status: 200,
+      headers: {
+        'Content-Type': ref.contentType ?? 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(ref.fileName)}"`,
+      },
+    })
   }),
 
   http.patch(paths.shareLinks.byId(':shareLinkId'), ({ params }) => {
