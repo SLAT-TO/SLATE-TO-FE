@@ -1,6 +1,5 @@
 import { request, requestBlob } from './client'
 import { paths } from './paths'
-import { fromApiProjectStatus, toApiProjectStatus } from '../constants/projectStatus'
 import type {
   AcceptInvitationRequest,
   AcceptInvitationResult,
@@ -36,45 +35,37 @@ export async function getProjects(params?: {
   cursor?: number
   size?: number
 }): Promise<ProjectListResponse> {
-  const result = await request<ProjectListResponse>({
+  return request<ProjectListResponse>({
     method: 'GET',
     url: paths.projects.root,
     params,
   })
-  return {
-    ...result,
-    items: result.items.map((item) => ({ ...item, status: fromApiProjectStatus(item.status) })),
-  }
 }
 
 export async function createProject(body: CreateProjectRequest): Promise<CreateProjectResult> {
-  const result = await request<CreateProjectResult>({
+  return request<CreateProjectResult>({
     method: 'POST',
     url: paths.projects.root,
     data: body,
   })
-  return { ...result, status: fromApiProjectStatus(result.status) }
 }
 
 export async function getProject(projectId: number): Promise<ProjectDetailResponse> {
-  const result = await request<ProjectDetailResponse>({
+  return request<ProjectDetailResponse>({
     method: 'GET',
     url: paths.projects.byId(projectId),
   })
-  return { ...result, status: fromApiProjectStatus(result.status) }
 }
 
 export async function updateProject(
   projectId: number,
   body: UpdateProjectRequest,
 ): Promise<ProjectResponse> {
-  const apiBody = body.status ? { ...body, status: toApiProjectStatus(body.status) } : body
-  const result = await request<ProjectResponse>({
+  return request<ProjectResponse>({
     method: 'PATCH',
     url: paths.projects.byId(projectId),
-    data: apiBody,
+    data: body,
   })
-  return { ...result, status: fromApiProjectStatus(result.status) }
 }
 
 export async function deleteProject(projectId: number): Promise<null> {
