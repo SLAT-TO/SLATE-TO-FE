@@ -94,6 +94,7 @@ export const paths = {
   shareLinks: {
     byToken: (token: string) => `${API_PREFIX}/share-links/${token}`,
     guests: (token: string) => `${API_PREFIX}/share-links/${token}/guests`,
+    video: (token: string) => `${API_PREFIX}/share-links/${token}/video`,
     byId: (shareLinkId: number | string) => `${API_PREFIX}/share-links/${shareLinkId}`,
   },
   /** FE mock 전용 — BE에 Recruitment 컨트롤러 자체가 없음 (엔티티만 존재, Swagger에 미노출)

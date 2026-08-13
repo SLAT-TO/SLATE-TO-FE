@@ -9,13 +9,6 @@ interface DashboardTodayScheduleCardProps {
   onExpand: () => void
 }
 
-function formatTime(iso: string): string {
-  const date = new Date(iso)
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${hours}:${minutes}`
-}
-
 export default function DashboardTodayScheduleCard({
   projectId,
   onExpand,
@@ -76,10 +69,9 @@ export default function DashboardTodayScheduleCard({
                 <span className="bg-primary mt-1.5 size-2 shrink-0 rounded-full" />
                 <div className="flex min-w-0 flex-col gap-1">
                   <p className="text-body-sm text-neutral-11 font-semibold">{schedule.title}</p>
-                  <p className="text-caption-lg text-neutral-6">
-                    {formatTime(schedule.startAt)}
-                    {schedule.location && ` · ${schedule.location}`}
-                  </p>
+                  {schedule.location && (
+                    <p className="text-caption-lg text-neutral-6">{schedule.location}</p>
+                  )}
                 </div>
               </li>
             ))}

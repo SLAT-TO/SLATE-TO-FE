@@ -29,6 +29,21 @@ export type VideoDetail = {
   updatedAt: string
 }
 
+/** BE GuestVideoDetailResDTO — 게스트는 projectId·bookmarked 없이 영상 자체 정보만 받는다 */
+export type GuestVideoDetail = {
+  videoId: number
+  title: string
+  youtubeUrl: string
+  youtubeVideoId: string
+  thumbnailUrl: string | null
+  progressStatus: VideoProgressStatus
+  description: string | null
+  memo: string | null
+  projectTags: string[]
+  createdAt: string
+  updatedAt: string
+}
+
 /** BE VideoListResDTO */
 export type VideoListResult = {
   items: VideoListItem[]

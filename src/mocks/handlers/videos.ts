@@ -477,6 +477,35 @@ export const videoHandlers = [
     )
   }),
 
+  http.get(paths.shareLinks.video(':token'), ({ request, params }) => {
+    const link = db.shareLinks.find((s) => s.token === params.token && s.isActive)
+    if (!link) return notFound()
+
+    const guestId = getGuestIdHeader(request)
+    const guest = guestId != null ? mockGuests.get(guestId) : undefined
+    if (!guest || guest.shareLinkId !== link.shareLinkId) return unauthorized()
+
+    const video = db.videos.find((v) => v.videoId === link.videoId)
+    if (!video) return notFound()
+
+    return HttpResponse.json(
+      ok({
+        videoId: video.videoId,
+        title: video.title,
+        youtubeUrl: video.youtubeUrl,
+        youtubeVideoId: video.youtubeVideoId,
+        thumbnailUrl: video.thumbnailUrl,
+        progressStatus: video.progressStatus,
+        description: video.description,
+        memo: video.memo,
+        projectTags: video.projectTags,
+        createdAt: video.createdAt,
+        updatedAt: video.updatedAt,
+      }),
+      { status: 200 },
+    )
+  }),
+
   http.patch(paths.shareLinks.byId(':shareLinkId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const link = db.shareLinks.find((s) => s.shareLinkId === Number(params.shareLinkId))

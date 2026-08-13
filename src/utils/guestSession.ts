@@ -6,7 +6,7 @@ export type GuestSession = {
 }
 
 export function getGuestSession(shareToken: string): GuestSession | null {
-  const serialized = sessionStorage.getItem(guestSessionKey(shareToken))
+  const serialized = localStorage.getItem(guestSessionKey(shareToken))
   if (!serialized) return null
 
   try {
@@ -14,11 +14,11 @@ export function getGuestSession(shareToken: string): GuestSession | null {
     if (typeof session.guestId !== 'number' || !session.sessionToken) return null
     return { guestId: session.guestId, sessionToken: session.sessionToken }
   } catch {
-    sessionStorage.removeItem(guestSessionKey(shareToken))
+    localStorage.removeItem(guestSessionKey(shareToken))
     return null
   }
 }
 
 export function setGuestSession(shareToken: string, session: GuestSession): void {
-  sessionStorage.setItem(guestSessionKey(shareToken), JSON.stringify(session))
+  localStorage.setItem(guestSessionKey(shareToken), JSON.stringify(session))
 }

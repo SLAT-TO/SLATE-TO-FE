@@ -12,15 +12,6 @@ import type { ProjectSummary } from '../types/project'
 /** 홈 화면에 카드로 보여줄 진행 중인 프로젝트 개수 */
 const HOME_PROJECT_LIMIT = 4
 
-/** 완료 프로젝트보다 진행 중인 프로젝트를 우선 노출한다. */
-function sortByInProgressFirst(projects: ProjectSummary[]): ProjectSummary[] {
-  return [...projects].sort((a, b) => {
-    const aDone = a.status === 'COMPLETED' ? 1 : 0
-    const bDone = b.status === 'COMPLETED' ? 1 : 0
-    return aDone - bDone
-  })
-}
-
 export function useHomeDashboard() {
   // 워크스페이스 목록과 같은 캐시(projectKeys.list())를 공유 — 홈↔워크스페이스 이동 시 재요청 없이 재사용된다
   const projectsQuery = useProjectsQuery()
@@ -30,8 +21,9 @@ export function useHomeDashboard() {
   const deleteMutation = useDeleteProjectMutation()
   const leaveMutation = useLeaveProjectMutation()
 
+  // 완료 프로젝트가 아래로 가는 정렬(useProjectsQuery)이 이미 적용된 목록이라 앞에서 자르기만 하면 된다
   const projects = useMemo(
-    () => sortByInProgressFirst(projectsQuery.projects).slice(0, HOME_PROJECT_LIMIT),
+    () => projectsQuery.projects.slice(0, HOME_PROJECT_LIMIT),
     [projectsQuery.projects],
   )
 
