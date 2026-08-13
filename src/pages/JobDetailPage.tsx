@@ -11,6 +11,7 @@ import ApplyModal from '../domains/recruit/ApplyModal'
 import { useRecruitmentDetail } from '../hooks/useRecruitmentDetail'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { applicationStatusPresentation } from '../constants/applicationStatus'
 
 function JobDetailBackHeader() {
   const nav = useNavigate()
@@ -71,6 +72,13 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
     }
   }
 
+  const hasApplication = detail.hasApplied || detail.myApplicationStatus != null
+  const applicationButtonLabel = detail.myApplicationStatus
+    ? applicationStatusPresentation(detail.myApplicationStatus).label
+    : hasApplication
+      ? '지원 완료'
+      : '지원하기'
+
   return (
     <div className="flex flex-col gap-6">
       <JobDetailHeader
@@ -101,10 +109,10 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
             if (detail.isMine) navigate(`/matching/${jobId}/applicants`)
             else setIsApplyOpen(true)
           }}
-          disabled={!detail.isMine && detail.hasApplied}
+          disabled={!detail.isMine && hasApplication}
           className="w-52"
         >
-          {detail.isMine ? '지원자 확인' : detail.hasApplied ? '지원 완료' : '지원하기'}
+          {detail.isMine ? '지원자 확인' : applicationButtonLabel}
         </Button>
       </div>
 

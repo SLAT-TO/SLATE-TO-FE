@@ -1,6 +1,6 @@
 // src/components/JobCard.tsx
 import { memo } from 'react'
-import Tag from './Tag'
+import Tag, { type TagVariant } from './Tag'
 
 interface JobCardProps {
   id: number
@@ -11,6 +11,9 @@ interface JobCardProps {
   role: string
   dDay: string
   isBookmarked: boolean
+  /** 지원한 공고에서만 노출하는 지원 상태 */
+  statusLabel?: string
+  statusVariant?: TagVariant
   /** 부모가 useCallback으로 안정화한 핸들러를 넘겨받아 id로 대상 카드를 식별한다 —
    * 카드마다 인라인 클로저를 새로 만들지 않아야 React.memo가 실제로 효과가 있다 */
   onClick?: (id: number) => void
@@ -30,6 +33,8 @@ function JobCard({
   role,
   dDay,
   isBookmarked,
+  statusLabel,
+  statusVariant = 'secondary',
   onClick,
   onBookmarkClick,
 }: JobCardProps) {
@@ -43,6 +48,7 @@ function JobCard({
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3.5">
+            {statusLabel && <Tag variant={statusVariant}>{statusLabel}</Tag>}
             <Tag variant="meta">{category}</Tag>
             {length && <Tag variant="meta">{length}</Tag>}
           </div>
