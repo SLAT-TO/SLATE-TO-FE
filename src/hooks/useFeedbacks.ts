@@ -79,7 +79,7 @@ export function useFeedbacks(
     isSubmittingFeedbackRef.current = true
     setIsSubmittingFeedback(true)
     try {
-      const created = await createFeedback(
+      await createFeedback(
         videoId,
         {
           content: newFeedback.trim(),
@@ -88,8 +88,9 @@ export function useFeedbacks(
         },
         guestId != null ? { guestId, guestToken } : undefined,
       )
-      // 새로 작성한 피드백은 아직 답글이 없다 — 목록 API의 replyCount에 해당하는 값을 직접 채운다
-      setFeedbacks((prev) => [{ ...created, replyCount: 0 }, ...prev])
+      // BE 정렬 규칙(재생 지점 있는 피드백은 startTime 오름차순, 없는 건 등록순 맨 뒤)을
+      // 프론트에서 재구현하지 않고 다시 불러와 항상 서버 정렬을 그대로 따른다
+      await load()
       setNewFeedback('')
       clearPendingTime()
       refreshProjectActivity()
@@ -108,6 +109,7 @@ export function useFeedbacks(
     guestToken,
     clearPendingTime,
     refreshProjectActivity,
+    load,
   ])
 
   /** 체크 아이콘 토글 — UI 먼저 반영 후 status API 호출 (실패 시 롤백) */

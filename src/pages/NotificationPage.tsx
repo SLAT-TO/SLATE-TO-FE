@@ -76,9 +76,12 @@ function NotificationListSkeleton() {
 function notificationLink(notification: AppNotification): string | null {
   switch (notification.type) {
     case 'SCHEDULE_ASSIGNED':
+    case 'SCHEDULE_CREATED':
       return '/calendar'
-    case 'PROJECT_INVITED':
+    case 'PROJECT_JOINED':
     case 'VIDEO_FEEDBACK_COMMENTED':
+    case 'NOTICE_CREATED':
+    case 'FILE_UPLOADED':
     case 'DEADLINE_REMINDER':
       return notification.projectId ? `/workspace/projects/${notification.projectId}` : null
     case 'RECRUITMENT_APPLIED':

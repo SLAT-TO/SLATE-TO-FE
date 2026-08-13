@@ -99,7 +99,20 @@ export const userHandlers = [
       user.primaryRole = body.roles[0] ?? null
     }
 
-    return HttpResponse.json(ok(toMeProfile(user)), { status: 200 })
+    return HttpResponse.json(
+      ok({
+        id: user.id,
+        nickname: user.nickname,
+        profileImageUrl: user.profileImageUrl,
+        bio: user.bio,
+        locations: user.regions ?? (user.location ? [user.location] : []),
+        primaryRole: user.primaryRole,
+        roles: user.roles,
+        categories: user.categories,
+        updatedAt: new Date().toISOString(),
+      }),
+      { status: 200 },
+    )
   }),
 
   http.put(paths.users.profileImage, async ({ request }) => {
