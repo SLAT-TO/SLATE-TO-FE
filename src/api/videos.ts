@@ -31,6 +31,7 @@ import type {
   Feedback,
   FeedbackListEntry,
   FeedbackReply,
+  GuestListResult,
   RegisterGuestRequest,
   RegisterGuestResult,
   ShareLink,
@@ -286,6 +287,14 @@ export async function createShareLink(
 /** BE는 영상당 단건 ShareLinkInfoResDTO. 없으면 404 — 호출부에서 처리 */
 export async function getShareLink(videoId: number): Promise<ShareLink> {
   return request({ method: 'GET', url: paths.videos.shareLinks(videoId) })
+}
+
+/** 소유자용 — 프로젝트 활성 멤버만 조회 가능, 세션 토큰 등 민감 정보는 내려오지 않음 */
+export async function getShareLinkGuests(
+  videoId: number,
+  shareLinkId: number,
+): Promise<GuestListResult> {
+  return request({ method: 'GET', url: paths.videos.shareLinkGuests(videoId, shareLinkId) })
 }
 
 /** @deprecated BE 단건 응답 — getShareLink 사용. 하위호환용으로 items 래핑 */

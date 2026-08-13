@@ -162,7 +162,8 @@ export type MockDb = {
   referenceFiles: ReferenceFile[]
   feedbacks: Feedback[]
   replies: FeedbackReply[]
-  shareLinks: ShareLink[]
+  /** guestCount는 저장값이 아니라 mockGuests에서 그때그때 세어 응답 시점에 붙인다 */
+  shareLinks: Omit<ShareLink, 'guestCount'>[]
   recruitments: MockRecruitmentRecord[]
   applications: Application[]
   applicationFiles: MockApplicationFile[]
