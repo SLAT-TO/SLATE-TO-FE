@@ -7,7 +7,7 @@ import {
   updateFeedback,
   updateFeedbackStatus,
 } from '../api/videos'
-import type { Feedback } from '../types/feedback'
+import type { Feedback, FeedbackListEntry } from '../types/feedback'
 import { invalidateProjectActivityData } from '../queries/projectInvalidation'
 
 export type FeedbackFilter = 'all' | 'unresolved'
@@ -23,7 +23,7 @@ export function useFeedbacks(
   guestToken?: string,
 ) {
   const queryClient = useQueryClient()
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
+  const [feedbacks, setFeedbacks] = useState<FeedbackListEntry[]>([])
   const [filter, setFilter] = useState<FeedbackFilter>('all')
   const [newFeedback, setNewFeedback] = useState('')
   const [pendingStart, setPendingStart] = useState<number | null>(null)
@@ -88,7 +88,8 @@ export function useFeedbacks(
         },
         guestId != null ? { guestId, guestToken } : undefined,
       )
-      setFeedbacks((prev) => [created, ...prev])
+      // 새로 작성한 피드백은 아직 답글이 없다 — 목록 API의 replyCount에 해당하는 값을 직접 채운다
+      setFeedbacks((prev) => [{ ...created, replyCount: 0 }, ...prev])
       setNewFeedback('')
       clearPendingTime()
       refreshProjectActivity()

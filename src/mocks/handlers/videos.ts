@@ -271,7 +271,13 @@ export const videoHandlers = [
       return a.startTime - b.startTime
     })
 
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    // 실 BE FeedbackListItemDTO처럼 답글 개수는 저장값이 아니라 그때그때 세어서 내려준다
+    const itemsWithReplyCount = items.map((f) => ({
+      ...f,
+      replyCount: db.replies.filter((r) => r.feedbackId === f.feedbackId).length,
+    }))
+
+    return HttpResponse.json(ok({ items: itemsWithReplyCount }), { status: 200 })
   }),
 
   http.post(paths.videos.feedbacks(':videoId'), async ({ request, params }) => {

@@ -3,14 +3,14 @@ import ActionMenu from '../../components/ActionMenu'
 import { Button } from '../../components/Button'
 import InlineIcon from '../../components/InlineIcon'
 import TextArea from '../../components/TextArea'
-import type { Feedback, FeedbackReply } from '../../types/feedback'
+import type { FeedbackListEntry, FeedbackReply } from '../../types/feedback'
 import chevronDownIcon from '../../assets/icons/chevron-down.svg?raw'
 import commentCheckIcon from '../../assets/icons/comment-check.svg?raw'
 import FeedbackReplies from './FeedbackReplies'
 import { FeedbackTimeLink } from './videoDetailShared'
 
 type FeedbackListItemProps = {
-  feedback: Feedback
+  feedback: FeedbackListEntry
   isMine: boolean
   isActionPending: boolean
   /** false면 해결 토글 숨김 (게스트 등 getMe 불가 컨텍스트) */
@@ -26,7 +26,8 @@ type FeedbackListItemProps = {
   onSaveEdit: () => void
   isExpanded: boolean
   onToggleReplies: () => void
-  replies: FeedbackReply[]
+  /** undefined면 아직 이 피드백의 답글을 불러온 적 없다는 뜻 — 개수는 feedback.replyCount로 표시 */
+  replies?: FeedbackReply[]
   newReply: string
   setNewReply: (value: string) => void
   onSubmitReply: () => void
@@ -76,6 +77,8 @@ export default function FeedbackListItem({
   onRemoveReply,
 }: FeedbackListItemProps) {
   const isResolved = feedback.status
+  // 펼쳐서 실제로 불러온 뒤에는 그 개수가 최신값 — 그 전까지는 목록 조회 때 받은 replyCount로 표시
+  const replyCount = replies ? replies.length : feedback.replyCount
 
   return (
     <li className="border-neutral-3 flex min-w-0 flex-col gap-3 border-b pb-4">
@@ -139,7 +142,7 @@ export default function FeedbackListItem({
           className="text-caption-lg text-neutral-9 flex items-center gap-1 font-semibold"
         >
           답글
-          {replies.length ? ` ${replies.length}` : ''}
+          {replyCount ? ` ${replyCount}` : ''}
           <InlineIcon
             svg={chevronDownIcon}
             className={`size-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
@@ -169,7 +172,7 @@ export default function FeedbackListItem({
 
       {isExpanded && (
         <FeedbackReplies
-          replies={replies}
+          replies={replies ?? []}
           newReply={newReply}
           setNewReply={setNewReply}
           onSubmitReply={onSubmitReply}
