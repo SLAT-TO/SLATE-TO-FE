@@ -1,8 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { accessShareLink, registerGuest } from '../api/videos'
-import { useFeedbacks } from '../hooks/useFeedbacks'
-import { useFeedbackReplies } from '../hooks/useFeedbackReplies'
-import FeedbackPanel from '../domains/workspace/FeedbackPanel'
+import { VideoDetailView } from '../domains/workspace/VideoDetailView'
+import MainLayout from '../layouts/MainLayout'
 import Input from '../components/Input'
 import { Button } from '../components/Button'
 import { ApiError } from '../types/api'
@@ -19,7 +18,8 @@ function errorMessage(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback
 }
 
-/** 공유 링크의 초대 안내와 게스트 등록을 거쳐 피드백 화면으로 진입한다. */
+/** 공유 링크의 초대 안내와 게스트 등록을 거쳐, 팀원과 동일한 영상 상세(VideoDetailView)를
+ * 게스트 모드로 보여준다 — 화면이 따로 놀지 않도록 부품을 새로 짜지 않고 그대로 재사용한다. */
 export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
   const [access, setAccess] = useState<ShareLinkAccess | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -46,59 +46,6 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
       cancelled = true
     }
   }, [token])
-
-  const videoId = access?.videoId ?? 0
-  const guestId = guestSession?.guestId
-  const guestToken = guestSession?.sessionToken
-
-  const {
-    filteredFeedbacks,
-    filter,
-    setFilter,
-    newFeedback,
-    setNewFeedback,
-    pendingStart,
-    pendingEnd,
-    isCapturingRange,
-    editingFeedbackId,
-    editingFeedbackContent,
-    isSubmittingFeedback,
-    pendingFeedbackActionId,
-    setEditingFeedbackContent,
-    load: loadFeedbacks,
-    clearPendingTime,
-    attachCurrentTime,
-    toggleRangeCapture,
-    submitFeedback,
-    toggleResolved,
-    removeFeedback,
-    startEditFeedback,
-    cancelEditFeedback,
-    saveEditFeedback,
-  } = useFeedbacks(videoId, () => 0, guestId ?? undefined, undefined, guestToken ?? undefined)
-
-  const {
-    expandedFeedbackId,
-    repliesByFeedback,
-    newReply,
-    setNewReply,
-    editingReplyId,
-    editingReplyContent,
-    setEditingReplyContent,
-    isSubmittingReply,
-    pendingReplyActionId,
-    toggleReplies,
-    submitReply,
-    startEditReply,
-    cancelEditReply,
-    saveEditReply,
-    removeReply,
-  } = useFeedbackReplies(guestId ?? undefined, undefined, guestToken ?? undefined)
-
-  useEffect(() => {
-    if (!access || guestId === null) return
-    void loadFeedbacks()
-  }, [access, guestId, loadFeedbacks])
 
   const handleRegister = async (event: FormEvent) => {
     event.preventDefault()
@@ -175,53 +122,21 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     )
   }
 
+  // step === 'feedback' — guestSession은 이 시점엔 항상 있다 (없으면 'invitation'에서 시작함)
+  if (!guestSession) return null
+
   return (
-    <div className="flex min-h-screen flex-col gap-6 px-4 py-8">
-      <h1 className="text-head-sm text-neutral-11 text-center font-bold">{access.videoTitle}</h1>
-      <div className="mx-auto w-full max-w-[500px]">
-        <FeedbackPanel
-          filteredFeedbacks={filteredFeedbacks}
-          filter={filter}
-          setFilter={setFilter}
-          newFeedback={newFeedback}
-          setNewFeedback={setNewFeedback}
-          pendingStart={pendingStart}
-          pendingEnd={pendingEnd}
-          isCapturingRange={isCapturingRange}
-          editingFeedbackId={editingFeedbackId}
-          editingFeedbackContent={editingFeedbackContent}
-          isSubmittingFeedback={isSubmittingFeedback}
-          pendingFeedbackActionId={pendingFeedbackActionId}
-          setEditingFeedbackContent={setEditingFeedbackContent}
-          clearPendingTime={clearPendingTime}
-          attachCurrentTime={attachCurrentTime}
-          toggleRangeCapture={toggleRangeCapture}
-          submitFeedback={submitFeedback}
-          toggleResolved={toggleResolved}
-          removeFeedback={removeFeedback}
-          startEditFeedback={startEditFeedback}
-          cancelEditFeedback={cancelEditFeedback}
-          saveEditFeedback={saveEditFeedback}
-          expandedFeedbackId={expandedFeedbackId}
-          repliesByFeedback={repliesByFeedback}
-          newReply={newReply}
-          setNewReply={setNewReply}
-          editingReplyId={editingReplyId}
-          editingReplyContent={editingReplyContent}
-          setEditingReplyContent={setEditingReplyContent}
-          isSubmittingReply={isSubmittingReply}
-          pendingReplyActionId={pendingReplyActionId}
-          toggleReplies={toggleReplies}
-          submitReply={submitReply}
-          startEditReply={startEditReply}
-          cancelEditReply={cancelEditReply}
-          saveEditReply={saveEditReply}
-          removeReply={removeReply}
-          meId={null}
-          guestId={guestId ?? undefined}
-          onSeek={() => {}}
-        />
-      </div>
-    </div>
+    <MainLayout>
+      <VideoDetailView
+        videoId={access.videoId}
+        guest={{
+          shareToken: token,
+          guestId: guestSession.guestId,
+          guestToken: guestSession.sessionToken,
+          initialTitle: access.videoTitle,
+        }}
+        onBack={() => {}}
+      />
+    </MainLayout>
   )
 }

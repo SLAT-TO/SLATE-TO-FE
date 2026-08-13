@@ -374,7 +374,6 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
           videoId={videoId}
           meId={meId}
           isAdmin={project.myPermission === 'ADMIN'}
-          lengthType={project.lengthType}
           projectStatus={project.status}
           onProjectStatusChange={(status) => {
             if (status === project.status) return
@@ -384,7 +383,6 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
             }
             void videoProjectStatusMenu.changeStatus(status)
           }}
-          myRoleNames={project.roleNames}
           onBack={closeVideo}
         />
         <ConfirmModal

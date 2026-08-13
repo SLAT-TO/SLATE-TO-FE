@@ -14,7 +14,10 @@ type ReferenceFilesSectionProps = Pick<
   | 'downloadReferenceFile'
   | 'removeReferenceFile'
   | 'openPicker'
->
+> & {
+  /** 게스트 등 조회만 가능한 경우 — 추가/삭제 컨트롤을 숨긴다. 다운로드는 계속 허용 */
+  readOnly?: boolean
+}
 
 export default function ReferenceFilesSection({
   filteredFiles,
@@ -23,6 +26,7 @@ export default function ReferenceFilesSection({
   downloadReferenceFile,
   removeReferenceFile,
   openPicker,
+  readOnly = false,
 }: ReferenceFilesSectionProps) {
   return (
     <div className="flex flex-col gap-3">
@@ -63,24 +67,28 @@ export default function ReferenceFilesSection({
             >
               <InlineIcon svg={downloadIcon} className="size-4" />
             </button>
-            <ActionMenu
-              items={[
-                {
-                  action: 'delete',
-                  onClick: () => removeReferenceFile(file.referenceFileId),
-                },
-              ]}
-            />
+            {!readOnly && (
+              <ActionMenu
+                items={[
+                  {
+                    action: 'delete',
+                    onClick: () => removeReferenceFile(file.referenceFileId),
+                  },
+                ]}
+              />
+            )}
           </div>
         </div>
       ))}
-      <button
-        type="button"
-        onClick={openPicker}
-        className="border-primary text-primary hover:bg-primary/5 text-body-sm w-full rounded-lg border py-2 font-semibold"
-      >
-        파일 추가하기
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={openPicker}
+          className="border-primary text-primary hover:bg-primary/5 text-body-sm w-full rounded-lg border py-2 font-semibold"
+        >
+          파일 추가하기
+        </button>
+      )}
     </div>
   )
 }

@@ -15,6 +15,7 @@ import type {
   BookmarkVideoResult,
   CreateVideoRequest,
   CreateVideoResult,
+  GuestVideoDetail,
   LinkReferenceFileResult,
   ReferenceFile,
   UpdateVideoRequest,
@@ -304,6 +305,17 @@ export async function registerGuest(
   body: RegisterGuestRequest,
 ): Promise<RegisterGuestResult> {
   return request({ method: 'POST', url: paths.shareLinks.guests(token), data: body })
+}
+
+export async function getGuestVideoDetail(
+  token: string,
+  options: GuestRequestOptions,
+): Promise<GuestVideoDetail> {
+  return request({
+    method: 'GET',
+    url: paths.shareLinks.video(token),
+    ...guestRequestConfig(options),
+  })
 }
 
 /** BE 토글 — isActive만 갱신된 응답 */

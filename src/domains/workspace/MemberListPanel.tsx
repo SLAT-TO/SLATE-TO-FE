@@ -275,16 +275,18 @@ export default function MemberListPanel({
             })}
           </ul>
 
-          <Button
-            variant="secondary"
-            className="w-full"
-            onClick={() => {
-              setPanelOpen(false)
-              setInviteOpen(true)
-            }}
-          >
-            프로젝트 초대하기
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => {
+                setPanelOpen(false)
+                setInviteOpen(true)
+              }}
+            >
+              프로젝트 초대하기
+            </Button>
+          )}
         </div>
       )}
 
