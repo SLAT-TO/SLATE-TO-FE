@@ -3,7 +3,6 @@ import ConfirmModal from '../../components/ConfirmModal'
 import Modal from '../../components/Modal'
 import EditVideoModal from './EditVideoModal'
 import VideoDetailHeader from './VideoDetailHeader'
-import MemberListPanel from './MemberListPanel'
 import VideoPlayerSection from './VideoPlayerSection'
 import ProjectIntroSection from './ProjectIntroSection'
 import ReferenceFilesSection from './ReferenceFilesSection'
@@ -218,16 +217,6 @@ export function VideoDetailView({
   const headerSlot = isGuest ? (
     <div className="flex items-center justify-between gap-4">
       <h1 className="text-head-sm text-neutral-11 font-bold">{title ?? '영상 피드백'}</h1>
-      {/* 참여 인원 — BE 게스트용 멤버 조회 API가 아직 없어 members는 항상 빈 배열이다.
-       * 컴포넌트는 팀원 화면과 동일하게 쓰고, API가 생기면 여기 fetch만 연결하면 된다. */}
-      <MemberListPanel
-        projectId={projectId ?? 0}
-        members={members}
-        isAdmin={false}
-        meId={meId}
-        avatarSize={40}
-        onMembersChange={setMembers}
-      />
     </div>
   ) : (
     <VideoDetailHeader

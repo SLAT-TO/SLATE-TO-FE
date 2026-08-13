@@ -1,18 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { removeMember, updateMemberRole } from '../../api/projects'
-import { getVideos } from '../../api/videos'
+import { getShareLink, getShareLinkGuests } from '../../api/videos'
 import ActionMenu from '../../components/ActionMenu'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
 import Choice from '../../components/Choice'
 import ConfirmModal from '../../components/ConfirmModal'
-import InviteChoiceModal from '../../components/InviteChoiceModal'
 import { ROLE_OPTIONS, roleLabel } from '../../constants/roles'
 import { CARD_BASE } from '../../styles/card'
 import { ApiError } from '../../types/api'
+import type { GuestSummary } from '../../types/feedback'
 import type { MemberSummary } from '../../types/project'
-import type { VideoListItem } from '../../types/video'
-import GuestVideoPickerModal from './GuestVideoPickerModal'
 import InviteLinkModal from './InviteLinkModal'
 import ShareLinkModal from './ShareLinkModal'
 
@@ -28,6 +26,8 @@ interface MemberListPanelProps {
   /** 외부에서 참여 인원 패널을 열 때 */
   panelOpen?: boolean
   onPanelOpenChange?: (open: boolean) => void
+  /** 영상 상세에서만 전달 — 있으면 "게스트 초대하기" 버튼이 이 영상으로 바로 뜬다 */
+  videoId?: number
 }
 
 export default function MemberListPanel({
@@ -40,6 +40,7 @@ export default function MemberListPanel({
   onMembersChange,
   panelOpen: panelOpenProp,
   onPanelOpenChange,
+  videoId,
 }: MemberListPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [internalPanelOpen, setInternalPanelOpen] = useState(false)
@@ -48,14 +49,12 @@ export default function MemberListPanel({
   const [savingRoles, setSavingRoles] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<MemberSummary | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [guestInviteOpen, setGuestInviteOpen] = useState(false)
   const [actionError, setActionError] = useState('')
 
-  /** 초대하기 진입점 하나에서 프로젝트/게스트 초대로 갈라진다 — 게스트는 영상 단위라 먼저 영상을 골라야 한다 */
-  const [inviteStep, setInviteStep] = useState<'closed' | 'choice' | 'guest-picker'>('closed')
-  const [guestVideos, setGuestVideos] = useState<VideoListItem[]>([])
-  const [guestVideosLoaded, setGuestVideosLoaded] = useState(false)
-  const [guestVideosLoading, setGuestVideosLoading] = useState(false)
-  const [guestShareVideoId, setGuestShareVideoId] = useState<number | null>(null)
+  const [guests, setGuests] = useState<GuestSummary[]>([])
+  const [guestsLoaded, setGuestsLoaded] = useState(false)
+  const [guestsLoading, setGuestsLoading] = useState(false)
 
   const panelOpen = panelOpenProp ?? internalPanelOpen
   const setPanelOpen = useCallback(
@@ -72,11 +71,15 @@ export default function MemberListPanel({
     const handlePointerDown = (e: PointerEvent) => {
       // ConfirmModal은 portal이라 패널 밖 — 제거 확인 중에는 닫지 않음
       if (removeTarget != null) return
-      if (!containerRef.current?.contains(e.target as Node)) {
-        setPanelOpen(false)
-        setEditingMemberId(null)
-        setActionError('')
-      }
+      const target = e.target as Node
+      if (containerRef.current?.contains(target)) return
+      // ActionMenu의 드롭다운(수정·제거)도 document.body에 포탈로 뜨기 때문에 containerRef
+      // 밖에 있다 — 그 클릭까지 "패널 바깥 클릭"으로 잡으면 항목을 누르는 순간 패널 전체가
+      // 먼저 닫혀버려 수정 UI가 뜨지 않는다.
+      if (target instanceof Element && target.closest('[role="menu"]')) return
+      setPanelOpen(false)
+      setEditingMemberId(null)
+      setActionError('')
     }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -93,6 +96,40 @@ export default function MemberListPanel({
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [panelOpen, removeTarget, setPanelOpen])
+
+  /** 게스트는 영상 단위 공유 링크에 딸려있어 videoId가 있을 때만 조회 가능 — 프로젝트
+   * 대시보드(videoId 없음)에서는 어떤 영상 기준인지가 없어 목록 자체를 보여줄 수 없다. */
+  useEffect(() => {
+    if (!panelOpen || videoId == null || guestsLoaded) return
+    let cancelled = false
+
+    async function loadGuests(id: number) {
+      setGuestsLoading(true)
+      try {
+        const link = await getShareLink(id)
+        const list = await getShareLinkGuests(id, link.shareLinkId)
+        if (cancelled) return
+        setGuests(list.guests)
+      } catch (err) {
+        if (cancelled) return
+        // 공유 링크를 아직 한 번도 안 만들었으면(게스트 초대 이력 없음) 404 — 빈 목록으로 취급
+        if (!(err instanceof ApiError && err.code === 'COMMON404')) {
+          setActionError('게스트 목록을 불러오지 못했습니다.')
+        }
+        setGuests([])
+      } finally {
+        if (!cancelled) {
+          setGuestsLoaded(true)
+          setGuestsLoading(false)
+        }
+      }
+    }
+
+    void loadGuests(videoId)
+    return () => {
+      cancelled = true
+    }
+  }, [panelOpen, videoId, guestsLoaded])
 
   const startEdit = (member: MemberSummary) => {
     setEditingMemberId(member.memberId)
@@ -143,36 +180,6 @@ export default function MemberListPanel({
 
   const canRemove = (member: MemberSummary) =>
     member.permission !== 'ADMIN' && (meId == null || member.userId !== meId)
-
-  const openInviteChoice = () => {
-    setPanelOpen(false)
-    setInviteStep('choice')
-  }
-
-  const selectProjectInvite = () => {
-    setInviteStep('closed')
-    setInviteOpen(true)
-  }
-
-  const selectGuestInvite = async () => {
-    setInviteStep('guest-picker')
-    if (guestVideosLoaded) return
-    setGuestVideosLoading(true)
-    try {
-      const page = await getVideos(projectId, undefined, 100)
-      setGuestVideos(page.items)
-      setGuestVideosLoaded(true)
-    } catch {
-      setGuestVideos([])
-    } finally {
-      setGuestVideosLoading(false)
-    }
-  }
-
-  const selectGuestVideo = (videoId: number) => {
-    setInviteStep('closed')
-    setGuestShareVideoId(videoId)
-  }
 
   const previewMembers = members.slice(0, 4)
 
@@ -299,45 +306,64 @@ export default function MemberListPanel({
             })}
           </ul>
 
-          {/* 게스트는 공유 링크로 들어온 별도 신원이라 팀원과 관리 방식이 다름(역할 없음, 개별
-           * 차단만 가능) — BE 게스트 목록 조회 API가 아직 없어 자리만 남겨둔다. */}
-          <div className="border-neutral-3 flex flex-col gap-2 border-t pt-3">
-            <h3 className="text-caption-lg text-neutral-8 font-semibold">게스트</h3>
-            <p className="text-caption-lg text-neutral-6">게스트 목록 기능은 준비 중입니다.</p>
-          </div>
+          {/* 게스트는 영상 단위 공유 링크에 딸린 별도 신원이라 팀원과 관리 방식이 다름(역할 없음).
+           * 프로젝트 대시보드에서는 기준이 되는 영상이 없어 이 섹션 자체를 보여주지 않는다. */}
+          {videoId != null && (
+            <div className="border-neutral-3 flex flex-col gap-2 border-t pt-3">
+              <h3 className="text-caption-lg text-neutral-8 font-semibold">
+                게스트{guests.length > 0 ? ` ${guests.length}` : ''}
+              </h3>
+              {guestsLoading ? (
+                <p className="text-caption-lg text-neutral-6">불러오는 중…</p>
+              ) : guests.length === 0 ? (
+                <p className="text-caption-lg text-neutral-6">게스트가 없습니다.</p>
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {guests.map((guest) => (
+                    <li key={guest.guestId} className="flex items-center gap-3">
+                      <Avatar
+                        alt={guest.name}
+                        size={28}
+                        fallback={guest.name.slice(0, 1)}
+                        border="gray"
+                        className="bg-neutral-2"
+                      />
+                      <p className="text-caption-lg text-neutral-10 truncate">{guest.name}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           {isAdmin && (
-            <Button variant="secondary" className="w-full" onClick={openInviteChoice}>
-              초대하기
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => {
+                  setPanelOpen(false)
+                  setInviteOpen(true)
+                }}
+              >
+                프로젝트 초대하기
+              </Button>
+              {/* 게스트 초대는 영상 단위 공유 링크라, 지금 보고 있는 영상이 있을 때만 바로 만들 수 있다 */}
+              {videoId != null && (
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => {
+                    setPanelOpen(false)
+                    setGuestInviteOpen(true)
+                  }}
+                >
+                  게스트 초대하기
+                </Button>
+              )}
+            </div>
           )}
         </div>
-      )}
-
-      <InviteChoiceModal
-        isOpen={inviteStep === 'choice'}
-        onClose={() => setInviteStep('closed')}
-        onSelectProject={selectProjectInvite}
-        onSelectGuest={() => void selectGuestInvite()}
-      />
-
-      <GuestVideoPickerModal
-        // 매번 열 때마다 이전 선택이 남지 않도록, 열릴 때만 새 key로 내부 state를 초기화한다
-        key={inviteStep === 'guest-picker' ? 'guest-picker-open' : 'guest-picker-closed'}
-        isOpen={inviteStep === 'guest-picker'}
-        onClose={() => setInviteStep('closed')}
-        onBack={() => setInviteStep('choice')}
-        onSelect={selectGuestVideo}
-        videos={guestVideos}
-        loading={guestVideosLoading}
-      />
-
-      {guestShareVideoId != null && (
-        <ShareLinkModal
-          isOpen
-          onClose={() => setGuestShareVideoId(null)}
-          videoId={guestShareVideoId}
-        />
       )}
 
       <InviteLinkModal
@@ -345,6 +371,14 @@ export default function MemberListPanel({
         onClose={() => setInviteOpen(false)}
         projectId={projectId}
       />
+
+      {videoId != null && (
+        <ShareLinkModal
+          isOpen={guestInviteOpen}
+          onClose={() => setGuestInviteOpen(false)}
+          videoId={videoId}
+        />
+      )}
 
       <ConfirmModal
         isOpen={removeTarget != null}

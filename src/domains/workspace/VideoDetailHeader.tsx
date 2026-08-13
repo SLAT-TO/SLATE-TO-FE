@@ -110,6 +110,7 @@ export default function VideoDetailHeader({
         <div className="ml-auto sm:mr-4">
           <MemberListPanel
             projectId={projectId}
+            videoId={videoDetail.videoId}
             members={members}
             isAdmin={isAdmin}
             meId={meId}
