@@ -148,6 +148,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     [projectId, routerNavigate],
   )
   const [initialFileId, setInitialFileId] = useState<number | null>(null)
+  const [unavailableNoticeId, setUnavailableNoticeId] = useState<number | null>(null)
   const [membersPanelOpen, setMembersPanelOpen] = useState(false)
   const [videoCompletionConfirmOpen, setVideoCompletionConfirmOpen] = useState(false)
   const videoProjectStatusRef = useRef<HTMLDivElement>(null)
@@ -167,12 +168,13 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   useEffect(() => {
     if (typeof noticeView !== 'number' || notices.some((notice) => notice.id === noticeView)) return
     let cancelled = false
+    setUnavailableNoticeId(null)
     void getProjectNotice(projectId, noticeView)
       .then((notice) => {
         if (!cancelled) setNotices((prev) => [notice, ...prev])
       })
       .catch(() => {
-        // Keep the existing not-found view for deleted or inaccessible notices.
+        if (!cancelled) setUnavailableNoticeId(noticeView)
       })
     return () => {
       cancelled = true
@@ -485,6 +487,9 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         (() => {
           const selectedNotice = notices.find((n) => n.id === noticeView)
           if (!selectedNotice) {
+            if (unavailableNoticeId !== noticeView) {
+              return <p className="text-body-sm text-neutral-6">공지를 불러오는 중입니다.</p>
+            }
             return (
               <section className="flex flex-col gap-3">
                 <p className="text-body-sm text-warning">공지를 찾을 수 없습니다.</p>

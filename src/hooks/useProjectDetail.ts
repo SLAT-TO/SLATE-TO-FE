@@ -51,14 +51,20 @@ export function useProjectDetail(projectId: number) {
           if (!prev) return prev
           const current = prev.pages.flatMap((page) => page.items)
           const next = typeof update === 'function' ? update(current) : update
+          // Keep all cached items. A prepend can make the first page temporarily
+          // larger than the server page size; its existing cursor still points to
+          // the first unseen server item, so fetching the next page remains safe.
+          const firstPageSize = prev.pages[0]?.items.length ?? 0
+          const firstPageExtra = Math.max(0, next.length - current.length)
           let offset = 0
           return {
             ...prev,
-            pages: prev.pages.map((page) => {
-              const items = next.slice(offset, offset + page.items.length)
-              offset += page.items.length
+            pages: prev.pages.map((page, index) => {
+              const size = index === 0 ? firstPageSize + firstPageExtra : page.items.length
+              const items = next.slice(offset, offset + size)
+              offset += size
               return {
-              ...page,
+                ...page,
                 items,
               }
             }),
