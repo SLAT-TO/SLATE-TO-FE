@@ -67,7 +67,15 @@ export default function HeaderProfileMenu({ userName, profileImageUrl }: HeaderP
       </button>
 
       {open && (
-        <ul id={menuId} role="menu" aria-labelledby={triggerId} className={actionMenuPanelClass}>
+        <ul
+          id={menuId}
+          role="menu"
+          aria-labelledby={triggerId}
+          // actionMenuPanelClass는 ActionMenu가 document.body에 포탈로 띄우는 걸 전제로
+          // position을 안 갖고 있다 — 이 메뉴는 포탈을 안 쓰므로 직접 absolute로 붙여야
+          // static으로 렌더링돼 헤더 높이를 밀어버리는 문제가 없다.
+          className={`${actionMenuPanelClass} absolute top-full right-0 mt-1`}
+        >
           {MENU_ITEMS.map((item) => (
             <li key={item.path} role="none">
               <button
