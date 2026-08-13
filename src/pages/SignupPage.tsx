@@ -239,7 +239,11 @@ export function SignupPage() {
                   type="button"
                   onClick={() => void handleConfirmCode()}
                   disabled={!codeSent || verifying || emailVerified}
-                  className="bg-neutral-2 border-neutral-3 text-body-sm text-neutral-5 h-12 w-36 shrink-0 rounded-lg border whitespace-nowrap disabled:cursor-not-allowed"
+                  className={`text-body-sm h-12 w-36 shrink-0 rounded-lg border whitespace-nowrap transition-colors disabled:cursor-not-allowed ${
+                    verifyCode
+                      ? 'bg-primary border-primary hover:bg-primary-hover disabled:bg-neutral-4 disabled:border-neutral-4 disabled:text-neutral-6 text-white'
+                      : 'bg-neutral-2 border-neutral-3 text-neutral-5'
+                  }`}
                 >
                   {verifying ? '확인 중…' : '인증번호 확인'}
                 </button>

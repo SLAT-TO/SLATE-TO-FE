@@ -3,6 +3,20 @@ import { refreshToken } from '../api/auth'
 import { getMe } from '../api/users'
 import { navigate, sanitizeRedirectTo } from '../utils/navigation'
 
+// 소셜 로그인 리다이렉트 직후엔 refreshToken 쿠키가 막 내려온 시점이라, 브라우저/네트워크
+// 타이밍에 따라 첫 refresh 요청이 간헐적으로 실패하는 경우가 있다(로그인은 정상 성공했는데
+// 매번은 아니고 가끔씩만 로그인 화면으로 되돌아가는 문제로 나타남). 실패 시 곧바로 로그인으로
+// 보내기 전에 짧은 대기 후 한 번 더 시도해 이런 일시적 실패를 흡수한다.
+async function refreshTokenWithRetry(retriesLeft = 1): Promise<void> {
+  try {
+    await refreshToken()
+  } catch (err) {
+    if (retriesLeft <= 0) throw err
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    return refreshTokenWithRetry(retriesLeft - 1)
+  }
+}
+
 // 소셜 로그인 성공 후 BE가 리다이렉트하는 콜백 화면 (callback-path: /auth/callback).
 // BE는 refreshToken만 HttpOnly 쿠키로 내려주므로, 여기서 refresh를 한 번 호출해
 // accessToken을 발급받아 저장한다. 온보딩 미완료(신규 유저)면 redirectTo가 있어도
@@ -14,7 +28,7 @@ export function AuthCallbackPage() {
   useEffect(() => {
     let cancelled = false
 
-    refreshToken()
+    refreshTokenWithRetry()
       .then(async () => {
         if (cancelled) return
 
