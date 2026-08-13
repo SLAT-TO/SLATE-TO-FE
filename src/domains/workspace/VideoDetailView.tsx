@@ -13,10 +13,9 @@ import { useVideoDetail } from '../../hooks/useVideoDetail'
 import { useReferenceFiles } from '../../hooks/useReferenceFiles'
 import { useFeedbacks } from '../../hooks/useFeedbacks'
 import { useFeedbackReplies } from '../../hooks/useFeedbackReplies'
-import { useProjectMembersInvite } from '../../hooks/useProjectMembersInvite'
 import { getGuestVideoDetail } from '../../api/videos'
 import { ApiError } from '../../types/api'
-import type { ProjectStatus } from '../../types/project'
+import type { ProjectStatus, MemberSummary } from '../../types/project'
 import type { GuestVideoDetail } from '../../types/video'
 
 /** 공유 링크로 들어온 게스트 신원 — 있으면 멤버 전용 데이터(참고파일·참여인원·수정·삭제 등)는 걷어내고 영상+피드백만 보여준다 */
@@ -38,6 +37,10 @@ export type VideoDetailViewProps = {
   isAdmin?: boolean
   projectStatus?: ProjectStatus
   onProjectStatusChange?: (status: ProjectStatus) => void
+  /** 부모(ProjectDetailPage)가 이미 불러온 참여 인원 목록 — 여기서 다시 조회하지 않고 그대로 받아 쓴다.
+   * guest가 없을 때(멤버 모드)만 실제로 쓰인다 */
+  members?: MemberSummary[]
+  onMembersChange?: (members: MemberSummary[]) => void
 }
 
 export function VideoDetailView({
@@ -49,6 +52,8 @@ export function VideoDetailView({
   isAdmin = false,
   projectStatus,
   onProjectStatusChange,
+  members = [],
+  onMembersChange,
 }: VideoDetailViewProps) {
   const isGuest = guest != null
   const [loading, setLoading] = useState(true)
@@ -150,8 +155,6 @@ export function VideoDetailView({
     removeReply,
   } = useFeedbackReplies(guest?.guestId, isGuest ? undefined : projectId, guest?.guestToken)
 
-  const { members, setMembers, load: loadMembers } = useProjectMembersInvite(projectId ?? 0)
-
   useEffect(() => {
     let cancelled = false
 
@@ -184,9 +187,6 @@ export function VideoDetailView({
           loadFeedbacks().catch(() => {
             if (!cancelled) window.alert('피드백을 불러오지 못했습니다.')
           }),
-          loadMembers().catch(() => {
-            if (!cancelled) window.alert('참여 인원을 불러오지 못했습니다.')
-          }),
         ])
       } catch (err) {
         if (!cancelled) {
@@ -201,7 +201,7 @@ export function VideoDetailView({
     return () => {
       cancelled = true
     }
-  }, [guest, projectId, videoId, loadVideoDetail, loadReferenceFiles, loadFeedbacks, loadMembers])
+  }, [guest, projectId, videoId, loadVideoDetail, loadReferenceFiles, loadFeedbacks])
 
   // 멤버/게스트 두 응답 shape을 화면에 필요한 필드만으로 통일
   const title = isGuest ? (guestVideoDetail?.title ?? guest?.initialTitle) : videoDetail?.title
@@ -228,7 +228,7 @@ export function VideoDetailView({
       members={members}
       isAdmin={isAdmin}
       meId={meId}
-      onMembersChange={setMembers}
+      onMembersChange={onMembersChange ?? (() => {})}
       onEdit={() => setEditOpen(true)}
       onDelete={() => setDeleteOpen(true)}
     />

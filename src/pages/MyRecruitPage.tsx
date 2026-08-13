@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import JobCard from '../components/JobCard'
 import HeaderTitle from '../components/HeaderTitle'
 import BookmarkModal from '../domains/recruit/BookmarkModal'
@@ -19,10 +19,20 @@ function MyRecruitPage() {
     useMyRecruitments()
 
   // 등록 시에만 안내 모달을 띄운다 (해제 시엔 없음)
-  const handleBookmarkClick = async (id: number) => {
-    const nowBookmarked = await toggleBookmark(id)
-    if (nowBookmarked) setIsBookmarkModalOpen(true)
-  }
+  // JobCard가 React.memo로 감싸져 있어 — useCallback으로 안정된 참조를 넘겨야 카드별 리렌더가 줄어든다
+  const handleBookmarkClick = useCallback(
+    (id: number) => {
+      void (async () => {
+        const nowBookmarked = await toggleBookmark(id)
+        if (nowBookmarked) setIsBookmarkModalOpen(true)
+      })()
+    },
+    [toggleBookmark],
+  )
+
+  const handleCardClick = useCallback((id: number) => {
+    navigate(`/matching/${id}`)
+  }, [])
 
   const renderSection = (title: string, posts: Recruitment[]) => (
     <section className="flex flex-col gap-4">
@@ -39,6 +49,7 @@ function MyRecruitPage() {
           {posts.map((post) => (
             <JobCard
               key={post.id}
+              id={post.id}
               category={PROJECT_TYPE_LABEL[post.category] ?? post.category}
               length={
                 post.lengthType
@@ -49,8 +60,8 @@ function MyRecruitPage() {
               role={roleLabel(post.recruitPart)}
               dDay={post.status === 'CLOSED' ? '마감' : `D-${post.dday}`}
               isBookmarked={bookmarkedIds.has(post.id)}
-              onBookmarkClick={() => void handleBookmarkClick(post.id)}
-              onClick={() => navigate(`/matching/${post.id}`)}
+              onBookmarkClick={handleBookmarkClick}
+              onClick={handleCardClick}
             />
           ))}
         </div>

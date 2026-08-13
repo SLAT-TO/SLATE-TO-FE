@@ -374,6 +374,8 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
           videoId={videoId}
           meId={meId}
           isAdmin={project.myPermission === 'ADMIN'}
+          members={members}
+          onMembersChange={setMembers}
           projectStatus={project.status}
           onProjectStatusChange={(status) => {
             if (status === project.status) return

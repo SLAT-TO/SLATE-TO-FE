@@ -1,5 +1,6 @@
-import type { UserRole, UserCategory, UserRegion } from './user'
+import type { UserRole, UserCategory, UserRegion, UserActivityStats } from './user'
 import type { ProjectLengthType, CursorPage } from './project'
+import type { PortfolioSummary, PageResult } from './portfolio'
 
 export type RecruitmentStatus = 'RECRUITING' | 'CLOSED' | string
 
@@ -120,6 +121,10 @@ export interface ApplicantSummary {
   bio: string | null
   primaryRole: UserRole | null
   locations: UserRegion[]
+  /** 지원 상세(RecruitmentApplicationDetailResponse.applicant)에만 포함 — 목록 응답에는 없음 */
+  stats?: UserActivityStats
+  /** 최신 5건만 담겨 온다 — 전체 목록은 GET /users/{userId}/portfolios로 별도 조회 */
+  portfolios?: PageResult<PortfolioSummary>
 }
 
 export interface RecruitmentApplication {

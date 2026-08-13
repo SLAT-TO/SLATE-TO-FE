@@ -1,7 +1,9 @@
 // src/components/JobCard.tsx
+import { memo } from 'react'
 import Tag from './Tag'
 
 interface JobCardProps {
+  id: number
   category: string
   length?: string
   title: string
@@ -9,8 +11,10 @@ interface JobCardProps {
   role: string
   dDay: string
   isBookmarked: boolean
-  onClick?: () => void
-  onBookmarkClick: () => void
+  /** 부모가 useCallback으로 안정화한 핸들러를 넘겨받아 id로 대상 카드를 식별한다 —
+   * 카드마다 인라인 클로저를 새로 만들지 않아야 React.memo가 실제로 효과가 있다 */
+  onClick?: (id: number) => void
+  onBookmarkClick: (id: number) => void
   /** @deprecated 하위호환용 — 렌더링 안 함. 홈 등 기존 사용처 호환 */
   type?: string
   /** @deprecated 하위호환용 — 렌더링 안 함 */
@@ -18,6 +22,7 @@ interface JobCardProps {
 }
 
 function JobCard({
+  id,
   length,
   category,
   title,
@@ -30,7 +35,7 @@ function JobCard({
 }: JobCardProps) {
   return (
     <article
-      onClick={onClick}
+      onClick={onClick ? () => onClick(id) : undefined}
       className={`bg-bg-primary flex h-full w-full flex-col gap-6 rounded-xl p-4 shadow-[0_4px_12px_color-mix(in_srgb,var(--color-gradation)_15%,transparent)] ${
         onClick ? 'cursor-pointer' : ''
       }`}
@@ -46,7 +51,7 @@ function JobCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation() // 카드 클릭(상세 이동) 막기
-              onBookmarkClick()
+              onBookmarkClick(id)
             }}
             aria-pressed={isBookmarked}
             aria-label={isBookmarked ? '북마크 해제' : '북마크 추가'}
@@ -79,4 +84,4 @@ function JobCard({
   )
 }
 
-export default JobCard
+export default memo(JobCard)

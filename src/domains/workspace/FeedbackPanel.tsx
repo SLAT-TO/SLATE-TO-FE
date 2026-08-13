@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import InlineIcon from '../../components/InlineIcon'
 import TextArea from '../../components/TextArea'
 import type { useFeedbacks } from '../../hooks/useFeedbacks'
@@ -57,7 +58,7 @@ type FeedbackPanelProps = Pick<
     onSeek: (seconds: number) => void
   }
 
-export default function FeedbackPanel({
+export default memo(function FeedbackPanel({
   filteredFeedbacks,
   filter,
   setFilter,
@@ -244,4 +245,4 @@ export default function FeedbackPanel({
       </div>
     </div>
   )
-}
+})

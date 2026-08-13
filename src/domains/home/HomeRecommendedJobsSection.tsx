@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import JobCard from '../../components/JobCard'
 import type { Recruitment } from '../../types/recruitment'
 import { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
@@ -26,6 +27,10 @@ export default function HomeRecommendedJobsSection({
   onToggleBookmark,
   loading,
 }: HomeRecommendedJobsSectionProps) {
+  const handleCardClick = useCallback((jobId: number) => {
+    navigate(`/matching/${jobId}`)
+  }, [])
+
   return (
     <section className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
@@ -61,6 +66,7 @@ export default function HomeRecommendedJobsSection({
           {jobs.map((job) => (
             <JobCard
               key={job.id}
+              id={job.id}
               category={PROJECT_TYPE_LABEL[job.category] ?? job.category}
               length={
                 job.lengthType
@@ -71,8 +77,8 @@ export default function HomeRecommendedJobsSection({
               role={roleLabel(job.recruitPart)}
               dDay={job.status === 'CLOSED' ? '마감' : `D-${job.dday}`}
               isBookmarked={bookmarkedIds.has(job.id)}
-              onBookmarkClick={() => onToggleBookmark(job.id)}
-              onClick={() => navigate(`/matching/${job.id}`)}
+              onBookmarkClick={onToggleBookmark}
+              onClick={handleCardClick}
             />
           ))}
         </div>
