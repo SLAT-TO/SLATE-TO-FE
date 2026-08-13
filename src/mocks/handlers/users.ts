@@ -135,7 +135,7 @@ export const userHandlers = [
     return HttpResponse.json(ok(null), { status: 200 })
   }),
 
-  http.patch(paths.users.changePassword, async ({ request }) => {
+  http.patch(paths.auth.changePassword, async ({ request }) => {
     const user = safeUser()
     if (!user) return unauthorized()
     const body = (await request.json()) as Partial<ChangePasswordRequest>
@@ -144,7 +144,18 @@ export const userHandlers = [
       return badRequest('현재 비밀번호가 일치하지 않습니다.')
     }
     db.passwords[user.id] = body.newPassword
-    return HttpResponse.json(ok(null), { status: 200 })
+    db.tokens = {
+      accessToken: `mock-access-password-changed-${user.id}`,
+      refreshToken: `mock-refresh-password-changed-${user.id}`,
+    }
+    return HttpResponse.json(
+      ok({
+        userId: user.id,
+        accessToken: db.tokens.accessToken,
+        onboardingCompleted: user.onboardingCompleted,
+      }),
+      { status: 200 },
+    )
   }),
 
   http.get(paths.users.byId(':userId'), ({ params }) => {
@@ -155,38 +166,15 @@ export const userHandlers = [
     return HttpResponse.json(ok(toPublicUser(user)), { status: 200 })
   }),
 
-  http.get(paths.users.portfolios(':userId'), ({ request, params }) => {
+  http.get(paths.users.portfolios(':userId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const userId = Number(params.userId)
     if (!db.users.some((u) => u.id === userId)) return notFound('존재하지 않는 유저')
 
-    const url = new URL(request.url)
-    const page = Number(url.searchParams.get('page') ?? 1)
-    const size = Number(url.searchParams.get('size') ?? 12)
-    const content = db.portfolios
-    const totalElements = content.length
-    const totalPages = Math.max(1, Math.ceil(totalElements / size))
-
-    return HttpResponse.json(ok({ content, page, size, totalElements, totalPages }), {
+    // mock은 전량 반환
+    return HttpResponse.json(ok({ items: db.portfolios, nextCursor: null, hasNext: false }), {
       status: 200,
     })
-  }),
-
-  http.get(paths.users.notificationSettings, () => {
-    const user = safeUser()
-    if (!user) return unauthorized()
-    return HttpResponse.json(ok(db.notificationSettings[user.id]), { status: 200 })
-  }),
-
-  http.patch(paths.users.notificationSettings, async ({ request }) => {
-    const user = safeUser()
-    if (!user) return unauthorized()
-    const body = (await request.json()) as Partial<(typeof db.notificationSettings)[number]>
-    db.notificationSettings[user.id] = {
-      ...db.notificationSettings[user.id],
-      ...body,
-    }
-    return HttpResponse.json(ok(db.notificationSettings[user.id]), { status: 200 })
   }),
 
   http.post(paths.users.myPortfolios, async ({ request }) => {

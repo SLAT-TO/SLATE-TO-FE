@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getMe } from '../api/users'
@@ -26,6 +26,7 @@ import ProjectFileList from '../domains/workspace/ProjectFileList'
 import { ProjectScheduleTab } from '../domains/workspace/ProjectScheduleTab'
 import ProjectStatusMenu from '../domains/workspace/ProjectStatusMenu'
 import { useProjectDetail } from '../hooks/useProjectDetail'
+import { useProjectStatusMenu } from '../hooks/useProjectStatusMenu'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import type { ProjectActivity, ProjectListResponse } from '../types/project'
 
@@ -144,12 +145,28 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   )
   const [initialFileId, setInitialFileId] = useState<number | null>(null)
   const [membersPanelOpen, setMembersPanelOpen] = useState(false)
+  const [videoCompletionConfirmOpen, setVideoCompletionConfirmOpen] = useState(false)
+  const videoProjectStatusRef = useRef<HTMLDivElement>(null)
+  const videoProjectStatusMenu = useProjectStatusMenu(
+    projectId,
+    project,
+    setProject,
+    videoProjectStatusRef,
+  )
 
   useEffect(() => {
     getMe()
       .then((me) => setMeId(me.id))
       .catch(() => setMeId(null))
   }, [])
+
+  // 설정 화면은 생성자(ADMIN)만 접근 가능 — 최근 활동 클릭이나 URL 직접 진입으로
+  // 비관리자가 view=settings로 들어와도 즉시 빠져나가게 한다.
+  useEffect(() => {
+    if (view === 'settings' && project && project.myPermission !== 'ADMIN') {
+      setProjectSearch({}, { replace: true })
+    }
+  }, [view, project, setProjectSearch])
 
   const partialErrorKey = partialErrors.join('|')
   useEffect(() => {
@@ -181,6 +198,11 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     if (activity.targetType === 'FILE' && activity.targetId != null) {
       setInitialFileId(activity.targetId)
       setProjectSearch({ tab: 'files' })
+      return
+    }
+
+    if (activity.targetType === 'VIDEO' && activity.targetId != null) {
+      routerNavigate(`/workspace/projects/${projectId}/videos/${activity.targetId}`)
       return
     }
 
@@ -304,8 +326,8 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     })
   }
 
-  if (view === 'settings') {
-    // ?view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
+  if (view === 'settings' && project.myPermission === 'ADMIN') {
+    // view=settings로 진입했을 수 있으므로, 나갈 때 URL을 정리해 새로고침 시 재진입되지 않게 한다.
     const leaveSettings = () => {
       setProjectSearch({}, { replace: true })
     }
@@ -346,15 +368,35 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
 
   if (videoId != null) {
     return (
-      <VideoDetailView
-        projectId={projectId}
-        videoId={videoId}
-        meId={meId}
-        isAdmin={project.myPermission === 'ADMIN'}
-        lengthType={project.lengthType}
-        myRoleNames={project.roleNames}
-        onBack={closeVideo}
-      />
+      <>
+        <VideoDetailView
+          projectId={projectId}
+          videoId={videoId}
+          meId={meId}
+          isAdmin={project.myPermission === 'ADMIN'}
+          projectStatus={project.status}
+          onProjectStatusChange={(status) => {
+            if (status === project.status) return
+            if (status === 'COMPLETED') {
+              setVideoCompletionConfirmOpen(true)
+              return
+            }
+            void videoProjectStatusMenu.changeStatus(status)
+          }}
+          onBack={closeVideo}
+        />
+        <ConfirmModal
+          isOpen={videoCompletionConfirmOpen}
+          onClose={() => setVideoCompletionConfirmOpen(false)}
+          onConfirm={() => {
+            setVideoCompletionConfirmOpen(false)
+            void videoProjectStatusMenu.changeStatus('COMPLETED')
+          }}
+          title="완료로 전환하면 참여자들의 포트폴리오에 자동으로 추가됩니다."
+          description="각자의 프로필 페이지에서 수정 및 삭제가 가능합니다. 완료로 변경하면 진행 상황을 수정할 수 없습니다."
+          confirmText="확인"
+        />
+      </>
     )
   }
 
@@ -368,7 +410,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         </p>
       </div>
 
-      <div className="[&_[role=tab][aria-selected=true]]:border-primary w-full [&_[role=tab]]:flex-1 [&_[role=tab]]:px-0 [&_[role=tab]]:text-center [&_[role=tab]]:text-[20px] [&_[role=tab][aria-selected=true]]:border-b-[3px] [&_[role=tablist]]:w-full">
+      <div className="[&_[role=tab][aria-selected=true]]:border-primary w-full overflow-x-auto [&_[role=tab]]:shrink-0 [&_[role=tab]]:px-4 [&_[role=tab]]:text-center [&_[role=tab]]:text-base sm:[&_[role=tab]]:flex-1 sm:[&_[role=tab]]:px-0 sm:[&_[role=tab]]:text-[20px] [&_[role=tab][aria-selected=true]]:border-b-[3px] [&_[role=tablist]]:min-w-max sm:[&_[role=tablist]]:w-full sm:[&_[role=tablist]]:min-w-0">
         <Tabs tabs={DETAIL_TABS} activeTab={tab} onChange={handleTabChange} />
       </div>
 
@@ -459,7 +501,9 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         />
       )}
 
-      {tab === 'feedback' && <VideoFeedbackTab projectId={projectId} />}
+      {tab === 'feedback' && (
+        <VideoFeedbackTab projectId={projectId} projectStatus={project.status} />
+      )}
 
       <ConfirmModal
         isOpen={deleteOpen}

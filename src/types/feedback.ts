@@ -21,6 +21,12 @@ export type Feedback = {
   updatedAt: string
 }
 
+/** BE FeedbackListItemDTO — 목록 조회에서만 답글 개수를 함께 준다.
+ * 작성/수정/상태변경 응답(Feedback)에는 없다. */
+export type FeedbackListEntry = Feedback & {
+  replyCount: number
+}
+
 export type FeedbackReply = {
   replyId: number
   feedbackId: number
@@ -42,15 +48,12 @@ export type CreateFeedbackRequest = {
   startTime?: number
   /** 타임코드 종료 시간(초). 단일 시점이면 생략 */
   endTime?: number
-  /** 공유링크 게스트 — 멤버는 JWT (FeedbackCreateReqDTO.guestId) */
-  guestId?: number
 }
 
 export type UpdateFeedbackRequest = {
   content?: string
   startTime?: number
   endTime?: number
-  guestId?: number
 }
 
 /** BE FeedbackStatusReqDTO */
@@ -60,8 +63,6 @@ export type UpdateFeedbackStatusRequest = {
 
 export type CreateReplyRequest = {
   content: string
-  /** 공유링크 게스트 — 멤버는 JWT (ReplyCreateReqDTO.guestId) */
-  guestId?: number
 }
 
 /** BE ReplyStatusReqDTO */
@@ -92,5 +93,7 @@ export type RegisterGuestResult = {
   guestId: number
   shareLinkId: number
   name: string
+  /** 게스트 요청의 X-Guest-Token 헤더에 전달하는 일회성 세션 토큰 */
+  sessionToken: string
   createdAt: string
 }

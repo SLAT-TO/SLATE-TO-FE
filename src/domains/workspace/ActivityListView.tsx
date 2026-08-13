@@ -3,6 +3,7 @@ import { Button } from '../../components/Button'
 import { markActivityRead, markAllActivitiesRead } from '../../api/projects'
 import { projectKeys } from '../../queries/keys'
 import type { ActivityLogListResult, ProjectActivity } from '../../types/project'
+import LayersCircleIcon from '../../components/icons/LayersCircleIcon'
 
 const CARD_SHADOW = 'shadow-[var(--shadow-card)]'
 
@@ -31,6 +32,7 @@ function canNavigate(activity: ProjectActivity): boolean {
     activity.targetType === 'NOTICE' ||
     activity.targetType === 'FILE' ||
     activity.targetType === 'SCHEDULE' ||
+    activity.targetType === 'VIDEO' ||
     activity.type === 'SCHEDULE_CREATED' ||
     activity.type === 'SCHEDULE_UPDATED' ||
     activity.type === 'PROJECT_MEMBER_JOINED' ||
@@ -144,9 +146,12 @@ export default function ActivityListView({
                   activity.isNew ? 'bg-neutral-1' : 'bg-neutral-3'
                 } ${navigable ? 'cursor-pointer' : ''}`}
               >
-                <span className="text-body-sm text-neutral-10 min-w-0 tracking-[-0.32px]">
-                  {activity.content}
-                </span>
+                <div className="flex min-w-0 items-center gap-3">
+                  <LayersCircleIcon />
+                  <span className="text-body-sm text-neutral-10 min-w-0 tracking-[-0.32px]">
+                    {activity.content}
+                  </span>
+                </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <span className="text-caption-sm text-neutral-6">
                     {formatActivityDate(activity.createdAt)}

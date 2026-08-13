@@ -14,7 +14,10 @@ type ReferenceFilesSectionProps = Pick<
   | 'downloadReferenceFile'
   | 'removeReferenceFile'
   | 'openPicker'
->
+> & {
+  /** 게스트 등 조회만 가능한 경우 — 추가/삭제 컨트롤을 숨긴다. 다운로드는 계속 허용 */
+  readOnly?: boolean
+}
 
 export default function ReferenceFilesSection({
   filteredFiles,
@@ -23,6 +26,7 @@ export default function ReferenceFilesSection({
   downloadReferenceFile,
   removeReferenceFile,
   openPicker,
+  readOnly = false,
 }: ReferenceFilesSectionProps) {
   return (
     <div className="flex flex-col gap-3">
@@ -48,39 +52,45 @@ export default function ReferenceFilesSection({
             <InlineIcon svg={documentIcon} className="text-neutral-5 size-6 shrink-0" />
             <div className="min-w-0">
               <p className="text-body-sm text-neutral-11 truncate">{file.fileName}</p>
-              <p className="text-caption-lg text-neutral-6 truncate">
-                업로더 · {file.uploader.nickname}
-              </p>
+              {file.uploader && (
+                <p className="text-caption-lg text-neutral-6 truncate">
+                  업로더 · {file.uploader.nickname}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-4">
             <span className="text-caption-lg text-neutral-6">{formatDate(file.createdAt)}</span>
             <button
               type="button"
-              onClick={() => downloadReferenceFile(file.projectFileId, file.fileName)}
+              onClick={() => downloadReferenceFile(file.referenceFileId, file.fileName)}
               aria-label="다운로드"
               className="text-neutral-9 hover:text-primary"
             >
               <InlineIcon svg={downloadIcon} className="size-4" />
             </button>
-            <ActionMenu
-              items={[
-                {
-                  action: 'delete',
-                  onClick: () => removeReferenceFile(file.referenceFileId),
-                },
-              ]}
-            />
+            {!readOnly && (
+              <ActionMenu
+                items={[
+                  {
+                    action: 'delete',
+                    onClick: () => removeReferenceFile(file.referenceFileId),
+                  },
+                ]}
+              />
+            )}
           </div>
         </div>
       ))}
-      <button
-        type="button"
-        onClick={openPicker}
-        className="border-primary text-primary hover:bg-primary/5 text-body-sm w-full rounded-lg border py-2 font-semibold"
-      >
-        파일 추가하기
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={openPicker}
+          className="border-primary text-primary hover:bg-primary/5 text-body-sm w-full rounded-lg border py-2 font-semibold"
+        >
+          파일 추가하기
+        </button>
+      )}
     </div>
   )
 }

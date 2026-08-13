@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { DateRangeCalendar, type DateRangeValue } from './DateRangeCalendar'
 import { DATE_FIELD_CLASS } from './dateFieldStyles'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useOutsideClick } from '../hooks/useOutsideClick'
 import { formatDate } from '../utils/formatDate'
 
@@ -16,6 +17,8 @@ export function DateRangeField({ value, onChange }: DateRangeFieldProps) {
 
   // 팝업 바깥을 클릭하면 닫기
   useOutsideClick(containerRef, open, () => setOpen(false))
+  // Escape 키로도 닫기 (Modal·ActionMenu·Select와 동일한 동작)
+  useEscapeKey(open, () => setOpen(false))
 
   return (
     <div ref={containerRef} className="inline-block">

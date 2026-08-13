@@ -29,6 +29,21 @@ export type VideoDetail = {
   updatedAt: string
 }
 
+/** BE GuestVideoDetailResDTO — 게스트는 projectId·bookmarked 없이 영상 자체 정보만 받는다 */
+export type GuestVideoDetail = {
+  videoId: number
+  title: string
+  youtubeUrl: string
+  youtubeVideoId: string
+  thumbnailUrl: string | null
+  progressStatus: VideoProgressStatus
+  description: string | null
+  memo: string | null
+  projectTags: string[]
+  createdAt: string
+  updatedAt: string
+}
+
 /** BE VideoListResDTO */
 export type VideoListResult = {
   items: VideoListItem[]
@@ -99,12 +114,14 @@ export type ValidateYoutubeResult = {
 
 export type ReferenceFile = {
   referenceFileId: number
-  projectFileId: number
+  /** 게스트 응답에는 없음(BE가 내부 파일 식별자를 노출하지 않음) — 팀원용 다운로드에만 쓰인다 */
+  projectFileId?: number
   fileName: string
-  contentType: string
-  fileSize: number
-  isFinal: boolean
-  uploader: {
+  contentType?: string
+  fileSize?: number
+  isFinal?: boolean
+  /** 게스트 응답에는 없음 — 외부인에게 팀원 신원을 노출하지 않기 위해 제외 */
+  uploader?: {
     id: number
     nickname: string
   }

@@ -5,6 +5,7 @@ import HeaderProfileMenu from './HeaderProfileMenu'
 import { CONTENT_PX } from '../constants/layout'
 type HeaderProps = {
   userName?: string
+  profileImageUrl?: string | null
 }
 
 function BellIcon() {
@@ -16,10 +17,11 @@ function BellIcon() {
   )
 }
 
-export default function Header({ userName = '000' }: HeaderProps) {
+export default function Header({ userName = '000', profileImageUrl }: HeaderProps) {
   const slot = useContext(HeaderSlotContentContext)
   const headerLeft = slot?.headerLeft ?? null
   const headerRight = slot?.headerRight ?? null
+  const hideDefaultActions = slot?.hideDefaultActions ?? false
 
   return (
     <header
@@ -30,17 +32,21 @@ export default function Header({ userName = '000' }: HeaderProps) {
       {/* 우측 액션 영역 */}
       <div className="flex shrink-0 items-center gap-4">
         {/* 알림 */}
-        <button
-          type="button"
-          onClick={() => navigate('/notifications')}
-          className="text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 flex h-10 w-10 items-center justify-center rounded-full transition-colors"
-          aria-label="알림"
-        >
-          <BellIcon />
-        </button>
+        {!hideDefaultActions && (
+          <>
+            <button
+              type="button"
+              onClick={() => navigate('/notifications')}
+              className="text-neutral-6 hover:bg-neutral-2 hover:text-neutral-9 flex h-10 w-10 items-center justify-center rounded-full transition-colors"
+              aria-label="알림"
+            >
+              <BellIcon />
+            </button>
 
-        {/* 아바타 (클릭 시 나의 구인구직/마이페이지/설정 드롭다운) */}
-        <HeaderProfileMenu userName={userName} />
+            {/* 아바타 (클릭 시 나의 구인구직/마이페이지/설정 드롭다운) */}
+            <HeaderProfileMenu userName={userName} profileImageUrl={profileImageUrl} />
+          </>
+        )}
 
         {/* 페이지별 추가 영역 (예: ProjectDetailPage의 ActionMenu) */}
         {headerRight}

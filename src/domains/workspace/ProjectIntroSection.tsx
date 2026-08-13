@@ -1,43 +1,20 @@
-import { PROJECT_LENGTH_TYPE_LABEL } from '../../constants/projectLabels'
-import { roleLabel } from '../../constants/roles'
-import type { ProjectLengthType } from '../../types/project'
-
 type ProjectIntroSectionProps = {
+  /** BE가 유형·길이·형태(kind)·역할을 이미 합쳐서 내려준다 — 따로 조합하지 않는다 */
   projectTags: string[]
-  lengthType: ProjectLengthType | null
-  myRoleNames: string[]
   memo: string | null
 }
 
-export default function ProjectIntroSection({
-  projectTags,
-  lengthType,
-  myRoleNames,
-  memo,
-}: ProjectIntroSectionProps) {
+export default function ProjectIntroSection({ projectTags, memo }: ProjectIntroSectionProps) {
   return (
     <div className="flex flex-col gap-3">
-      {(projectTags.length > 0 || lengthType || myRoleNames.length > 0) && (
+      {projectTags.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {projectTags.map((tag) => (
             <span
               key={tag}
-              className="bg-tag-role-bg text-tag-role-text text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
+              className="bg-neutral-2 text-neutral-7 text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
             >
               {tag}
-            </span>
-          ))}
-          {lengthType && (
-            <span className="bg-tag-role-bg text-tag-role-text text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold">
-              {PROJECT_LENGTH_TYPE_LABEL[lengthType] ?? lengthType}
-            </span>
-          )}
-          {myRoleNames.map((role) => (
-            <span
-              key={role}
-              className="bg-tag-role-bg text-tag-role-text text-caption-sm rounded-[3px] px-[19px] py-1 font-semibold"
-            >
-              {roleLabel(role)}
             </span>
           ))}
         </div>

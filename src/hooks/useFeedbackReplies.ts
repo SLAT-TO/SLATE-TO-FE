@@ -1,13 +1,12 @@
 import { useCallback, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { resolveFeedbackActor } from '../domains/workspace/resolveFeedbackActor'
 import { createReply, deleteReply, getReplies, updateReply } from '../api/videos'
 import type { FeedbackReply } from '../types/feedback'
 import { invalidateProjectActivityData } from '../queries/projectInvalidation'
 
 /** 피드백 답글 펼침/목록/작성
  * @param guestId 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
-export function useFeedbackReplies(guestId?: number, projectId?: number) {
+export function useFeedbackReplies(guestId?: number, projectId?: number, guestToken?: string) {
   const queryClient = useQueryClient()
   const [expandedFeedbackId, setExpandedFeedbackId] = useState<number | null>(null)
   const [repliesByFeedback, setRepliesByFeedback] = useState<Record<number, FeedbackReply[]>>({})
@@ -18,6 +17,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
   const [pendingReplyActionId, setPendingReplyActionId] = useState<number | null>(null)
   const isSubmittingReplyRef = useRef(false)
   const pendingReplyActionIdsRef = useRef(new Set<number>())
+  const fetchingReplyIdsRef = useRef(new Set<number>())
 
   const resetReplyCompose = useCallback(() => {
     setNewReply('')
@@ -32,15 +32,22 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
       }
       setExpandedFeedbackId(feedbackId)
       resetReplyCompose()
-      setRepliesByFeedback((prev) => {
-        if (prev[feedbackId]) return prev
-        void getReplies(feedbackId, guestId != null ? { guestId } : undefined).then((page) => {
-          setRepliesByFeedback((p) => ({ ...p, [feedbackId]: page.items }))
-        })
-        return prev
-      })
+      if (repliesByFeedback[feedbackId] || fetchingReplyIdsRef.current.has(feedbackId)) return
+
+      fetchingReplyIdsRef.current.add(feedbackId)
+      try {
+        const page = await getReplies(
+          feedbackId,
+          guestId != null ? { guestId, guestToken } : undefined,
+        )
+        setRepliesByFeedback((prev) => ({ ...prev, [feedbackId]: page.items }))
+      } catch {
+        window.alert('답글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+      } finally {
+        fetchingReplyIdsRef.current.delete(feedbackId)
+      }
     },
-    [expandedFeedbackId, guestId, resetReplyCompose],
+    [expandedFeedbackId, guestId, guestToken, repliesByFeedback, resetReplyCompose],
   )
 
   const submitReply = useCallback(
@@ -50,11 +57,11 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
       isSubmittingReplyRef.current = true
       setIsSubmittingReply(true)
       try {
-        const actor = resolveFeedbackActor(guestId)
-        const created = await createReply(feedbackId, {
-          content: newReply.trim(),
-          ...actor,
-        })
+        const created = await createReply(
+          feedbackId,
+          { content: newReply.trim() },
+          guestId != null ? { guestId, guestToken } : undefined,
+        )
         setRepliesByFeedback((prev) => ({
           ...prev,
           [feedbackId]: [...(prev[feedbackId] ?? []), created],
@@ -70,7 +77,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
         setIsSubmittingReply(false)
       }
     },
-    [newReply, guestId, projectId, queryClient, resetReplyCompose],
+    [newReply, guestId, guestToken, projectId, queryClient, resetReplyCompose],
   )
 
   const startEditReply = useCallback((reply: FeedbackReply) => {
@@ -91,8 +98,11 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
       pendingReplyActionIdsRef.current.add(replyId)
       setPendingReplyActionId(replyId)
       try {
-        const actor = resolveFeedbackActor(guestId)
-        const updated = await updateReply(replyId, { content, ...actor })
+        const updated = await updateReply(
+          replyId,
+          { content },
+          guestId != null ? { guestId, guestToken } : undefined,
+        )
         if (!updated) throw new Error('답글 수정 응답이 없습니다.')
         setRepliesByFeedback((prev) => ({
           ...prev,
@@ -108,7 +118,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
         setPendingReplyActionId((current) => (current === replyId ? null : current))
       }
     },
-    [cancelEditReply, editingReplyContent, guestId],
+    [cancelEditReply, editingReplyContent, guestId, guestToken],
   )
 
   const removeReply = useCallback(
@@ -118,8 +128,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
       pendingReplyActionIdsRef.current.add(replyId)
       setPendingReplyActionId(replyId)
       try {
-        const actor = resolveFeedbackActor(guestId)
-        await deleteReply(replyId, actor)
+        await deleteReply(replyId, guestId != null ? { guestId, guestToken } : undefined)
         setRepliesByFeedback((prev) => ({
           ...prev,
           [feedbackId]: (prev[feedbackId] ?? []).filter((reply) => reply.replyId !== replyId),
@@ -132,7 +141,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number) {
         setPendingReplyActionId((current) => (current === replyId ? null : current))
       }
     },
-    [cancelEditReply, editingReplyId, guestId],
+    [cancelEditReply, editingReplyId, guestId, guestToken],
   )
 
   return {

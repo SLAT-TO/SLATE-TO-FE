@@ -4,9 +4,11 @@ import { HeaderSlotActionsContext, HeaderSlotContentContext } from './headerSlot
 export function HeaderSlotProvider({ children }: { children: ReactNode }) {
   const [headerLeft, setHeaderLeft] = useState<ReactNode>(null)
   const [headerRight, setHeaderRight] = useState<ReactNode>(null)
+  const [hideDefaultActions, setHideDefaultActions] = useState(false)
 
   const clearHeaderLeft = useCallback(() => setHeaderLeft(null), [])
   const clearHeaderRight = useCallback(() => setHeaderRight(null), [])
+  const clearHideDefaultActions = useCallback(() => setHideDefaultActions(false), [])
 
   const actions = useMemo(
     () => ({
@@ -14,16 +16,19 @@ export function HeaderSlotProvider({ children }: { children: ReactNode }) {
       clearHeaderLeft,
       setHeaderRight,
       clearHeaderRight,
+      setHideDefaultActions,
+      clearHideDefaultActions,
     }),
-    [clearHeaderLeft, clearHeaderRight],
+    [clearHeaderLeft, clearHeaderRight, clearHideDefaultActions],
   )
 
   const content = useMemo(
     () => ({
       headerLeft,
       headerRight,
+      hideDefaultActions,
     }),
-    [headerLeft, headerRight],
+    [headerLeft, headerRight, hideDefaultActions],
   )
 
   return (

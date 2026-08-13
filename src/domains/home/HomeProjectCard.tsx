@@ -10,6 +10,7 @@ import { projectMetaTags } from '../../constants/projectLabels'
 import { projectStatusLabel } from '../../constants/projectStatus'
 import { roleLabel } from '../../constants/roles'
 import type { ProjectSummary } from '../../types/project'
+import { calculateProjectDeadlineProgress } from '../../utils/projectDeadlineProgress'
 import { navigate } from '../../utils/navigation'
 
 interface HomeProjectCardProps {
@@ -30,6 +31,7 @@ export default function HomeProjectCard({
   const tags = projectMetaTags({ type: project.type, lengthType: project.lengthType })
   const visibleMembers = project.memberPreviewImageUrls.slice(0, VISIBLE_AVATAR_COUNT)
   const extraCount = project.memberCount - visibleMembers.length
+  const deadlineProgress = calculateProjectDeadlineProgress(project.createdAt, project.endDate) ?? 0
   const relativeTime = project.lastActivityAt
     ? formatDistanceToNow(new Date(project.lastActivityAt), { addSuffix: true, locale: ko })
     : undefined
@@ -90,11 +92,7 @@ export default function HomeProjectCard({
       </div>
 
       <div className="flex w-full flex-col items-start gap-6">
-        <ProgressBar
-          value={project.deadlineProgressPercent ?? 0}
-          variant={variant}
-          className="self-stretch"
-        />
+        <ProgressBar value={deadlineProgress} variant={variant} className="self-stretch" />
 
         <div className="flex w-full items-center justify-between">
           <div className="flex min-w-0 items-center gap-2">

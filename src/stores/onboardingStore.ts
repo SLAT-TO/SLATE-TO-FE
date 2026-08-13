@@ -14,7 +14,7 @@ interface OnboardingProfile {
 }
 
 interface OnboardingState {
-  /** 약관 동의(가입 단계) — TermsPage 연동 전까지는 항상 false */
+  /** 약관 동의(가입 단계) — TermsPage에서 필수 약관 전체 동의 여부를 저장 */
   agreedTerms: boolean
   roles: UserRole[]
   regions: Region[]

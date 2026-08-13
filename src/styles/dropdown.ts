@@ -10,7 +10,9 @@ export const DROPDOWN_ITEM_BASE =
 
 export const selectPanelClass = `${DROPDOWN_PANEL_BASE} ${DROPDOWN_PANEL_POSITION} max-h-60 w-full overflow-auto`
 
-export const actionMenuPanelClass = `${DROPDOWN_PANEL_BASE} ${DROPDOWN_PANEL_POSITION} top-full right-0 min-w-[200px] overflow-hidden`
+// ActionMenu 패널은 document.body에 포탈로 뜨기 때문에(스크롤 컨테이너에 잘리는 문제 방지)
+// absolute/top-full 같은 상대 위치 클래스 대신 인라인 style로 fixed 좌표를 직접 지정한다.
+export const actionMenuPanelClass = `${DROPDOWN_PANEL_BASE} z-50 min-w-[200px] overflow-hidden`
 
 export const selectOptionClass = `${DROPDOWN_ITEM_BASE} cursor-pointer`
 

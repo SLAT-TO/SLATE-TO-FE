@@ -1,5 +1,7 @@
 import { useEffect, useState, type Dispatch, type RefObject, type SetStateAction } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../api/projects'
+import { invalidateProjectActivityData } from '../queries/projectInvalidation'
 import type { ProjectDetailResponse, ProjectStatus } from '../types/project'
 
 export function useProjectStatusMenu(
@@ -8,6 +10,7 @@ export function useProjectStatusMenu(
   setProject: Dispatch<SetStateAction<ProjectDetailResponse | null>>,
   containerRef: RefObject<HTMLDivElement | null>,
 ) {
+  const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -51,6 +54,7 @@ export function useProjectStatusMenu(
         kind: project.kind ?? undefined,
         status,
       })
+      void invalidateProjectActivityData(queryClient, projectId)
     } catch {
       setProject((prev) => (prev ? { ...prev, status: previous } : prev))
     }

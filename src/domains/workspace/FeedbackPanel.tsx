@@ -157,7 +157,7 @@ export default function FeedbackPanel({
               onSaveEdit={() => void saveEditFeedback(feedback.feedbackId)}
               isExpanded={expandedFeedbackId === feedback.feedbackId}
               onToggleReplies={() => toggleReplies(feedback.feedbackId)}
-              replies={repliesByFeedback[feedback.feedbackId] ?? []}
+              replies={repliesByFeedback[feedback.feedbackId]}
               newReply={newReply}
               setNewReply={setNewReply}
               onSubmitReply={() => void submitReply(feedback.feedbackId)}

@@ -23,6 +23,24 @@ function safeUser() {
   }
 }
 
+/** BE #181 — 게스트 guestId는 X-Guest-Id 헤더로 온다 (본문/쿼리 아님) */
+function getGuestIdHeader(request: Request): number | null {
+  const header = request.headers.get('X-Guest-Id')
+  return header ? Number(header) : null
+}
+
+/** 수정/삭제 요청이 실제 작성자 본인(로그인 회원 또는 그 게스트)인지 —
+ * 게스트 헤더가 왔으면 대상의 작성자 게스트와 일치해야 하고, 없으면 로그인 여부만 본다.
+ * (로그인 회원의 "본인만" 제약까지는 mock이 흉내내지 않음 — 기존 동작 그대로) */
+function isAuthorizedWriter(
+  target: { actor: { type: 'USER' | 'GUEST'; id: number } },
+  request: Request,
+): boolean {
+  const guestId = getGuestIdHeader(request)
+  if (guestId != null) return target.actor.type === 'GUEST' && target.actor.id === guestId
+  return Boolean(safeUser())
+}
+
 /** mock 전용 — registerGuest로 발급한 guestId → 이름 매핑 (실 BE 게스트 세션 대체) */
 const mockGuests = new Map<number, { name: string; shareLinkId: number }>()
 
@@ -34,25 +52,34 @@ export const videoHandlers = [
 
     const url = new URL(request.url)
     const size = Number(url.searchParams.get('size') ?? 20)
-    const videos = db.videos
+    const cursor = url.searchParams.get('cursor')
+    const cursorId = cursor ? Number(cursor) : null
+
+    const sorted = db.videos
       .filter((v) => v.projectId === projectId)
-      .slice(0, size)
-      .map((v) => ({
-        videoId: v.videoId,
-        title: v.title,
-        thumbnailUrl: v.thumbnailUrl,
-        bookmarked: v.bookmarked,
-        progressStatus: v.progressStatus,
-        hasUnreadFeedback: v.hasUnreadFeedback,
-        createdAt: v.createdAt,
-        updatedAt: v.updatedAt,
-      }))
+      .sort((a, b) => b.videoId - a.videoId)
+    const filtered = cursorId != null ? sorted.filter((v) => v.videoId < cursorId) : sorted
+    const page = filtered.slice(0, size)
+    // size<=0이면 slice(0, size)가 빈 배열을 주는데 length 비교만으로 hasNext를 정하면
+    // page가 비어있는데도 true가 나올 수 있어, page.length>0도 같이 확인한다.
+    const hasNext = page.length > 0 && filtered.length > size
+
+    const videos = page.map((v) => ({
+      videoId: v.videoId,
+      title: v.title,
+      thumbnailUrl: v.thumbnailUrl,
+      bookmarked: v.bookmarked,
+      progressStatus: v.progressStatus,
+      hasUnreadFeedback: v.hasUnreadFeedback,
+      createdAt: v.createdAt,
+      updatedAt: v.updatedAt,
+    }))
 
     return HttpResponse.json(
       ok({
         items: videos,
-        nextCursor: videos.length ? videos[videos.length - 1].videoId : null,
-        hasNext: false,
+        nextCursor: hasNext ? videos[videos.length - 1]!.videoId : null,
+        hasNext,
       }),
       { status: 200 },
     )
@@ -244,7 +271,13 @@ export const videoHandlers = [
       return a.startTime - b.startTime
     })
 
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    // 실 BE FeedbackListItemDTO처럼 답글 개수는 저장값이 아니라 그때그때 세어서 내려준다
+    const itemsWithReplyCount = items.map((f) => ({
+      ...f,
+      replyCount: db.replies.filter((r) => r.feedbackId === f.feedbackId).length,
+    }))
+
+    return HttpResponse.json(ok({ items: itemsWithReplyCount }), { status: 200 })
   }),
 
   http.post(paths.videos.feedbacks(':videoId'), async ({ request, params }) => {
@@ -253,12 +286,13 @@ export const videoHandlers = [
     if (body.endTime !== undefined && body.startTime === undefined) return badRequest()
 
     const user = safeUser()
-    const guest = body.guestId != null ? mockGuests.get(body.guestId) : undefined
+    const guestId = getGuestIdHeader(request)
+    const guest = guestId != null ? mockGuests.get(guestId) : undefined
     if (!user && !guest) return unauthorized()
 
     const now = new Date().toISOString()
     const actor = guest
-      ? { type: 'GUEST' as const, id: body.guestId!, name: guest.name }
+      ? { type: 'GUEST' as const, id: guestId!, name: guest.name }
       : { type: 'USER' as const, id: user!.id, name: user!.nickname }
     const feedback = {
       feedbackId: allocId(),
@@ -276,9 +310,9 @@ export const videoHandlers = [
   }),
 
   http.patch(paths.feedbacks.byId(':feedbackId'), async ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
     const feedback = db.feedbacks.find((f) => f.feedbackId === Number(params.feedbackId))
     if (!feedback) return notFound()
+    if (!isAuthorizedWriter(feedback, request)) return unauthorized()
     const body = (await request.json()) as Partial<CreateFeedbackRequest>
     if (body.content !== undefined) feedback.content = body.content
     if (body.startTime !== undefined) feedback.startTime = body.startTime
@@ -287,10 +321,11 @@ export const videoHandlers = [
     return HttpResponse.json(ok(feedback), { status: 200 })
   }),
 
-  http.delete(paths.feedbacks.byId(':feedbackId'), ({ params }) => {
-    if (!safeUser()) return unauthorized()
+  http.delete(paths.feedbacks.byId(':feedbackId'), ({ request, params }) => {
     const id = Number(params.feedbackId)
-    if (!db.feedbacks.some((f) => f.feedbackId === id)) return notFound()
+    const feedback = db.feedbacks.find((f) => f.feedbackId === id)
+    if (!feedback) return notFound()
+    if (!isAuthorizedWriter(feedback, request)) return unauthorized()
     db.feedbacks = db.feedbacks.filter((f) => f.feedbackId !== id)
     return HttpResponse.json(ok(null), { status: 200 })
   }),
@@ -324,12 +359,13 @@ export const videoHandlers = [
     if (!body.content) return badRequest()
 
     const user = safeUser()
-    const guest = body.guestId != null ? mockGuests.get(body.guestId) : undefined
+    const guestId = getGuestIdHeader(request)
+    const guest = guestId != null ? mockGuests.get(guestId) : undefined
     if (!user && !guest) return unauthorized()
 
     const now = new Date().toISOString()
     const actor = guest
-      ? { type: 'GUEST' as const, id: body.guestId!, name: guest.name }
+      ? { type: 'GUEST' as const, id: guestId!, name: guest.name }
       : { type: 'USER' as const, id: user!.id, name: user!.nickname }
     const reply = {
       replyId: allocId(),
@@ -347,9 +383,9 @@ export const videoHandlers = [
   }),
 
   http.patch(paths.replies.byId(':replyId'), async ({ request, params }) => {
-    if (!safeUser()) return unauthorized()
     const reply = db.replies.find((r) => r.replyId === Number(params.replyId))
     if (!reply) return notFound()
+    if (!isAuthorizedWriter(reply, request)) return unauthorized()
     const body = (await request.json()) as { content?: string; deleted?: boolean }
     if (body.deleted) {
       db.replies = db.replies.filter((r) => r.replyId !== reply.replyId)
@@ -445,6 +481,73 @@ export const videoHandlers = [
       }),
       { status: 201 },
     )
+  }),
+
+  http.get(paths.shareLinks.video(':token'), ({ request, params }) => {
+    const link = db.shareLinks.find((s) => s.token === params.token && s.isActive)
+    if (!link) return notFound()
+
+    const guestId = getGuestIdHeader(request)
+    const guest = guestId != null ? mockGuests.get(guestId) : undefined
+    if (!guest || guest.shareLinkId !== link.shareLinkId) return unauthorized()
+
+    const video = db.videos.find((v) => v.videoId === link.videoId)
+    if (!video) return notFound()
+
+    return HttpResponse.json(
+      ok({
+        videoId: video.videoId,
+        title: video.title,
+        youtubeUrl: video.youtubeUrl,
+        youtubeVideoId: video.youtubeVideoId,
+        thumbnailUrl: video.thumbnailUrl,
+        progressStatus: video.progressStatus,
+        description: video.description,
+        memo: video.memo,
+        projectTags: video.projectTags,
+        createdAt: video.createdAt,
+        updatedAt: video.updatedAt,
+      }),
+      { status: 200 },
+    )
+  }),
+
+  http.get(paths.shareLinks.files(':token'), ({ request, params }) => {
+    const link = db.shareLinks.find((s) => s.token === params.token && s.isActive)
+    if (!link) return notFound()
+
+    const guestId = getGuestIdHeader(request)
+    const guest = guestId != null ? mockGuests.get(guestId) : undefined
+    if (!guest || guest.shareLinkId !== link.shareLinkId) return unauthorized()
+
+    // 게스트 응답에는 projectFileId·uploader를 넣지 않는다 (내부 파일 식별자·팀원 신원 비노출)
+    const items = db.referenceFiles.map(({ referenceFileId, fileName, createdAt }) => ({
+      referenceFileId,
+      fileName,
+      createdAt,
+    }))
+    return HttpResponse.json(ok({ items }), { status: 200 })
+  }),
+
+  http.get(paths.shareLinks.fileDownload(':token', ':referenceFileId'), ({ request, params }) => {
+    const link = db.shareLinks.find((s) => s.token === params.token && s.isActive)
+    if (!link) return notFound()
+
+    const guestId = getGuestIdHeader(request)
+    const guest = guestId != null ? mockGuests.get(guestId) : undefined
+    if (!guest || guest.shareLinkId !== link.shareLinkId) return unauthorized()
+
+    const ref = db.referenceFiles.find((r) => r.referenceFileId === Number(params.referenceFileId))
+    if (!ref) return notFound()
+    /** mock 환경엔 실제 업로드 바이트가 없어 파일명을 담은 텍스트로 대체 */
+    const body = `mock file content: ${ref.fileName}`
+    return new HttpResponse(body, {
+      status: 200,
+      headers: {
+        'Content-Type': ref.contentType ?? 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(ref.fileName)}"`,
+      },
+    })
   }),
 
   http.patch(paths.shareLinks.byId(':shareLinkId'), ({ params }) => {

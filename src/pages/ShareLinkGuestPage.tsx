@@ -1,14 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { accessShareLink, registerGuest } from '../api/videos'
-import { useFeedbacks } from '../hooks/useFeedbacks'
-import { useFeedbackReplies } from '../hooks/useFeedbackReplies'
-import FeedbackPanel from '../domains/workspace/FeedbackPanel'
+import { VideoDetailView } from '../domains/workspace/VideoDetailView'
+import GuestLayout from '../layouts/GuestLayout'
 import Input from '../components/Input'
-import Select from '../components/Select'
 import { Button } from '../components/Button'
-import { ROLE_OPTIONS } from '../constants/roles'
 import { ApiError } from '../types/api'
 import type { ShareLinkAccess } from '../types/feedback'
+import { getGuestSession, setGuestSession } from '../utils/guestSession'
 
 type ShareLinkGuestPageProps = {
   token: string
@@ -20,14 +18,14 @@ function errorMessage(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback
 }
 
-/** 공유 링크의 초대 안내와 게스트 등록을 거쳐 피드백 화면으로 진입한다. */
+/** 공유 링크의 초대 안내와 게스트 등록을 거쳐, 팀원과 동일한 영상 상세(VideoDetailView)를
+ * 게스트 모드로 보여준다 — 화면이 따로 놀지 않도록 부품을 새로 짜지 않고 그대로 재사용한다. */
 export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
   const [access, setAccess] = useState<ShareLinkAccess | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [step, setStep] = useState<GuestShareStep>('invitation')
+  const [guestSession, setGuestSessionState] = useState(() => getGuestSession(token))
+  const [step, setStep] = useState<GuestShareStep>(() => (guestSession ? 'feedback' : 'invitation'))
   const [name, setName] = useState('')
-  const [role, setRole] = useState('')
-  const [guestId, setGuestId] = useState<number | null>(null)
   const [registering, setRegistering] = useState(false)
   const [registerError, setRegisterError] = useState<string | null>(null)
 
@@ -49,67 +47,17 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     }
   }, [token])
 
-  const videoId = access?.videoId ?? 0
-
-  const {
-    filteredFeedbacks,
-    filter,
-    setFilter,
-    newFeedback,
-    setNewFeedback,
-    pendingStart,
-    pendingEnd,
-    isCapturingRange,
-    editingFeedbackId,
-    editingFeedbackContent,
-    isSubmittingFeedback,
-    pendingFeedbackActionId,
-    setEditingFeedbackContent,
-    load: loadFeedbacks,
-    clearPendingTime,
-    attachCurrentTime,
-    toggleRangeCapture,
-    submitFeedback,
-    toggleResolved,
-    removeFeedback,
-    startEditFeedback,
-    cancelEditFeedback,
-    saveEditFeedback,
-  } = useFeedbacks(videoId, () => 0, guestId ?? undefined)
-
-  const {
-    expandedFeedbackId,
-    repliesByFeedback,
-    newReply,
-    setNewReply,
-    editingReplyId,
-    editingReplyContent,
-    setEditingReplyContent,
-    isSubmittingReply,
-    pendingReplyActionId,
-    toggleReplies,
-    submitReply,
-    startEditReply,
-    cancelEditReply,
-    saveEditReply,
-    removeReply,
-  } = useFeedbackReplies(guestId ?? undefined)
-
-  useEffect(() => {
-    if (!access || guestId === null) return
-    void loadFeedbacks()
-  }, [access, guestId, loadFeedbacks])
-
   const handleRegister = async (event: FormEvent) => {
     event.preventDefault()
-    if (!name.trim() || !role) return
+    if (!name.trim()) return
 
     setRegistering(true)
     setRegisterError(null)
     try {
-      // 역할 저장은 BE 게스트 등록 계약에 추가되면 이 요청에 함께 전달한다.
       const result = await registerGuest(token, { name: name.trim() })
-      setGuestId(result.guestId)
+      const session = { guestId: result.guestId, sessionToken: result.sessionToken }
+      setGuestSession(token, session)
+      setGuestSessionState(session)
       setStep('feedback')
     } catch (err) {
       setRegisterError(errorMessage(err, '게스트 등록에 실패했습니다.'))
@@ -142,7 +90,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
             <p className="text-head-sm text-neutral-11 font-bold">영상 피드백에 초대되었어요</p>
             <p className="text-body-lg text-neutral-10 font-semibold">{access.videoTitle}</p>
             <p className="text-body-sm text-neutral-6">
-              이름과 역할을 등록한 뒤 영상 피드백에 참여할 수 있습니다.
+              이름을 등록한 뒤 영상 피드백에 참여할 수 있습니다.
             </p>
           </div>
           <Button type="button" fullWidth onClick={() => setStep('registration')}>
@@ -164,23 +112,9 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
             <p className="text-head-sm text-neutral-11 font-bold">{access.videoTitle}</p>
             <p className="text-body-sm text-neutral-6">참여 정보를 입력해 주세요.</p>
           </div>
-          <div className="flex flex-col gap-4">
-            <Input
-              id="guest-name"
-              placeholder="이름을 입력하세요."
-              value={name}
-              onChange={setName}
-            />
-            <Select
-              id="guest-role"
-              options={ROLE_OPTIONS}
-              value={role}
-              onChange={setRole}
-              placeholder="역할을 선택하세요."
-            />
-          </div>
+          <Input id="guest-name" placeholder="이름을 입력하세요." value={name} onChange={setName} />
           {registerError && <p className="text-warning text-caption-lg">{registerError}</p>}
-          <Button type="submit" fullWidth disabled={registering || !name.trim() || !role}>
+          <Button type="submit" fullWidth disabled={registering || !name.trim()}>
             {registering ? '등록 중...' : '입장하기'}
           </Button>
         </form>
@@ -188,53 +122,21 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
     )
   }
 
+  // step === 'feedback' — guestSession은 이 시점엔 항상 있다 (없으면 'invitation'에서 시작함)
+  if (!guestSession) return null
+
   return (
-    <div className="flex min-h-screen flex-col gap-6 px-4 py-8">
-      <h1 className="text-head-sm text-neutral-11 text-center font-bold">{access.videoTitle}</h1>
-      <div className="mx-auto w-full max-w-[500px]">
-        <FeedbackPanel
-          filteredFeedbacks={filteredFeedbacks}
-          filter={filter}
-          setFilter={setFilter}
-          newFeedback={newFeedback}
-          setNewFeedback={setNewFeedback}
-          pendingStart={pendingStart}
-          pendingEnd={pendingEnd}
-          isCapturingRange={isCapturingRange}
-          editingFeedbackId={editingFeedbackId}
-          editingFeedbackContent={editingFeedbackContent}
-          isSubmittingFeedback={isSubmittingFeedback}
-          pendingFeedbackActionId={pendingFeedbackActionId}
-          setEditingFeedbackContent={setEditingFeedbackContent}
-          clearPendingTime={clearPendingTime}
-          attachCurrentTime={attachCurrentTime}
-          toggleRangeCapture={toggleRangeCapture}
-          submitFeedback={submitFeedback}
-          toggleResolved={toggleResolved}
-          removeFeedback={removeFeedback}
-          startEditFeedback={startEditFeedback}
-          cancelEditFeedback={cancelEditFeedback}
-          saveEditFeedback={saveEditFeedback}
-          expandedFeedbackId={expandedFeedbackId}
-          repliesByFeedback={repliesByFeedback}
-          newReply={newReply}
-          setNewReply={setNewReply}
-          editingReplyId={editingReplyId}
-          editingReplyContent={editingReplyContent}
-          setEditingReplyContent={setEditingReplyContent}
-          isSubmittingReply={isSubmittingReply}
-          pendingReplyActionId={pendingReplyActionId}
-          toggleReplies={toggleReplies}
-          submitReply={submitReply}
-          startEditReply={startEditReply}
-          cancelEditReply={cancelEditReply}
-          saveEditReply={saveEditReply}
-          removeReply={removeReply}
-          meId={null}
-          guestId={guestId ?? undefined}
-          onSeek={() => {}}
-        />
-      </div>
-    </div>
+    <GuestLayout>
+      <VideoDetailView
+        videoId={access.videoId}
+        guest={{
+          shareToken: token,
+          guestId: guestSession.guestId,
+          guestToken: guestSession.sessionToken,
+          initialTitle: access.videoTitle,
+        }}
+        onBack={() => {}}
+      />
+    </GuestLayout>
   )
 }

@@ -1,5 +1,6 @@
 import type { ProjectActivity } from '../../types/project'
 import { CARD_BASE } from '../../styles/card'
+import LayersCircleIcon from '../../components/icons/LayersCircleIcon'
 
 interface DashboardActivityCardProps {
   activities: ProjectActivity[]
@@ -31,7 +32,11 @@ export default function DashboardActivityCard({
         ) : (
           <ul className="flex flex-col gap-4">
             {activities.map((activity) => (
-              <li key={activity.activityId} className="text-body-sm text-neutral-10">
+              <li
+                key={activity.activityId}
+                className="text-body-sm text-neutral-10 flex items-center gap-3"
+              >
+                <LayersCircleIcon />
                 {activity.content}
               </li>
             ))}

@@ -38,7 +38,6 @@ export default function MemberListPanel({
 }: MemberListPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [internalPanelOpen, setInternalPanelOpen] = useState(false)
-  const [manageMode, setManageMode] = useState(false)
   const [editingMemberId, setEditingMemberId] = useState<number | null>(null)
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [savingRoles, setSavingRoles] = useState(false)
@@ -63,7 +62,6 @@ export default function MemberListPanel({
       if (removeTarget != null) return
       if (!containerRef.current?.contains(e.target as Node)) {
         setPanelOpen(false)
-        setManageMode(false)
         setEditingMemberId(null)
         setActionError('')
       }
@@ -71,7 +69,6 @@ export default function MemberListPanel({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setPanelOpen(false)
-        setManageMode(false)
         setEditingMemberId(null)
         setActionError('')
       }
@@ -86,7 +83,6 @@ export default function MemberListPanel({
   }, [panelOpen, removeTarget, setPanelOpen])
 
   const startEdit = (member: MemberSummary) => {
-    setManageMode(false)
     setEditingMemberId(member.memberId)
     setSelectedRoles([...member.roleNames])
     setActionError('')
@@ -171,26 +167,11 @@ export default function MemberListPanel({
 
       {panelOpen && (
         <div
-          className={`absolute top-full right-0 z-20 mt-2 flex w-[320px] flex-col gap-4 p-4 ${CARD_BASE}`}
+          className={`absolute top-full right-0 z-20 mt-2 flex w-[calc(100vw-32px)] max-w-[320px] flex-col gap-4 p-4 ${CARD_BASE}`}
           role="dialog"
           aria-label="참여 목록"
         >
-          <div className="flex items-center justify-between">
-            <h2 className="text-head-sm text-neutral-11 font-bold">참여 목록</h2>
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={() => {
-                  setManageMode((v) => !v)
-                  setEditingMemberId(null)
-                  setActionError('')
-                }}
-                className="text-caption-lg text-neutral-6 font-semibold"
-              >
-                {manageMode ? '완료' : '관리'}
-              </button>
-            )}
-          </div>
+          <h2 className="text-head-sm text-neutral-11 font-bold">참여 목록</h2>
 
           {actionError ? (
             <p className="text-warning text-caption-lg" role="alert">
@@ -225,22 +206,23 @@ export default function MemberListPanel({
                       )}
                     </div>
 
-                    {manageMode ? (
-                      canRemove(member) ? (
-                        <button
-                          type="button"
-                          onClick={() => setRemoveTarget(member)}
-                          className="text-caption-lg text-neutral-6 shrink-0 font-semibold"
-                        >
-                          제거
-                        </button>
-                      ) : null
-                    ) : isAdmin ? (
+                    {isAdmin && (
                       <ActionMenu
-                        items={[{ action: 'edit', onClick: () => startEdit(member) }]}
+                        items={[
+                          { action: 'edit', onClick: () => startEdit(member) },
+                          ...(canRemove(member)
+                            ? [
+                                {
+                                  action: 'delete' as const,
+                                  label: '제거',
+                                  onClick: () => setRemoveTarget(member),
+                                },
+                              ]
+                            : []),
+                        ]}
                         ariaLabel={`${member.nickname} 메뉴`}
                       />
-                    ) : null}
+                    )}
                   </div>
 
                   {isEditing && isAdmin && (
@@ -275,16 +257,18 @@ export default function MemberListPanel({
             })}
           </ul>
 
-          <Button
-            variant="secondary"
-            className="w-full"
-            onClick={() => {
-              setPanelOpen(false)
-              setInviteOpen(true)
-            }}
-          >
-            프로젝트 초대하기
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => {
+                setPanelOpen(false)
+                setInviteOpen(true)
+              }}
+            >
+              프로젝트 초대하기
+            </Button>
+          )}
         </div>
       )}
 
