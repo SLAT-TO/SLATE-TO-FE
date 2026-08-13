@@ -15,12 +15,12 @@ export function useFeedbackReplies(
   const queryClient = useQueryClient()
   const [expandedFeedbackId, setExpandedFeedbackId] = useState<number | null>(null)
   const [repliesByFeedback, setRepliesByFeedback] = useState<Record<number, FeedbackReply[]>>({})
-  const [replyCursorByFeedback, setReplyCursorByFeedback] = useState<
-    Record<number, string | null>
-  >({})
-  const [hasMoreRepliesByFeedback, setHasMoreRepliesByFeedback] = useState<
-    Record<number, boolean>
-  >({})
+  const [replyCursorByFeedback, setReplyCursorByFeedback] = useState<Record<number, string | null>>(
+    {},
+  )
+  const [hasMoreRepliesByFeedback, setHasMoreRepliesByFeedback] = useState<Record<number, boolean>>(
+    {},
+  )
   const [isLoadingMoreRepliesByFeedback, setIsLoadingMoreRepliesByFeedback] = useState<
     Record<number, boolean>
   >({})

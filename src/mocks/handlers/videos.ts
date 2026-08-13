@@ -283,9 +283,7 @@ export const videoHandlers = [
       return a.startTime - b.startTime
     })
 
-    const startIndex = cursor
-      ? items.findIndex((f) => String(f.feedbackId) === cursor) + 1
-      : 0
+    const startIndex = cursor ? items.findIndex((f) => String(f.feedbackId) === cursor) + 1 : 0
     const page = items.slice(startIndex, startIndex + size)
     const hasNext = startIndex + size < items.length
 
