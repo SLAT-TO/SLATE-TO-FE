@@ -169,7 +169,7 @@ function AppShell() {
 
   useEffect(() => {
     void fetchUser()
-  }, [fetchUser])
+  }, [fetchUser, pathname])
 
   const fullscreen = renderFullscreenRoute(pathname)
   if (fullscreen) {

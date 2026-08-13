@@ -22,7 +22,9 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   fetchUser: async () => {
     if (!getAccessToken()) return
-    if (get().status === 'loading') return
+    const { status } = get()
+    // 이미 조회했거나 조회 중이면 재요청하지 않는다
+    if (status === 'loading' || status === 'success') return
 
     set({ status: 'loading' })
     try {
