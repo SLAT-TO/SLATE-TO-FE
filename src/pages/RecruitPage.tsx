@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import JobCard from '../components/JobCard'
 import JobFilterBar from '../domains/recruit/JobFilterBar'
 import { FILTER_CONFIGS, type SortValue } from '../constants'
@@ -11,6 +11,7 @@ import { navigate } from '../utils/navigation'
 import BookmarkModal from '../domains/recruit/BookmarkModal'
 import { useSearchParams } from 'react-router-dom'
 import { parseFilters, parseSort, toSearchParams } from '../utils/recruitUrlState'
+import JobCardSkeleton from '../domains/recruit/JobCardSkeleton'
 
 /** 추천 공고는 2x2 그리드로 4개까지 노출 */
 const RECOMMENDED_LIMIT = 4
@@ -44,11 +45,19 @@ function RecruitPage() {
     })
   }
 
-  const handleBookmarkClick = (job: Recruitment) => {
-    const willBookmark = !bookmarkedIds.has(job.id)
-    void toggleBookmark(job.id)
-    if (willBookmark) setIsBookmarkModalOpen(true)
-  }
+  // JobCard가 React.memo로 감싸져 있어 — id 기반의 안정된 참조여야 카드별 리렌더가 줄어든다
+  const handleBookmarkClick = useCallback(
+    (jobId: number) => {
+      const willBookmark = !bookmarkedIds.has(jobId)
+      void toggleBookmark(jobId)
+      if (willBookmark) setIsBookmarkModalOpen(true)
+    },
+    [bookmarkedIds, toggleBookmark],
+  )
+
+  const handleCardClick = useCallback((jobId: number) => {
+    navigate(`/matching/${jobId}`)
+  }, [])
 
   const handleSortChange = (next: SortValue) => {
     setSearchParams(toSearchParams(selectedFilters, next), { replace: true })
@@ -61,6 +70,7 @@ function RecruitPage() {
   const renderCard = (job: Recruitment) => (
     <JobCard
       key={job.id}
+      id={job.id}
       category={PROJECT_TYPE_LABEL[job.category] ?? job.category}
       length={
         job.lengthType ? (PROJECT_LENGTH_TYPE_LABEL[job.lengthType] ?? job.lengthType) : undefined
@@ -69,8 +79,8 @@ function RecruitPage() {
       role={roleLabel(job.recruitPart)}
       dDay={job.status === 'CLOSED' ? '마감' : `D-${job.dday}`}
       isBookmarked={bookmarkedIds.has(job.id)}
-      onBookmarkClick={() => handleBookmarkClick(job)}
-      onClick={() => navigate(`/matching/${job.id}`)}
+      onBookmarkClick={handleBookmarkClick}
+      onClick={handleCardClick}
     />
   )
 
@@ -83,7 +93,17 @@ function RecruitPage() {
       <section className="flex flex-col gap-4">
         <h2 className="text-head-sm text-neutral-11 font-bold">추천공고</h2>
         {loading ? (
-          <p className="text-caption-sm text-neutral-6">불러오는 중…</p>
+          <div
+            className="grid grid-cols-2 gap-6"
+            role="status"
+            aria-busy="true"
+            aria-live="polite"
+            aria-label="추천 공고 불러오는 중"
+          >
+            {Array.from({ length: 4 }).map((_, i) => (
+              <JobCardSkeleton key={i} />
+            ))}
+          </div>
         ) : recommended.length === 0 ? (
           <p className="text-caption-sm text-neutral-6">추천 공고가 없어요.</p>
         ) : (
@@ -108,7 +128,17 @@ function RecruitPage() {
         />
 
         {loading ? (
-          <p className="text-caption-sm text-neutral-6">불러오는 중…</p>
+          <div
+            className="grid grid-cols-2 gap-6"
+            role="status"
+            aria-busy="true"
+            aria-live="polite"
+            aria-label="전체 공고 불러오는 중"
+          >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <JobCardSkeleton key={i} />
+            ))}
+          </div>
         ) : jobs.length === 0 ? (
           <p className="text-caption-sm text-neutral-6">등록된 공고가 없어요.</p>
         ) : (

@@ -27,6 +27,13 @@ export type FeedbackListEntry = Feedback & {
   replyCount: number
 }
 
+/** BE 피드백 목록 응답 — cursor 페이지네이션 (cursor는 불투명 문자열, 그대로 전달) */
+export type FeedbackListResult = {
+  items: FeedbackListEntry[]
+  nextCursor: string | null
+  hasNext: boolean
+}
+
 export type FeedbackReply = {
   replyId: number
   feedbackId: number
@@ -40,6 +47,13 @@ export type FeedbackReply = {
   status: boolean
   createdAt: string
   updatedAt: string
+}
+
+/** BE 답글 목록 응답 — cursor 페이지네이션 (cursor는 불투명 문자열, 그대로 전달) */
+export type FeedbackReplyListResult = {
+  items: FeedbackReply[]
+  nextCursor: string | null
+  hasNext: boolean
 }
 
 export type CreateFeedbackRequest = {

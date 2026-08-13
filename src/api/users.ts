@@ -8,6 +8,7 @@ import type {
   OnboardingRequest,
   OnboardingResult,
   PasswordChangeResult,
+  ProfileUpdateResult,
   PublicUser,
   UpdateProfileRequest,
   UserActivityStats,
@@ -16,6 +17,7 @@ import type {
   CreatePortfolioRequest,
   PageResult,
   Portfolio,
+  PortfolioSummary,
   UpdatePortfolioRequest,
 } from '../types/portfolio'
 
@@ -40,9 +42,9 @@ export async function submitOnboarding(body: OnboardingRequest): Promise<Onboard
   })
 }
 
-export async function updateProfile(body: UpdateProfileRequest): Promise<MeProfile> {
-  const result = await request<BeMe>({ method: 'PATCH', url: paths.users.me, data: body })
-  return normalizeMe(result)
+/** GET /users/me와 응답 형태가 달라(email·socialType 등 없음) normalizeMe/MeProfile을 쓰지 않는다 */
+export async function updateProfile(body: UpdateProfileRequest): Promise<ProfileUpdateResult> {
+  return request<ProfileUpdateResult>({ method: 'PATCH', url: paths.users.me, data: body })
 }
 
 /** PUT /users/me/profile-image — 교체 방식, 응답으로 CDN URL을 바로 준다 */
@@ -62,7 +64,7 @@ export async function uploadProfileImage(file: File): Promise<{
   })
 }
 
-/** FE mock 전용 — BE에 DELETE /users/me(회원탈퇴) 미구현. BE 연동 시 API 존재 여부 재확인 필요 */
+/** DELETE /api/v1/users/me — 회원탈퇴. body는 UserWithdrawRequest{agreed, password} */
 export async function deleteAccount(body: DeleteAccountRequest): Promise<null> {
   return request<null>({ method: 'DELETE', url: paths.users.me, data: body })
 }
@@ -84,12 +86,16 @@ export async function getPublicProfile(userId: number): Promise<PublicUser> {
 export async function getUserPortfolios(
   userId: number,
   params: { cursor?: number; size?: number } = {},
-): Promise<PageResult<Portfolio>> {
-  return request<PageResult<Portfolio>>({
+): Promise<PageResult<PortfolioSummary>> {
+  return request<PageResult<PortfolioSummary>>({
     method: 'GET',
     url: paths.users.portfolios(userId),
     params,
   })
+}
+
+export async function getUserPortfolio(userId: number, portfolioId: number): Promise<Portfolio> {
+  return request<Portfolio>({ method: 'GET', url: paths.users.portfolio(userId, portfolioId) })
 }
 
 export async function createPortfolio(body: CreatePortfolioRequest): Promise<Portfolio> {

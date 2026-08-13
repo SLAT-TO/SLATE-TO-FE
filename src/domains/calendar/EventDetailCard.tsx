@@ -75,13 +75,15 @@ export function EventDetailCard({
         <h3 className="text-body-sm text-neutral-10 flex-1 leading-none font-semibold tracking-[-0.32px]">
           {format(date, 'M월 d일')} 일정
         </h3>
-        <ActionMenu
-          ariaLabel="일정 관리"
-          items={[
-            { action: 'edit', onClick: onEdit },
-            { action: 'delete', onClick: () => setConfirmOpen(true) },
-          ]}
-        />
+        {event.canEdit === true && (
+          <ActionMenu
+            ariaLabel="일정 관리"
+            items={[
+              { action: 'edit', onClick: onEdit },
+              { action: 'delete', onClick: () => setConfirmOpen(true) },
+            ]}
+          />
+        )}
       </header>
 
       <p className={LABEL_CLASS}>{event.title}</p>

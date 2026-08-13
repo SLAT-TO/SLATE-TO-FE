@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import ApplicantRow from '../domains/recruit/ApplicantRow'
 import { getAllApplications, getRecruitment } from '../api/recruitments'
-import type { RecruitmentApplication } from '../types/recruitment'
+import type { ApplicationStatusValue, RecruitmentApplication } from '../types/recruitment'
 import { navigate } from '../utils/navigation'
 
 interface JobApplicantsPageProps {
@@ -41,6 +41,16 @@ function JobApplicantsPage({ jobId }: JobApplicantsPageProps) {
     }
   }, [jobId])
 
+  const handleStatusChange = (applicationId: number, status: ApplicationStatusValue) => {
+    setApplications((prev) =>
+      prev.map((application) =>
+        application.applicationId === applicationId
+          ? { ...application, applicationStatus: status }
+          : application,
+      ),
+    )
+  }
+
   return (
     <div className="flex flex-col gap-6 px-8 py-6">
       <h2 className="text-head-sm text-neutral-11 font-bold">
@@ -72,10 +82,12 @@ function JobApplicantsPage({ jobId }: JobApplicantsPageProps) {
                 {applications.map((application) => (
                   <ApplicantRow
                     key={application.applicationId}
+                    recruitmentId={jobId}
                     application={application}
                     onViewProfile={() =>
                       navigate(`/matching/${jobId}/applicants/${application.applicationId}`)
                     }
+                    onStatusChange={handleStatusChange}
                   />
                 ))}
               </ul>

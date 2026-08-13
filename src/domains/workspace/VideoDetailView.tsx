@@ -13,10 +13,9 @@ import { useVideoDetail } from '../../hooks/useVideoDetail'
 import { useReferenceFiles } from '../../hooks/useReferenceFiles'
 import { useFeedbacks } from '../../hooks/useFeedbacks'
 import { useFeedbackReplies } from '../../hooks/useFeedbackReplies'
-import { useProjectMembersInvite } from '../../hooks/useProjectMembersInvite'
 import { getGuestVideoDetail } from '../../api/videos'
 import { ApiError } from '../../types/api'
-import type { ProjectStatus } from '../../types/project'
+import type { ProjectStatus, MemberSummary } from '../../types/project'
 import type { GuestVideoDetail } from '../../types/video'
 
 /** 공유 링크로 들어온 게스트 신원 — 있으면 멤버 전용 데이터(참고파일·참여인원·수정·삭제 등)는 걷어내고 영상+피드백만 보여준다 */
@@ -38,6 +37,10 @@ export type VideoDetailViewProps = {
   isAdmin?: boolean
   projectStatus?: ProjectStatus
   onProjectStatusChange?: (status: ProjectStatus) => void
+  /** 부모(ProjectDetailPage)가 이미 불러온 참여 인원 목록 — 여기서 다시 조회하지 않고 그대로 받아 쓴다.
+   * guest가 없을 때(멤버 모드)만 실제로 쓰인다 */
+  members?: MemberSummary[]
+  onMembersChange?: (members: MemberSummary[]) => void
 }
 
 export function VideoDetailView({
@@ -49,6 +52,8 @@ export function VideoDetailView({
   isAdmin = false,
   projectStatus,
   onProjectStatusChange,
+  members = [],
+  onMembersChange,
 }: VideoDetailViewProps) {
   const isGuest = guest != null
   const [loading, setLoading] = useState(true)
@@ -92,6 +97,9 @@ export function VideoDetailView({
     attachFile,
     removeReferenceFile,
     downloadReferenceFile,
+    hasMoreReferenceFiles,
+    isLoadingMoreReferenceFiles,
+    loadMoreReferenceFiles,
   } = useReferenceFiles(
     projectId ?? 0,
     videoId,
@@ -102,6 +110,8 @@ export function VideoDetailView({
 
   const {
     filteredFeedbacks,
+    hasMoreFeedbacks,
+    isLoadingMoreFeedbacks,
     filter,
     setFilter,
     newFeedback,
@@ -115,6 +125,7 @@ export function VideoDetailView({
     pendingFeedbackActionId,
     setEditingFeedbackContent,
     load: loadFeedbacks,
+    loadMoreFeedbacks,
     clearPendingTime,
     attachCurrentTime,
     toggleRangeCapture,
@@ -124,6 +135,7 @@ export function VideoDetailView({
     startEditFeedback,
     cancelEditFeedback,
     saveEditFeedback,
+    changeReplyCount,
   } = useFeedbacks(
     videoId,
     getCurrentTime,
@@ -135,6 +147,8 @@ export function VideoDetailView({
   const {
     expandedFeedbackId,
     repliesByFeedback,
+    hasMoreRepliesByFeedback,
+    isLoadingMoreRepliesByFeedback,
     newReply,
     setNewReply,
     editingReplyId,
@@ -143,14 +157,18 @@ export function VideoDetailView({
     isSubmittingReply,
     pendingReplyActionId,
     toggleReplies,
+    loadMoreReplies,
     submitReply,
     startEditReply,
     cancelEditReply,
     saveEditReply,
     removeReply,
-  } = useFeedbackReplies(guest?.guestId, isGuest ? undefined : projectId, guest?.guestToken)
-
-  const { members, setMembers, load: loadMembers } = useProjectMembersInvite(projectId ?? 0)
+  } = useFeedbackReplies(
+    guest?.guestId,
+    isGuest ? undefined : projectId,
+    guest?.guestToken,
+    changeReplyCount,
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -184,9 +202,6 @@ export function VideoDetailView({
           loadFeedbacks().catch(() => {
             if (!cancelled) window.alert('피드백을 불러오지 못했습니다.')
           }),
-          loadMembers().catch(() => {
-            if (!cancelled) window.alert('참여 인원을 불러오지 못했습니다.')
-          }),
         ])
       } catch (err) {
         if (!cancelled) {
@@ -201,7 +216,7 @@ export function VideoDetailView({
     return () => {
       cancelled = true
     }
-  }, [guest, projectId, videoId, loadVideoDetail, loadReferenceFiles, loadFeedbacks, loadMembers])
+  }, [guest, projectId, videoId, loadVideoDetail, loadReferenceFiles, loadFeedbacks])
 
   // 멤버/게스트 두 응답 shape을 화면에 필요한 필드만으로 통일
   const title = isGuest ? (guestVideoDetail?.title ?? guest?.initialTitle) : videoDetail?.title
@@ -228,7 +243,7 @@ export function VideoDetailView({
       members={members}
       isAdmin={isAdmin}
       meId={meId}
-      onMembersChange={setMembers}
+      onMembersChange={onMembersChange ?? (() => {})}
       onEdit={() => setEditOpen(true)}
       onDelete={() => setDeleteOpen(true)}
     />
@@ -297,12 +312,18 @@ export function VideoDetailView({
             downloadReferenceFile={downloadReferenceFile}
             removeReferenceFile={removeReferenceFile}
             openPicker={openPicker}
+            hasMoreReferenceFiles={hasMoreReferenceFiles}
+            isLoadingMoreReferenceFiles={isLoadingMoreReferenceFiles}
+            loadMoreReferenceFiles={loadMoreReferenceFiles}
             readOnly={isGuest}
           />
         </div>
 
         <FeedbackPanel
           filteredFeedbacks={filteredFeedbacks}
+          hasMoreFeedbacks={hasMoreFeedbacks}
+          isLoadingMoreFeedbacks={isLoadingMoreFeedbacks}
+          loadMoreFeedbacks={loadMoreFeedbacks}
           filter={filter}
           setFilter={setFilter}
           newFeedback={newFeedback}
@@ -326,6 +347,8 @@ export function VideoDetailView({
           saveEditFeedback={saveEditFeedback}
           expandedFeedbackId={expandedFeedbackId}
           repliesByFeedback={repliesByFeedback}
+          hasMoreRepliesByFeedback={hasMoreRepliesByFeedback}
+          isLoadingMoreRepliesByFeedback={isLoadingMoreRepliesByFeedback}
           newReply={newReply}
           setNewReply={setNewReply}
           editingReplyId={editingReplyId}
@@ -334,6 +357,7 @@ export function VideoDetailView({
           isSubmittingReply={isSubmittingReply}
           pendingReplyActionId={pendingReplyActionId}
           toggleReplies={toggleReplies}
+          loadMoreReplies={loadMoreReplies}
           submitReply={submitReply}
           startEditReply={startEditReply}
           cancelEditReply={cancelEditReply}

@@ -3,26 +3,17 @@ import Tag from '../components/Tag'
 import type { Portfolio } from '../types/portfolio'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
-import { getMyPortfolio } from '../api/users'
+import { getMyPortfolio, getUserPortfolio } from '../api/users'
 import { roleLabel } from '../constants/roles'
 import { videoCategoryLabel } from '../constants/videoCategories'
 
 interface ProjectOverviewPageProps {
   portfolioId: number
+  /** 있으면 타인 포트폴리오 조회, 없으면 내 것 */
+  userId?: number
 }
 
-function OverviewField({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <h4 className="text-neutral-11 text-sm font-semibold">{label}</h4>
-      <div className="text-neutral-7 text-sm">{children}</div>
-    </div>
-  )
-}
-
-const HEADER = <HeaderTitle>프로젝트 개요</HeaderTitle>
-
-function ProjectOverviewPage({ portfolioId }: ProjectOverviewPageProps) {
+function ProjectOverviewPage({ portfolioId, userId }: ProjectOverviewPageProps) {
   useHeaderSlot(HEADER)
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -35,7 +26,9 @@ function ProjectOverviewPage({ portfolioId }: ProjectOverviewPageProps) {
       setIsLoading(true)
       setError(null)
       try {
-        const result = await getMyPortfolio(portfolioId)
+        const result = userId
+          ? await getUserPortfolio(userId, portfolioId)
+          : await getMyPortfolio(portfolioId)
         if (!cancelled) setPortfolio(result)
       } catch {
         if (!cancelled) setError('프로젝트 정보를 불러오지 못했습니다.')
@@ -48,7 +41,7 @@ function ProjectOverviewPage({ portfolioId }: ProjectOverviewPageProps) {
     return () => {
       cancelled = true
     }
-  }, [portfolioId])
+  }, [portfolioId, userId])
 
   if (isLoading) {
     return <p className="text-caption-sm text-neutral-6 p-6">불러오는 중…</p>
@@ -64,26 +57,27 @@ function ProjectOverviewPage({ portfolioId }: ProjectOverviewPageProps) {
     <div className="flex flex-col gap-6 p-6">
       {/* 정보 카드 */}
       <section className="rounded-xl bg-white p-6 shadow-xs">
-        <div className="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-3">
-          {/* 윗줄: 맡은 역할 / 코멘트 / 프로젝트 설명 */}
-          <OverviewField label="맡은 역할">
-            <div className="flex flex-wrap gap-1.5">
-              {roles.map((role) => (
-                <Tag key={role}>{roleLabel(role)}</Tag>
-              ))}
-            </div>
-          </OverviewField>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {/* 왼쪽 2열 — 설명이 길어져도 밀리지 않도록 분리 */}
+          <div className="grid gap-6 md:col-span-2 md:grid-cols-2">
+            <OverviewField label="맡은 역할">
+              <div className="flex flex-wrap gap-1.5">
+                {roles.map((role) => (
+                  <Tag key={role}>{roleLabel(role)}</Tag>
+                ))}
+              </div>
+            </OverviewField>
 
-          <OverviewField label="코멘트">{comment ?? '-'}</OverviewField>
+            <OverviewField label="코멘트">{comment ?? '-'}</OverviewField>
+
+            <OverviewField label="프로젝트 유형">{videoCategoryLabel(type)}</OverviewField>
+
+            <OverviewField label="클라이언트">
+              {kind === 'EXTERNAL' ? (clientName ?? '-') : '개인 프로젝트'}
+            </OverviewField>
+          </div>
 
           <OverviewField label="프로젝트 설명">{description}</OverviewField>
-
-          {/* 아랫줄: 프로젝트 유형 / 클라이언트 */}
-          <OverviewField label="프로젝트 유형">{videoCategoryLabel(type)}</OverviewField>
-
-          <OverviewField label="클라이언트">
-            {kind === 'EXTERNAL' ? (clientName ?? '-') : '개인 프로젝트'}
-          </OverviewField>
         </div>
       </section>
 
@@ -100,6 +94,8 @@ function ProjectOverviewPage({ portfolioId }: ProjectOverviewPageProps) {
               {youtubeUrl}
             </a>
           </OverviewField>
+        ) : userId ? (
+          <OverviewField label="영상링크">-</OverviewField>
         ) : (
           <label className="bg-neutral-2 hover:bg-neutral-3 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg py-12 shadow-xs">
             <input
@@ -140,5 +136,16 @@ function ProjectOverviewPage({ portfolioId }: ProjectOverviewPageProps) {
     </div>
   )
 }
+
+function OverviewField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <h4 className="text-neutral-11 text-sm font-semibold">{label}</h4>
+      <div className="text-neutral-7 text-sm">{children}</div>
+    </div>
+  )
+}
+
+const HEADER = <HeaderTitle>프로젝트 개요</HeaderTitle>
 
 export default ProjectOverviewPage

@@ -24,10 +24,12 @@ export const paths = {
     /** 다른 유저의 유형·역할 분포 (공개 프로필의 stats와 동일) */
     stats: (userId: number | string) => `${API_PREFIX}/users/${userId}/stats`,
     portfolios: (userId: number | string) => `${API_PREFIX}/users/${userId}/portfolios`,
+    portfolio: (userId: number | string, portfolioId: number | string) =>
+      `${API_PREFIX}/users/${userId}/portfolios/${portfolioId}`,
     myPortfolios: `${API_PREFIX}/users/me/portfolios`,
     myPortfolio: (portfolioId: number | string) =>
       `${API_PREFIX}/users/me/portfolios/${portfolioId}`,
-    /** FE mock 전용 — BE에 Recruitment 컨트롤러 자체가 없음 (엔티티만 존재, Swagger에 미노출) */
+    /** BE MyRecruitmentController 구현됨 */
     myRecruitments: `${API_PREFIX}/users/me/recruitments`,
     myApplications: `${API_PREFIX}/users/me/applications`,
     myRecruitmentBookmarks: `${API_PREFIX}/users/me/recruitment-bookmarks`,
@@ -102,9 +104,8 @@ export const paths = {
       `${API_PREFIX}/share-links/${token}/files/${referenceFileId}/download`,
     byId: (shareLinkId: number | string) => `${API_PREFIX}/share-links/${shareLinkId}`,
   },
-  /** FE mock 전용 — BE에 Recruitment 컨트롤러 자체가 없음 (엔티티만 존재, Swagger에 미노출)
-   * BE 엔티티 필드(recruitPart/shootingPeriod/pay/contact/location/deadline)가 FE 모델과 구조가
-   * 많이 달라서, 컨트롤러가 실제로 나오기 전까지는 아래 타입/mock을 엔티티에 맞춰 미리 바꾸지 않음 */
+  /** BE RecruitmentController/RecruitmentApplicationController/RecruitmentBookmarkController 구현됨,
+   * FE 경로와 일치 확인 완료 */
   recruitments: {
     root: `${API_PREFIX}/recruitments`,
     recommended: `${API_PREFIX}/recruitments/recommended`,
@@ -116,13 +117,13 @@ export const paths = {
     application: (recruitmentId: number | string, applicationId: number | string) =>
       `${API_PREFIX}/recruitments/${recruitmentId}/applications/${applicationId}`,
     applicationFiles: (recruitmentId: number | string) =>
-      `/api/v1/recruitments/${recruitmentId}/application-files`,
+      `${API_PREFIX}/recruitments/${recruitmentId}/application-files`,
     applicationFileDownload: (
       recruitmentId: number | string,
       applicationId: number | string,
       fileId: number | string,
     ) =>
-      `/api/v1/recruitments/${recruitmentId}/applications/${applicationId}/files/${fileId}/download`,
+      `${API_PREFIX}/recruitments/${recruitmentId}/applications/${applicationId}/files/${fileId}/download`,
   },
   schedules: {
     root: `${API_PREFIX}/schedules`,

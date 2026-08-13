@@ -15,6 +15,8 @@ export type Schedule = {
   participantIds: number[]
   createdAt: string
   updatedAt: string
+  /** 수정 가능 여부 (작성자 본인만 true) — /schedules/daily 응답에만 포함, 그 외엔 undefined */
+  canEdit?: boolean
 }
 
 /** GET /api/v1/schedules/summary — BE 미구현, mock 전용 */

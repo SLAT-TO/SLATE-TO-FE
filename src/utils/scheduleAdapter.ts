@@ -33,5 +33,6 @@ export function scheduleToCalendarEvent(
     participantIds: schedule.participantIds.map(String),
     memo: schedule.publicMemo ?? undefined,
     note: schedule.privateMemo ?? undefined,
+    canEdit: schedule.canEdit,
   }
 }

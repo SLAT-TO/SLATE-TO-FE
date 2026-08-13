@@ -12,6 +12,9 @@ import { CARD_BASE } from '../../styles/card'
 interface NoticeListViewProps {
   projectId: number
   notices: ProjectNoticeListItem[]
+  hasMore: boolean
+  isLoadingMore: boolean
+  onLoadMore: () => void
   onBack: () => void
   onOpenNotice: (noticeId: number) => void
   onCreated: (notice: ProjectNoticeListItem) => void
@@ -30,6 +33,9 @@ function formatNoticeMeta(notice: ProjectNoticeListItem): string {
 export default function NoticeListView({
   projectId,
   notices,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
   onBack,
   onOpenNotice,
   onCreated,
@@ -98,6 +104,14 @@ export default function NoticeListView({
             </li>
           ))}
         </ul>
+      )}
+
+      {hasMore && (
+        <div className="flex justify-center">
+          <Button variant="secondary" size="sm" onClick={onLoadMore} disabled={isLoadingMore}>
+            {isLoadingMore ? '불러오는 중…' : '더 보기'}
+          </Button>
+        </div>
       )}
 
       <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)}>

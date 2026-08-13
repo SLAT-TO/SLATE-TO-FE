@@ -9,6 +9,7 @@ import type {
 import { allocId, db, requireUser, toMeProfile, toPublicUser } from '../db'
 import { badRequest, domainError, notFound, unauthorized } from '../errors'
 import { created, ok } from '../response'
+import { paginateByCursor } from '../pagination'
 import type { CreatePortfolioRequest, UpdatePortfolioRequest } from '../../types/portfolio'
 
 function safeUser() {
@@ -99,7 +100,20 @@ export const userHandlers = [
       user.primaryRole = body.roles[0] ?? null
     }
 
-    return HttpResponse.json(ok(toMeProfile(user)), { status: 200 })
+    return HttpResponse.json(
+      ok({
+        id: user.id,
+        nickname: user.nickname,
+        profileImageUrl: user.profileImageUrl,
+        bio: user.bio,
+        locations: user.regions ?? (user.location ? [user.location] : []),
+        primaryRole: user.primaryRole,
+        roles: user.roles,
+        categories: user.categories,
+        updatedAt: new Date().toISOString(),
+      }),
+      { status: 200 },
+    )
   }),
 
   http.put(paths.users.profileImage, async ({ request }) => {
@@ -166,15 +180,17 @@ export const userHandlers = [
     return HttpResponse.json(ok(toPublicUser(user)), { status: 200 })
   }),
 
-  http.get(paths.users.portfolios(':userId'), ({ params }) => {
+  http.get(paths.users.portfolios(':userId'), ({ request, params }) => {
     if (!safeUser()) return unauthorized()
     const userId = Number(params.userId)
     if (!db.users.some((u) => u.id === userId)) return notFound('존재하지 않는 유저')
 
-    // mock은 전량 반환
-    return HttpResponse.json(ok({ items: db.portfolios, nextCursor: null, hasNext: false }), {
-      status: 200,
-    })
+    const url = new URL(request.url)
+    const cursor = url.searchParams.get('cursor')
+    const size = Number(url.searchParams.get('size') ?? 20)
+    const page = paginateByCursor(db.portfolios, cursor ? Number(cursor) : null, size)
+
+    return HttpResponse.json(ok(page), { status: 200 })
   }),
 
   http.post(paths.users.myPortfolios, async ({ request }) => {
@@ -230,5 +246,17 @@ export const userHandlers = [
     if (!exists) return notFound('포트폴리오가 없거나 내 것이 아님')
     db.portfolios = db.portfolios.filter((p) => p.id !== id)
     return HttpResponse.json(ok(null), { status: 200 })
+  }),
+
+  // '/users/me/portfolios/:id'도 이 패턴에 매칭되므로 me 전용 핸들러보다 뒤에 둔다
+  http.get(paths.users.portfolio(':userId', ':portfolioId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const userId = Number(params.userId)
+    if (!db.users.some((u) => u.id === userId)) return notFound('존재하지 않는 유저')
+
+    // mock은 유저별 포트폴리오를 구분하지 않아 전체에서 id로 찾는다
+    const portfolio = db.portfolios.find((p) => p.id === Number(params.portfolioId))
+    if (!portfolio) return notFound('존재하지 않는 포트폴리오')
+    return HttpResponse.json(ok(portfolio), { status: 200 })
   }),
 ]

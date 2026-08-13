@@ -17,7 +17,7 @@ import type {
   CreateVideoResult,
   GuestVideoDetail,
   LinkReferenceFileResult,
-  ReferenceFile,
+  ReferenceFileListResult,
   UpdateVideoRequest,
   UpdateVideoResult,
   ValidateYoutubeRequest,
@@ -29,8 +29,9 @@ import type {
   CreateFeedbackRequest,
   CreateReplyRequest,
   Feedback,
-  FeedbackListEntry,
+  FeedbackListResult,
   FeedbackReply,
+  FeedbackReplyListResult,
   GuestListResult,
   RegisterGuestRequest,
   RegisterGuestResult,
@@ -101,8 +102,13 @@ export async function validateYoutubeUrl(
 export async function getReferenceFiles(
   projectId: number,
   videoId: number,
-): Promise<{ items: ReferenceFile[] }> {
-  return request({ method: 'GET', url: paths.projects.referenceFiles(projectId, videoId) })
+  params?: { keyword?: string; cursor?: number; size?: number },
+): Promise<ReferenceFileListResult> {
+  return request({
+    method: 'GET',
+    url: paths.projects.referenceFiles(projectId, videoId),
+    params,
+  })
 }
 
 export async function linkReferenceFile(
@@ -140,17 +146,28 @@ function guestRequestConfig(options?: GuestRequestOptions) {
   return Object.keys(headers).length > 0 ? { headers } : {}
 }
 
+/** cursor는 BE가 내려준 불투명 문자열을 그대로 전달 — FE에서 파싱/가공하지 않는다.
+ * size 생략 시 BE 기본값(10), 최대 50 */
+type PaginationOptions = { cursor?: string; size?: number }
+
 export async function getFeedbacks(
   videoId: number,
-  options?: GuestRequestOptions,
-): Promise<{ items: FeedbackListEntry[] }> {
-  const result = await request<{ items: (FeedbackStatusRaw & { replyCount: number })[] }>({
+  options?: PaginationOptions & GuestRequestOptions,
+): Promise<FeedbackListResult> {
+  const result = await request<{
+    items: (FeedbackStatusRaw & { replyCount: number })[]
+    nextCursor: string | null
+    hasNext: boolean
+  }>({
     method: 'GET',
     url: paths.videos.feedbacks(videoId),
+    params: { cursor: options?.cursor, size: options?.size },
     ...guestRequestConfig(options),
   })
   return {
     items: result.items.map((raw) => ({ ...normalizeFeedback(raw), replyCount: raw.replyCount })),
+    nextCursor: result.nextCursor,
+    hasNext: result.hasNext,
   }
 }
 
@@ -215,14 +232,23 @@ export async function updateFeedbackStatus(
 
 export async function getReplies(
   feedbackId: number,
-  options?: GuestRequestOptions,
-): Promise<{ items: FeedbackReply[] }> {
-  const result = await request<{ items: FeedbackReplyStatusRaw[] }>({
+  options?: PaginationOptions & GuestRequestOptions,
+): Promise<FeedbackReplyListResult> {
+  const result = await request<{
+    items: FeedbackReplyStatusRaw[]
+    nextCursor: string | null
+    hasNext: boolean
+  }>({
     method: 'GET',
     url: paths.feedbacks.replies(feedbackId),
+    params: { cursor: options?.cursor, size: options?.size },
     ...guestRequestConfig(options),
   })
-  return { items: result.items.map(normalizeFeedbackReply) }
+  return {
+    items: result.items.map(normalizeFeedbackReply),
+    nextCursor: result.nextCursor,
+    hasNext: result.hasNext,
+  }
 }
 
 export async function createReply(
@@ -333,10 +359,12 @@ export async function getGuestVideoDetail(
 export async function getGuestReferenceFiles(
   token: string,
   options: GuestRequestOptions,
-): Promise<{ items: ReferenceFile[] }> {
+  params?: { keyword?: string; cursor?: number; size?: number },
+): Promise<ReferenceFileListResult> {
   return request({
     method: 'GET',
     url: paths.shareLinks.files(token),
+    params,
     ...guestRequestConfig(options),
   })
 }

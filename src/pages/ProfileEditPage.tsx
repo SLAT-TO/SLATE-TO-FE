@@ -11,7 +11,7 @@ import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
 import { navigate } from '../utils/navigation'
 import { getMe, updateProfile, uploadProfileImage } from '../api/users'
-import type { SocialType, UserCategory, UserRole, UserRegion } from '../types/user'
+import type { UserCategory, UserRole, UserRegion } from '../types/user'
 import { useUserStore } from '../stores/userStore'
 import { validateProfileImage } from '../utils/profileImage'
 
@@ -36,14 +36,11 @@ function ProfileEditPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imageError, setImageError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [socialType, setSocialType] = useState<SocialType | null>(null)
   // 화면에서 다루지 않는 값은 서버 값을 그대로 되돌려보내 삭제를 막는다
   const [serverCategories, setServerCategories] = useState<UserCategory[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-
-  const isSocialAccount = socialType !== null && socialType !== 'EMAIL'
 
   useEffect(() => {
     let cancelled = false
@@ -51,7 +48,6 @@ function ProfileEditPage() {
     getMe()
       .then((me) => {
         if (cancelled) return
-        setSocialType(me.socialType)
         setServerCategories(me.categories)
         setValues({
           nickname: me.nickname,
@@ -135,12 +131,21 @@ function ProfileEditPage() {
         categories: serverCategories.length > 0 ? serverCategories : undefined,
       })
       // 프로필 저장이 성공한 뒤에 이미지를 올려, 저장 실패 시 사진만 바뀌는 상태를 막는다
-      if (imageFile) {
-        const { profileImageUrl } = await uploadProfileImage(imageFile)
-        useUserStore.getState().setUser({ ...updated, profileImageUrl })
-      } else {
-        useUserStore.getState().setUser(updated)
-      }
+      const profileImageUrl = imageFile
+        ? (await uploadProfileImage(imageFile)).profileImageUrl
+        : updated.profileImageUrl
+      // PATCH 응답엔 email·socialType 등이 없어 setUser로 통째로 덮으면 유실된다 — 병합만 한다
+      useUserStore.getState().patchUser({
+        nickname: updated.nickname,
+        bio: updated.bio,
+        profileImageUrl,
+        regions: updated.locations,
+        region: updated.locations[0] ?? null,
+        location: updated.locations[0] ?? null,
+        primaryRole: updated.primaryRole,
+        roles: updated.roles,
+        categories: updated.categories,
+      })
       navigate('/mypage')
     } catch {
       setSaveError('저장에 실패했습니다. 잠시 후 다시 시도해주세요.')
@@ -225,8 +230,8 @@ function ProfileEditPage() {
           value={values.email}
           onChange={handleChange('email')}
           error={errors.email}
-          disabled={isSocialAccount}
-          hint={isSocialAccount ? '소셜 로그인 계정은 이메일을 변경할 수 없습니다.' : undefined}
+          disabled
+          hint="이메일은 변경할 수 없습니다."
         />
 
         <TextArea

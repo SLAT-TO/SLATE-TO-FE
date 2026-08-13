@@ -76,9 +76,12 @@ function NotificationListSkeleton() {
 function notificationLink(notification: AppNotification): string | null {
   switch (notification.type) {
     case 'SCHEDULE_ASSIGNED':
+    case 'SCHEDULE_CREATED':
       return '/calendar'
-    case 'PROJECT_INVITED':
+    case 'PROJECT_JOINED':
     case 'VIDEO_FEEDBACK_COMMENTED':
+    case 'NOTICE_CREATED':
+    case 'FILE_UPLOADED':
     case 'DEADLINE_REMINDER':
       return notification.projectId ? `/workspace/projects/${notification.projectId}` : null
     case 'RECRUITMENT_APPLIED':
@@ -89,7 +92,16 @@ function notificationLink(notification: AppNotification): string | null {
 }
 
 export default function NotificationPage() {
-  const { notifications, loading, error, markAsRead, markAllAsRead } = useNotifications()
+  const {
+    notifications,
+    loading,
+    error,
+    markAsRead,
+    markAllAsRead,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useNotifications()
   const hasUnread = notifications.some((item) => !item.isRead)
 
   function handleClick(notification: AppNotification) {
@@ -131,15 +143,29 @@ export default function NotificationPage() {
       )}
 
       {!loading && !error && notifications.length > 0 && (
-        <ul className="flex flex-col gap-4">
-          {notifications.map((notification) => (
-            <NotificationCard
-              key={notification.notificationId}
-              notification={notification}
-              onClick={() => handleClick(notification)}
-            />
-          ))}
-        </ul>
+        <>
+          <ul className="flex flex-col gap-4">
+            {notifications.map((notification) => (
+              <NotificationCard
+                key={notification.notificationId}
+                notification={notification}
+                onClick={() => handleClick(notification)}
+              />
+            ))}
+          </ul>
+          {hasNextPage && (
+            <div className="flex justify-center">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => void fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? '불러오는 중…' : '더 보기'}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </section>
   )
