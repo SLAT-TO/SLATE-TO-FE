@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { accessShareLink, registerGuest } from '../api/videos'
 import { VideoDetailView } from '../domains/workspace/VideoDetailView'
-import MainLayout from '../layouts/MainLayout'
+import GuestLayout from '../layouts/GuestLayout'
 import Input from '../components/Input'
 import { Button } from '../components/Button'
 import { ApiError } from '../types/api'
@@ -126,7 +126,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
   if (!guestSession) return null
 
   return (
-    <MainLayout>
+    <GuestLayout>
       <VideoDetailView
         videoId={access.videoId}
         guest={{
@@ -137,6 +137,6 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
         }}
         onBack={() => {}}
       />
-    </MainLayout>
+    </GuestLayout>
   )
 }

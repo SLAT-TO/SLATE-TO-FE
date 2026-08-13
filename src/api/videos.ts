@@ -29,6 +29,7 @@ import type {
   CreateFeedbackRequest,
   CreateReplyRequest,
   Feedback,
+  FeedbackListEntry,
   FeedbackReply,
   RegisterGuestRequest,
   RegisterGuestResult,
@@ -141,13 +142,15 @@ function guestRequestConfig(options?: GuestRequestOptions) {
 export async function getFeedbacks(
   videoId: number,
   options?: GuestRequestOptions,
-): Promise<{ items: Feedback[] }> {
-  const result = await request<{ items: FeedbackStatusRaw[] }>({
+): Promise<{ items: FeedbackListEntry[] }> {
+  const result = await request<{ items: (FeedbackStatusRaw & { replyCount: number })[] }>({
     method: 'GET',
     url: paths.videos.feedbacks(videoId),
     ...guestRequestConfig(options),
   })
-  return { items: result.items.map(normalizeFeedback) }
+  return {
+    items: result.items.map((raw) => ({ ...normalizeFeedback(raw), replyCount: raw.replyCount })),
+  }
 }
 
 export async function createFeedback(
