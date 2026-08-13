@@ -93,7 +93,13 @@ export function VideoDetailView({
     attachFile,
     removeReferenceFile,
     downloadReferenceFile,
-  } = useReferenceFiles(projectId ?? 0, videoId)
+  } = useReferenceFiles(
+    projectId ?? 0,
+    videoId,
+    guest
+      ? { shareToken: guest.shareToken, guestId: guest.guestId, guestToken: guest.guestToken }
+      : undefined,
+  )
 
   const {
     filteredFeedbacks,
@@ -161,9 +167,12 @@ export function VideoDetailView({
           })
           if (cancelled) return
           setGuestVideoDetail(detail)
-          await loadFeedbacks().catch(() => {
-            if (!cancelled) window.alert('피드백을 불러오지 못했습니다.')
-          })
+          await Promise.all([
+            loadReferenceFiles().catch(() => {}),
+            loadFeedbacks().catch(() => {
+              if (!cancelled) window.alert('피드백을 불러오지 못했습니다.')
+            }),
+          ])
           return
         }
 
@@ -292,8 +301,6 @@ export function VideoDetailView({
 
           <ProjectIntroSection projectTags={projectTags} memo={memo} />
 
-          {/* 게스트는 항상 빈 목록(슬롯) — BE 게스트용 조회 API가 생기면 load()만 게스트 버전으로
-           * 연결하면 된다. UI는 팀원 화면과 동일하게 재사용하고 readOnly로 추가/삭제만 막는다. */}
           <ReferenceFilesSection
             filteredFiles={filteredFiles}
             fileSearch={fileSearch}

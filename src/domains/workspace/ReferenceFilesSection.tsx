@@ -52,16 +52,18 @@ export default function ReferenceFilesSection({
             <InlineIcon svg={documentIcon} className="text-neutral-5 size-6 shrink-0" />
             <div className="min-w-0">
               <p className="text-body-sm text-neutral-11 truncate">{file.fileName}</p>
-              <p className="text-caption-lg text-neutral-6 truncate">
-                업로더 · {file.uploader.nickname}
-              </p>
+              {file.uploader && (
+                <p className="text-caption-lg text-neutral-6 truncate">
+                  업로더 · {file.uploader.nickname}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-4">
             <span className="text-caption-lg text-neutral-6">{formatDate(file.createdAt)}</span>
             <button
               type="button"
-              onClick={() => downloadReferenceFile(file.projectFileId, file.fileName)}
+              onClick={() => downloadReferenceFile(file.referenceFileId, file.fileName)}
               aria-label="다운로드"
               className="text-neutral-9 hover:text-primary"
             >

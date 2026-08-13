@@ -114,12 +114,14 @@ export type ValidateYoutubeResult = {
 
 export type ReferenceFile = {
   referenceFileId: number
-  projectFileId: number
+  /** 게스트 응답에는 없음(BE가 내부 파일 식별자를 노출하지 않음) — 팀원용 다운로드에만 쓰인다 */
+  projectFileId?: number
   fileName: string
-  contentType: string
-  fileSize: number
-  isFinal: boolean
-  uploader: {
+  contentType?: string
+  fileSize?: number
+  isFinal?: boolean
+  /** 게스트 응답에는 없음 — 외부인에게 팀원 신원을 노출하지 않기 위해 제외 */
+  uploader?: {
     id: number
     nickname: string
   }
