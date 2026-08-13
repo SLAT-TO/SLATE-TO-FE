@@ -6,10 +6,24 @@ import { invalidateProjectActivityData } from '../queries/projectInvalidation'
 
 /** 피드백 답글 펼침/목록/작성
  * @param guestId 공유링크로 들어온 게스트가 작성하는 경우 (registerGuest로 발급받은 id) */
-export function useFeedbackReplies(guestId?: number, projectId?: number, guestToken?: string) {
+export function useFeedbackReplies(
+  guestId?: number,
+  projectId?: number,
+  guestToken?: string,
+  onReplyCountChange?: (feedbackId: number, delta: number) => void,
+) {
   const queryClient = useQueryClient()
   const [expandedFeedbackId, setExpandedFeedbackId] = useState<number | null>(null)
   const [repliesByFeedback, setRepliesByFeedback] = useState<Record<number, FeedbackReply[]>>({})
+  const [replyCursorByFeedback, setReplyCursorByFeedback] = useState<Record<number, string | null>>(
+    {},
+  )
+  const [hasMoreRepliesByFeedback, setHasMoreRepliesByFeedback] = useState<Record<number, boolean>>(
+    {},
+  )
+  const [isLoadingMoreRepliesByFeedback, setIsLoadingMoreRepliesByFeedback] = useState<
+    Record<number, boolean>
+  >({})
   const [newReply, setNewReply] = useState('')
   const [editingReplyId, setEditingReplyId] = useState<number | null>(null)
   const [editingReplyContent, setEditingReplyContent] = useState('')
@@ -18,6 +32,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
   const isSubmittingReplyRef = useRef(false)
   const pendingReplyActionIdsRef = useRef(new Set<number>())
   const fetchingReplyIdsRef = useRef(new Set<number>())
+  const loadingMoreReplyIdsRef = useRef(new Set<number>())
 
   const resetReplyCompose = useCallback(() => {
     setNewReply('')
@@ -41,6 +56,8 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
           guestId != null ? { guestId, guestToken } : undefined,
         )
         setRepliesByFeedback((prev) => ({ ...prev, [feedbackId]: page.items }))
+        setReplyCursorByFeedback((prev) => ({ ...prev, [feedbackId]: page.nextCursor }))
+        setHasMoreRepliesByFeedback((prev) => ({ ...prev, [feedbackId]: page.hasNext }))
       } catch {
         window.alert('답글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
       } finally {
@@ -48,6 +65,36 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
       }
     },
     [expandedFeedbackId, guestId, guestToken, repliesByFeedback, resetReplyCompose],
+  )
+
+  /** "더 보기" — 피드백별로 저장해둔 nextCursor로 다음 페이지를 불러와 기존 답글 뒤에 이어붙인다 */
+  const loadMoreReplies = useCallback(
+    async (feedbackId: number) => {
+      const cursor = replyCursorByFeedback[feedbackId]
+      if (!hasMoreRepliesByFeedback[feedbackId] || cursor == null) return
+      if (loadingMoreReplyIdsRef.current.has(feedbackId)) return
+
+      loadingMoreReplyIdsRef.current.add(feedbackId)
+      setIsLoadingMoreRepliesByFeedback((prev) => ({ ...prev, [feedbackId]: true }))
+      try {
+        const page = await getReplies(feedbackId, {
+          cursor,
+          ...(guestId != null ? { guestId, guestToken } : {}),
+        })
+        setRepliesByFeedback((prev) => ({
+          ...prev,
+          [feedbackId]: [...(prev[feedbackId] ?? []), ...page.items],
+        }))
+        setReplyCursorByFeedback((prev) => ({ ...prev, [feedbackId]: page.nextCursor }))
+        setHasMoreRepliesByFeedback((prev) => ({ ...prev, [feedbackId]: page.hasNext }))
+      } catch {
+        window.alert('답글을 더 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+      } finally {
+        loadingMoreReplyIdsRef.current.delete(feedbackId)
+        setIsLoadingMoreRepliesByFeedback((prev) => ({ ...prev, [feedbackId]: false }))
+      }
+    },
+    [replyCursorByFeedback, hasMoreRepliesByFeedback, guestId, guestToken],
   )
 
   const submitReply = useCallback(
@@ -66,6 +113,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
           ...prev,
           [feedbackId]: [...(prev[feedbackId] ?? []), created],
         }))
+        onReplyCountChange?.(feedbackId, 1)
         resetReplyCompose()
         if (projectId != null) {
           void invalidateProjectActivityData(queryClient, projectId)
@@ -77,7 +125,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
         setIsSubmittingReply(false)
       }
     },
-    [newReply, guestId, guestToken, projectId, queryClient, resetReplyCompose],
+    [newReply, guestId, guestToken, projectId, queryClient, resetReplyCompose, onReplyCountChange],
   )
 
   const startEditReply = useCallback((reply: FeedbackReply) => {
@@ -133,6 +181,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
           ...prev,
           [feedbackId]: (prev[feedbackId] ?? []).filter((reply) => reply.replyId !== replyId),
         }))
+        onReplyCountChange?.(feedbackId, -1)
         if (editingReplyId === replyId) cancelEditReply()
       } catch {
         window.alert('답글 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')
@@ -141,12 +190,14 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
         setPendingReplyActionId((current) => (current === replyId ? null : current))
       }
     },
-    [cancelEditReply, editingReplyId, guestId, guestToken],
+    [cancelEditReply, editingReplyId, guestId, guestToken, onReplyCountChange],
   )
 
   return {
     expandedFeedbackId,
     repliesByFeedback,
+    hasMoreRepliesByFeedback,
+    isLoadingMoreRepliesByFeedback,
     newReply,
     setNewReply,
     editingReplyId,
@@ -155,6 +206,7 @@ export function useFeedbackReplies(guestId?: number, projectId?: number, guestTo
     isSubmittingReply,
     pendingReplyActionId,
     toggleReplies,
+    loadMoreReplies,
     submitReply,
     startEditReply,
     cancelEditReply,

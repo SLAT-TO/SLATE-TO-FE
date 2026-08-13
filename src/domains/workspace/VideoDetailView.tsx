@@ -102,6 +102,8 @@ export function VideoDetailView({
 
   const {
     filteredFeedbacks,
+    hasMoreFeedbacks,
+    isLoadingMoreFeedbacks,
     filter,
     setFilter,
     newFeedback,
@@ -115,6 +117,7 @@ export function VideoDetailView({
     pendingFeedbackActionId,
     setEditingFeedbackContent,
     load: loadFeedbacks,
+    loadMoreFeedbacks,
     clearPendingTime,
     attachCurrentTime,
     toggleRangeCapture,
@@ -124,6 +127,7 @@ export function VideoDetailView({
     startEditFeedback,
     cancelEditFeedback,
     saveEditFeedback,
+    changeReplyCount,
   } = useFeedbacks(
     videoId,
     getCurrentTime,
@@ -135,6 +139,8 @@ export function VideoDetailView({
   const {
     expandedFeedbackId,
     repliesByFeedback,
+    hasMoreRepliesByFeedback,
+    isLoadingMoreRepliesByFeedback,
     newReply,
     setNewReply,
     editingReplyId,
@@ -143,12 +149,18 @@ export function VideoDetailView({
     isSubmittingReply,
     pendingReplyActionId,
     toggleReplies,
+    loadMoreReplies,
     submitReply,
     startEditReply,
     cancelEditReply,
     saveEditReply,
     removeReply,
-  } = useFeedbackReplies(guest?.guestId, isGuest ? undefined : projectId, guest?.guestToken)
+  } = useFeedbackReplies(
+    guest?.guestId,
+    isGuest ? undefined : projectId,
+    guest?.guestToken,
+    changeReplyCount,
+  )
 
   const { members, setMembers, load: loadMembers } = useProjectMembersInvite(projectId ?? 0)
 
@@ -303,6 +315,9 @@ export function VideoDetailView({
 
         <FeedbackPanel
           filteredFeedbacks={filteredFeedbacks}
+          hasMoreFeedbacks={hasMoreFeedbacks}
+          isLoadingMoreFeedbacks={isLoadingMoreFeedbacks}
+          loadMoreFeedbacks={loadMoreFeedbacks}
           filter={filter}
           setFilter={setFilter}
           newFeedback={newFeedback}
@@ -326,6 +341,8 @@ export function VideoDetailView({
           saveEditFeedback={saveEditFeedback}
           expandedFeedbackId={expandedFeedbackId}
           repliesByFeedback={repliesByFeedback}
+          hasMoreRepliesByFeedback={hasMoreRepliesByFeedback}
+          isLoadingMoreRepliesByFeedback={isLoadingMoreRepliesByFeedback}
           newReply={newReply}
           setNewReply={setNewReply}
           editingReplyId={editingReplyId}
@@ -334,6 +351,7 @@ export function VideoDetailView({
           isSubmittingReply={isSubmittingReply}
           pendingReplyActionId={pendingReplyActionId}
           toggleReplies={toggleReplies}
+          loadMoreReplies={loadMoreReplies}
           submitReply={submitReply}
           startEditReply={startEditReply}
           cancelEditReply={cancelEditReply}
