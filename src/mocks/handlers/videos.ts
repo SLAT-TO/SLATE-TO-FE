@@ -12,7 +12,7 @@ import type {
   RegisterGuestRequest,
 } from '../../types/feedback'
 import { allocId, db, requireUser } from '../db'
-import { badRequest, notFound, unauthorized } from '../errors'
+import { badRequest, domainError, notFound, unauthorized } from '../errors'
 import { paginateByCursor } from '../pagination'
 import { created, ok } from '../response'
 
@@ -517,7 +517,7 @@ export const videoHandlers = [
   http.get(paths.videos.shareLinks(':videoId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const link = db.shareLinks.find((s) => s.videoId === Number(params.videoId))
-    if (!link) return notFound()
+    if (!link) return domainError('SHARELINK404', '공유 링크를 찾을 수 없습니다.')
     return HttpResponse.json(ok({ ...link, guestCount: guestCountFor(link.shareLinkId) }), {
       status: 200,
     })
@@ -528,7 +528,7 @@ export const videoHandlers = [
     const videoId = Number(params.videoId)
     const shareLinkId = Number(params.shareLinkId)
     const link = db.shareLinks.find((s) => s.shareLinkId === shareLinkId && s.videoId === videoId)
-    if (!link) return notFound()
+    if (!link) return domainError('SHARELINK404', '공유 링크를 찾을 수 없습니다.')
 
     const guests = [...mockGuests.entries()]
       .filter(([, guest]) => guest.shareLinkId === shareLinkId)
