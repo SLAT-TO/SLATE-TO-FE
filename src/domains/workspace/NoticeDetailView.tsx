@@ -12,6 +12,8 @@ interface NoticeDetailViewProps {
   projectId: number
   notice: ProjectNoticeListItem
   meId: number | null
+  /** 프로젝트 ADMIN — 작성자가 아니어도 수정/삭제 가능 (BE ProjectNoticeController 규칙) */
+  isAdmin: boolean
   onBack: () => void
   onUpdated: (notice: ProjectNoticeListItem) => void
   onDeleted: (noticeId: number) => void
@@ -31,6 +33,7 @@ export default function NoticeDetailView({
   projectId,
   notice,
   meId,
+  isAdmin,
   onBack,
   onUpdated,
   onDeleted,
@@ -115,7 +118,7 @@ export default function NoticeDetailView({
                   {formatNoticeMeta(notice)}
                 </span>
               </div>
-              {isMine && (
+              {(isMine || isAdmin) && (
                 <ActionMenu
                   items={[
                     { action: 'edit', onClick: startEdit },

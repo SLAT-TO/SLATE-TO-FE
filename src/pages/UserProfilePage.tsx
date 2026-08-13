@@ -7,6 +7,7 @@ import type { PortfolioSummary } from '../types/portfolio'
 import { getPublicProfile, getUserPortfolios } from '../api/users'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
+import { Button } from '../components/Button'
 import { roleLabel } from '../constants/roles'
 import { regionLabel } from '../constants/regions'
 import { PROJECT_TYPE_LABEL } from '../constants/projectLabels'
@@ -46,6 +47,9 @@ function UserProfilePage({ userId }: UserProfilePageProps) {
   const [portfolios, setPortfolios] = useState<PortfolioSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [portfolioCursor, setPortfolioCursor] = useState<number | null>(null)
+  const [hasMorePortfolios, setHasMorePortfolios] = useState(false)
+  const [isLoadingMorePortfolios, setIsLoadingMorePortfolios] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -61,6 +65,8 @@ function UserProfilePage({ userId }: UserProfilePageProps) {
         if (cancelled) return
         setUser(profile)
         setPortfolios(portfolioPage?.items ?? [])
+        setPortfolioCursor(portfolioPage?.nextCursor ?? null)
+        setHasMorePortfolios(portfolioPage?.hasNext ?? false)
       } catch {
         if (!cancelled) setError('프로필을 불러오지 못했습니다.')
       } finally {
@@ -73,6 +79,21 @@ function UserProfilePage({ userId }: UserProfilePageProps) {
       cancelled = true
     }
   }, [userId])
+
+  const handleLoadMorePortfolios = async () => {
+    if (portfolioCursor == null || isLoadingMorePortfolios) return
+    setIsLoadingMorePortfolios(true)
+    try {
+      const page = await getUserPortfolios(userId, { cursor: portfolioCursor })
+      setPortfolios((prev) => [...prev, ...page.items])
+      setPortfolioCursor(page.nextCursor)
+      setHasMorePortfolios(page.hasNext)
+    } catch {
+      // 조용히 실패 처리 — 기존 목록은 유지, "더 보기" 버튼으로 재시도 가능
+    } finally {
+      setIsLoadingMorePortfolios(false)
+    }
+  }
 
   if (loading) {
     return <p className="text-body-sm text-neutral-6 p-6">불러오는 중…</p>
@@ -97,15 +118,29 @@ function UserProfilePage({ userId }: UserProfilePageProps) {
         {portfolios.length === 0 ? (
           <p className="text-caption-sm text-neutral-6">등록된 프로젝트가 없습니다.</p>
         ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {portfolios.map((portfolio) => (
-              <ProjectHistoryCard
-                key={portfolio.id}
-                project={toProjectHistory(portfolio)}
-                onClick={(id) => navigate(`/users/${userId}/project/${id}`)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {portfolios.map((portfolio) => (
+                <ProjectHistoryCard
+                  key={portfolio.id}
+                  project={toProjectHistory(portfolio)}
+                  onClick={(id) => navigate(`/users/${userId}/project/${id}`)}
+                />
+              ))}
+            </div>
+            {hasMorePortfolios && (
+              <div className="mt-4 flex justify-center">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => void handleLoadMorePortfolios()}
+                  disabled={isLoadingMorePortfolios}
+                >
+                  {isLoadingMorePortfolios ? '불러오는 중…' : '더 보기'}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

@@ -8,6 +8,7 @@ import type {
   OnboardingRequest,
   OnboardingResult,
   PasswordChangeResult,
+  ProfileUpdateResult,
   PublicUser,
   UpdateProfileRequest,
   UserActivityStats,
@@ -41,9 +42,9 @@ export async function submitOnboarding(body: OnboardingRequest): Promise<Onboard
   })
 }
 
-export async function updateProfile(body: UpdateProfileRequest): Promise<MeProfile> {
-  const result = await request<BeMe>({ method: 'PATCH', url: paths.users.me, data: body })
-  return normalizeMe(result)
+/** GET /users/me와 응답 형태가 달라(email·socialType 등 없음) normalizeMe/MeProfile을 쓰지 않는다 */
+export async function updateProfile(body: UpdateProfileRequest): Promise<ProfileUpdateResult> {
+  return request<ProfileUpdateResult>({ method: 'PATCH', url: paths.users.me, data: body })
 }
 
 /** PUT /users/me/profile-image — 교체 방식, 응답으로 CDN URL을 바로 준다 */

@@ -28,6 +28,9 @@ type FeedbackListItemProps = {
   onToggleReplies: () => void
   /** undefined면 아직 이 피드백의 답글을 불러온 적 없다는 뜻 — 개수는 feedback.replyCount로 표시 */
   replies?: FeedbackReply[]
+  hasMoreReplies: boolean
+  isLoadingMoreReplies: boolean
+  onLoadMoreReplies: () => void
   newReply: string
   setNewReply: (value: string) => void
   onSubmitReply: () => void
@@ -61,6 +64,9 @@ export default function FeedbackListItem({
   isExpanded,
   onToggleReplies,
   replies,
+  hasMoreReplies,
+  isLoadingMoreReplies,
+  onLoadMoreReplies,
   newReply,
   setNewReply,
   onSubmitReply,
@@ -78,7 +84,9 @@ export default function FeedbackListItem({
 }: FeedbackListItemProps) {
   const isResolved = feedback.status
   // 펼쳐서 실제로 불러온 뒤에는 그 개수가 최신값 — 그 전까지는 목록 조회 때 받은 replyCount로 표시
-  const replyCount = replies ? replies.length : feedback.replyCount
+  // The replies array contains only the pages opened in this view. Keep the server's
+  // total until local reply mutations explicitly update it.
+  const replyCount = Math.max(feedback.replyCount, replies?.length ?? 0)
 
   return (
     <li className="border-neutral-3 flex min-w-0 flex-col gap-3 border-b pb-4">
@@ -173,6 +181,9 @@ export default function FeedbackListItem({
       {isExpanded && (
         <FeedbackReplies
           replies={replies ?? []}
+          hasMoreReplies={hasMoreReplies}
+          isLoadingMoreReplies={isLoadingMoreReplies}
+          onLoadMoreReplies={onLoadMoreReplies}
           newReply={newReply}
           setNewReply={setNewReply}
           onSubmitReply={onSubmitReply}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   bookmarkRecruitment,
-  getMyRecruitmentBookmarks,
+  getAllRecruitmentBookmarks,
   getRecommendedRecruitments,
   unbookmarkRecruitment,
 } from '../api/recruitments'
@@ -23,11 +23,11 @@ export function useRecommendedJobs() {
       try {
         const [recommended, bookmarks] = await Promise.all([
           getRecommendedRecruitments(),
-          getMyRecruitmentBookmarks().catch(() => ({ items: [] as Recruitment[] })),
+          getAllRecruitmentBookmarks().catch(() => [] as Recruitment[]),
         ])
         if (cancelled) return
         setJobs(recommended.items)
-        setBookmarkedIds(new Set(bookmarks.items.map((r) => r.id)))
+        setBookmarkedIds(new Set(bookmarks.map((r) => r.id)))
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof ApiError ? err.message : '추천 공고를 불러오지 못했습니다.')

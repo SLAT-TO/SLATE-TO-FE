@@ -375,7 +375,11 @@ export default function MemberListPanel({
       {videoId != null && (
         <ShareLinkModal
           isOpen={guestInviteOpen}
-          onClose={() => setGuestInviteOpen(false)}
+          onClose={() => {
+            setGuestInviteOpen(false)
+            // 공유 링크를 새로 만들었을 수 있으니 다음에 열 때(또는 지금 열려 있으면 바로) 게스트 목록을 다시 불러온다
+            setGuestsLoaded(false)
+          }}
           videoId={videoId}
         />
       )}

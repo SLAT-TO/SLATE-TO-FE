@@ -24,6 +24,9 @@ export function useFeedbacks(
 ) {
   const queryClient = useQueryClient()
   const [feedbacks, setFeedbacks] = useState<FeedbackListEntry[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [hasMoreFeedbacks, setHasMoreFeedbacks] = useState(false)
+  const [isLoadingMoreFeedbacks, setIsLoadingMoreFeedbacks] = useState(false)
   const [filter, setFilter] = useState<FeedbackFilter>('all')
   const [newFeedback, setNewFeedback] = useState('')
   const [pendingStart, setPendingStart] = useState<number | null>(null)
@@ -40,8 +43,29 @@ export function useFeedbacks(
   const load = useCallback(async () => {
     const page = await getFeedbacks(videoId, guestId != null ? { guestId, guestToken } : undefined)
     setFeedbacks(page.items)
+    setNextCursor(page.nextCursor)
+    setHasMoreFeedbacks(page.hasNext)
     return page.items
   }, [videoId, guestId, guestToken])
+
+  /** "더 보기" — 저장해둔 nextCursor로 다음 페이지를 불러와 기존 목록 뒤에 이어붙인다 */
+  const loadMoreFeedbacks = useCallback(async () => {
+    if (!hasMoreFeedbacks || nextCursor == null || isLoadingMoreFeedbacks) return
+    setIsLoadingMoreFeedbacks(true)
+    try {
+      const page = await getFeedbacks(videoId, {
+        cursor: nextCursor,
+        ...(guestId != null ? { guestId, guestToken } : {}),
+      })
+      setFeedbacks((prev) => [...prev, ...page.items])
+      setNextCursor(page.nextCursor)
+      setHasMoreFeedbacks(page.hasNext)
+    } catch {
+      window.alert('피드백을 더 불러오지 못했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsLoadingMoreFeedbacks(false)
+    }
+  }, [videoId, guestId, guestToken, hasMoreFeedbacks, nextCursor, isLoadingMoreFeedbacks])
 
   const clearPendingTime = useCallback(() => {
     setPendingStart(null)
@@ -53,6 +77,16 @@ export function useFeedbacks(
     if (projectId == null) return
     void invalidateProjectActivityData(queryClient, projectId)
   }, [projectId, queryClient])
+
+  const changeReplyCount = useCallback((feedbackId: number, delta: number) => {
+    setFeedbacks((prev) =>
+      prev.map((feedback) =>
+        feedback.feedbackId === feedbackId
+          ? { ...feedback, replyCount: Math.max(0, feedback.replyCount + delta) }
+          : feedback,
+      ),
+    )
+  }, [])
 
   const attachCurrentTime = useCallback(() => {
     setPendingStart(Math.floor(getCurrentTime()))
@@ -79,7 +113,7 @@ export function useFeedbacks(
     isSubmittingFeedbackRef.current = true
     setIsSubmittingFeedback(true)
     try {
-      const created = await createFeedback(
+      await createFeedback(
         videoId,
         {
           content: newFeedback.trim(),
@@ -88,8 +122,9 @@ export function useFeedbacks(
         },
         guestId != null ? { guestId, guestToken } : undefined,
       )
-      // 새로 작성한 피드백은 아직 답글이 없다 — 목록 API의 replyCount에 해당하는 값을 직접 채운다
-      setFeedbacks((prev) => [{ ...created, replyCount: 0 }, ...prev])
+      // BE 정렬 규칙(재생 지점 있는 피드백은 startTime 오름차순, 없는 건 등록순 맨 뒤)을
+      // 프론트에서 재구현하지 않고 다시 불러와 항상 서버 정렬을 그대로 따른다
+      await load()
       setNewFeedback('')
       clearPendingTime()
       refreshProjectActivity()
@@ -108,6 +143,7 @@ export function useFeedbacks(
     guestToken,
     clearPendingTime,
     refreshProjectActivity,
+    load,
   ])
 
   /** 체크 아이콘 토글 — UI 먼저 반영 후 status API 호출 (실패 시 롤백) */
@@ -227,6 +263,8 @@ export function useFeedbacks(
 
   return {
     feedbacks,
+    hasMoreFeedbacks,
+    isLoadingMoreFeedbacks,
     filteredFeedbacks,
     filter,
     setFilter,
@@ -241,6 +279,7 @@ export function useFeedbacks(
     pendingFeedbackActionId,
     setEditingFeedbackContent,
     load,
+    loadMoreFeedbacks,
     clearPendingTime,
     attachCurrentTime,
     toggleRangeCapture,
@@ -250,5 +289,6 @@ export function useFeedbacks(
     startEditFeedback,
     cancelEditFeedback,
     saveEditFeedback,
+    changeReplyCount,
   }
 }

@@ -13,6 +13,8 @@ interface UserState {
   /** 토큰이 있을 때만 프로필을 불러온다. 중복 호출은 무시 */
   fetchUser: () => Promise<void>
   setUser: (user: MeProfile) => void
+  /** 프로필 수정처럼 응답이 MeProfile 일부 필드만 담고 있을 때 기존 값 위에 병합 */
+  patchUser: (patch: Partial<MeProfile>) => void
   clearUser: () => void
 }
 
@@ -22,7 +24,9 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   fetchUser: async () => {
     if (!getAccessToken()) return
-    if (get().status === 'loading') return
+    const { status } = get()
+    // 이미 조회했거나 조회 중이면 재요청하지 않는다
+    if (status === 'loading' || status === 'success') return
 
     set({ status: 'loading' })
     try {
@@ -34,5 +38,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 
   setUser: (user) => set({ user, status: 'success' }),
+  patchUser: (patch) =>
+    set((state) => (state.user ? { user: { ...state.user, ...patch } } : state)),
   clearUser: () => set({ user: null, status: 'idle' }),
 }))

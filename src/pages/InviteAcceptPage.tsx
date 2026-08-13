@@ -4,6 +4,7 @@ import Select from '../components/Select'
 import { Button } from '../components/Button'
 import { getInvitation, acceptInvitation } from '../api/projects'
 import { ApiError } from '../types/api'
+import type { InvitationStatus } from '../types/project'
 import { ROLE_OPTIONS } from '../constants/roles'
 import { navigate } from '../utils/navigation'
 import { invalidateProjectActivityData } from '../queries/projectInvalidation'
@@ -34,6 +35,7 @@ export function InviteAcceptPage({ token }: { token: string }) {
 
   const [projectId, setProjectId] = useState<number | null>(null)
   const [projectTitle, setProjectTitle] = useState<string | null>(null)
+  const [invitationStatus, setInvitationStatus] = useState<InvitationStatus | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -46,6 +48,7 @@ export function InviteAcceptPage({ token }: { token: string }) {
         if (!cancelled) {
           setProjectId(res.projectId)
           setProjectTitle(res.projectTitle)
+          setInvitationStatus(res.status)
         }
       })
       .catch((err) => {
@@ -56,6 +59,17 @@ export function InviteAcceptPage({ token }: { token: string }) {
       cancelled = true
     }
   }, [token])
+
+  // PENDING이 아니면(만료·이미 수락 등) 역할 선택 폼을 아예 보여주지 않는다 —
+  // 예전엔 제출까지 시킨 뒤 acceptInvitation 실패로만 알 수 있었다
+  const unusableMessage =
+    invitationStatus == null || invitationStatus === 'PENDING'
+      ? null
+      : invitationStatus === 'EXPIRED'
+        ? '만료된 초대 링크입니다.'
+        : invitationStatus === 'ACCEPTED'
+          ? '이미 수락된 초대 링크입니다.'
+          : '유효하지 않은 초대 링크입니다.'
 
   const handleAccept = async () => {
     if (!role) {
@@ -100,13 +114,24 @@ export function InviteAcceptPage({ token }: { token: string }) {
       </p>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
-        {loadError && (
+        {(loadError || unusableMessage) && (
           <Card>
-            <p className="text-warning text-head-sm text-center font-semibold">{loadError}</p>
+            <p className="text-warning text-head-sm text-center font-semibold">
+              {loadError ?? unusableMessage}
+            </p>
+            {unusableMessage && (
+              <button
+                type="button"
+                onClick={() => navigate('/workspace')}
+                className="text-body-sm text-primary mx-auto w-fit underline"
+              >
+                워크스페이스로 이동
+              </button>
+            )}
           </Card>
         )}
 
-        {!loadError && (
+        {!loadError && !unusableMessage && (
           <Card>
             <form
               onSubmit={(event) => {

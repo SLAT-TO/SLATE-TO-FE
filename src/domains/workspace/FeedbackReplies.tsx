@@ -10,6 +10,9 @@ import paperPlaneIcon from '../../assets/icons/paper-plane.svg?raw'
 
 type FeedbackRepliesProps = {
   replies: FeedbackReply[]
+  hasMoreReplies: boolean
+  isLoadingMoreReplies: boolean
+  onLoadMoreReplies: () => void
   newReply: string
   setNewReply: (value: string) => void
   onSubmitReply: () => void
@@ -28,6 +31,9 @@ type FeedbackRepliesProps = {
 
 export default function FeedbackReplies({
   replies,
+  hasMoreReplies,
+  isLoadingMoreReplies,
+  onLoadMoreReplies,
   newReply,
   setNewReply,
   onSubmitReply,
@@ -110,6 +116,18 @@ export default function FeedbackReplies({
           </div>
         )
       })}
+      {hasMoreReplies && (
+        <div className="flex justify-center">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onLoadMoreReplies}
+            disabled={isLoadingMoreReplies}
+          >
+            {isLoadingMoreReplies ? '불러오는 중…' : '더 보기'}
+          </Button>
+        </div>
+      )}
       <div className="flex min-w-0 items-center gap-2">
         <input
           value={newReply}
