@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { getProjectFiles, downloadProjectFile } from '../api/projects'
 import {
   downloadGuestReferenceFile,
@@ -26,20 +26,69 @@ export function useReferenceFiles(
   const [fileSearch, setFileSearch] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [projectFiles, setProjectFiles] = useState<ProjectFileListItem[]>([])
+  const [nextReferenceFileCursor, setNextReferenceFileCursor] = useState<number | null>(null)
+  const [hasMoreReferenceFiles, setHasMoreReferenceFiles] = useState(false)
+  const [isLoadingMoreReferenceFiles, setIsLoadingMoreReferenceFiles] = useState(false)
+  const latestLoadIdRef = useRef(0)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (keyword?: string) => {
+    const loadId = ++latestLoadIdRef.current
     const refFiles =
       guestShareToken != null
-        ? await getGuestReferenceFiles(guestShareToken, { guestId, guestToken })
-        : await getReferenceFiles(projectId, videoId)
+        ? await getGuestReferenceFiles(guestShareToken, { guestId, guestToken }, { keyword })
+        : await getReferenceFiles(projectId, videoId, { keyword })
+    if (loadId !== latestLoadIdRef.current) return []
     setReferenceFiles(refFiles.items)
+    setNextReferenceFileCursor(refFiles.nextCursor)
+    setHasMoreReferenceFiles(refFiles.hasNext)
     return refFiles.items
   }, [projectId, videoId, guestShareToken, guestId, guestToken])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void load(fileSearch.trim() || undefined)
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [fileSearch, load])
+
+  const loadMoreReferenceFiles = useCallback(async () => {
+    if (!hasMoreReferenceFiles || nextReferenceFileCursor == null) return
+    setIsLoadingMoreReferenceFiles(true)
+    try {
+      const page =
+        guestShareToken != null
+          ? await getGuestReferenceFiles(
+              guestShareToken,
+              { guestId, guestToken },
+              { cursor: nextReferenceFileCursor, keyword: fileSearch.trim() || undefined },
+            )
+          : await getReferenceFiles(projectId, videoId, {
+              cursor: nextReferenceFileCursor,
+              keyword: fileSearch.trim() || undefined,
+            })
+      setReferenceFiles((prev) => [...prev, ...page.items])
+      setNextReferenceFileCursor(page.nextCursor)
+      setHasMoreReferenceFiles(page.hasNext)
+    } finally {
+      setIsLoadingMoreReferenceFiles(false)
+    }
+  }, [
+    projectId,
+    videoId,
+    guestShareToken,
+    guestId,
+    guestToken,
+    hasMoreReferenceFiles,
+    nextReferenceFileCursor,
+    fileSearch,
+  ])
 
   const openPicker = useCallback(async () => {
     setPickerOpen(true)
     if (projectFiles.length === 0) {
-      const page = await getProjectFiles(projectId)
+      // BE 최대치(50)를 한 번에 받아 온다 — 이 피커는 "더 보기" UI가 없는 단발성 목록이라
+      // 전체 커서 페이지네이션 대신 더 큰 페이지 하나로 실용적으로 커버한다.
+      const page = await getProjectFiles(projectId, undefined, { size: 50 })
       setProjectFiles(page.items)
     }
   }, [projectId, projectFiles.length])
@@ -47,10 +96,10 @@ export function useReferenceFiles(
   const attachFile = useCallback(
     async (projectFileId: number) => {
       await linkReferenceFile(projectId, videoId, projectFileId)
-      await load()
+      await load(fileSearch.trim() || undefined)
       setPickerOpen(false)
     },
-    [projectId, videoId, load],
+    [projectId, videoId, load, fileSearch],
   )
 
   const removeReferenceFile = useCallback(
@@ -79,13 +128,9 @@ export function useReferenceFiles(
     [guestShareToken, guestId, guestToken, projectId, referenceFiles],
   )
 
-  const filteredFiles = referenceFiles.filter((f) =>
-    f.fileName.toLowerCase().includes(fileSearch.toLowerCase()),
-  )
-
   return {
     referenceFiles,
-    filteredFiles,
+    filteredFiles: referenceFiles,
     fileSearch,
     setFileSearch,
     pickerOpen,
@@ -96,5 +141,8 @@ export function useReferenceFiles(
     attachFile,
     removeReferenceFile,
     downloadReferenceFile,
+    hasMoreReferenceFiles,
+    isLoadingMoreReferenceFiles,
+    loadMoreReferenceFiles,
   }
 }

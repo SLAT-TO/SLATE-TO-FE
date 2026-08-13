@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getMe } from '../api/users'
+import { getProjectNotice } from '../api/projects'
 import {
   useDeleteProjectMutation,
   useLeaveProjectMutation,
@@ -124,6 +125,9 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
     isLoadingMoreActivities,
     notices,
     setNotices,
+    hasMoreNotices,
+    loadMoreNotices,
+    isLoadingMoreNotices,
     loading,
     error,
     partialErrors,
@@ -159,6 +163,21 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
       .then((me) => setMeId(me.id))
       .catch(() => setMeId(null))
   }, [])
+
+  useEffect(() => {
+    if (typeof noticeView !== 'number' || notices.some((notice) => notice.id === noticeView)) return
+    let cancelled = false
+    void getProjectNotice(projectId, noticeView)
+      .then((notice) => {
+        if (!cancelled) setNotices((prev) => [notice, ...prev])
+      })
+      .catch(() => {
+        // Keep the existing not-found view for deleted or inaccessible notices.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, noticeView, notices, setNotices])
 
   // 설정 화면은 생성자(ADMIN)만 접근 가능 — 최근 활동 클릭이나 URL 직접 진입으로
   // 비관리자가 view=settings로 들어와도 즉시 빠져나가게 한다.
@@ -452,6 +471,9 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         <NoticeListView
           projectId={projectId}
           notices={notices}
+          hasMore={hasMoreNotices}
+          isLoadingMore={isLoadingMoreNotices}
+          onLoadMore={() => void loadMoreNotices()}
           onBack={() => setProjectSearch({})}
           onOpenNotice={(noticeId) => setProjectSearch({ panel: 'notices', noticeId })}
           onCreated={(notice) => setNotices((prev) => [notice, ...prev])}

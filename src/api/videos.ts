@@ -17,7 +17,7 @@ import type {
   CreateVideoResult,
   GuestVideoDetail,
   LinkReferenceFileResult,
-  ReferenceFile,
+  ReferenceFileListResult,
   UpdateVideoRequest,
   UpdateVideoResult,
   ValidateYoutubeRequest,
@@ -101,8 +101,13 @@ export async function validateYoutubeUrl(
 export async function getReferenceFiles(
   projectId: number,
   videoId: number,
-): Promise<{ items: ReferenceFile[] }> {
-  return request({ method: 'GET', url: paths.projects.referenceFiles(projectId, videoId) })
+  params?: { keyword?: string; cursor?: number; size?: number },
+): Promise<ReferenceFileListResult> {
+  return request({
+    method: 'GET',
+    url: paths.projects.referenceFiles(projectId, videoId),
+    params,
+  })
 }
 
 export async function linkReferenceFile(
@@ -333,10 +338,12 @@ export async function getGuestVideoDetail(
 export async function getGuestReferenceFiles(
   token: string,
   options: GuestRequestOptions,
-): Promise<{ items: ReferenceFile[] }> {
+  params?: { keyword?: string; cursor?: number; size?: number },
+): Promise<ReferenceFileListResult> {
   return request({
     method: 'GET',
     url: paths.shareLinks.files(token),
+    params,
     ...guestRequestConfig(options),
   })
 }

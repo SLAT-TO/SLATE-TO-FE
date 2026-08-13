@@ -67,14 +67,24 @@ export function useProjectMembersQuery(projectId: number) {
 }
 
 export function useProjectNoticesQuery(projectId: number) {
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: projectKeys.notices(projectId),
-    queryFn: async () => {
-      const result = await getProjectNotices(projectId)
-      return result.items
+    initialPageParam: null as number | null,
+    queryFn: ({ pageParam }) =>
+      getProjectNotices(projectId, { cursor: pageParam ?? undefined, size: 20 }),
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasNext || lastPage.nextCursor == null) return undefined
+      return lastPage.nextCursor
     },
     retry: false,
   })
+
+  const notices = useMemo(
+    () => query.data?.pages.flatMap((page) => page.items) ?? [],
+    [query.data],
+  )
+
+  return { ...query, notices }
 }
 
 export function useProjectActivitiesQuery(projectId: number) {
