@@ -11,6 +11,7 @@ import { navigate } from '../utils/navigation'
 import BookmarkModal from '../domains/recruit/BookmarkModal'
 import { useSearchParams } from 'react-router-dom'
 import { parseFilters, parseSort, toSearchParams } from '../utils/recruitUrlState'
+import JobCardSkeleton from '../domains/recruit/JobCardSkeleton'
 
 /** 추천 공고는 2x2 그리드로 4개까지 노출 */
 const RECOMMENDED_LIMIT = 4
@@ -83,7 +84,17 @@ function RecruitPage() {
       <section className="flex flex-col gap-4">
         <h2 className="text-head-sm text-neutral-11 font-bold">추천공고</h2>
         {loading ? (
-          <p className="text-caption-sm text-neutral-6">불러오는 중…</p>
+          <div
+            className="grid grid-cols-2 gap-6"
+            role="status"
+            aria-busy="true"
+            aria-live="polite"
+            aria-label="추천 공고 불러오는 중"
+          >
+            {Array.from({ length: 4 }).map((_, i) => (
+              <JobCardSkeleton key={i} />
+            ))}
+          </div>
         ) : recommended.length === 0 ? (
           <p className="text-caption-sm text-neutral-6">추천 공고가 없어요.</p>
         ) : (
