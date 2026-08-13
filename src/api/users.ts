@@ -16,6 +16,7 @@ import type {
   CreatePortfolioRequest,
   PageResult,
   Portfolio,
+  PortfolioSummary,
   UpdatePortfolioRequest,
 } from '../types/portfolio'
 
@@ -84,12 +85,16 @@ export async function getPublicProfile(userId: number): Promise<PublicUser> {
 export async function getUserPortfolios(
   userId: number,
   params: { cursor?: number; size?: number } = {},
-): Promise<PageResult<Portfolio>> {
-  return request<PageResult<Portfolio>>({
+): Promise<PageResult<PortfolioSummary>> {
+  return request<PageResult<PortfolioSummary>>({
     method: 'GET',
     url: paths.users.portfolios(userId),
     params,
   })
+}
+
+export async function getUserPortfolio(userId: number, portfolioId: number): Promise<Portfolio> {
+  return request<Portfolio>({ method: 'GET', url: paths.users.portfolio(userId, portfolioId) })
 }
 
 export async function createPortfolio(body: CreatePortfolioRequest): Promise<Portfolio> {

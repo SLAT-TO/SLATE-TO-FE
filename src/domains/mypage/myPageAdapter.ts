@@ -1,5 +1,5 @@
 import type { MeProfile, UserActivityStats } from '../../types/user'
-import type { Portfolio } from '../../types/portfolio'
+import type { PortfolioSummary } from '../../types/portfolio'
 import type { ProfileSummary, StatItem, ProjectHistoryItem } from '../../types/MyPage.types'
 import { roleLabel } from '../../constants/roles'
 import { regionLabel } from '../../constants/regions'
@@ -40,7 +40,7 @@ export function toRoleStats(stats: UserActivityStats): StatItem[] {
   )
 }
 
-export function toProjectHistoryItem(portfolio: Portfolio): ProjectHistoryItem {
+export function toProjectHistoryItem(portfolio: PortfolioSummary): ProjectHistoryItem {
   return {
     id: String(portfolio.id),
     title: portfolio.title,

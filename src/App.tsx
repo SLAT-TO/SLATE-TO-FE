@@ -37,6 +37,7 @@ function getHeaderTitle(pathname: string, userName: string): string | undefined 
   if (pathname === '/mypage/edit') return '프로필 수정'
   if (pathname === '/mypage/project/new') return '프로젝트 추가'
   if (matchPath('/mypage/project/:id/edit', pathname)) return '프로젝트 수정'
+  if (matchPath('/users/:userId/project/:portfolioId', pathname)) return '프로젝트 개요'
   if (matchPath('/mypage/project/:id', pathname)) return '프로젝트 개요'
   return undefined
 }
@@ -105,6 +106,22 @@ function LegacyAppRoutes() {
       return <p className="text-body-sm text-warning">잘못된 공고 경로입니다.</p>
     }
     return <JobDetailPage jobId={jobId} />
+  }
+
+  const userPortfolioMatch = matchPath('/users/:userId/project/:portfolioId', path)
+  if (userPortfolioMatch) {
+    const userId = Number(userPortfolioMatch.userId)
+    const portfolioId = Number(userPortfolioMatch.portfolioId)
+    if (!Number.isFinite(userId) || !Number.isFinite(portfolioId)) {
+      return <p className="text-body-sm text-warning">잘못된 프로젝트 경로입니다.</p>
+    }
+    return (
+      <ProjectOverviewPage
+        key={`${userId}-${portfolioId}`}
+        userId={userId}
+        portfolioId={portfolioId}
+      />
+    )
   }
 
   const userProfileMatch = matchPath('/users/:userId', path)

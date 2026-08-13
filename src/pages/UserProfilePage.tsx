@@ -3,7 +3,7 @@ import ProfileOverviewCard from '../domains/mypage/ProfileOverviewCard'
 import ProjectHistoryCard from '../domains/mypage/ProjectHistoryCard'
 import type { ProfileSummary, ProjectHistoryItem } from '../types/MyPage.types'
 import type { PublicUser } from '../types/user'
-import type { Portfolio } from '../types/portfolio'
+import type { PortfolioSummary } from '../types/portfolio'
 import { getPublicProfile, getUserPortfolios } from '../api/users'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
@@ -11,6 +11,7 @@ import { roleLabel } from '../constants/roles'
 import { regionLabel } from '../constants/regions'
 import { PROJECT_TYPE_LABEL } from '../constants/projectLabels'
 import { toProjectTypeStats, toRoleStats } from '../domains/mypage/myPageAdapter'
+import { navigate } from '../utils/navigation'
 
 interface UserProfilePageProps {
   userId: number
@@ -23,14 +24,14 @@ function toProfileSummary(user: PublicUser): ProfileSummary {
   return {
     profileImageUrl: user.profileImageUrl ?? '',
     nickname: user.nickname,
-    roles: user.roles.map((r) => roleLabel(r)),
-    regions: user.locations.map((location) => regionLabel(location)),
+    roles: (user.roles ?? []).map((r) => roleLabel(r)),
+    regions: (user.locations ?? []).map((location) => regionLabel(location)),
     email: '',
     introduction: user.bio ?? '',
   }
 }
 
-function toProjectHistory(portfolio: Portfolio): ProjectHistoryItem {
+function toProjectHistory(portfolio: PortfolioSummary): ProjectHistoryItem {
   return {
     id: String(portfolio.id),
     title: portfolio.title,
@@ -42,7 +43,7 @@ function toProjectHistory(portfolio: Portfolio): ProjectHistoryItem {
 function UserProfilePage({ userId }: UserProfilePageProps) {
   useHeaderSlot(HEADER)
   const [user, setUser] = useState<PublicUser | null>(null)
-  const [portfolios, setPortfolios] = useState<Portfolio[]>([])
+  const [portfolios, setPortfolios] = useState<PortfolioSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -98,7 +99,11 @@ function UserProfilePage({ userId }: UserProfilePageProps) {
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {portfolios.map((portfolio) => (
-              <ProjectHistoryCard key={portfolio.id} project={toProjectHistory(portfolio)} />
+              <ProjectHistoryCard
+                key={portfolio.id}
+                project={toProjectHistory(portfolio)}
+                onClick={(id) => navigate(`/users/${userId}/project/${id}`)}
+              />
             ))}
           </div>
         )}

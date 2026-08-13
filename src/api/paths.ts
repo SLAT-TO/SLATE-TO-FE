@@ -24,6 +24,8 @@ export const paths = {
     /** 다른 유저의 유형·역할 분포 (공개 프로필의 stats와 동일) */
     stats: (userId: number | string) => `${API_PREFIX}/users/${userId}/stats`,
     portfolios: (userId: number | string) => `${API_PREFIX}/users/${userId}/portfolios`,
+    portfolio: (userId: number | string, portfolioId: number | string) =>
+      `${API_PREFIX}/users/${userId}/portfolios/${portfolioId}`,
     myPortfolios: `${API_PREFIX}/users/me/portfolios`,
     myPortfolio: (portfolioId: number | string) =>
       `${API_PREFIX}/users/me/portfolios/${portfolioId}`,
@@ -116,13 +118,13 @@ export const paths = {
     application: (recruitmentId: number | string, applicationId: number | string) =>
       `${API_PREFIX}/recruitments/${recruitmentId}/applications/${applicationId}`,
     applicationFiles: (recruitmentId: number | string) =>
-      `/api/v1/recruitments/${recruitmentId}/application-files`,
+      `${API_PREFIX}/recruitments/${recruitmentId}/application-files`,
     applicationFileDownload: (
       recruitmentId: number | string,
       applicationId: number | string,
       fileId: number | string,
     ) =>
-      `/api/v1/recruitments/${recruitmentId}/applications/${applicationId}/files/${fileId}/download`,
+      `${API_PREFIX}/recruitments/${recruitmentId}/applications/${applicationId}/files/${fileId}/download`,
   },
   schedules: {
     root: `${API_PREFIX}/schedules`,

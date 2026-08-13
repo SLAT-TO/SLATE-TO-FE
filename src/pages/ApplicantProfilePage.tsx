@@ -14,6 +14,7 @@ import { regionLabel } from '../constants/regions'
 import { videoCategoryLabel } from '../constants/videoCategories'
 import { toProjectTypeStats, toRoleStats } from '../domains/mypage/myPageAdapter'
 import { downloadBlob } from '../utils/downloadBlob'
+import { navigate } from '../utils/navigation'
 
 interface ApplicantProfilePageProps {
   jobId: number
@@ -146,8 +147,11 @@ function ApplicantProfilePage({ jobId, applicationId }: ApplicantProfilePageProp
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {projects.map((project) => (
-              // 편집 콜백 미전달로 케밥 메뉴 비노출, 클릭 이동도 없음
-              <ProjectHistoryCard key={project.id} project={project} />
+              <ProjectHistoryCard
+                key={project.id}
+                project={project}
+                onClick={(id) => navigate(`/users/${applicant.id}/project/${id}`)}
+              />
             ))}
           </div>
         )}

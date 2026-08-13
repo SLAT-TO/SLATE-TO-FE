@@ -15,6 +15,19 @@ export type Portfolio = {
   thumbnailUrl: string | null
 }
 
+/** GET /users/{userId}/portfolios — 카드 렌더링용 요약본 (상세 필드 없음) */
+export type PortfolioSummary = {
+  id: number
+  title: string
+  type: UserCategory | 'ETC' | string
+  customTypeName: string | null
+  roles: UserRole[]
+  thumbnailUrl: string | null
+  startDate: string | null
+  endDate: string | null
+  createdAt: string
+}
+
 export type CreatePortfolioRequest = {
   title: string
   type: string
