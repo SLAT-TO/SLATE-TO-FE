@@ -31,7 +31,7 @@ function JobCard({
   return (
     <article
       onClick={onClick}
-      className={`bg-bg-primary flex w-full flex-col gap-6 rounded-xl p-4 shadow-[0_4px_12px_color-mix(in_srgb,var(--color-gradation)_15%,transparent)] ${
+      className={`bg-bg-primary flex h-full w-full flex-col gap-6 rounded-xl p-4 shadow-[0_4px_12px_color-mix(in_srgb,var(--color-gradation)_15%,transparent)] ${
         onClick ? 'cursor-pointer' : ''
       }`}
     >
@@ -71,7 +71,7 @@ function JobCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="mt-auto flex items-center justify-between gap-3">
         <Tag variant="primary">{role}</Tag>
         <span className="text-body-sm text-neutral-11 shrink-0 font-semibold">{dDay}</span>
       </div>
