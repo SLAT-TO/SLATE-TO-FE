@@ -108,6 +108,21 @@ export type UpdateProfileRequest = {
   categories?: UserCategory[]
 }
 
+/** PATCH /api/v1/users/me 응답 — GET /users/me(MeProfile)와 달리 email·socialType·
+ * onboardingCompleted·createdAt이 없다. MeProfile로 잘못 취급해 스토어를 통째로 덮으면
+ * 그 필드들이 유실된다 (예: 회원탈퇴 시 socialType 기준 비밀번호 확인이 스킵됨) */
+export type ProfileUpdateResult = {
+  id: number
+  nickname: string
+  profileImageUrl: string | null
+  bio: string | null
+  locations: (UserRegion | string)[]
+  primaryRole: UserRole | null
+  roles: UserRole[]
+  categories: UserCategory[]
+  updatedAt: string
+}
+
 export type ChangePasswordRequest = {
   currentPassword: string
   newPassword: string
