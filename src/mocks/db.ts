@@ -726,7 +726,7 @@ export function toPublicUser(user: MeUser) {
     nickname: user.nickname,
     profileImageUrl: user.profileImageUrl,
     bio: user.bio,
-    location: user.location,
+    locations: user.regions ?? (user.location ? [user.location] : []),
     primaryRole: user.primaryRole,
     roles: user.roles,
     categories: user.categories,
