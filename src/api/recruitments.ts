@@ -83,8 +83,24 @@ export async function getMyApplications(): Promise<CursorPage<AppliedRecruitment
 export async function getMyRecruitments(): Promise<CursorPage<MyRecruitment>> {
   return request({ method: 'GET', url: paths.users.myRecruitments })
 }
-export async function getMyRecruitmentBookmarks(): Promise<CursorPage<Recruitment>> {
-  return request({ method: 'GET', url: paths.users.myRecruitmentBookmarks })
+export async function getMyRecruitmentBookmarks(
+  params: { cursor?: number; size?: number } = {},
+): Promise<CursorPage<Recruitment>> {
+  return request({ method: 'GET', url: paths.users.myRecruitmentBookmarks, params })
+}
+
+/** 추천 공고 별표 매칭용 전량 조회 — hasNext가 끝날 때까지 이어 받음 */
+export async function getAllRecruitmentBookmarks(): Promise<Recruitment[]> {
+  const items: Recruitment[] = []
+  let cursor: number | undefined
+  // 서버가 hasNext만 true로 주고 커서를 누락해도 멈추도록 반복 횟수에 상한을 둠
+  for (let i = 0; i < 20; i += 1) {
+    const page = await getMyRecruitmentBookmarks({ cursor })
+    items.push(...page.items)
+    if (!page.hasNext || page.nextCursor == null) break
+    cursor = page.nextCursor
+  }
+  return items
 }
 
 export async function bookmarkRecruitment(

@@ -25,10 +25,13 @@ export function useNotifications() {
   }
 
   return {
-    notifications: notificationsQuery.data ?? [],
+    notifications: notificationsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     loading: notificationsQuery.isPending,
     error,
     markAsRead,
     markAllAsRead,
+    hasNextPage: notificationsQuery.hasNextPage,
+    fetchNextPage: notificationsQuery.fetchNextPage,
+    isFetchingNextPage: notificationsQuery.isFetchingNextPage,
   }
 }

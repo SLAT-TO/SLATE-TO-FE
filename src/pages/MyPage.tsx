@@ -6,6 +6,7 @@ import { navigate } from '../utils/navigation'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
 import ConfirmModal from '../components/ConfirmModal'
+import { Button } from '../components/Button'
 import { deletePortfolio, getMe, getMyActivityStats, getUserPortfolios } from '../api/users'
 import {
   toProfileSummary,
@@ -26,6 +27,10 @@ function MyPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+  const [userId, setUserId] = useState<number | null>(null)
+  const [portfolioCursor, setPortfolioCursor] = useState<number | null>(null)
+  const [hasMorePortfolios, setHasMorePortfolios] = useState(false)
+  const [isLoadingMorePortfolios, setIsLoadingMorePortfolios] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -45,6 +50,9 @@ function MyPage() {
         setProjectTypeStats(toProjectTypeStats(stats))
         setRoleStats(toRoleStats(stats))
         setProjects(portfolios.items.map(toProjectHistoryItem))
+        setUserId(me.id)
+        setPortfolioCursor(portfolios.nextCursor)
+        setHasMorePortfolios(portfolios.hasNext)
       } catch {
         if (!cancelled) setError('마이페이지 정보를 불러오지 못했습니다.')
       } finally {
@@ -57,6 +65,21 @@ function MyPage() {
       cancelled = true
     }
   }, [])
+
+  const handleLoadMorePortfolios = async () => {
+    if (userId == null || portfolioCursor == null || isLoadingMorePortfolios) return
+    setIsLoadingMorePortfolios(true)
+    try {
+      const page = await getUserPortfolios(userId, { cursor: portfolioCursor })
+      setProjects((prev) => [...prev, ...page.items.map(toProjectHistoryItem)])
+      setPortfolioCursor(page.nextCursor)
+      setHasMorePortfolios(page.hasNext)
+    } catch {
+      setError('프로젝트 이력을 더 불러오지 못했습니다.')
+    } finally {
+      setIsLoadingMorePortfolios(false)
+    }
+  }
 
   const handleEditClick = () => {
     navigate('/mypage/edit')
@@ -144,17 +167,31 @@ function MyPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {projects.map((project) => (
-              <ProjectHistoryCard
-                key={project.id}
-                project={project}
-                onEdit={handleProjectEdit}
-                onDelete={handleProjectDelete}
-                onClick={handleProjectClick}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {projects.map((project) => (
+                <ProjectHistoryCard
+                  key={project.id}
+                  project={project}
+                  onEdit={handleProjectEdit}
+                  onDelete={handleProjectDelete}
+                  onClick={handleProjectClick}
+                />
+              ))}
+            </div>
+            {hasMorePortfolios && (
+              <div className="mt-4 flex justify-center">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => void handleLoadMorePortfolios()}
+                  disabled={isLoadingMorePortfolios}
+                >
+                  {isLoadingMorePortfolios ? '불러오는 중…' : '더 보기'}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </section>
       <ConfirmModal
