@@ -8,6 +8,7 @@ import { navigate } from '../utils/navigation'
 import { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL } from '../constants/projectLabels'
 import { roleLabel } from '../constants/roles'
 import type { Recruitment } from '../types/recruitment'
+import JobCardSkeleton from '../domains/recruit/JobCardSkeleton'
 
 const HEADER = <HeaderTitle>나의 구인구직</HeaderTitle>
 
@@ -26,7 +27,12 @@ function MyRecruitPage() {
   const renderSection = (title: string, posts: Recruitment[]) => (
     <section className="flex flex-col gap-4">
       <h2 className="text-head-sm text-neutral-11 font-bold">{title}</h2>
-      {posts.length === 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2" role="status" aria-busy="true">
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+        </div>
+      ) : posts.length === 0 ? (
         <p className="text-caption-sm text-neutral-6">공고가 없어요.</p>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -51,10 +57,6 @@ function MyRecruitPage() {
       )}
     </section>
   )
-
-  if (loading) {
-    return <p className="text-body-sm text-neutral-6 py-6">불러오는 중…</p>
-  }
 
   if (error) {
     return <p className="text-body-sm text-neutral-6 py-6">{error}</p>
