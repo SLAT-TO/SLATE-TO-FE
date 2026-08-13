@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ActionMenu from '../../components/ActionMenu'
-import { Button } from '../../components/Button'
 import BookmarkStarIcon from '../../components/icons/BookmarkStarIcon'
 import { useHeaderSlot } from '../../hooks/useHeaderSlot'
 import type { VideoDetail } from '../../types/video'
@@ -12,7 +11,6 @@ import {
 } from '../../constants/projectStatus'
 import type { ProjectStatus } from '../../types/project'
 import MemberListPanel from './MemberListPanel'
-import ShareLinkModal from './ShareLinkModal'
 
 type VideoDetailHeaderProps = {
   projectId: number
@@ -42,7 +40,6 @@ export default function VideoDetailHeader({
   onEdit,
   onDelete,
 }: VideoDetailHeaderProps) {
-  const [inviteOpen, setInviteOpen] = useState(false)
   const [statusMenuOpen, setStatusMenuOpen] = useState(false)
   const statusMenuRef = useRef<HTMLDivElement>(null)
   const isCompleted = projectStatus === 'COMPLETED'
@@ -139,26 +136,15 @@ export default function VideoDetailHeader({
   const headerRightContent = useMemo(() => {
     if (!videoDetail) return null
     return (
-      <div className="flex items-center gap-2 sm:gap-4">
-        <ActionMenu
-          items={[
-            { action: 'edit', onClick: onEdit },
-            { action: 'delete', onClick: onDelete },
-          ]}
-          className="order-2"
-          ariaLabel="영상 메뉴"
-        />
-        <Button variant="primary" size="sm" className="order-1" onClick={() => setInviteOpen(true)}>
-          게스트 초대하기
-        </Button>
-        <ShareLinkModal
-          isOpen={inviteOpen}
-          onClose={() => setInviteOpen(false)}
-          videoId={videoDetail.videoId}
-        />
-      </div>
+      <ActionMenu
+        items={[
+          { action: 'edit', onClick: onEdit },
+          { action: 'delete', onClick: onDelete },
+        ]}
+        ariaLabel="영상 메뉴"
+      />
     )
-  }, [videoDetail, onEdit, onDelete, inviteOpen])
+  }, [videoDetail, onEdit, onDelete])
 
   useHeaderSlot(headerLeftContent, headerRightContent, { hideDefaultActions: true })
 
