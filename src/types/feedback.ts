@@ -77,6 +77,21 @@ export type ShareLink = {
   isActive: boolean
   expiredAt: string | null
   createdAt: string
+  /** 이 링크로 참여한 게스트 수 */
+  guestCount: number
+}
+
+/** BE GuestSummaryResDTO — 소유자용 게스트 목록의 항목. 세션 토큰 등 민감 정보는 없음 */
+export type GuestSummary = {
+  guestId: number
+  name: string
+  createdAt: string
+}
+
+/** BE GuestListResDTO */
+export type GuestListResult = {
+  guestCount: number
+  guests: GuestSummary[]
 }
 
 export type ShareLinkAccess = {

@@ -211,6 +211,7 @@ export function ProfileStep({ onComplete }: ProfileStepProps) {
               value={profile.email}
               onChange={(v) => updateField('email', v)}
               error={errors.email}
+              disabled
             />
           </div>
 

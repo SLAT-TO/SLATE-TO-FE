@@ -42,7 +42,15 @@ function isAuthorizedWriter(
 }
 
 /** mock 전용 — registerGuest로 발급한 guestId → 이름 매핑 (실 BE 게스트 세션 대체) */
-const mockGuests = new Map<number, { name: string; shareLinkId: number }>()
+const mockGuests = new Map<number, { name: string; shareLinkId: number; createdAt: string }>()
+
+function guestCountFor(shareLinkId: number): number {
+  let count = 0
+  for (const guest of mockGuests.values()) {
+    if (guest.shareLinkId === shareLinkId) count += 1
+  }
+  return count
+}
 
 export const videoHandlers = [
   http.get(paths.projects.videos(':projectId'), ({ request, params }) => {
@@ -441,14 +449,31 @@ export const videoHandlers = [
       createdAt: new Date().toISOString(),
     }
     db.shareLinks.push(link)
-    return HttpResponse.json(created(link), { status: 201 })
+    return HttpResponse.json(created({ ...link, guestCount: 0 }), { status: 201 })
   }),
 
   http.get(paths.videos.shareLinks(':videoId'), ({ params }) => {
     if (!safeUser()) return unauthorized()
     const link = db.shareLinks.find((s) => s.videoId === Number(params.videoId))
     if (!link) return notFound()
-    return HttpResponse.json(ok(link), { status: 200 })
+    return HttpResponse.json(ok({ ...link, guestCount: guestCountFor(link.shareLinkId) }), {
+      status: 200,
+    })
+  }),
+
+  http.get(paths.videos.shareLinkGuests(':videoId', ':shareLinkId'), ({ params }) => {
+    if (!safeUser()) return unauthorized()
+    const videoId = Number(params.videoId)
+    const shareLinkId = Number(params.shareLinkId)
+    const link = db.shareLinks.find((s) => s.shareLinkId === shareLinkId && s.videoId === videoId)
+    if (!link) return notFound()
+
+    const guests = [...mockGuests.entries()]
+      .filter(([, guest]) => guest.shareLinkId === shareLinkId)
+      .map(([guestId, guest]) => ({ guestId, name: guest.name, createdAt: guest.createdAt }))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+
+    return HttpResponse.json(ok({ guestCount: guests.length, guests }), { status: 200 })
   }),
 
   http.get(paths.shareLinks.byToken(':token'), ({ params }) => {
@@ -471,13 +496,14 @@ export const videoHandlers = [
     const body = (await request.json()) as RegisterGuestRequest
     if (!body.name) return badRequest()
     const guestId = allocId()
-    mockGuests.set(guestId, { name: body.name, shareLinkId: link.shareLinkId })
+    const createdAt = new Date().toISOString()
+    mockGuests.set(guestId, { name: body.name, shareLinkId: link.shareLinkId, createdAt })
     return HttpResponse.json(
       created({
         guestId,
         shareLinkId: link.shareLinkId,
         name: body.name,
-        createdAt: new Date().toISOString(),
+        createdAt,
       }),
       { status: 201 },
     )

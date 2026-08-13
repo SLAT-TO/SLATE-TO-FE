@@ -81,6 +81,8 @@ export const paths = {
     validateYoutube: `${API_PREFIX}/videos/youtube/validate`,
     feedbacks: (videoId: number | string) => `${API_PREFIX}/videos/${videoId}/feedbacks`,
     shareLinks: (videoId: number | string) => `${API_PREFIX}/videos/${videoId}/share-links`,
+    shareLinkGuests: (videoId: number | string, shareLinkId: number | string) =>
+      `${API_PREFIX}/videos/${videoId}/share-links/${shareLinkId}/guests`,
   },
   feedbacks: {
     byId: (feedbackId: number | string) => `${API_PREFIX}/feedbacks/${feedbackId}`,
