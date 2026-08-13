@@ -170,14 +170,9 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
   useEffect(() => {
     if (typeof noticeView !== 'number') return
     const cachedNotice = notices.find((notice) => notice.id === noticeView)
-    if (cachedNotice) {
-      setDeepLinkedNotice(null)
-      return
-    }
+    if (cachedNotice) return
     if (deepLinkedNotice?.id === noticeView) return
     let cancelled = false
-    setDeepLinkedNotice(null)
-    setUnavailableNoticeId(null)
     void getProjectNotice(projectId, noticeView)
       .then((notice) => {
         if (!cancelled) setDeepLinkedNotice(notice)

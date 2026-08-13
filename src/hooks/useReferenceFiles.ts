@@ -31,18 +31,21 @@ export function useReferenceFiles(
   const [isLoadingMoreReferenceFiles, setIsLoadingMoreReferenceFiles] = useState(false)
   const latestLoadIdRef = useRef(0)
 
-  const load = useCallback(async (keyword?: string) => {
-    const loadId = ++latestLoadIdRef.current
-    const refFiles =
-      guestShareToken != null
-        ? await getGuestReferenceFiles(guestShareToken, { guestId, guestToken }, { keyword })
-        : await getReferenceFiles(projectId, videoId, { keyword })
-    if (loadId !== latestLoadIdRef.current) return []
-    setReferenceFiles(refFiles.items)
-    setNextReferenceFileCursor(refFiles.nextCursor)
-    setHasMoreReferenceFiles(refFiles.hasNext)
-    return refFiles.items
-  }, [projectId, videoId, guestShareToken, guestId, guestToken])
+  const load = useCallback(
+    async (keyword?: string) => {
+      const loadId = ++latestLoadIdRef.current
+      const refFiles =
+        guestShareToken != null
+          ? await getGuestReferenceFiles(guestShareToken, { guestId, guestToken }, { keyword })
+          : await getReferenceFiles(projectId, videoId, { keyword })
+      if (loadId !== latestLoadIdRef.current) return []
+      setReferenceFiles(refFiles.items)
+      setNextReferenceFileCursor(refFiles.nextCursor)
+      setHasMoreReferenceFiles(refFiles.hasNext)
+      return refFiles.items
+    },
+    [projectId, videoId, guestShareToken, guestId, guestToken],
+  )
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

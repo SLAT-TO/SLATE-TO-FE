@@ -79,10 +79,7 @@ export function useProjectNoticesQuery(projectId: number) {
     retry: false,
   })
 
-  const notices = useMemo(
-    () => query.data?.pages.flatMap((page) => page.items) ?? [],
-    [query.data],
-  )
+  const notices = useMemo(() => query.data?.pages.flatMap((page) => page.items) ?? [], [query.data])
 
   return { ...query, notices }
 }
