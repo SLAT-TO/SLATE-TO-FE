@@ -8,6 +8,7 @@ import type { RecruitmentApplicationDetail, ApplicationFile } from '../types/rec
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import HeaderTitle from '../components/HeaderTitle'
 import { getApplication, downloadApplicationFile } from '../api/recruitments'
+import { getUserPortfolios } from '../api/users'
 import { roleLabel } from '../constants/roles'
 import { regionLabel } from '../constants/regions'
 import { videoCategoryLabel } from '../constants/videoCategories'
@@ -41,18 +42,25 @@ function ApplicantProfilePage({ jobId, applicationId }: ApplicantProfilePageProp
       setIsLoading(true)
       setError(null)
       try {
-        // 지원 상세에 applicant.stats·applicant.portfolios(최신 5건)가 함께 오므로 별도 유저 조회는 생략
         const application = await getApplication(jobId, applicationId)
         if (cancelled) return
         setDetail(application)
 
-        const { stats, portfolios } = application.applicant
+        const { stats } = application.applicant
         if (stats) {
           setProjectTypeStats(toProjectTypeStats(stats))
           setRoleStats(toRoleStats(stats))
         }
+        const portfolios = []
+        let cursor: number | undefined
+        do {
+          const page = await getUserPortfolios(application.applicant.id, { cursor, size: 100 })
+          portfolios.push(...page.items)
+          cursor = page.hasNext ? (page.nextCursor ?? undefined) : undefined
+        } while (cursor != null)
+        if (cancelled) return
         setProjects(
-          (portfolios?.items ?? []).map((portfolio) => ({
+          portfolios.map((portfolio) => ({
             id: String(portfolio.id),
             title: portfolio.title,
             thumbnailUrl: portfolio.thumbnailUrl ?? PLACEHOLDER_THUMBNAIL,
