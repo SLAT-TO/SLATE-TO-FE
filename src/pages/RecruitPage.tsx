@@ -119,7 +119,17 @@ function RecruitPage() {
         />
 
         {loading ? (
-          <p className="text-caption-sm text-neutral-6">불러오는 중…</p>
+          <div
+            className="grid grid-cols-2 gap-6"
+            role="status"
+            aria-busy="true"
+            aria-live="polite"
+            aria-label="전체 공고 불러오는 중"
+          >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <JobCardSkeleton key={i} />
+            ))}
+          </div>
         ) : jobs.length === 0 ? (
           <p className="text-caption-sm text-neutral-6">등록된 공고가 없어요.</p>
         ) : (
