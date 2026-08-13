@@ -92,7 +92,16 @@ function notificationLink(notification: AppNotification): string | null {
 }
 
 export default function NotificationPage() {
-  const { notifications, loading, error, markAsRead, markAllAsRead } = useNotifications()
+  const {
+    notifications,
+    loading,
+    error,
+    markAsRead,
+    markAllAsRead,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useNotifications()
   const hasUnread = notifications.some((item) => !item.isRead)
 
   function handleClick(notification: AppNotification) {
@@ -134,15 +143,29 @@ export default function NotificationPage() {
       )}
 
       {!loading && !error && notifications.length > 0 && (
-        <ul className="flex flex-col gap-4">
-          {notifications.map((notification) => (
-            <NotificationCard
-              key={notification.notificationId}
-              notification={notification}
-              onClick={() => handleClick(notification)}
-            />
-          ))}
-        </ul>
+        <>
+          <ul className="flex flex-col gap-4">
+            {notifications.map((notification) => (
+              <NotificationCard
+                key={notification.notificationId}
+                notification={notification}
+                onClick={() => handleClick(notification)}
+              />
+            ))}
+          </ul>
+          {hasNextPage && (
+            <div className="flex justify-center">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => void fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? '불러오는 중…' : '더 보기'}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </section>
   )

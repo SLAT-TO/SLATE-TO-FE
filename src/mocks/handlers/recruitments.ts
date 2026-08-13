@@ -20,6 +20,7 @@ import {
 } from '../db'
 import { badRequest, notFound, unauthorized } from '../errors'
 import { created, ok } from '../response'
+import { paginateByCursor } from '../pagination'
 function safeUser() {
   try {
     return requireUser()
@@ -151,16 +152,21 @@ export const recruitmentHandlers = [
     return HttpResponse.json(ok({ items }), { status: 200 })
   }),
 
-  http.get(paths.users.myRecruitmentBookmarks, () => {
+  http.get(paths.users.myRecruitmentBookmarks, ({ request }) => {
     const user = safeUser()
     if (!user) return unauthorized()
+    const url = new URL(request.url)
+    const cursor = url.searchParams.get('cursor')
+    const size = Number(url.searchParams.get('size') ?? 20)
     const ids = db.recruitmentBookmarks
       .filter((b) => b.userId === user.id)
       .map((b) => b.recruitmentId)
-    const items = db.recruitments
-      .filter((r) => ids.includes(r.id))
-      .map((r) => toResponse(r, user.id))
-    return HttpResponse.json(ok(toPage(items)), { status: 200 })
+    const bookmarked = db.recruitments.filter((r) => ids.includes(r.id))
+    const page = paginateByCursor(bookmarked, cursor ? Number(cursor) : null, size)
+    return HttpResponse.json(
+      ok({ ...page, items: page.items.map((r) => toResponse(r, user.id)) }),
+      { status: 200 },
+    )
   }),
 
   http.post(paths.recruitments.bookmark(':recruitmentId'), ({ params }) => {
