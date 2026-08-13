@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { removeMember, updateMemberRole } from '../../api/projects'
+import { getVideos } from '../../api/videos'
 import ActionMenu from '../../components/ActionMenu'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
 import Choice from '../../components/Choice'
 import ConfirmModal from '../../components/ConfirmModal'
+import InviteChoiceModal from '../../components/InviteChoiceModal'
 import { ROLE_OPTIONS, roleLabel } from '../../constants/roles'
 import { CARD_BASE } from '../../styles/card'
 import { ApiError } from '../../types/api'
 import type { MemberSummary } from '../../types/project'
+import type { VideoListItem } from '../../types/video'
+import GuestVideoPickerModal from './GuestVideoPickerModal'
 import InviteLinkModal from './InviteLinkModal'
+import ShareLinkModal from './ShareLinkModal'
 
 interface MemberListPanelProps {
   projectId: number
@@ -44,6 +49,13 @@ export default function MemberListPanel({
   const [removeTarget, setRemoveTarget] = useState<MemberSummary | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [actionError, setActionError] = useState('')
+
+  /** 초대하기 진입점 하나에서 프로젝트/게스트 초대로 갈라진다 — 게스트는 영상 단위라 먼저 영상을 골라야 한다 */
+  const [inviteStep, setInviteStep] = useState<'closed' | 'choice' | 'guest-picker'>('closed')
+  const [guestVideos, setGuestVideos] = useState<VideoListItem[]>([])
+  const [guestVideosLoaded, setGuestVideosLoaded] = useState(false)
+  const [guestVideosLoading, setGuestVideosLoading] = useState(false)
+  const [guestShareVideoId, setGuestShareVideoId] = useState<number | null>(null)
 
   const panelOpen = panelOpenProp ?? internalPanelOpen
   const setPanelOpen = useCallback(
@@ -131,6 +143,36 @@ export default function MemberListPanel({
 
   const canRemove = (member: MemberSummary) =>
     member.permission !== 'ADMIN' && (meId == null || member.userId !== meId)
+
+  const openInviteChoice = () => {
+    setPanelOpen(false)
+    setInviteStep('choice')
+  }
+
+  const selectProjectInvite = () => {
+    setInviteStep('closed')
+    setInviteOpen(true)
+  }
+
+  const selectGuestInvite = async () => {
+    setInviteStep('guest-picker')
+    if (guestVideosLoaded) return
+    setGuestVideosLoading(true)
+    try {
+      const page = await getVideos(projectId, undefined, 100)
+      setGuestVideos(page.items)
+      setGuestVideosLoaded(true)
+    } catch {
+      setGuestVideos([])
+    } finally {
+      setGuestVideosLoading(false)
+    }
+  }
+
+  const selectGuestVideo = (videoId: number) => {
+    setInviteStep('closed')
+    setGuestShareVideoId(videoId)
+  }
 
   const previewMembers = members.slice(0, 4)
 
@@ -257,19 +299,45 @@ export default function MemberListPanel({
             })}
           </ul>
 
+          {/* 게스트는 공유 링크로 들어온 별도 신원이라 팀원과 관리 방식이 다름(역할 없음, 개별
+           * 차단만 가능) — BE 게스트 목록 조회 API가 아직 없어 자리만 남겨둔다. */}
+          <div className="border-neutral-3 flex flex-col gap-2 border-t pt-3">
+            <h3 className="text-caption-lg text-neutral-8 font-semibold">게스트</h3>
+            <p className="text-caption-lg text-neutral-6">게스트 목록 기능은 준비 중입니다.</p>
+          </div>
+
           {isAdmin && (
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={() => {
-                setPanelOpen(false)
-                setInviteOpen(true)
-              }}
-            >
-              프로젝트 초대하기
+            <Button variant="secondary" className="w-full" onClick={openInviteChoice}>
+              초대하기
             </Button>
           )}
         </div>
+      )}
+
+      <InviteChoiceModal
+        isOpen={inviteStep === 'choice'}
+        onClose={() => setInviteStep('closed')}
+        onSelectProject={selectProjectInvite}
+        onSelectGuest={() => void selectGuestInvite()}
+      />
+
+      <GuestVideoPickerModal
+        // 매번 열 때마다 이전 선택이 남지 않도록, 열릴 때만 새 key로 내부 state를 초기화한다
+        key={inviteStep === 'guest-picker' ? 'guest-picker-open' : 'guest-picker-closed'}
+        isOpen={inviteStep === 'guest-picker'}
+        onClose={() => setInviteStep('closed')}
+        onBack={() => setInviteStep('choice')}
+        onSelect={selectGuestVideo}
+        videos={guestVideos}
+        loading={guestVideosLoading}
+      />
+
+      {guestShareVideoId != null && (
+        <ShareLinkModal
+          isOpen
+          onClose={() => setGuestShareVideoId(null)}
+          videoId={guestShareVideoId}
+        />
       )}
 
       <InviteLinkModal
