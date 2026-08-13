@@ -11,6 +11,10 @@ export default function DashboardActivityCard({
   activities,
   onExpand,
 }: DashboardActivityCardProps) {
+  // activities는 "더보기"로 다음 페이지를 불러온 뒤에도 그대로 유지되는 공용 목록(infinite
+  // query 캐시)이라, 전체 목록에서 돌아온 뒤에도 미리보기는 항상 최신 5건만 보여준다.
+  const previewActivities = activities.slice(0, 5)
+
   return (
     <section className="flex flex-col gap-5">
       <button
@@ -25,13 +29,13 @@ export default function DashboardActivityCard({
         type="button"
         onClick={onExpand}
         aria-label="최근 활동 전체 보기"
-        className={`flex min-h-[183px] flex-col ${CARD_BASE} p-4 text-left ${activities.length === 0 ? 'justify-center' : 'justify-start'}`}
+        className={`flex min-h-[183px] flex-col ${CARD_BASE} p-4 text-left ${previewActivities.length === 0 ? 'justify-center' : 'justify-start'}`}
       >
-        {activities.length === 0 ? (
+        {previewActivities.length === 0 ? (
           <p className="text-caption-lg text-neutral-6">최근 활동이 없습니다.</p>
         ) : (
           <ul className="flex flex-col gap-4">
-            {activities.map((activity) => (
+            {previewActivities.map((activity) => (
               <li
                 key={activity.activityId}
                 className="text-body-sm text-neutral-10 flex items-center gap-3"
