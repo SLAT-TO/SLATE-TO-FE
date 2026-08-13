@@ -1,15 +1,49 @@
+import { useState } from 'react'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
-import type { RecruitmentApplication } from '../../types/recruitment'
+import Tag from '../../components/Tag'
+import ConfirmModal from '../../components/ConfirmModal'
+import type { ApplicationStatusValue, RecruitmentApplication } from '../../types/recruitment'
 import { formatDateTime } from '../../utils/formatDate'
+import { updateApplicationStatus } from '../../api/recruitments'
 
 interface ApplicantRowProps {
+  recruitmentId: number
   application: RecruitmentApplication
   onViewProfile: () => void
+  onStatusChange: (applicationId: number, status: ApplicationStatusValue) => void
 }
 
-function ApplicantRow({ application, onViewProfile }: ApplicantRowProps) {
-  const { applicant } = application
+type DecidedStatus = Exclude<ApplicationStatusValue, 'PENDING'>
+
+const STATUS_LABEL: Record<DecidedStatus, string> = {
+  ACCEPTED: '수락함',
+  REJECTED: '거절함',
+}
+
+function ApplicantRow({
+  recruitmentId,
+  application,
+  onViewProfile,
+  onStatusChange,
+}: ApplicantRowProps) {
+  const { applicant, applicationStatus } = application
+  const [pendingAction, setPendingAction] = useState<DecidedStatus | null>(null)
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false)
+
+  // BE는 PENDING 지원만 상태 변경을 허용하므로 이 액션은 되돌릴 수 없다
+  const handleConfirm = () => {
+    if (!pendingAction || isStatusUpdating) return
+    const nextStatus = pendingAction
+    setIsStatusUpdating(true)
+    updateApplicationStatus(recruitmentId, application.applicationId, { status: nextStatus })
+      .then(() => {
+        onStatusChange(application.applicationId, nextStatus)
+        setPendingAction(null)
+      })
+      .catch(() => window.alert('지원 상태를 변경하지 못했습니다. 다시 시도해주세요.'))
+      .finally(() => setIsStatusUpdating(false))
+  }
 
   return (
     <li className="bg-bg-primary shadow-card grid grid-cols-[1fr_1fr_2fr_auto] items-center gap-4 rounded-xl px-6 py-4">
@@ -24,14 +58,51 @@ function ApplicantRow({ application, onViewProfile }: ApplicantRowProps) {
 
       <span className="text-caption-lg text-neutral-6 truncate">{applicant.bio ?? '—'}</span>
 
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={() => onViewProfile()}
-        className="ml-auto w-[140px]"
-      >
-        프로필 보기
-      </Button>
+      <div className="ml-auto flex items-center gap-2">
+        {applicationStatus === 'PENDING' ? (
+          <>
+            <Button
+              variant="negativeOutline"
+              size="sm"
+              width={72}
+              onClick={() => setPendingAction('REJECTED')}
+              disabled={isStatusUpdating}
+            >
+              거절
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              width={72}
+              onClick={() => setPendingAction('ACCEPTED')}
+              disabled={isStatusUpdating}
+            >
+              수락
+            </Button>
+          </>
+        ) : (
+          <Tag
+            variant={applicationStatus === 'ACCEPTED' ? 'secondary' : 'ghost'}
+            className="min-w-[72px]"
+          >
+            {STATUS_LABEL[applicationStatus]}
+          </Tag>
+        )}
+
+        <Button variant="secondary" size="sm" onClick={() => onViewProfile()} className="w-[140px]">
+          프로필 보기
+        </Button>
+      </div>
+
+      <ConfirmModal
+        isOpen={pendingAction != null}
+        onClose={() => !isStatusUpdating && setPendingAction(null)}
+        onConfirm={handleConfirm}
+        isPending={isStatusUpdating}
+        title={pendingAction === 'ACCEPTED' ? '지원자를 수락할까요?' : '지원자를 거절할까요?'}
+        description="상태 변경 후에는 되돌릴 수 없어요."
+        confirmText={pendingAction === 'ACCEPTED' ? '수락하기' : '거절하기'}
+      />
     </li>
   )
 }

@@ -2,7 +2,6 @@ import { request, requestBlob } from './client'
 import { paths } from './paths'
 import type {
   AppliedRecruitment,
-  Application,
   ApplicationResult,
   ApplicationStatusValue,
   CreateApplicationRequest,
@@ -127,11 +126,12 @@ export async function getApplications(
   })
 }
 
+/** PENDING 상태의 지원만 ACCEPTED/REJECTED로 바꿀 수 있다 — BE 응답 바디 없음 */
 export async function updateApplicationStatus(
   recruitmentId: number,
   applicationId: number,
   body: UpdateApplicationRequest,
-): Promise<Application> {
+): Promise<null> {
   return request({
     method: 'PATCH',
     url: paths.recruitments.application(recruitmentId, applicationId),
