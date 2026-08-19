@@ -541,9 +541,7 @@ export default function ProjectDetailPage({ projectId, videoId = null }: Project
         />
       )}
 
-      {tab === 'feedback' && (
-        <VideoFeedbackTab projectId={projectId} projectStatus={project.status} />
-      )}
+      {tab === 'feedback' && <VideoFeedbackTab projectId={projectId} />}
 
       <ConfirmModal
         isOpen={deleteOpen}

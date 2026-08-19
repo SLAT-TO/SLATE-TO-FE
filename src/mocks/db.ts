@@ -373,7 +373,7 @@ export const db: MockDb = {
       hasUnreadFeedback: true,
       description: '프로젝트 소개글',
       memo: '1차 피드백 반영 예정',
-      projectTags: ['다큐'],
+      projectTags: ['다큐멘터리'],
       createdAt: '2026-05-20T00:00:00Z',
       updatedAt: '2026-05-25T00:00:00Z',
     },
