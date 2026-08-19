@@ -12,11 +12,21 @@ import ConfirmModal from '../../components/ConfirmModal'
 import VideoCard from './VideoCard'
 import AddVideoModal from './AddVideoModal'
 import EditVideoModal from './EditVideoModal'
-import type { VideoListItem } from '../../types/video'
+import type { VideoListItem, VideoProgressStatus } from '../../types/video'
 import type { CreateVideoValues } from '../../schemas/video'
 import { invalidateProjectActivityData } from '../../queries/projectInvalidation'
-import { projectStatusLabel } from '../../constants/projectStatus'
-import type { ProjectStatus } from '../../types/project'
+import {
+  getVideoProgressOverride,
+  setVideoProgressOverride,
+} from '../../utils/videoProgressOverride'
+
+/** BE 응답의 progressStatus 위에 로컬에 저장해둔 값이 있으면 덮어쓴다 */
+function applyProgressOverrides(items: VideoListItem[]): VideoListItem[] {
+  return items.map((item) => {
+    const override = getVideoProgressOverride(item.videoId)
+    return override ? { ...item, progressStatus: override } : item
+  })
+}
 
 /** 북마크한 영상을 목록 상단으로 */
 function sortVideosByBookmark(items: VideoListItem[]): VideoListItem[] {
@@ -35,10 +45,9 @@ type EditTarget = {
 
 type VideoFeedbackTabProps = {
   projectId: number
-  projectStatus: ProjectStatus
 }
 
-export default function VideoFeedbackTab({ projectId, projectStatus }: VideoFeedbackTabProps) {
+export default function VideoFeedbackTab({ projectId }: VideoFeedbackTabProps) {
   const queryClient = useQueryClient()
   const [videos, setVideos] = useState<VideoListItem[]>([])
   const [videosLoading, setVideosLoading] = useState(true)
@@ -59,7 +68,7 @@ export default function VideoFeedbackTab({ projectId, projectStatus }: VideoFeed
       setVideosLoading(true)
       try {
         const result = await getVideos(projectId)
-        if (!cancelled) setVideos(sortVideosByBookmark(result.items))
+        if (!cancelled) setVideos(sortVideosByBookmark(applyProgressOverrides(result.items)))
       } finally {
         if (!cancelled) setVideosLoading(false)
       }
@@ -138,6 +147,16 @@ export default function VideoFeedbackTab({ projectId, projectStatus }: VideoFeed
     }
   }
 
+  // BE에 영상 자체 진행 상태를 바꾸는 API가 아직 없어(2026-08-19 기준) 새로고침에도 남게
+  // 우선 localStorage에 저장해둔다. API가 추가되면 setVideoProgressOverride 호출을
+  // 실제 요청으로 바꾸고(실패 시 이전 값 롤백), videoProgressOverride.ts는 지우면 된다.
+  const handleStatusChange = (videoId: number, status: VideoProgressStatus) => {
+    setVideoProgressOverride(videoId, status)
+    setVideos((prev) =>
+      prev.map((v) => (v.videoId === videoId ? { ...v, progressStatus: status } : v)),
+    )
+  }
+
   const handleUpdateVideo = async (values: { title: string; memo?: string }) => {
     if (!editTarget) return
     const result = await updateVideo(projectId, editTarget.videoId, values)
@@ -165,8 +184,8 @@ export default function VideoFeedbackTab({ projectId, projectStatus }: VideoFeed
                 key={video.videoId}
                 title={video.title}
                 thumbnailUrl={video.thumbnailUrl}
-                statusLabel={projectStatusLabel(projectStatus)}
-                statusVariant={projectStatus === 'COMPLETED' ? 'ghost' : 'secondary'}
+                status={video.progressStatus}
+                onStatusChange={(status) => handleStatusChange(video.videoId, status)}
                 hasUnreadFeedback={video.hasUnreadFeedback}
                 bookmarked={video.bookmarked}
                 onToggleBookmark={() => void handleToggleBookmark(video)}

@@ -2,14 +2,15 @@ import type { KeyboardEvent, MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import ActionMenu from '../../components/ActionMenu'
 import BookmarkStarIcon from '../../components/icons/BookmarkStarIcon'
-import Tag, { type TagVariant } from '../../components/Tag'
 import { CARD_BASE } from '../../styles/card'
+import VideoProgressStatusDropdown from './VideoProgressStatusDropdown'
+import type { VideoProgressStatus } from '../../types/video'
 
 interface VideoCardProps {
   title: string
   thumbnailUrl?: string | null
-  statusLabel: string
-  statusVariant: TagVariant
+  status: VideoProgressStatus
+  onStatusChange: (status: VideoProgressStatus) => void
   /** BE VideoItemResDTO.hasUnreadFeedback */
   hasUnreadFeedback?: boolean
   bookmarked?: boolean
@@ -25,8 +26,8 @@ interface VideoCardProps {
 export default function VideoCard({
   title,
   thumbnailUrl,
-  statusLabel,
-  statusVariant,
+  status,
+  onStatusChange,
   hasUnreadFeedback = false,
   bookmarked = false,
   onToggleBookmark,
@@ -99,7 +100,7 @@ export default function VideoCard({
 
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <Tag variant={statusVariant}>{statusLabel}</Tag>
+          <VideoProgressStatusDropdown status={status} onChange={onStatusChange} />
         </div>
         {hasUnreadFeedback && (
           <span

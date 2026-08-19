@@ -1,11 +1,12 @@
 import type { ProjectStatus } from '../types/project'
 
-// BE ProjectStatus enum 선언 순서(기획 중 → 편집 중 → 검토 중 → 완료)와 값 그대로 맞춘다.
+// BE ProjectStatus enum 선언 순서(PREPARING → EDITING → REVIEWING → COMPLETED)와 값 그대로 맞춘다.
+// 화면 표기는 기획 중 → 촬영 중 → 편집 중 → 완료 — enum 키 이름과 표시 라벨이 어긋나 있으니 주의.
 // 이 순서 그대로 드롭다운에 노출되므로(Object.keys 사용), 실제 진행 순서와 다르게 두면 안 된다.
 export const PROJECT_STATUS_LABEL: Record<string, string> = {
   PREPARING: '기획 중',
-  EDITING: '편집 중',
-  REVIEWING: '검토 중',
+  EDITING: '촬영 중',
+  REVIEWING: '편집 중',
   COMPLETED: '완료',
 }
 
