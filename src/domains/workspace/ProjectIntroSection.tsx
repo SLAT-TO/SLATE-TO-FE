@@ -1,4 +1,8 @@
-import { ROLE_LABELS } from '../../constants/roles'
+import {
+  PROJECT_KIND_LABEL,
+  PROJECT_LENGTH_TYPE_LABEL,
+  PROJECT_TYPE_LABEL,
+} from '../../constants/projectLabels'
 
 type ProjectIntroSectionProps = {
   /** BE가 유형·길이·형태(kind)·역할을 이미 합쳐서 내려준다 — 따로 조합하지 않는다 */
@@ -6,13 +10,18 @@ type ProjectIntroSectionProps = {
   memo: string | null
 }
 
-// 역할 '기타'(ETC)와 카테고리 '기타'(ETC)가 라벨이 똑같아 구분이 안 된다 — 지우면
-// 카테고리가 기타인 프로젝트의 태그까지 같이 사라지므로 필터 대상에서 뺀다
-const FILTERABLE_ROLE_LABELS = ROLE_LABELS.filter((label) => label !== '기타')
+// BE가 [유형, 길이, 형태(선택), ...역할들] 순으로 합쳐 내려주는데 형태(kind)가 없을 수 있어
+// 위치로는 역할을 못 구분한다 — 대신 유형·길이·형태로 알려진 라벨만 "남기는" 화이트리스트 방식.
+// "기타"처럼 유형과 역할 라벨이 같은 값이면 그냥 보여준다(숨기다 진짜 유형 태그를 지우는 것보다 안전).
+const NON_ROLE_TAG_LABELS = new Set([
+  ...Object.values(PROJECT_TYPE_LABEL),
+  ...Object.values(PROJECT_LENGTH_TYPE_LABEL),
+  ...Object.values(PROJECT_KIND_LABEL),
+])
 
 export default function ProjectIntroSection({ projectTags, memo }: ProjectIntroSectionProps) {
   // 영상 피드백은 프로젝트 멤버가 아닌 사람도 보므로, 역할 태그는 굳이 노출하지 않는다
-  const displayTags = projectTags.filter((tag) => !FILTERABLE_ROLE_LABELS.includes(tag))
+  const displayTags = projectTags.filter((tag) => NON_ROLE_TAG_LABELS.has(tag))
 
   return (
     <div className="flex flex-col gap-3">
