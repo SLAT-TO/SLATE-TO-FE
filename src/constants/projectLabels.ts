@@ -17,6 +17,12 @@ export const PROJECT_TYPE_LABEL: Record<string, string> = {
   ETC: '기타',
 }
 
+/** BE Kind 기준 (VideoService.resolveKind) — 프로젝트 생성 시 선택 안 하면 비어있을 수 있다 */
+export const PROJECT_KIND_LABEL: Record<string, string> = {
+  PERSONAL: '개인',
+  EXTERNAL: '외주',
+}
+
 export function projectMetaTags(project: {
   type?: string | null
   lengthType?: string | null

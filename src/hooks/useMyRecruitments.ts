@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   bookmarkRecruitment,
   getMyApplications,
@@ -54,30 +54,33 @@ export function useMyRecruitments() {
   }, [])
 
   /** 낙관적 업데이트 — 실패 시 되돌린다. 등록 여부를 반환해 모달 노출 판단에 쓴다 */
-  async function toggleBookmark(recruitmentId: number): Promise<boolean> {
-    const wasBookmarked = bookmarkedIds.has(recruitmentId)
+  const toggleBookmark = useCallback(
+    async (recruitmentId: number): Promise<boolean> => {
+      const wasBookmarked = bookmarkedIds.has(recruitmentId)
 
-    setBookmarkedIds((prev) => {
-      const next = new Set(prev)
-      if (wasBookmarked) next.delete(recruitmentId)
-      else next.add(recruitmentId)
-      return next
-    })
-
-    try {
-      if (wasBookmarked) await unbookmarkRecruitment(recruitmentId)
-      else await bookmarkRecruitment(recruitmentId)
-      return !wasBookmarked
-    } catch {
       setBookmarkedIds((prev) => {
         const next = new Set(prev)
-        if (wasBookmarked) next.add(recruitmentId)
-        else next.delete(recruitmentId)
+        if (wasBookmarked) next.delete(recruitmentId)
+        else next.add(recruitmentId)
         return next
       })
-      return wasBookmarked
-    }
-  }
+
+      try {
+        if (wasBookmarked) await unbookmarkRecruitment(recruitmentId)
+        else await bookmarkRecruitment(recruitmentId)
+        return !wasBookmarked
+      } catch {
+        setBookmarkedIds((prev) => {
+          const next = new Set(prev)
+          if (wasBookmarked) next.add(recruitmentId)
+          else next.delete(recruitmentId)
+          return next
+        })
+        return wasBookmarked
+      }
+    },
+    [bookmarkedIds],
+  )
 
   return { bookmarked, myPosts, applied, bookmarkedIds, toggleBookmark, loading, error }
 }

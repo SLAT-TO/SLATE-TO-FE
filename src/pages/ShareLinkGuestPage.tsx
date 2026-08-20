@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { accessShareLink, registerGuest } from '../api/videos'
 import { VideoDetailView } from '../domains/workspace/VideoDetailView'
 import GuestLayout from '../layouts/GuestLayout'
@@ -7,6 +7,7 @@ import { Button } from '../components/Button'
 import { ApiError } from '../types/api'
 import type { ShareLinkAccess } from '../types/feedback'
 import { getGuestSession, setGuestSession } from '../utils/guestSession'
+import inviteBg from '../assets/images/invite-bg.png'
 
 type ShareLinkGuestPageProps = {
   token: string
@@ -16,6 +17,27 @@ type GuestShareStep = 'invitation' | 'registration' | 'feedback'
 
 function errorMessage(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback
+}
+
+/** 등록 전 안내·입력 단계 전용 배경 — 프로젝트 초대 수락 화면(InviteAcceptPage)과 동일하게 맞춘다 */
+function GuestInviteBackground({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(118deg,#9ff0ff_33.5%,#b9d6ff_98%)]">
+      <img
+        src={inviteBg}
+        alt=""
+        className="pointer-events-none absolute inset-0 size-full object-cover"
+      />
+
+      <p className="font-logo absolute top-8 left-8 text-lg tracking-tight text-white">
+        SLATE - TO
+      </p>
+
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
+        {children}
+      </div>
+    </div>
+  )
 }
 
 /** 공유 링크의 초대 안내와 게스트 등록을 거쳐, 팀원과 동일한 영상 상세(VideoDetailView)를
@@ -68,23 +90,23 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
 
   if (loadError) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
+      <GuestInviteBackground>
         <p className="text-warning text-body-sm">{loadError}</p>
-      </div>
+      </GuestInviteBackground>
     )
   }
 
   if (!access) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
+      <GuestInviteBackground>
         <p className="text-body-sm text-neutral-6">불러오는 중...</p>
-      </div>
+      </GuestInviteBackground>
     )
   }
 
   if (step === 'invitation') {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
+      <GuestInviteBackground>
         <section className="bg-neutral-1 flex w-full max-w-[480px] flex-col gap-8 rounded-xl p-8 text-center shadow-[0_3px_12px_rgba(169,204,244,0.15)]">
           <div className="flex flex-col gap-3">
             <p className="text-head-sm text-neutral-11 font-bold">영상 피드백에 초대되었어요</p>
@@ -97,13 +119,13 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
             확인
           </Button>
         </section>
-      </div>
+      </GuestInviteBackground>
     )
   }
 
   if (step === 'registration') {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
+      <GuestInviteBackground>
         <form
           onSubmit={handleRegister}
           className="bg-neutral-1 flex w-full max-w-[400px] flex-col gap-6 rounded-xl p-8 shadow-[0_3px_12px_rgba(169,204,244,0.15)]"
@@ -118,7 +140,7 @@ export function ShareLinkGuestPage({ token }: ShareLinkGuestPageProps) {
             {registering ? '등록 중...' : '입장하기'}
           </Button>
         </form>
-      </div>
+      </GuestInviteBackground>
     )
   }
 

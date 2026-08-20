@@ -7,7 +7,8 @@ import { useMyRecruitments } from '../hooks/useMyRecruitments'
 import { navigate } from '../utils/navigation'
 import { PROJECT_TYPE_LABEL, PROJECT_LENGTH_TYPE_LABEL } from '../constants/projectLabels'
 import { roleLabel } from '../constants/roles'
-import type { Recruitment } from '../types/recruitment'
+import { applicationStatusPresentation } from '../constants/applicationStatus'
+import type { ApplicationStatusValue, Recruitment } from '../types/recruitment'
 import JobCardSkeleton from '../domains/recruit/JobCardSkeleton'
 
 const HEADER = <HeaderTitle>나의 구인구직</HeaderTitle>
@@ -34,7 +35,11 @@ function MyRecruitPage() {
     navigate(`/matching/${id}`)
   }, [])
 
-  const renderSection = (title: string, posts: Recruitment[]) => (
+  const renderSection = <T extends Recruitment>(
+    title: string,
+    posts: T[],
+    getApplicationStatus?: (post: T) => ApplicationStatusValue | undefined,
+  ) => (
     <section className="flex flex-col gap-4">
       <h2 className="text-head-sm text-neutral-11 font-bold">{title}</h2>
       {loading ? (
@@ -46,24 +51,33 @@ function MyRecruitPage() {
         <p className="text-caption-sm text-neutral-6">공고가 없어요.</p>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {posts.map((post) => (
-            <JobCard
-              key={post.id}
-              id={post.id}
-              category={PROJECT_TYPE_LABEL[post.category] ?? post.category}
-              length={
-                post.lengthType
-                  ? (PROJECT_LENGTH_TYPE_LABEL[post.lengthType] ?? post.lengthType)
-                  : undefined
-              }
-              title={post.title}
-              role={roleLabel(post.recruitPart)}
-              dDay={post.status === 'CLOSED' ? '마감' : `D-${post.dday}`}
-              isBookmarked={bookmarkedIds.has(post.id)}
-              onBookmarkClick={handleBookmarkClick}
-              onClick={handleCardClick}
-            />
-          ))}
+          {posts.map((post) => {
+            const applicationStatus = getApplicationStatus?.(post)
+            const statusPresentation = applicationStatus
+              ? applicationStatusPresentation(applicationStatus)
+              : undefined
+
+            return (
+              <JobCard
+                key={post.id}
+                id={post.id}
+                category={PROJECT_TYPE_LABEL[post.category] ?? post.category}
+                length={
+                  post.lengthType
+                    ? (PROJECT_LENGTH_TYPE_LABEL[post.lengthType] ?? post.lengthType)
+                    : undefined
+                }
+                title={post.title}
+                role={roleLabel(post.recruitPart)}
+                dDay={post.status === 'CLOSED' ? '마감' : `D-${post.dday}`}
+                isBookmarked={bookmarkedIds.has(post.id)}
+                statusLabel={statusPresentation?.label}
+                statusVariant={statusPresentation?.tagVariant}
+                onBookmarkClick={handleBookmarkClick}
+                onClick={handleCardClick}
+              />
+            )
+          })}
         </div>
       )}
     </section>
@@ -77,7 +91,7 @@ function MyRecruitPage() {
     <div className="flex flex-col gap-10 py-6">
       {renderSection('관심 있는 공고', bookmarked)}
       {renderSection('내가 올린 공고', myPosts)}
-      {renderSection('내가 지원한 공고', applied)}
+      {renderSection('내가 지원한 공고', applied, (post) => post.applicationStatus)}
       <BookmarkModal isOpen={isBookmarkModalOpen} onClose={() => setIsBookmarkModalOpen(false)} />
     </div>
   )

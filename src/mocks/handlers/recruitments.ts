@@ -2,7 +2,9 @@ import { http, HttpResponse } from 'msw'
 import { paths } from '../../api/paths'
 import type { UserRegion } from '../../types/user'
 import type {
+  AppliedRecruitment,
   Application,
+  ApplicationResult,
   CreateApplicationRequest,
   CreateRecruitmentRequest,
   Recruitment,
@@ -41,7 +43,7 @@ function toResponse(r: Recruitment, userId: number): Recruitment {
 }
 
 /** 커서 페이지네이션 응답 (mock은 전량 반환) */
-function toPage(items: Recruitment[]) {
+function toPage<T>(items: T[]) {
   return { items, nextCursor: null, hasNext: false }
 }
 
@@ -148,8 +150,21 @@ export const recruitmentHandlers = [
   http.get(paths.users.myApplications, () => {
     const user = safeUser()
     if (!user) return unauthorized()
-    const items = db.applications.filter((a) => a.userId === user.id)
-    return HttpResponse.json(ok({ items }), { status: 200 })
+    const items = db.applications
+      .filter((application) => application.userId === user.id)
+      .flatMap<AppliedRecruitment>((application) => {
+        const recruitment = db.recruitments.find((r) => r.id === application.recruitmentId)
+        if (!recruitment) return []
+        return [
+          {
+            ...toResponse(recruitment, user.id),
+            applicationId: application.id,
+            applicationStatus: application.status,
+            appliedAt: application.createdAt,
+          },
+        ]
+      })
+    return HttpResponse.json(ok(toPage(items)), { status: 200 })
   }),
 
   http.get(paths.users.myRecruitmentBookmarks, ({ request }) => {
@@ -218,7 +233,15 @@ export const recruitmentHandlers = [
       const file = db.applicationFiles.find((f) => f.id === fileId)
       if (file) file.applicationId = application.id
     }
-    return HttpResponse.json(created(application), { status: 201 })
+    const result: ApplicationResult = {
+      applicationId: application.id,
+      recruitmentId: application.recruitmentId,
+      applicationStatus: application.status,
+      message: application.message ?? '',
+      referenceLink: body.referenceLink ?? null,
+      appliedAt: application.createdAt,
+    }
+    return HttpResponse.json(created(result), { status: 201 })
   }),
 
   http.get(paths.recruitments.application(':recruitmentId', ':applicationId'), ({ params }) => {

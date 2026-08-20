@@ -11,6 +11,7 @@ import ApplyModal from '../domains/recruit/ApplyModal'
 import { useRecruitmentDetail } from '../hooks/useRecruitmentDetail'
 import { useHeaderSlot } from '../hooks/useHeaderSlot'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { applicationStatusPresentation } from '../constants/applicationStatus'
 
 function JobDetailBackHeader() {
   const nav = useNavigate()
@@ -41,7 +42,7 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
   const [isBookmarkModalOpen, setIsBookmarkModalOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const { detail, toggleBookmark, loading, error } = useRecruitmentDetail(jobId)
+  const { detail, toggleBookmark, markApplied, loading, error } = useRecruitmentDetail(jobId)
 
   if (loading) {
     return <p className="text-body-sm text-neutral-6">불러오는 중…</p>
@@ -70,6 +71,13 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
       setDeleting(false)
     }
   }
+
+  const hasApplication = detail.hasApplied || detail.myApplicationStatus != null
+  const applicationButtonLabel = detail.myApplicationStatus
+    ? applicationStatusPresentation(detail.myApplicationStatus).label
+    : hasApplication
+      ? '지원 완료'
+      : '지원하기'
 
   return (
     <div className="flex flex-col gap-6">
@@ -101,10 +109,10 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
             if (detail.isMine) navigate(`/matching/${jobId}/applicants`)
             else setIsApplyOpen(true)
           }}
-          disabled={!detail.isMine && detail.hasApplied}
+          disabled={!detail.isMine && hasApplication}
           className="w-52"
         >
-          {detail.isMine ? '지원자 확인' : detail.hasApplied ? '지원 완료' : '지원하기'}
+          {detail.isMine ? '지원자 확인' : applicationButtonLabel}
         </Button>
       </div>
 
@@ -113,11 +121,12 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
         recruitmentId={jobId}
         onClose={() => setIsApplyOpen(false)}
         onSubmit={async (values) => {
-          await applyRecruitment(jobId, {
+          const result = await applyRecruitment(jobId, {
             message: values.comment,
             referenceLink: values.referenceLink || undefined,
             fileIds: values.fileIds.length > 0 ? values.fileIds : undefined,
           })
+          markApplied(result.applicationStatus)
         }}
       />
       <BookmarkModal isOpen={isBookmarkModalOpen} onClose={() => setIsBookmarkModalOpen(false)} />
