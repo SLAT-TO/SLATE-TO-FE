@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react'
 import type { VideoProgressStatus } from '../../types/video'
 import {
   VIDEO_PROGRESS_STATUS_LABEL,
@@ -23,70 +22,39 @@ export default function VideoProgressStatusDropdown({
   status,
   onChange,
 }: VideoProgressStatusDropdownProps) {
-  const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const closeMenu = (event: PointerEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false)
-    }
-    document.addEventListener('pointerdown', closeMenu)
-    return () => document.removeEventListener('pointerdown', closeMenu)
-  }, [open])
-
-  // 카드 전체가 클릭 시 영상 상세로 이동하는 링크라, 드롭다운 조작이 그 이동을 트리거하면 안 된다
-  const stopCardClick = (event: MouseEvent) => {
-    event.preventDefault()
-    event.stopPropagation()
-  }
-  const stopCardKeyDown = (event: KeyboardEvent) => {
-    event.stopPropagation()
-  }
+  const hasKnownStatus = (VIDEO_PROGRESS_STATUS_VALUES as string[]).includes(status)
 
   return (
-    <div
-      className="relative"
-      ref={containerRef}
-      onClick={stopCardClick}
-      onKeyDown={stopCardKeyDown}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={`text-caption-sm flex items-center gap-1 rounded-[3px] px-[19px] py-1 font-semibold ${
+    <label className="relative inline-flex items-center">
+      <span className="sr-only">영상 진행 상태</span>
+      <select
+        value={status}
+        onChange={(event) => onChange(event.target.value as VideoProgressStatus)}
+        className={`text-caption-sm cursor-pointer appearance-none rounded-[3px] py-1 pr-8 pl-[19px] font-semibold focus-visible:ring-2 focus-visible:ring-current focus-visible:outline-none ${
           STATUS_COLOR[status] ?? STATUS_COLOR.IN_PROGRESS
         }`}
       >
-        {videoProgressStatusLabel(status)}
-        <svg viewBox="0 0 12 12" fill="none" className="size-3">
-          <path
-            d="M2.5 4.5L6 8l3.5-3.5"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-      {open && (
-        <ul className="border-neutral-3 bg-bg-primary absolute top-full left-0 z-10 mt-1 w-24 rounded-lg border py-1 shadow-md">
-          {VIDEO_PROGRESS_STATUS_VALUES.map((value) => (
-            <li key={value}>
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false)
-                  if (value !== status) onChange(value)
-                }}
-                className="hover:bg-neutral-2 text-caption-lg text-neutral-10 block w-full px-3 py-2 text-left"
-              >
-                {VIDEO_PROGRESS_STATUS_LABEL[value]}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+        {!hasKnownStatus && <option value={status}>{videoProgressStatusLabel(status)}</option>}
+        {VIDEO_PROGRESS_STATUS_VALUES.map((value) => (
+          <option key={value} value={value}>
+            {VIDEO_PROGRESS_STATUS_LABEL[value]}
+          </option>
+        ))}
+      </select>
+      <svg
+        viewBox="0 0 12 12"
+        fill="none"
+        aria-hidden
+        className="pointer-events-none absolute right-3 size-3"
+      >
+        <path
+          d="M2.5 4.5L6 8l3.5-3.5"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </label>
   )
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { bookmarkRecruitment, getRecruitment, unbookmarkRecruitment } from '../api/recruitments'
 import { ApiError } from '../types/api'
-import type { RecruitmentDetailResponse } from '../types/recruitment'
+import type { ApplicationStatusValue, RecruitmentDetailResponse } from '../types/recruitment'
 
 export function useRecruitmentDetail(recruitmentId: number) {
   const [detail, setDetail] = useState<RecruitmentDetailResponse | null>(null)
@@ -50,5 +50,9 @@ export function useRecruitmentDetail(recruitmentId: number) {
     }
   }
 
-  return { detail, toggleBookmark, loading, error }
+  const markApplied = (status: ApplicationStatusValue) => {
+    setDetail((prev) => (prev ? { ...prev, hasApplied: true, myApplicationStatus: status } : prev))
+  }
+
+  return { detail, toggleBookmark, markApplied, loading, error }
 }

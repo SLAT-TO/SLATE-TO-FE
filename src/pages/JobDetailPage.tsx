@@ -42,7 +42,7 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
   const [isBookmarkModalOpen, setIsBookmarkModalOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const { detail, toggleBookmark, loading, error } = useRecruitmentDetail(jobId)
+  const { detail, toggleBookmark, markApplied, loading, error } = useRecruitmentDetail(jobId)
 
   if (loading) {
     return <p className="text-body-sm text-neutral-6">불러오는 중…</p>
@@ -121,11 +121,12 @@ function JobDetailPage({ jobId }: JobDetailPageProps) {
         recruitmentId={jobId}
         onClose={() => setIsApplyOpen(false)}
         onSubmit={async (values) => {
-          await applyRecruitment(jobId, {
+          const result = await applyRecruitment(jobId, {
             message: values.comment,
             referenceLink: values.referenceLink || undefined,
             fileIds: values.fileIds.length > 0 ? values.fileIds : undefined,
           })
+          markApplied(result.applicationStatus)
         }}
       />
       <BookmarkModal isOpen={isBookmarkModalOpen} onClose={() => setIsBookmarkModalOpen(false)} />
